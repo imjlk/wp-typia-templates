@@ -1,15 +1,9 @@
 import { describe, expect, test } from 'bun:test';
+import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 
-import {
-  ADD_OPTION_METADATA,
-  buildCommandOptionParser,
-  CREATE_OPTION_METADATA,
-  GLOBAL_OPTION_METADATA,
-  MIGRATE_OPTION_METADATA,
-  TEMPLATES_OPTION_METADATA,
-} from '../src/command-option-metadata';
+import { COMMAND_ROUTING_METADATA } from '../src/command-option-metadata';
 import {
   WP_TYPIA_BUN_REQUIRED_TOP_LEVEL_COMMAND_NAMES,
   WP_TYPIA_BUNLI_MIGRATION_DOC,
@@ -46,6 +40,15 @@ describe('wp-typia Bunli preparation', () => {
     expect(packageManifest.scripts['bunli:dev']).toBe('bun src/cli.ts');
     expect(packageManifest.scripts['bunli:test']).toBe(
       'bun test tests/*.test.ts',
+    );
+    expect(packageManifest.scripts['generate:routing']).toBe(
+      'node scripts/generate-routing-metadata.mjs',
+    );
+    expect(packageManifest.scripts['validate:routing']).toBe(
+      'node scripts/generate-routing-metadata.mjs --check',
+    );
+    expect(packageManifest.scripts.generate).toBe(
+      'node scripts/generate-routing-metadata.mjs && bun scripts/generate-bunli-metadata.ts',
     );
     expect(packageManifest.scripts['build:standalone']).toBe(
       'bun scripts/build-standalone-runtime.ts --targets native --outdir ./dist-standalone',
@@ -112,20 +115,6 @@ describe('wp-typia Bunli preparation', () => {
   });
 
   test('generates bin routing metadata from shared command and option metadata', () => {
-    const parser = buildCommandOptionParser(
-      ADD_OPTION_METADATA,
-      GLOBAL_OPTION_METADATA,
-      CREATE_OPTION_METADATA,
-      MIGRATE_OPTION_METADATA,
-      TEMPLATES_OPTION_METADATA,
-    );
-    const expectedLongValueOptions = Array.from(parser.stringOptionNames)
-      .map((optionName) => `--${optionName}`)
-      .sort((left, right) => left.localeCompare(right));
-    const expectedShortValueOptions = Array.from(parser.shortFlagMap.entries())
-      .filter(([, option]) => option.type === 'string')
-      .map(([short]) => `-${short}`)
-      .sort((left, right) => left.localeCompare(right));
     const binEntrypointSource = fs.readFileSync(
       path.join(packageRoot, 'bin', 'wp-typia.js'),
       'utf8',
@@ -134,11 +123,14 @@ describe('wp-typia Bunli preparation', () => {
     expect(fullRuntimeCommands).toEqual(
       Array.from(WP_TYPIA_BUN_REQUIRED_TOP_LEVEL_COMMAND_NAMES),
     );
-    expect(longValueOptions).toEqual(expectedLongValueOptions);
-    expect(shortValueOptions).toEqual(expectedShortValueOptions);
+    expect(longValueOptions).toEqual(COMMAND_ROUTING_METADATA.longValueOptions);
+    expect(shortValueOptions).toEqual(
+      COMMAND_ROUTING_METADATA.shortValueOptions,
+    );
     expect(binEntrypointSource).toMatch(
       /from ['"]\.\/routing-metadata\.generated\.js['"]/,
     );
+    expect(binEntrypointSource).toMatch(/from ['"]\.\/argv-walker\.js['"]/);
     expect(binEntrypointSource).not.toContain(
       'const fullRuntimeCommands = new Set([',
     );
@@ -148,6 +140,20 @@ describe('wp-typia Bunli preparation', () => {
     expect(binEntrypointSource).not.toContain(
       'const shortValueOptions = new Set([',
     );
+  });
+
+  test('validates routing metadata with node without requiring bunli generation', () => {
+    const result = spawnSync(
+      'node',
+      ['scripts/generate-routing-metadata.mjs', '--check'],
+      {
+        cwd: packageRoot,
+        encoding: 'utf8',
+      },
+    );
+
+    expect(result.status).toBe(0);
+    expect(result.stderr).not.toContain('Routing metadata is out of date');
   });
 
   test('runtime rebuild fallback targets sibling linked packages directly', () => {

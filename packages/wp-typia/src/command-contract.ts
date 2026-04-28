@@ -1,86 +1,62 @@
 import path from 'node:path';
 import {
-  ADD_OPTION_METADATA,
+  collectPositionalIndexes,
+  findFirstPositionalIndex,
+} from '../bin/argv-walker.js';
+import {
+  ALL_COMMAND_OPTION_METADATA,
   buildCommandOptionParser,
   collectOptionNamesByType,
-  CREATE_OPTION_METADATA,
+  COMMAND_OPTION_METADATA_BY_GROUP,
+  COMMAND_ROUTING_METADATA,
   GLOBAL_OPTION_METADATA,
-  MIGRATE_OPTION_METADATA,
-  TEMPLATES_OPTION_METADATA,
 } from './command-option-metadata';
-
-export const WP_TYPIA_CANONICAL_CREATE_USAGE = 'wp-typia create <project-dir>';
-export const WP_TYPIA_POSITIONAL_ALIAS_USAGE = 'wp-typia <project-dir>';
-export const WP_TYPIA_CANONICAL_MIGRATE_USAGE = 'wp-typia migrate <subcommand>';
-export const WP_TYPIA_DEPRECATED_MIGRATIONS_USAGE =
-  'wp-typia migrations <subcommand>';
-export const WP_TYPIA_BUNLI_MIGRATION_DOC =
-  'https://imjlk.github.io/wp-typia/maintainers/bunli-cli-migration/';
-
-export const WP_TYPIA_RESERVED_TOP_LEVEL_COMMAND_NAMES = [
-  'create',
-  'init',
-  'sync',
-  'add',
-  'migrate',
-  'templates',
-  'doctor',
-  'mcp',
-  'help',
-  'version',
-  'skills',
-  'completions',
-  'complete',
-] as const;
-
-export const WP_TYPIA_NODE_FALLBACK_TOP_LEVEL_COMMAND_NAMES = [
-  'create',
-  'init',
-  'sync',
-  'add',
-  'migrate',
-  'templates',
-  'doctor',
-  'help',
-  'version',
-] as const;
-
-export const WP_TYPIA_TOP_LEVEL_COMMAND_NAMES = [
-  'create',
-  'init',
-  'sync',
-  'add',
-  'migrate',
-  'templates',
-  'doctor',
-  'mcp',
-] as const;
-
-const NODE_FALLBACK_TOP_LEVEL_COMMAND_NAME_SET = new Set<string>(
+export {
+  WP_TYPIA_BUNLI_MIGRATION_DOC,
+  WP_TYPIA_BUN_REQUIRED_TOP_LEVEL_COMMAND_NAMES,
+  WP_TYPIA_CANONICAL_CREATE_USAGE,
+  WP_TYPIA_CANONICAL_MIGRATE_USAGE,
+  WP_TYPIA_DEPRECATED_MIGRATIONS_USAGE,
+  WP_TYPIA_FUTURE_COMMAND_TREE,
   WP_TYPIA_NODE_FALLBACK_TOP_LEVEL_COMMAND_NAMES,
-);
-
-export const WP_TYPIA_BUN_REQUIRED_TOP_LEVEL_COMMAND_NAMES =
-  WP_TYPIA_RESERVED_TOP_LEVEL_COMMAND_NAMES.filter(
-    (name) => !NODE_FALLBACK_TOP_LEVEL_COMMAND_NAME_SET.has(name),
-  );
+  WP_TYPIA_POSITIONAL_ALIAS_USAGE,
+  WP_TYPIA_RESERVED_TOP_LEVEL_COMMAND_NAMES,
+  WP_TYPIA_TOP_LEVEL_COMMAND_NAMES,
+} from './command-registry';
+import {
+  WP_TYPIA_COMMAND_OPTION_GROUP_NAMES_BY_TOP_LEVEL_COMMAND,
+  WP_TYPIA_CANONICAL_CREATE_USAGE,
+  WP_TYPIA_RESERVED_TOP_LEVEL_COMMAND_NAMES,
+  type WpTypiaReservedTopLevelCommandName,
+} from './command-registry';
 
 const SHARED_OPTION_PARSER = buildCommandOptionParser(
-  ADD_OPTION_METADATA,
-  GLOBAL_OPTION_METADATA,
-  CREATE_OPTION_METADATA,
-  MIGRATE_OPTION_METADATA,
-  TEMPLATES_OPTION_METADATA,
+  ALL_COMMAND_OPTION_METADATA,
 );
 
-const STRING_OPTION_NAMES_BY_COMMAND = {
-  add: new Set(collectOptionNamesByType(ADD_OPTION_METADATA, 'string')),
-  create: new Set(collectOptionNamesByType(CREATE_OPTION_METADATA, 'string')),
-  migrate: new Set(collectOptionNamesByType(MIGRATE_OPTION_METADATA, 'string')),
-  templates: new Set(
-    collectOptionNamesByType(TEMPLATES_OPTION_METADATA, 'string'),
+const STRING_OPTION_NAMES_BY_GROUP = Object.fromEntries(
+  Object.entries(COMMAND_OPTION_METADATA_BY_GROUP).map(
+    ([groupName, metadata]) => [
+      groupName,
+      new Set(collectOptionNamesByType(metadata, 'string')),
+    ],
   ),
-} as const;
+) as {
+  [GroupName in keyof typeof COMMAND_OPTION_METADATA_BY_GROUP]: Set<string>;
+};
+
+const STRING_OPTION_NAMES_BY_COMMAND = Object.fromEntries(
+  WP_TYPIA_RESERVED_TOP_LEVEL_COMMAND_NAMES.map((commandName) => [
+    commandName,
+    new Set(
+      WP_TYPIA_COMMAND_OPTION_GROUP_NAMES_BY_TOP_LEVEL_COMMAND[
+        commandName
+      ].flatMap((groupName) =>
+        Array.from(STRING_OPTION_NAMES_BY_GROUP[groupName]),
+      ),
+    ),
+  ]),
+) as Record<WpTypiaReservedTopLevelCommandName, Set<string>>;
 
 const GLOBAL_STRING_OPTION_NAMES = new Set(
   collectOptionNamesByType(GLOBAL_OPTION_METADATA, 'string'),
@@ -92,114 +68,6 @@ const SHORT_OPTION_NAMES_WITH_VALUES = new Set<string>(
     .map(([short]) => short),
 );
 
-function isLongOptionValueConsumer(optionName: string): boolean {
-  if (GLOBAL_STRING_OPTION_NAMES.has(optionName)) {
-    return true;
-  }
-
-  return Object.values(STRING_OPTION_NAMES_BY_COMMAND).some((optionNames) =>
-    optionNames.has(optionName as never),
-  );
-}
-
-function findFirstPositionalIndex(argv: string[]): number {
-  const positionalIndexes = collectPositionalIndexes(argv);
-  return positionalIndexes[0] ?? -1;
-}
-
-function collectPositionalIndexes(argv: string[]): number[] {
-  const positionalIndexes: number[] = [];
-
-  for (let index = 0; index < argv.length; index += 1) {
-    const arg = argv[index];
-    if (arg === '--') {
-      for (let restIndex = index + 1; restIndex < argv.length; restIndex += 1) {
-        positionalIndexes.push(restIndex);
-      }
-      break;
-    }
-    if (!arg.startsWith('-') || arg === '-') {
-      positionalIndexes.push(index);
-      continue;
-    }
-    if (arg.startsWith('--')) {
-      if (arg.includes('=')) {
-        continue;
-      }
-      if (isLongOptionValueConsumer(arg.slice(2))) {
-        index += 1;
-      }
-      continue;
-    }
-    if (arg.length === 2 && SHORT_OPTION_NAMES_WITH_VALUES.has(arg.slice(1))) {
-      index += 1;
-    }
-  }
-
-  return positionalIndexes;
-}
-
-export const WP_TYPIA_FUTURE_COMMAND_TREE = [
-  {
-    description: 'Scaffold a new wp-typia project.',
-    name: 'create',
-  },
-  {
-    description: 'Preview the minimum retrofit plan for an existing project.',
-    name: 'init',
-  },
-  {
-    description: 'Run the common generated-project sync workflow.',
-    name: 'sync',
-    subcommands: ['ai'],
-  },
-  {
-    description: 'Extend an official wp-typia workspace.',
-    name: 'add',
-    subcommands: [
-      'block',
-      'variation',
-      'style',
-      'transform',
-      'pattern',
-      'binding-source',
-      'rest-resource',
-      'editor-plugin',
-      'hooked-block',
-    ],
-  },
-  {
-    description: 'Run migration workflows.',
-    name: 'migrate',
-    subcommands: [
-      'init',
-      'snapshot',
-      'diff',
-      'scaffold',
-      'plan',
-      'wizard',
-      'verify',
-      'doctor',
-      'fixtures',
-      'fuzz',
-    ],
-  },
-  {
-    description: 'Inspect scaffold templates.',
-    name: 'templates',
-    subcommands: ['list', 'inspect'],
-  },
-  {
-    description: 'Run repository and project diagnostics.',
-    name: 'doctor',
-  },
-  {
-    description: 'Inspect or sync schema-driven MCP metadata.',
-    name: 'mcp',
-    subcommands: ['list', 'sync'],
-  },
-] as const;
-
 export function isReservedTopLevelCommandName(value: string): boolean {
   return WP_TYPIA_RESERVED_TOP_LEVEL_COMMAND_NAMES.includes(
     value as (typeof WP_TYPIA_RESERVED_TOP_LEVEL_COMMAND_NAMES)[number],
@@ -207,7 +75,10 @@ export function isReservedTopLevelCommandName(value: string): boolean {
 }
 
 function assertStringOptionValues(argv: string[]): void {
-  const firstPositionalIndex = findFirstPositionalIndex(argv);
+  const firstPositionalIndex = findFirstPositionalIndex(
+    argv,
+    COMMAND_ROUTING_METADATA,
+  );
   if (firstPositionalIndex === -1) {
     return;
   }
@@ -293,7 +164,10 @@ function assertPositionalAliasProjectDir(projectDir: string): void {
 }
 
 export function normalizeWpTypiaArgv(argv: string[]): string[] {
-  const positionalIndexes = collectPositionalIndexes(argv);
+  const positionalIndexes = collectPositionalIndexes(
+    argv,
+    COMMAND_ROUTING_METADATA,
+  );
   const firstPositionalIndex = positionalIndexes[0] ?? -1;
   if (firstPositionalIndex === -1) {
     return argv;

@@ -1,45 +1,23 @@
+import {
+  buildCommandOptionParser,
+  extractKnownOptionValuesFromArgv,
+  GLOBAL_OPTION_METADATA,
+} from './command-option-metadata';
+
+const GLOBAL_OPTION_PARSER = buildCommandOptionParser(GLOBAL_OPTION_METADATA);
+
 export function extractWpTypiaConfigOverride(argv: string[]): {
-	argv: string[];
-	configOverridePath?: string;
+  argv: string[];
+  configOverridePath?: string;
 } {
-	const nextArgv: string[] = [];
-	let configOverridePath: string | undefined;
+  const { argv: nextArgv, flags } = extractKnownOptionValuesFromArgv(argv, {
+    optionNames: ['config'],
+    parser: GLOBAL_OPTION_PARSER,
+  });
 
-	for (let index = 0; index < argv.length; index += 1) {
-		const arg = argv[index];
-		if (!arg) {
-			continue;
-		}
-
-		if (arg === "--") {
-			nextArgv.push(...argv.slice(index));
-			break;
-		}
-
-		if (arg === "--config" || arg === "-c") {
-			const next = argv[index + 1];
-			if (!next || next.startsWith("-")) {
-				throw new Error(`\`${arg}\` requires a value.`);
-			}
-			configOverridePath = next;
-			index += 1;
-			continue;
-		}
-
-		if (arg.startsWith("--config=")) {
-			const inlineValue = arg.slice("--config=".length);
-			if (!inlineValue) {
-				throw new Error("`--config` requires a value.");
-			}
-			configOverridePath = inlineValue;
-			continue;
-		}
-
-		nextArgv.push(arg);
-	}
-
-	return {
-		argv: nextArgv,
-		configOverridePath,
-	};
+  return {
+    argv: nextArgv,
+    configOverridePath:
+      typeof flags.config === 'string' ? flags.config : undefined,
+  };
 }

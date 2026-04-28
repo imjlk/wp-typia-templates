@@ -7,10 +7,12 @@ import {
   serializeCliDiagnosticError,
 } from '@wp-typia/project-tools/cli-diagnostics';
 import {
+  ALL_COMMAND_OPTION_METADATA,
   ADD_OPTION_METADATA,
   buildCommandOptionParser,
   CREATE_OPTION_METADATA,
   DOCTOR_OPTION_METADATA,
+  extractKnownOptionValuesFromArgv,
   formatNodeFallbackOptionHelp,
   GLOBAL_OPTION_METADATA,
   MIGRATE_OPTION_METADATA,
@@ -65,13 +67,7 @@ type GlobalFlags = {
 };
 
 const NODE_FALLBACK_OPTION_PARSER = buildCommandOptionParser(
-  GLOBAL_OPTION_METADATA,
-  CREATE_OPTION_METADATA,
-  ADD_OPTION_METADATA,
-  MIGRATE_OPTION_METADATA,
-  DOCTOR_OPTION_METADATA,
-  SYNC_OPTION_METADATA,
-  TEMPLATES_OPTION_METADATA,
+  ALL_COMMAND_OPTION_METADATA,
 );
 const NODE_FALLBACK_BOOLEAN_OPTION_NAMES = ['help', 'version'] as const;
 const STANDALONE_GUIDANCE_LINE =
@@ -111,54 +107,34 @@ export function parseGlobalFlags(argv: string[]): {
   argv: string[];
   flags: GlobalFlags;
 } {
-  const nextArgv: string[] = [];
-  const flags: GlobalFlags = {};
+  try {
+    const { argv: nextArgv, flags } = extractKnownOptionValuesFromArgv(argv, {
+      optionNames: ['format', 'id'],
+      parser: NODE_FALLBACK_OPTION_PARSER,
+    });
 
-  for (let index = 0; index < argv.length; index += 1) {
-    const arg = argv[index];
-    if (!arg) {
-      continue;
+    return {
+      argv: nextArgv,
+      flags: {
+        format: typeof flags.format === 'string' ? flags.format : undefined,
+        id: typeof flags.id === 'string' ? flags.id : undefined,
+      },
+    };
+  } catch (error) {
+    if (
+      error instanceof Error &&
+      /\`--format\` requires a value\.|\`--id\` requires a value\./.test(
+        error.message,
+      )
+    ) {
+      throw createCliDiagnosticCodeError(
+        CLI_DIAGNOSTIC_CODES.MISSING_ARGUMENT,
+        error.message,
+      );
     }
 
-    if (arg === '--') {
-      nextArgv.push(...argv.slice(index));
-      break;
-    }
-
-    if (arg === '--format' || arg === '--id') {
-      const next = argv[index + 1];
-      if (!next || next.startsWith('-')) {
-        throw createCliDiagnosticCodeError(
-          CLI_DIAGNOSTIC_CODES.MISSING_ARGUMENT,
-          `\`${arg}\` requires a value.`,
-        );
-      }
-      if (arg === '--format') {
-        flags.format = next;
-      } else {
-        flags.id = next;
-      }
-      index += 1;
-      continue;
-    }
-
-    if (arg.startsWith('--format=')) {
-      flags.format = arg.slice('--format='.length);
-      continue;
-    }
-
-    if (arg.startsWith('--id=')) {
-      flags.id = arg.slice('--id='.length);
-      continue;
-    }
-
-    nextArgv.push(arg);
+    throw error;
   }
-
-  return {
-    argv: nextArgv,
-    flags,
-  };
 }
 
 async function applyNodeFallbackConfigDefaults(
@@ -628,7 +604,8 @@ export async function runNodeCli(argv = process.argv.slice(2)): Promise<void> {
             dryRun: Boolean(mergedFlags['dry-run']),
             kind: positionals[1],
             name: positionals[2],
-            projectDir: extractCompletionProjectDir(completion) ?? process.cwd(),
+            projectDir:
+              extractCompletionProjectDir(completion) ?? process.cwd(),
           }),
           null,
           2,

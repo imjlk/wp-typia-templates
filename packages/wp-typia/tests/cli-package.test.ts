@@ -595,7 +595,9 @@ describe('wp-typia package', () => {
     );
     expect(helpResult.stdout).toContain('Runtime: Node fallback');
     expect(helpResult.stdout).toContain('standalone wp-typia binary');
-    expect(helpResult.stdout).toContain('WP_TYPIA_ASCII=1 forces ASCII markers');
+    expect(helpResult.stdout).toContain(
+      'WP_TYPIA_ASCII=1 forces ASCII markers',
+    );
     expect(createHelpResult.status).toBe(0);
     expect(createHelpResult.stderr).toBe('');
     expect(createHelpResult.stdout).toContain('--external-layer-source');
@@ -746,6 +748,12 @@ describe('wp-typia package', () => {
       tarball?.files.some(
         (entry) => entry.path === 'bin/routing-metadata.generated.d.ts',
       ),
+    ).toBe(true);
+    expect(
+      tarball?.files.some((entry) => entry.path === 'bin/argv-walker.js'),
+    ).toBe(true);
+    expect(
+      tarball?.files.some((entry) => entry.path === 'bin/argv-walker.d.ts'),
     ).toBe(true);
     expect(
       tarball?.files.some((entry) => entry.path === 'bunli.config.ts'),
@@ -1573,9 +1581,7 @@ describe('wp-typia package', () => {
       expect(capturedStdout.join('\n')).toContain(
         'wp-typia add ai-feature <name>',
       );
-      expect(capturedStdout.join('\n')).toContain(
-        'wp-typia add style <name>',
-      );
+      expect(capturedStdout.join('\n')).toContain('wp-typia add style <name>');
       expect(capturedStdout.join('\n')).toContain(
         'wp-typia add transform <name>',
       );
