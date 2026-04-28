@@ -24,6 +24,15 @@ export interface ExternalTemplateCacheResolution {
   sourceDir: string
 }
 
+/**
+ * Checks whether remote external template source caching is enabled.
+ *
+ * Caching is enabled by default. Set `WP_TYPIA_EXTERNAL_TEMPLATE_CACHE` to
+ * `0`, `false`, `no`, or `off` to force uncached resolution.
+ *
+ * @param env Environment object to inspect, defaulting to `process.env`.
+ * @returns Whether external template source cache reads and writes are enabled.
+ */
 export function isExternalTemplateCacheEnabled(
   env: NodeJS.ProcessEnv = process.env,
 ): boolean {
@@ -35,6 +44,16 @@ export function isExternalTemplateCacheEnabled(
   return !DISABLED_CACHE_VALUES.has(rawValue.trim().toLowerCase())
 }
 
+/**
+ * Resolves the external template source cache root directory.
+ *
+ * `WP_TYPIA_EXTERNAL_TEMPLATE_CACHE_DIR` overrides the location. Without an
+ * override, wp-typia uses a `wp-typia-template-source-cache` directory inside
+ * the operating system temp directory.
+ *
+ * @param env Environment object to inspect, defaulting to `process.env`.
+ * @returns Absolute cache root directory path.
+ */
 export function getExternalTemplateCacheRoot(
   env: NodeJS.ProcessEnv = process.env,
 ): string {
@@ -46,6 +65,12 @@ export function getExternalTemplateCacheRoot(
   return path.join(os.tmpdir(), 'wp-typia-template-source-cache')
 }
 
+/**
+ * Creates a deterministic cache key from source identity and integrity parts.
+ *
+ * @param keyParts Ordered values that identify one cached template source.
+ * @returns SHA-256 hex digest of the JSON-serialized key parts.
+ */
 export function createExternalTemplateCacheKey(
   keyParts: readonly string[],
 ): string {
@@ -95,6 +120,17 @@ async function isReusableCacheEntry(
   return (await pathExists(markerPath)) && (await pathExists(sourceDir))
 }
 
+/**
+ * Resolves or populates a cached external template source directory.
+ *
+ * Returns `null` when caching is disabled. Cache misses populate a temporary
+ * directory first and then atomically move it into place; concurrent writers
+ * that lose the race reuse the completed marker/source pair.
+ *
+ * @param descriptor Namespace, key parts, and metadata for the cache entry.
+ * @param populateSourceDir Callback that writes the guarded source on a miss.
+ * @returns Cache resolution details, or `null` when caching is disabled.
+ */
 export async function resolveExternalTemplateSourceCache(
   descriptor: ExternalTemplateCacheDescriptor,
   populateSourceDir: (sourceDir: string) => Promise<void>,

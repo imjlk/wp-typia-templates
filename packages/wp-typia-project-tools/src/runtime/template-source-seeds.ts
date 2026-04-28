@@ -375,13 +375,19 @@ export async function assertNoSymlinks(sourceDir: string): Promise<void> {
 function runGitTemplateCommand(
   args: readonly string[],
   label: string,
+  options: { captureOutput?: boolean } = {},
 ): ReturnType<typeof spawnSync> {
   const timeoutMs = getExternalTemplateTimeoutMs()
-  const result = spawnSync('git', args, {
-    encoding: 'utf8',
-    stdio: ['ignore', 'pipe', 'pipe'],
-    timeout: timeoutMs,
-  })
+  const result = options.captureOutput
+    ? spawnSync('git', args, {
+        encoding: 'utf8',
+        stdio: ['ignore', 'pipe', 'pipe'],
+        timeout: timeoutMs,
+      })
+    : spawnSync('git', args, {
+        stdio: 'ignore',
+        timeout: timeoutMs,
+      })
   if (result.error) {
     const errorCode =
       typeof result.error === 'object' &&
@@ -447,6 +453,7 @@ function resolveGitHubTemplateCacheRevision(
   const result = runGitTemplateCommand(
     ['ls-remote', getGitHubTemplateRepositoryUrl(locator), ref],
     `checking GitHub template revision ${locator.owner}/${locator.repo}`,
+    { captureOutput: true },
   )
   if (result.status !== 0 || typeof result.stdout !== 'string') {
     return null
@@ -457,7 +464,7 @@ function resolveGitHubTemplateCacheRevision(
     .map((line) => line.trim().split(/\s+/u)[0])
     .filter((revision) => /^[0-9a-f]{40}$/iu.test(revision))
 
-  return revisions.length > 0 ? revisions[revisions.length - 1] : null
+  return revisions.length > 0 ? revisions[0] : null
 }
 
 async function resolveGitHubTemplateSource(
