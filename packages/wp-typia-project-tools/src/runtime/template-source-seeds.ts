@@ -550,6 +550,54 @@ function getGitHubTemplateRevisionPatterns(
   return [ref, `refs/heads/${ref}`, `refs/tags/${ref}`, `refs/tags/${ref}^{}`]
 }
 
+type GitHubTemplateResolvedRevision = {
+  resolvedRef: string
+  revision: string
+}
+
+function pickGitHubTemplateCacheRevision(
+  locator: GitHubTemplateLocator,
+  revisions: readonly GitHubTemplateResolvedRevision[],
+): string | null {
+  const ref = locator.ref ?? 'HEAD'
+  if (!locator.ref) {
+    return revisions[0]?.revision ?? null
+  }
+  if (!ref.startsWith('refs/')) {
+    const branchRevision = revisions.find(
+      (entry) => entry.resolvedRef === `refs/heads/${ref}`,
+    )
+    if (branchRevision) {
+      return branchRevision.revision
+    }
+
+    const peeledTagRevision = revisions.find(
+      (entry) => entry.resolvedRef === `refs/tags/${ref}^{}`,
+    )
+    if (peeledTagRevision) {
+      return peeledTagRevision.revision
+    }
+
+    const tagRevision = revisions.find(
+      (entry) => entry.resolvedRef === `refs/tags/${ref}`,
+    )
+    if (tagRevision) {
+      return tagRevision.revision
+    }
+  }
+  if (ref.startsWith('refs/tags/')) {
+    const peeledRevision = revisions.find(
+      (entry) => entry.resolvedRef === `${ref}^{}`,
+    )
+    if (peeledRevision) {
+      return peeledRevision.revision
+    }
+  }
+
+  const exactRevision = revisions.find((entry) => entry.resolvedRef === ref)
+  return (exactRevision ?? revisions[0])?.revision ?? null
+}
+
 /**
  * Resolves a GitHub template ref to a stable revision for cache keying.
  *
@@ -585,18 +633,10 @@ function resolveGitHubTemplateCacheRevision(
       }
     })
     .filter(
-      (
-        entry,
-      ): entry is {
-        resolvedRef: string
-        revision: string
-      } => entry !== null,
+      (entry): entry is GitHubTemplateResolvedRevision => entry !== null,
     )
 
-  const peeledRevision = revisions.find((entry) =>
-    entry.resolvedRef.endsWith('^{}'),
-  )
-  return (peeledRevision ?? revisions[0])?.revision ?? null
+  return pickGitHubTemplateCacheRevision(locator, revisions)
 }
 
 async function resolveGitHubTemplateSource(
