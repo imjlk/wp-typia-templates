@@ -52,14 +52,14 @@ const WORKSPACE_GENERATED_BLOCK_ARTIFACTS = [
 ] as const;
 const WORKSPACE_FULL_BLOCK_NAME_PATTERN = /^[a-z0-9-]+\/[a-z0-9-]+$/u;
 const WORKSPACE_VARIATIONS_IMPORT_PATTERN =
-	/import\s*\{\s*registerWorkspaceVariations\s*\}\s*from\s*["']\.\/variations["']\s*;?/u;
+	/^\s*import\s*\{\s*registerWorkspaceVariations\s*\}\s*from\s*["']\.\/variations["']\s*;?\s*$/mu;
 const WORKSPACE_VARIATIONS_CALL_PATTERN = /registerWorkspaceVariations\s*\(\s*\)\s*;?/u;
 const WORKSPACE_BLOCK_STYLES_IMPORT_PATTERN =
-	/import\s*\{\s*registerWorkspaceBlockStyles\s*\}\s*from\s*["']\.\/styles["']\s*;?/u;
+	/^\s*import\s*\{\s*registerWorkspaceBlockStyles\s*\}\s*from\s*["']\.\/styles["']\s*;?\s*$/mu;
 const WORKSPACE_BLOCK_STYLES_CALL_PATTERN =
 	/registerWorkspaceBlockStyles\s*\(\s*\)\s*;?/u;
 const WORKSPACE_BLOCK_TRANSFORMS_IMPORT_PATTERN =
-	/import\s*\{\s*applyWorkspaceBlockTransforms\s*\}\s*from\s*["']\.\/transforms["']\s*;?/u;
+	/^\s*import\s*\{\s*applyWorkspaceBlockTransforms\s*\}\s*from\s*["']\.\/transforms["']\s*;?\s*$/mu;
 const WORKSPACE_BLOCK_TRANSFORMS_CALL_PATTERN =
 	/applyWorkspaceBlockTransforms\s*\(\s*registration\s*\.\s*settings\s*\)\s*;?/u;
 
@@ -1443,6 +1443,11 @@ export function getWorkspaceDoctorChecks(cwd: string): DoctorCheck[] {
 			);
 		}
 		for (const blockSlug of blockStyleTargetBlocks) {
+			checks.push(
+				checkExistingFiles(workspace.projectDir, `Block style registry ${blockSlug}`, [
+					path.join("src", "blocks", blockSlug, "styles", "index.ts"),
+				]),
+			);
 			checks.push(checkBlockStyleEntrypoint(workspace.projectDir, blockSlug));
 		}
 
@@ -1470,6 +1475,11 @@ export function getWorkspaceDoctorChecks(cwd: string): DoctorCheck[] {
 			);
 		}
 		for (const blockSlug of blockTransformTargetBlocks) {
+			checks.push(
+				checkExistingFiles(workspace.projectDir, `Block transform registry ${blockSlug}`, [
+					path.join("src", "blocks", blockSlug, "transforms", "index.ts"),
+				]),
+			);
 			checks.push(checkBlockTransformEntrypoint(workspace.projectDir, blockSlug));
 		}
 

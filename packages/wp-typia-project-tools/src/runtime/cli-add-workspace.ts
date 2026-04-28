@@ -28,21 +28,21 @@ import {
 
 const VARIATIONS_IMPORT_LINE = "import { registerWorkspaceVariations } from './variations';";
 const VARIATIONS_IMPORT_PATTERN =
-	/import\s*\{\s*registerWorkspaceVariations\s*\}\s*from\s*["']\.\/variations["']\s*;?/u;
+	/^\s*import\s*\{\s*registerWorkspaceVariations\s*\}\s*from\s*["']\.\/variations["']\s*;?\s*$/mu;
 const VARIATIONS_CALL_LINE = "registerWorkspaceVariations();";
-const VARIATIONS_CALL_PATTERN = /registerWorkspaceVariations\s*\(\s*\)\s*;/u;
+const VARIATIONS_CALL_PATTERN = /registerWorkspaceVariations\s*\(\s*\)\s*;?/u;
 const BLOCK_STYLES_IMPORT_LINE = "import { registerWorkspaceBlockStyles } from './styles';";
 const BLOCK_STYLES_IMPORT_PATTERN =
-	/import\s*\{\s*registerWorkspaceBlockStyles\s*\}\s*from\s*["']\.\/styles["']\s*;?/u;
+	/^\s*import\s*\{\s*registerWorkspaceBlockStyles\s*\}\s*from\s*["']\.\/styles["']\s*;?\s*$/mu;
 const BLOCK_STYLES_CALL_LINE = "registerWorkspaceBlockStyles();";
-const BLOCK_STYLES_CALL_PATTERN = /registerWorkspaceBlockStyles\s*\(\s*\)\s*;/u;
+const BLOCK_STYLES_CALL_PATTERN = /registerWorkspaceBlockStyles\s*\(\s*\)\s*;?/u;
 const BLOCK_TRANSFORMS_IMPORT_LINE =
 	"import { applyWorkspaceBlockTransforms } from './transforms';";
 const BLOCK_TRANSFORMS_IMPORT_PATTERN =
-	/import\s*\{\s*applyWorkspaceBlockTransforms\s*\}\s*from\s*["']\.\/transforms["']\s*;?/u;
+	/^\s*import\s*\{\s*applyWorkspaceBlockTransforms\s*\}\s*from\s*["']\.\/transforms["']\s*;?\s*$/mu;
 const BLOCK_TRANSFORMS_CALL_LINE = "applyWorkspaceBlockTransforms(registration.settings);";
 const BLOCK_TRANSFORMS_CALL_PATTERN =
-	/applyWorkspaceBlockTransforms\s*\(\s*registration\s*\.\s*settings\s*\)\s*;/u;
+	/applyWorkspaceBlockTransforms\s*\(\s*registration\s*\.\s*settings\s*\)\s*;?/u;
 const SCAFFOLD_REGISTRATION_SETTINGS_CALL_PATTERN =
 	/registerScaffoldBlockType\s*\(\s*registration\s*\.\s*name\s*,\s*registration\s*\.\s*settings\s*\)\s*;?/u;
 const FULL_BLOCK_NAME_PATTERN = /^[a-z0-9-]+\/[a-z0-9-]+$/u;

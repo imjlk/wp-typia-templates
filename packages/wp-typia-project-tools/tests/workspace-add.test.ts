@@ -628,6 +628,13 @@ test("canonical CLI can add block styles and transforms to an official workspace
     "counter-card",
     "index.tsx"
   );
+  fs.writeFileSync(
+    blockIndexPath,
+    `${fs.readFileSync(blockIndexPath, "utf8")}
+const copiedStyleImport = "import { registerWorkspaceBlockStyles } from './styles';";
+`,
+    "utf8"
+  );
   runCli(
     "node",
     [entryPath, "add", "style", "callout-emphasis", "--block", "counter-card"],
@@ -662,16 +669,22 @@ test("canonical CLI can add block styles and transforms to an official workspace
     { cwd: targetDir }
   );
 
-  const blockConfigSource = fs.readFileSync(
-    path.join(targetDir, "scripts", "block-config.ts"),
-    "utf8"
-  );
-  const blockIndexSource = fs.readFileSync(
+  const blockConfigPath = path.join(targetDir, "scripts", "block-config.ts");
+  let blockConfigSource = fs.readFileSync(blockConfigPath, "utf8");
+  let blockIndexSource = fs.readFileSync(
     blockIndexPath,
     "utf8"
   );
+  const stylesIndexPath = path.join(
+    targetDir,
+    "src",
+    "blocks",
+    "counter-card",
+    "styles",
+    "index.ts"
+  );
   const stylesIndexSource = fs.readFileSync(
-    path.join(targetDir, "src", "blocks", "counter-card", "styles", "index.ts"),
+    stylesIndexPath,
     "utf8"
   );
   const styleSource = fs.readFileSync(
@@ -685,15 +698,16 @@ test("canonical CLI can add block styles and transforms to an official workspace
     ),
     "utf8"
   );
-  const transformsIndexSource = fs.readFileSync(
-    path.join(
-      targetDir,
-      "src",
-      "blocks",
-      "counter-card",
-      "transforms",
-      "index.ts"
-    ),
+  const transformsIndexPath = path.join(
+    targetDir,
+    "src",
+    "blocks",
+    "counter-card",
+    "transforms",
+    "index.ts"
+  );
+  let transformsIndexSource = fs.readFileSync(
+    transformsIndexPath,
     "utf8"
   );
   const transformSource = fs.readFileSync(
@@ -723,6 +737,11 @@ test("canonical CLI can add block styles and transforms to an official workspace
   );
   expect(
     blockIndexSource.match(
+      /^\s*import\s*\{\s*registerWorkspaceBlockStyles\s*\}\s*from\s*["']\.\/styles["']\s*;?\s*$/gmu
+    )?.length ?? 0
+  ).toBe(1);
+  expect(
+    blockIndexSource.match(
       /import\s*\{\s*applyWorkspaceBlockTransforms\s*\}\s*from\s*["']\.\/transforms["']\s*;?/gu
     )?.length ?? 0
   ).toBe(1);
@@ -735,6 +754,42 @@ test("canonical CLI can add block styles and transforms to an official workspace
   expect(transformsIndexSource).toContain("WORKSPACE_BLOCK_TRANSFORMS");
   expect(transformSource).toContain('blocks: ["3d/quote"]');
   expect(transformSource).toContain("createBlock(metadata.name");
+
+  const semicolonlessTransformHookSource = replaceFixtureSource(
+    blockIndexSource,
+    "applyWorkspaceBlockTransforms(registration.settings);",
+    "applyWorkspaceBlockTransforms(registration.settings)",
+    "semicolonless transform hook"
+  );
+  fs.writeFileSync(blockIndexPath, semicolonlessTransformHookSource, "utf8");
+  runCli(
+    "node",
+    [
+      entryPath,
+      "add",
+      "transform",
+      "paragraph-to-counter",
+      "--from",
+      "core/paragraph",
+      "--to",
+      "counter-card",
+    ],
+    { cwd: targetDir }
+  );
+
+  blockConfigSource = fs.readFileSync(blockConfigPath, "utf8");
+  blockIndexSource = fs.readFileSync(blockIndexPath, "utf8");
+  transformsIndexSource = fs.readFileSync(transformsIndexPath, "utf8");
+  expect(blockConfigSource).toContain(
+    'file: "src/blocks/counter-card/transforms/paragraph-to-counter.ts"'
+  );
+  expect(blockConfigSource).toContain('from: "core/paragraph"');
+  expect(
+    blockIndexSource.match(
+      /applyWorkspaceBlockTransforms\s*\(\s*registration\s*\.\s*settings\s*\)/gu
+    )?.length ?? 0
+  ).toBe(1);
+  expect(transformsIndexSource).toContain("paragraph-to-counter");
 
   const doctorOutput = runCli("node", [entryPath, "doctor", "--format", "json"], {
     cwd: targetDir,
@@ -754,12 +809,32 @@ test("canonical CLI can add block styles and transforms to an official workspace
   ).toBe("pass");
   expect(
     doctorChecks.checks.find(
+      (check) => check.label === "Block style registry counter-card"
+    )?.status
+  ).toBe("pass");
+  expect(
+    doctorChecks.checks.find(
       (check) => check.label === "Block transform config counter-card/quote-to-counter"
     )?.status
   ).toBe("pass");
   expect(
     doctorChecks.checks.find(
       (check) => check.label === "Block transform counter-card/quote-to-counter"
+    )?.status
+  ).toBe("pass");
+  expect(
+    doctorChecks.checks.find(
+      (check) => check.label === "Block transform config counter-card/paragraph-to-counter"
+    )?.status
+  ).toBe("pass");
+  expect(
+    doctorChecks.checks.find(
+      (check) => check.label === "Block transform counter-card/paragraph-to-counter"
+    )?.status
+  ).toBe("pass");
+  expect(
+    doctorChecks.checks.find(
+      (check) => check.label === "Block transform registry counter-card"
     )?.status
   ).toBe("pass");
   expect(
@@ -788,7 +863,7 @@ test("canonical CLI can add block styles and transforms to an official workspace
   );
   commentedHookSource = replaceFixtureSource(
     commentedHookSource,
-    /applyWorkspaceBlockTransforms\s*\(\s*registration\s*\.\s*settings\s*\)\s*;/u,
+    /applyWorkspaceBlockTransforms\s*\(\s*registration\s*\.\s*settings\s*\)\s*;?/u,
     "// applyWorkspaceBlockTransforms(registration.settings);",
     "block transform registration hook"
   );
@@ -808,6 +883,32 @@ test("canonical CLI can add block styles and transforms to an official workspace
     "Missing ./transforms import or applyWorkspaceBlockTransforms(registration.settings) call"
   );
   fs.writeFileSync(blockIndexPath, blockIndexSource, "utf8");
+
+  fs.rmSync(stylesIndexPath);
+  const missingStyleRegistryDoctorError = getCommandErrorMessage(() =>
+    runCli("node", [entryPath, "doctor", "--format", "json"], {
+      cwd: targetDir,
+    })
+  );
+  expect(missingStyleRegistryDoctorError).toContain("Block style registry counter-card");
+  expect(missingStyleRegistryDoctorError).toContain(
+    "src/blocks/counter-card/styles/index.ts"
+  );
+  fs.writeFileSync(stylesIndexPath, stylesIndexSource, "utf8");
+
+  fs.rmSync(transformsIndexPath);
+  const missingTransformRegistryDoctorError = getCommandErrorMessage(() =>
+    runCli("node", [entryPath, "doctor", "--format", "json"], {
+      cwd: targetDir,
+    })
+  );
+  expect(missingTransformRegistryDoctorError).toContain(
+    "Block transform registry counter-card"
+  );
+  expect(missingTransformRegistryDoctorError).toContain(
+    "src/blocks/counter-card/transforms/index.ts"
+  );
+  fs.writeFileSync(transformsIndexPath, transformsIndexSource, "utf8");
 
   runCli("npm", ["run", "build"], { cwd: targetDir });
 }, 60_000);
