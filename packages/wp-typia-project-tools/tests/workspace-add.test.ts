@@ -768,6 +768,47 @@ test("canonical CLI can add block styles and transforms to an official workspace
     )?.status
   ).toBe("pass");
 
+  let commentedHookSource = replaceFixtureSource(
+    blockIndexSource,
+    /import\s*\{\s*registerWorkspaceBlockStyles\s*\}\s*from\s*["']\.\/styles["']\s*;?/u,
+    "// import { registerWorkspaceBlockStyles } from './styles';",
+    "block style import hook"
+  );
+  commentedHookSource = replaceFixtureSource(
+    commentedHookSource,
+    /import\s*\{\s*applyWorkspaceBlockTransforms\s*\}\s*from\s*["']\.\/transforms["']\s*;?/u,
+    "// import { applyWorkspaceBlockTransforms } from './transforms';",
+    "block transform import hook"
+  );
+  commentedHookSource = replaceFixtureSource(
+    commentedHookSource,
+    /registerWorkspaceBlockStyles\s*\(\s*\)\s*;/u,
+    "// registerWorkspaceBlockStyles();",
+    "block style registration hook"
+  );
+  commentedHookSource = replaceFixtureSource(
+    commentedHookSource,
+    /applyWorkspaceBlockTransforms\s*\(\s*registration\s*\.\s*settings\s*\)\s*;/u,
+    "// applyWorkspaceBlockTransforms(registration.settings);",
+    "block transform registration hook"
+  );
+  fs.writeFileSync(blockIndexPath, commentedHookSource, "utf8");
+
+  const commentedHookDoctorError = getCommandErrorMessage(() =>
+    runCli("node", [entryPath, "doctor", "--format", "json"], {
+      cwd: targetDir,
+    })
+  );
+  expect(commentedHookDoctorError).toContain("Block style entrypoint counter-card");
+  expect(commentedHookDoctorError).toContain("Block transform entrypoint counter-card");
+  expect(commentedHookDoctorError).toContain(
+    "Missing ./styles import or registerWorkspaceBlockStyles() call"
+  );
+  expect(commentedHookDoctorError).toContain(
+    "Missing ./transforms import or applyWorkspaceBlockTransforms(registration.settings) call"
+  );
+  fs.writeFileSync(blockIndexPath, blockIndexSource, "utf8");
+
   runCli("npm", ["run", "build"], { cwd: targetDir });
 }, 60_000);
 
@@ -834,6 +875,9 @@ test("transform workflow rejects direct registerBlockType entrypoints without wr
     originalBlockIndexSource.indexOf("registerWorkspaceBlockStyles();")
   ).toBeGreaterThan(
     originalBlockIndexSource.indexOf("registerBlockType(metadata.name")
+  );
+  expect(originalBlockIndexSource).toContain(
+    "});\nregisterWorkspaceBlockStyles();"
   );
 
   const commandError = getCommandErrorMessage(() =>

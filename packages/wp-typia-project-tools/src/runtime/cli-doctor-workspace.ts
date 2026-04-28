@@ -51,6 +51,17 @@ const WORKSPACE_GENERATED_BLOCK_ARTIFACTS = [
 	"typia.openapi.json",
 ] as const;
 const WORKSPACE_FULL_BLOCK_NAME_PATTERN = /^[a-z0-9-]+\/[a-z0-9-]+$/u;
+const WORKSPACE_VARIATIONS_IMPORT_PATTERN =
+	/import\s*\{\s*registerWorkspaceVariations\s*\}\s*from\s*["']\.\/variations["']\s*;?/u;
+const WORKSPACE_VARIATIONS_CALL_PATTERN = /registerWorkspaceVariations\s*\(\s*\)\s*;?/u;
+const WORKSPACE_BLOCK_STYLES_IMPORT_PATTERN =
+	/import\s*\{\s*registerWorkspaceBlockStyles\s*\}\s*from\s*["']\.\/styles["']\s*;?/u;
+const WORKSPACE_BLOCK_STYLES_CALL_PATTERN =
+	/registerWorkspaceBlockStyles\s*\(\s*\)\s*;?/u;
+const WORKSPACE_BLOCK_TRANSFORMS_IMPORT_PATTERN =
+	/import\s*\{\s*applyWorkspaceBlockTransforms\s*\}\s*from\s*["']\.\/transforms["']\s*;?/u;
+const WORKSPACE_BLOCK_TRANSFORMS_CALL_PATTERN =
+	/applyWorkspaceBlockTransforms\s*\(\s*registration\s*\.\s*settings\s*\)\s*;?/u;
 
 function createDoctorCheck(
 	label: string,
@@ -65,6 +76,96 @@ function createDoctorScopeCheck(
 	detail: string,
 ): DoctorCheck {
 	return createDoctorCheck("Doctor scope", status, detail);
+}
+
+function maskSourceSegment(segment: string): string {
+	return segment.replace(/[^\n\r]/gu, " ");
+}
+
+function maskTypeScriptComments(source: string): string {
+	return source
+		.replace(/\/\*[\s\S]*?\*\//gu, maskSourceSegment)
+		.replace(/\/\/[^\n\r]*/gu, maskSourceSegment);
+}
+
+// Preserve offsets while hiding non-executable text from hook checks.
+function maskTypeScriptCommentsAndLiterals(source: string): string {
+	let maskedSource = "";
+	let index = 0;
+
+	while (index < source.length) {
+		const current = source[index];
+		const next = source[index + 1];
+
+		if (current === "/" && next === "/") {
+			const start = index;
+			index += 2;
+
+			while (
+				index < source.length &&
+				source[index] !== "\n" &&
+				source[index] !== "\r"
+			) {
+				index += 1;
+			}
+
+			maskedSource += maskSourceSegment(source.slice(start, index));
+			continue;
+		}
+
+		if (current === "/" && next === "*") {
+			const start = index;
+			index += 2;
+
+			while (
+				index < source.length &&
+				!(source[index] === "*" && source[index + 1] === "/")
+			) {
+				index += 1;
+			}
+
+			index = Math.min(index + 2, source.length);
+			maskedSource += maskSourceSegment(source.slice(start, index));
+			continue;
+		}
+
+		if (current === "'" || current === '"' || current === "`") {
+			const start = index;
+			const quote = current;
+			index += 1;
+
+			while (index < source.length) {
+				const char = source[index];
+
+				if (char === "\\") {
+					index += 2;
+					continue;
+				}
+
+				index += 1;
+
+				if (char === quote) {
+					break;
+				}
+			}
+
+			maskedSource += maskSourceSegment(source.slice(start, index));
+			continue;
+		}
+
+		maskedSource += current;
+		index += 1;
+	}
+
+	return maskedSource;
+}
+
+function hasUncommentedPattern(source: string, pattern: RegExp): boolean {
+	return pattern.test(maskTypeScriptComments(source));
+}
+
+function hasExecutablePattern(source: string, pattern: RegExp): boolean {
+	return pattern.test(maskTypeScriptCommentsAndLiterals(source));
 }
 
 function getWorkspaceBootstrapRelativePath(packageName: string): string {
@@ -1076,8 +1177,8 @@ function checkVariationEntrypoint(projectDir: string, blockSlug: string): Doctor
 		);
 	}
 	const source = fs.readFileSync(entryPath, "utf8");
-	const hasImport = source.includes("./variations");
-	const hasCall = source.includes("registerWorkspaceVariations()");
+	const hasImport = hasUncommentedPattern(source, WORKSPACE_VARIATIONS_IMPORT_PATTERN);
+	const hasCall = hasExecutablePattern(source, WORKSPACE_VARIATIONS_CALL_PATTERN);
 	return createDoctorCheck(
 		`Variation entrypoint ${blockSlug}`,
 		hasImport && hasCall ? "pass" : "fail",
@@ -1097,8 +1198,8 @@ function checkBlockStyleEntrypoint(projectDir: string, blockSlug: string): Docto
 		);
 	}
 	const source = fs.readFileSync(entryPath, "utf8");
-	const hasImport = source.includes("./styles");
-	const hasCall = source.includes("registerWorkspaceBlockStyles()");
+	const hasImport = hasUncommentedPattern(source, WORKSPACE_BLOCK_STYLES_IMPORT_PATTERN);
+	const hasCall = hasExecutablePattern(source, WORKSPACE_BLOCK_STYLES_CALL_PATTERN);
 	return createDoctorCheck(
 		`Block style entrypoint ${blockSlug}`,
 		hasImport && hasCall ? "pass" : "fail",
@@ -1121,8 +1222,11 @@ function checkBlockTransformEntrypoint(
 		);
 	}
 	const source = fs.readFileSync(entryPath, "utf8");
-	const hasImport = source.includes("./transforms");
-	const hasCall = source.includes("applyWorkspaceBlockTransforms(registration.settings)");
+	const hasImport = hasUncommentedPattern(
+		source,
+		WORKSPACE_BLOCK_TRANSFORMS_IMPORT_PATTERN,
+	);
+	const hasCall = hasExecutablePattern(source, WORKSPACE_BLOCK_TRANSFORMS_CALL_PATTERN);
 	return createDoctorCheck(
 		`Block transform entrypoint ${blockSlug}`,
 		hasImport && hasCall ? "pass" : "fail",
