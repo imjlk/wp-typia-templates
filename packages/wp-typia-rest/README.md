@@ -6,6 +6,7 @@ This package focuses on:
 
 - validated `apiFetch` wrappers
 - typed endpoint helpers
+- optional resource-level facades that group endpoint contracts
 - canonical WordPress REST route URL resolution
 - a React/data convenience layer at `@wp-typia/rest/react`
 - optional query/header decoder helpers that can wrap Typia-generated HTTP decoders
@@ -58,6 +59,51 @@ validation fails before transport execution, the result keeps
 `validationTarget: "request"`. Response validation runs after transport and uses
 `validationTarget: "response"`.
 
+When a feature or screen should consume a REST collection as a resource instead
+of a loose set of endpoint functions, you can group the existing contracts with
+`defineRestResource(...)`:
+
+```ts
+import {
+  createEndpoint,
+  defineRestResource,
+  defineRestResourceListQuery,
+  toRestResourceListRequest,
+} from '@wp-typia/rest';
+
+const products = defineRestResource({
+  endpoints: {
+    list: createEndpoint<ProductListQuery, ProductListResponse>({
+      method: 'GET',
+      path: '/my-plugin/v1/products',
+      validateRequest: validators.listRequest,
+      validateResponse: validators.listResponse,
+    }),
+  },
+  idField: 'id',
+  listQuery: defineRestResourceListQuery(
+    (view: { page: number; term?: string }) => ({
+      page: view.page,
+      ...(view.term ? { search: view.term } : {}),
+    }),
+  ),
+  namespace: 'my-plugin/v1',
+  path: '/products',
+});
+
+const request = toRestResourceListRequest(products, {
+  page: 1,
+  term: 'hero',
+});
+const result = await products.list(request);
+```
+
+The facade is additive: it does not replace `createEndpoint(...)`,
+`callEndpoint(...)`, or hand-authored endpoint exports. Generated
+`wp-typia add rest-resource` sources can keep exporting individual endpoints and
+optionally layer a resource facade on top for DataViews screens or other
+resource-oriented consumers.
+
 Invalid request/response payloads stay in that result union. Thrown exceptions
 are reserved for public runtime misconfiguration or assertion APIs:
 
@@ -97,6 +143,11 @@ The `./react` subpath adds a small cache client and React hook layer on top of
 - `useEndpointDataClient()`
 - `useEndpointQuery(endpoint, request, options?)`
 - `useEndpointMutation(endpoint, options?)`
+- `useRestResourceListQuery(resource, request, options?)`
+- `useRestResourceReadQuery(resource, request, options?)`
+- `useRestResourceCreateMutation(resource, options?)`
+- `useRestResourceUpdateMutation(resource, options?)`
+- `useRestResourceDeleteMutation(resource, options?)`
 
 `useEndpointQuery(...)` is GET-only in this first pass. Mutations and explicit
 non-query calls go through `useEndpointMutation(...)`.
@@ -126,6 +177,11 @@ const mutation = useEndpointMutation(writeStateEndpoint, {
   }),
 });
 ```
+
+Those resource-aware hooks stay thin wrappers over the existing endpoint hooks,
+so they inherit the same validation result behavior and cache client model.
+Reach for them when you already grouped contracts with `defineRestResource(...)`
+and want React/DataViews code to consume the same resource facade.
 
 The refresh model is explicit:
 

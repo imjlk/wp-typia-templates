@@ -307,6 +307,9 @@ baseline.
 - `createValidatedFetch<T>()`
 - `createEndpoint<Req, Res>()`
 - `callEndpoint<Req, Res>()`
+- `defineRestResource(...)`
+- `defineRestResourceListQuery(...)`
+- `toRestResourceListRequest(...)`
 - `resolveRestRouteUrl(routePath, root?)`
 - `createQueryDecoder<T>()`
 - `createHeadersDecoder<T>()`
@@ -333,10 +336,20 @@ separate `@wp-typia/rest/react` subpath:
 - `useEndpointDataClient()`
 - `useEndpointQuery(endpoint, request, options?)`
 - `useEndpointMutation(endpoint, options?)`
+- `useRestResourceListQuery(resource, request, options?)`
+- `useRestResourceCreateMutation(resource, options?)`
 
 That hook layer is built directly on `callEndpoint(...)`, not on an external
 query library. `useEndpointQuery(...)` is GET-only in this first pass, while
 mutations and explicit non-query calls go through `useEndpointMutation(...)`.
+
+When a screen should think in terms of a resource rather than five unrelated
+endpoint functions, group the existing contracts with `defineRestResource(...)`.
+The facade is intentionally additive: it preserves the original endpoint
+contracts under `resource.endpoints`, exposes convenience methods such as
+`resource.list(request)` and `resource.update(request)`, and can carry an
+optional typed `listQuery` bridge for consumers such as DataViews adapters
+without making `@wp-typia/rest` depend on `@wp-typia/dataviews`.
 
 Refresh-sensitive auth remains explicit there:
 

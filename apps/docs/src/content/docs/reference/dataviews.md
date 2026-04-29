@@ -174,7 +174,10 @@ The scaffold writes `src/admin-views/<name>/` plus
 WordPress Tools menu. The generated `data.ts` file is intentionally small and
 replaceable. Without `--source` it uses a local fetcher; with
 `--source rest-resource:<slug>` it calls the list endpoint from an existing
-list-capable `wp-typia add rest-resource` scaffold.
+list-capable `wp-typia add rest-resource` scaffold. That scaffold can continue
+to export individual endpoint helpers, or it can group them with
+`defineRestResource(...)` from `@wp-typia/rest` and let the admin view consume
+the same resource facade.
 
 Prefer custom UI instead of DataViews when the interaction is primarily a
 guided flow, a canvas/editor experience, a dense dashboard with unrelated
@@ -254,6 +257,9 @@ more convenient, or call `definedViews.toQueryArgs(view, options)` from a
 
 This boundary lets future scaffold support generate typed fields, actions,
 forms, and query adapters without hiding application-specific data fetching.
+When you adopt the optional resource facade, `toRestResourceListRequest(...)`
+is the intended bridge point from DataViews-owned view state into the list
+request shape that your resource facade expects.
 
 ## Upstream References
 
