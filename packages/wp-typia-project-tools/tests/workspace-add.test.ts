@@ -100,6 +100,13 @@ function replaceFixtureSource(
   return nextSource;
 }
 
+function withUnpublishedDataViewsEnv(): NodeJS.ProcessEnv {
+  return {
+    ...process.env,
+    WP_TYPIA_ALLOW_UNPUBLISHED_DATAVIEWS: "1",
+  };
+}
+
 describe("@wp-typia/project-tools workspace add", () => {
   const tempRoot = createScaffoldTempRoot("wp-typia-workspace-add-");
 
@@ -3200,6 +3207,46 @@ test("canonical CLI can add a plugin-level REST resource to an official workspac
   typecheckGeneratedProject(targetDir);
 }, 30_000);
 
+test("canonical CLI blocks admin-view scaffolds until @wp-typia/dataviews is published", async () => {
+  const targetDir = path.join(tempRoot, "demo-workspace-add-admin-view-blocked");
+
+  await scaffoldProject({
+    projectDir: targetDir,
+    templateId: workspaceTemplatePackageManifest.name,
+    packageManager: "npm",
+    noInstall: true,
+    answers: {
+      author: "Test Runner",
+      description: "Demo workspace add admin view blocked",
+      namespace: "demo-space",
+      phpPrefix: "demo_space",
+      slug: "demo-workspace-add-admin-view-blocked",
+      textDomain: "demo-space",
+      title: "Demo Workspace Add Admin View Blocked",
+    },
+  });
+
+  linkWorkspaceNodeModules(targetDir);
+
+  const errorMessage = getCommandErrorMessage(() =>
+    runCli("node", [entryPath, "add", "admin-view", "snapshots"], {
+      cwd: targetDir,
+    })
+  );
+  const packageJson = JSON.parse(
+    fs.readFileSync(path.join(targetDir, "package.json"), "utf8")
+  ) as {
+    devDependencies?: Record<string, string>;
+  };
+
+  expect(errorMessage).toContain("@wp-typia/dataviews");
+  expect(errorMessage).toContain("not published to npm for public installs yet");
+  expect(packageJson.devDependencies?.["@wp-typia/dataviews"]).toBeUndefined();
+  expect(
+    fs.existsSync(path.join(targetDir, "src", "admin-views", "snapshots"))
+  ).toBe(false);
+}, 20_000);
+
 test("canonical CLI can add a DataViews admin screen with a REST resource source", async () => {
   const targetDir = path.join(tempRoot, "demo-workspace-add-admin-view");
 
@@ -3235,6 +3282,7 @@ test("canonical CLI can add a DataViews admin screen with a REST resource source
     ],
     {
       cwd: targetDir,
+      env: withUnpublishedDataViewsEnv(),
     }
   );
   runCli(
@@ -3249,6 +3297,7 @@ test("canonical CLI can add a DataViews admin screen with a REST resource source
     ],
     {
       cwd: targetDir,
+      env: withUnpublishedDataViewsEnv(),
     }
   );
 
@@ -3423,6 +3472,7 @@ test("admin view workflow accepts formatted shared webpack entries", async () =>
 
   runCli("node", [entryPath, "add", "admin-view", "reports"], {
     cwd: targetDir,
+    env: withUnpublishedDataViewsEnv(),
   });
 
   expect(fs.readFileSync(buildScriptPath, "utf8")).toContain(
