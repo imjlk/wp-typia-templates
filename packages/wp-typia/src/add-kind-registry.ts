@@ -110,6 +110,27 @@ type AddVariationResult = Awaited<
   ReturnType<AddRuntime['runAddVariationCommand']>
 >;
 
+type AddKindExecutionResultById = {
+  'admin-view': AddAdminViewResult;
+  ability: AddAbilityResult;
+  'ai-feature': AddAiFeatureResult;
+  'binding-source': AddBindingSourceResult;
+  block: AddBlockResult;
+  'editor-plugin': AddEditorPluginResult;
+  'hooked-block': AddHookedBlockResult;
+  pattern: AddPatternResult;
+  'rest-resource': AddRestResourceResult;
+  style: AddBlockStyleResult;
+  transform: AddBlockTransformResult;
+  variation: AddVariationResult;
+};
+
+type AddKindRegistry = {
+  [TKey in CliAddRuntime.AddKindId]: AddKindRegistryEntry<
+    AddKindExecutionResultById[TKey]
+  >;
+};
+
 const BLOCK_VISIBLE_FIELD_ORDER = [
   'kind',
   'name',
@@ -174,9 +195,9 @@ function toExternalLayerPromptOptions(options: ExternalLayerSelectOption[]) {
   }));
 }
 
-function defineAddKindRegistryEntry<
-  TResult extends AddKindExecutionResultBase,
->(entry: AddKindRegistryEntry<TResult>) {
+function defineAddKindRegistryEntry<TResult extends AddKindExecutionResultBase>(
+  entry: AddKindRegistryEntry<TResult>,
+) {
   return entry;
 }
 
@@ -813,13 +834,15 @@ export const ADD_KIND_REGISTRY = {
     usage: 'wp-typia add variation <name> --block <block-slug> [--dry-run]',
     visibleFieldNames: () => ['kind', 'name', 'block'],
   }),
-} as const satisfies Record<CliAddRuntime.AddKindId, AddKindRegistryEntry<any>>;
+} as const satisfies AddKindRegistry;
 
 export type AddKindId = keyof typeof ADD_KIND_REGISTRY;
 export type AddKindExecutionPlanFor<TKey extends AddKindId> = Awaited<
   ReturnType<(typeof ADD_KIND_REGISTRY)[TKey]['prepareExecution']>
 >;
-export const ADD_KIND_IDS = (Object.keys(ADD_KIND_REGISTRY) as AddKindId[]).sort(
+export const ADD_KIND_IDS = (
+  Object.keys(ADD_KIND_REGISTRY) as AddKindId[]
+).sort(
   (left, right) =>
     ADD_KIND_REGISTRY[left].sortOrder - ADD_KIND_REGISTRY[right].sortOrder,
 );
@@ -835,8 +858,9 @@ export async function getAddKindExecutionPlan<TKey extends AddKindId>(
   kind: TKey,
   context: AddKindExecutionContext,
 ): Promise<AddKindExecutionPlanFor<TKey>> {
-  return ADD_KIND_REGISTRY[kind]
-    .prepareExecution(context) as Promise<AddKindExecutionPlanFor<TKey>>;
+  return ADD_KIND_REGISTRY[kind].prepareExecution(context) as Promise<
+    AddKindExecutionPlanFor<TKey>
+  >;
 }
 
 export function buildAddKindCompletionDetails(
