@@ -446,43 +446,7 @@ export function buildCreateDryRunPayload(
  * @returns A structured alternate-buffer completion payload.
  */
 export function buildInitCompletionPayload(
-  plan: {
-    commandMode: 'apply' | 'preview-only';
-    detectedLayout: {
-      blockNames: string[];
-      description: string;
-      kind: string;
-    };
-    generatedArtifacts: string[];
-    nextSteps: string[];
-    notes: string[];
-    packageChanges: {
-      addDevDependencies: Array<{
-        action: 'add' | 'update';
-        name: string;
-        requiredValue: string;
-      }>;
-      packageManagerField?: {
-        action: 'add' | 'update';
-        requiredValue: string;
-      };
-      scripts: Array<{
-        action: 'add' | 'update';
-        name: string;
-        requiredValue: string;
-      }>;
-    };
-    plannedFiles: Array<{
-      action: 'add' | 'update';
-      path: string;
-      purpose: string;
-    }>;
-    packageManager: PackageManagerId;
-    projectDir: string;
-    projectName: string;
-    status: 'already-initialized' | 'applied' | 'preview';
-    summary: string;
-  },
+  plan: StructuredInitPlan,
   markerOptions?: OutputMarkerOptions,
 ): AlternateBufferCompletionPayload {
   const changeLines = [
