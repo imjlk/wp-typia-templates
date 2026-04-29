@@ -8,6 +8,7 @@ import {
   defineRestResourceListQuery,
   toRestResourceListRequest,
   toValidationResult,
+  type RestResourceEndpointSet,
   type ValidationLike,
 } from '../src/index';
 
@@ -236,5 +237,50 @@ describe('@wp-typia/rest resource helpers', () => {
 
     expect(helperPath).toBe('/products?page=3');
     expect(directPath).toBe('/products?page=4');
+  });
+
+  test('keeps list helpers available when callers widen endpoint maps to the shared endpoint-set type', async () => {
+    let seenPath = '';
+    const listEndpoint = createEndpoint<{ page: number }, { items: number[] }>({
+      method: 'GET',
+      path: '/products',
+      validateRequest: (input: unknown) =>
+        typeof input === 'object' &&
+        input !== null &&
+        typeof (input as { page?: unknown }).page === 'number'
+          ? toValidationResult(success(input as { page: number }))
+          : toValidationResult(
+              failure<{ page: number }>('{ page: number }', '$.page'),
+            ),
+      validateResponse: (input: unknown) =>
+        typeof input === 'object' &&
+        input !== null &&
+        Array.isArray((input as { items?: unknown }).items)
+          ? toValidationResult(success(input as { items: number[] }))
+          : toValidationResult(
+              failure<{ items: number[] }>('{ items: number[] }', '$.items'),
+            ),
+    });
+    const endpoints: RestResourceEndpointSet = {
+      list: listEndpoint,
+    };
+    const resource = defineRestResource({
+      endpoints,
+    });
+
+    expect(typeof resource.list).toBe('function');
+    const result = await resource.list!(
+      { page: 5 },
+      {
+        fetchFn: asApiFetch(async (options: Record<string, unknown>) => {
+          seenPath = String(options.path);
+          return { items: [5] } as never;
+        }),
+      },
+    );
+
+    expect(seenPath).toBe('/products?page=5');
+    expect(result.isValid).toBe(true);
+    expect(result.data).toEqual({ items: [5] });
   });
 });

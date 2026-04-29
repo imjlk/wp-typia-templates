@@ -26,9 +26,12 @@ export interface RestResourceDefinition<
 > {
   endpoints: TEndpoints;
   idField?: TIdField;
-  listQuery?: TEndpoints extends { list: ApiEndpoint<infer TRequest, any> }
-    ? RestResourceListQueryBridge<TListQuerySource, TRequest>
-    : never;
+  listQuery?: [RestResourceEndpointForKey<TEndpoints, 'list'>] extends [never]
+    ? never
+    : RestResourceListQueryBridge<
+        TListQuerySource,
+        EndpointRequest<RestResourceEndpointForKey<TEndpoints, 'list'>>
+      >;
   namespace?: string;
   path?: string;
 }
@@ -37,6 +40,14 @@ type EndpointRequest<TEndpoint> =
   TEndpoint extends ApiEndpoint<infer TRequest, any> ? TRequest : never;
 type EndpointResponse<TEndpoint> =
   TEndpoint extends ApiEndpoint<any, infer TResponse> ? TResponse : never;
+type RestResourceEndpointForKey<
+  TEndpoints extends RestResourceEndpointSet,
+  TKey extends keyof RestResourceEndpointSet,
+> = Extract<TEndpoints[TKey], AnyApiEndpoint>;
+type HasRequiredEndpointKey<
+  TEndpoints extends RestResourceEndpointSet,
+  TKey extends keyof RestResourceEndpointSet,
+> = TEndpoints extends Record<TKey, AnyApiEndpoint> ? true : false;
 
 export type RestResourceListRequest<
   TResource extends RestResourceWithList<any, any>,
@@ -99,80 +110,165 @@ export type RestResourceWithDelete<TRequest, TResponse> = {
   };
 };
 
-type RestResourceListMethods<TEndpoints extends RestResourceEndpointSet> =
-  TEndpoints extends { list: infer TEndpoint extends AnyApiEndpoint }
+type RestResourceListMethods<TEndpoints extends RestResourceEndpointSet> = [
+  RestResourceEndpointForKey<TEndpoints, 'list'>,
+] extends [never]
+  ? {}
+  : HasRequiredEndpointKey<TEndpoints, 'list'> extends true
     ? {
         list: (
-          request: EndpointRequest<TEndpoint>,
+          request: EndpointRequest<
+            RestResourceEndpointForKey<TEndpoints, 'list'>
+          >,
           options?: EndpointCallOptions,
         ) => Promise<
           EndpointValidationResult<
-            EndpointRequest<TEndpoint>,
-            EndpointResponse<TEndpoint>
+            EndpointRequest<RestResourceEndpointForKey<TEndpoints, 'list'>>,
+            EndpointResponse<RestResourceEndpointForKey<TEndpoints, 'list'>>
           >
         >;
       }
-    : {};
+    : {
+        list?: (
+          request: EndpointRequest<
+            RestResourceEndpointForKey<TEndpoints, 'list'>
+          >,
+          options?: EndpointCallOptions,
+        ) => Promise<
+          EndpointValidationResult<
+            EndpointRequest<RestResourceEndpointForKey<TEndpoints, 'list'>>,
+            EndpointResponse<RestResourceEndpointForKey<TEndpoints, 'list'>>
+          >
+        >;
+      };
 
-type RestResourceReadMethods<TEndpoints extends RestResourceEndpointSet> =
-  TEndpoints extends { read: infer TEndpoint extends AnyApiEndpoint }
+type RestResourceReadMethods<TEndpoints extends RestResourceEndpointSet> = [
+  RestResourceEndpointForKey<TEndpoints, 'read'>,
+] extends [never]
+  ? {}
+  : HasRequiredEndpointKey<TEndpoints, 'read'> extends true
     ? {
         read: (
-          request: EndpointRequest<TEndpoint>,
+          request: EndpointRequest<
+            RestResourceEndpointForKey<TEndpoints, 'read'>
+          >,
           options?: EndpointCallOptions,
         ) => Promise<
           EndpointValidationResult<
-            EndpointRequest<TEndpoint>,
-            EndpointResponse<TEndpoint>
+            EndpointRequest<RestResourceEndpointForKey<TEndpoints, 'read'>>,
+            EndpointResponse<RestResourceEndpointForKey<TEndpoints, 'read'>>
           >
         >;
       }
-    : {};
+    : {
+        read?: (
+          request: EndpointRequest<
+            RestResourceEndpointForKey<TEndpoints, 'read'>
+          >,
+          options?: EndpointCallOptions,
+        ) => Promise<
+          EndpointValidationResult<
+            EndpointRequest<RestResourceEndpointForKey<TEndpoints, 'read'>>,
+            EndpointResponse<RestResourceEndpointForKey<TEndpoints, 'read'>>
+          >
+        >;
+      };
 
-type RestResourceCreateMethods<TEndpoints extends RestResourceEndpointSet> =
-  TEndpoints extends { create: infer TEndpoint extends AnyApiEndpoint }
+type RestResourceCreateMethods<TEndpoints extends RestResourceEndpointSet> = [
+  RestResourceEndpointForKey<TEndpoints, 'create'>,
+] extends [never]
+  ? {}
+  : HasRequiredEndpointKey<TEndpoints, 'create'> extends true
     ? {
         create: (
-          request: EndpointRequest<TEndpoint>,
+          request: EndpointRequest<
+            RestResourceEndpointForKey<TEndpoints, 'create'>
+          >,
           options?: EndpointCallOptions,
         ) => Promise<
           EndpointValidationResult<
-            EndpointRequest<TEndpoint>,
-            EndpointResponse<TEndpoint>
+            EndpointRequest<RestResourceEndpointForKey<TEndpoints, 'create'>>,
+            EndpointResponse<RestResourceEndpointForKey<TEndpoints, 'create'>>
           >
         >;
       }
-    : {};
+    : {
+        create?: (
+          request: EndpointRequest<
+            RestResourceEndpointForKey<TEndpoints, 'create'>
+          >,
+          options?: EndpointCallOptions,
+        ) => Promise<
+          EndpointValidationResult<
+            EndpointRequest<RestResourceEndpointForKey<TEndpoints, 'create'>>,
+            EndpointResponse<RestResourceEndpointForKey<TEndpoints, 'create'>>
+          >
+        >;
+      };
 
-type RestResourceUpdateMethods<TEndpoints extends RestResourceEndpointSet> =
-  TEndpoints extends { update: infer TEndpoint extends AnyApiEndpoint }
+type RestResourceUpdateMethods<TEndpoints extends RestResourceEndpointSet> = [
+  RestResourceEndpointForKey<TEndpoints, 'update'>,
+] extends [never]
+  ? {}
+  : HasRequiredEndpointKey<TEndpoints, 'update'> extends true
     ? {
         update: (
-          request: EndpointRequest<TEndpoint>,
+          request: EndpointRequest<
+            RestResourceEndpointForKey<TEndpoints, 'update'>
+          >,
           options?: EndpointCallOptions,
         ) => Promise<
           EndpointValidationResult<
-            EndpointRequest<TEndpoint>,
-            EndpointResponse<TEndpoint>
+            EndpointRequest<RestResourceEndpointForKey<TEndpoints, 'update'>>,
+            EndpointResponse<RestResourceEndpointForKey<TEndpoints, 'update'>>
           >
         >;
       }
-    : {};
+    : {
+        update?: (
+          request: EndpointRequest<
+            RestResourceEndpointForKey<TEndpoints, 'update'>
+          >,
+          options?: EndpointCallOptions,
+        ) => Promise<
+          EndpointValidationResult<
+            EndpointRequest<RestResourceEndpointForKey<TEndpoints, 'update'>>,
+            EndpointResponse<RestResourceEndpointForKey<TEndpoints, 'update'>>
+          >
+        >;
+      };
 
-type RestResourceDeleteMethods<TEndpoints extends RestResourceEndpointSet> =
-  TEndpoints extends { delete: infer TEndpoint extends AnyApiEndpoint }
+type RestResourceDeleteMethods<TEndpoints extends RestResourceEndpointSet> = [
+  RestResourceEndpointForKey<TEndpoints, 'delete'>,
+] extends [never]
+  ? {}
+  : HasRequiredEndpointKey<TEndpoints, 'delete'> extends true
     ? {
         delete: (
-          request: EndpointRequest<TEndpoint>,
+          request: EndpointRequest<
+            RestResourceEndpointForKey<TEndpoints, 'delete'>
+          >,
           options?: EndpointCallOptions,
         ) => Promise<
           EndpointValidationResult<
-            EndpointRequest<TEndpoint>,
-            EndpointResponse<TEndpoint>
+            EndpointRequest<RestResourceEndpointForKey<TEndpoints, 'delete'>>,
+            EndpointResponse<RestResourceEndpointForKey<TEndpoints, 'delete'>>
           >
         >;
       }
-    : {};
+    : {
+        delete?: (
+          request: EndpointRequest<
+            RestResourceEndpointForKey<TEndpoints, 'delete'>
+          >,
+          options?: EndpointCallOptions,
+        ) => Promise<
+          EndpointValidationResult<
+            EndpointRequest<RestResourceEndpointForKey<TEndpoints, 'delete'>>,
+            EndpointResponse<RestResourceEndpointForKey<TEndpoints, 'delete'>>
+          >
+        >;
+      };
 
 export type RestResource<
   TEndpoints extends RestResourceEndpointSet,
