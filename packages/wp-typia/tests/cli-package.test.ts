@@ -57,6 +57,10 @@ const migrateCommandSource = fs.readFileSync(
   path.join(packageRoot, 'src', 'commands', 'migrate.ts'),
   'utf8',
 );
+const initCommandSource = fs.readFileSync(
+  path.join(packageRoot, 'src', 'commands', 'init.ts'),
+  'utf8',
+);
 const templatesCommandSource = fs.readFileSync(
   path.join(packageRoot, 'src', 'commands', 'templates.ts'),
   'utf8',
@@ -362,7 +366,9 @@ describe('wp-typia package', () => {
     expect(createHelpOutput).toContain('--external-layer-id');
     expect(createHelpOutput).toContain('--alternate-render-targets');
     expect(createHelpOutput).toContain('Query Loop');
-    expect(initHelpOutput).toContain('Preview-only retrofit planner');
+    expect(initHelpOutput).toContain('Preview-by-default retrofit planner');
+    expect(initHelpOutput).toContain('--apply');
+    expect(initHelpOutput).toContain('--package-manager');
     expect(addHelpOutput).toContain('--external-layer-source');
     expect(addHelpOutput).toContain('--external-layer-id');
     expect(addHelpOutput).toContain('--alternate-render-targets');
@@ -388,6 +394,7 @@ describe('wp-typia package', () => {
       );
       const parsed = parseJsonObjectFromOutput<{
         init?: {
+          commandMode?: string;
           detectedLayout?: { kind?: string; blockNames?: string[] };
           nextSteps?: string[];
           packageChanges?: {
@@ -398,6 +405,7 @@ describe('wp-typia package', () => {
       }>(output);
 
       expect(parsed.init?.status).toBe('preview');
+      expect(parsed.init?.commandMode).toBe('preview-only');
       expect(parsed.init?.detectedLayout?.kind).toBe('single-block');
       expect(parsed.init?.detectedLayout?.blockNames).toEqual([
         'create-block/retrofit-init',
@@ -408,6 +416,80 @@ describe('wp-typia package', () => {
       expect(parsed.init?.nextSteps).toContain(
         `npx --yes wp-typia@${packageManifest.version} doctor`,
       );
+    } finally {
+      fs.rmSync(fixtureRoot, { force: true, recursive: true });
+    }
+  });
+
+  test('applies retrofit init through the canonical bin in Node fallback JSON mode', () => {
+    const fixtureRoot = createRetrofitInitFixture();
+
+    try {
+      const output = runUtf8Command(
+        process.execPath,
+        [
+          entryPath,
+          'init',
+          '--apply',
+          '--package-manager',
+          'pnpm',
+          '--format',
+          'json',
+        ],
+        {
+          cwd: fixtureRoot,
+        },
+      );
+      const parsed = parseJsonObjectFromOutput<{
+        init?: {
+          commandMode?: string;
+          packageManager?: string;
+          plannedFiles?: Array<{ action?: string; path?: string }>;
+          status?: string;
+        };
+      }>(output);
+      const packageJson = JSON.parse(
+        fs.readFileSync(path.join(fixtureRoot, 'package.json'), 'utf8'),
+      ) as {
+        packageManager?: string;
+        scripts?: Record<string, string>;
+      };
+
+      expect(parsed.init?.status).toBe('applied');
+      expect(parsed.init?.commandMode).toBe('apply');
+      expect(parsed.init?.packageManager).toBe('pnpm');
+      expect(parsed.init?.plannedFiles).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            action: 'add',
+            path: 'scripts/block-config.ts',
+          }),
+          expect.objectContaining({
+            action: 'add',
+            path: 'scripts/sync-types-to-block-json.ts',
+          }),
+          expect.objectContaining({
+            action: 'add',
+            path: 'scripts/sync-project.ts',
+          }),
+        ]),
+      );
+      expect(packageJson.packageManager).toBe('pnpm@8.3.1');
+      expect(packageJson.scripts?.sync).toBe('tsx scripts/sync-project.ts');
+      expect(packageJson.scripts?.typecheck).toBe(
+        'pnpm run sync --check && tsc --noEmit',
+      );
+      expect(
+        fs.existsSync(path.join(fixtureRoot, 'scripts', 'block-config.ts')),
+      ).toBe(true);
+      expect(
+        fs.existsSync(
+          path.join(fixtureRoot, 'scripts', 'sync-types-to-block-json.ts'),
+        ),
+      ).toBe(true);
+      expect(
+        fs.existsSync(path.join(fixtureRoot, 'scripts', 'sync-project.ts')),
+      ).toBe(true);
     } finally {
       fs.rmSync(fixtureRoot, { force: true, recursive: true });
     }
@@ -689,6 +771,9 @@ describe('wp-typia package', () => {
     expect(addCommandSource).toContain(
       'buildCommandOptions(ADD_OPTION_METADATA)',
     );
+    expect(initCommandSource).toContain(
+      'buildCommandOptions(INIT_OPTION_METADATA)',
+    );
     expect(syncCommandSource).toContain(
       'buildCommandOptions(SYNC_OPTION_METADATA)',
     );
@@ -704,6 +789,9 @@ describe('wp-typia package', () => {
     expect(nodeCliSource).toMatch(/from ['"]\.\/command-option-metadata['"]/);
     expect(nodeCliSource).toContain(
       'formatNodeFallbackOptionHelp(CREATE_OPTION_METADATA)',
+    );
+    expect(nodeCliSource).toContain(
+      'formatNodeFallbackOptionHelp(INIT_OPTION_METADATA)',
     );
     expect(nodeCliSource).toContain(
       'formatNodeFallbackOptionHelp(ADD_OPTION_METADATA)',

@@ -11,6 +11,7 @@ import {
   DOCTOR_OPTION_METADATA,
   extractKnownOptionValuesFromArgv,
   GLOBAL_OPTION_METADATA,
+  INIT_OPTION_METADATA,
   parseCommandArgvWithMetadata,
   resolveCommandOptionValues,
   SYNC_OPTION_METADATA,
@@ -142,6 +143,25 @@ describe('command option metadata helpers', () => {
       'dry-run': true,
     });
     expect(parsed.positionals).toEqual([]);
+  });
+
+  test('parses init apply/package-manager flags from shared metadata', () => {
+    const parsed = parseCommandArgvWithMetadata(
+      ['init', '--apply', '--package-manager', 'pnpm', 'demo-plugin'],
+      {
+        extraBooleanOptionNames: ['help', 'version'],
+        parser: buildCommandOptionParser(
+          GLOBAL_OPTION_METADATA,
+          INIT_OPTION_METADATA,
+        ),
+      },
+    );
+
+    expect(parsed.flags).toEqual({
+      apply: true,
+      'package-manager': 'pnpm',
+    });
+    expect(parsed.positionals).toEqual(['init', 'demo-plugin']);
   });
 
   test('parses doctor structured output flags from shared metadata', () => {

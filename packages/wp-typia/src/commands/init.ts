@@ -1,22 +1,28 @@
 import { defineCommand } from "@bunli/core";
 
 import {
-	emitCliDiagnosticFailure,
-	prefersStructuredCliOutput,
-} from "../cli-diagnostic-output";
+	buildCommandOptions,
+	INIT_OPTION_METADATA,
+} from "../command-option-metadata";
+import { emitCliDiagnosticFailure, prefersStructuredCliOutput } from "../cli-diagnostic-output";
 import { executeInitCommand } from "../runtime-bridge";
 
 export const initCommand = defineCommand({
 	defaultFormat: "toon",
 	description:
-		"Preview the minimum wp-typia retrofit plan for an existing project.",
+		"Preview or apply the minimum wp-typia retrofit plan for an existing project.",
 	handler: async (args) => {
 		const prefersStructuredOutput = prefersStructuredCliOutput(args);
 
 		try {
 			const plan = await executeInitCommand(
 				{
+					apply: Boolean(args.flags.apply),
 					cwd: args.cwd,
+					packageManager:
+						typeof args.flags["package-manager"] === "string"
+							? args.flags["package-manager"]
+							: undefined,
 					projectDir: args.positional[0] as string | undefined,
 				},
 				{ emitOutput: !prefersStructuredOutput },
@@ -32,7 +38,7 @@ export const initCommand = defineCommand({
 		}
 	},
 	name: "init",
-	options: {},
+	options: buildCommandOptions(INIT_OPTION_METADATA),
 });
 
 export default initCommand;

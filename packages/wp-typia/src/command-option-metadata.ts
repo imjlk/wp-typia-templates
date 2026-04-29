@@ -25,6 +25,7 @@ export type CommandOptionGroupName =
   | 'global'
   | 'create'
   | 'add'
+  | 'init'
   | 'migrate'
   | 'sync'
   | 'doctor'
@@ -222,6 +223,23 @@ export const ADD_OPTION_METADATA = {
 } as const satisfies CommandOptionMetadataMap;
 
 /**
+ * Shared `wp-typia init` option metadata used by both runtime entry paths.
+ */
+export const INIT_OPTION_METADATA = {
+  apply: {
+    argumentKind: 'flag',
+    description:
+      'Write the planned package.json updates and retrofit helper files instead of previewing only.',
+    type: 'boolean',
+  },
+  'package-manager': {
+    description: 'Package manager to use for emitted scripts and next steps.',
+    short: 'p',
+    type: 'string',
+  },
+} as const satisfies CommandOptionMetadataMap;
+
+/**
  * Shared `wp-typia migrate` option metadata used by both runtime entry paths.
  */
 export const MIGRATE_OPTION_METADATA = {
@@ -328,6 +346,7 @@ export const COMMAND_OPTION_METADATA_BY_GROUP = {
   create: CREATE_OPTION_METADATA,
   doctor: DOCTOR_OPTION_METADATA,
   global: GLOBAL_OPTION_METADATA,
+  init: INIT_OPTION_METADATA,
   migrate: MIGRATE_OPTION_METADATA,
   sync: SYNC_OPTION_METADATA,
   templates: TEMPLATES_OPTION_METADATA,

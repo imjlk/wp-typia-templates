@@ -76,7 +76,9 @@ type TemplatesExecutionInput = {
 };
 
 type InitExecutionInput = {
+  apply?: boolean;
   cwd: string;
+  packageManager?: string;
   projectDir?: string;
 };
 
@@ -585,7 +587,7 @@ export async function executeTemplatesCommand(
 }
 
 export async function executeInitCommand(
-  { cwd, projectDir }: InitExecutionInput,
+  { apply, cwd, packageManager, projectDir }: InitExecutionInput,
   options: {
     emitOutput?: boolean;
     printLine?: PrintLine;
@@ -593,11 +595,15 @@ export async function executeInitCommand(
   } = {},
 ) {
   try {
-    const { getInitPlan } = await loadCliInitRuntime();
+    const { runInitCommand } = await loadCliInitRuntime();
     const resolvedProjectDir = projectDir
       ? (await import('node:path')).resolve(cwd, projectDir)
       : cwd;
-    const plan = getInitPlan(resolvedProjectDir);
+    const plan = await runInitCommand({
+      apply,
+      packageManager,
+      projectDir: resolvedProjectDir,
+    });
     const completion = buildInitCompletionPayload(plan);
 
     if (options.emitOutput ?? true) {
@@ -609,6 +615,9 @@ export async function executeInitCommand(
 
     return plan;
   } catch (error) {
+    if (!shouldWrapCliCommandError({ emitOutput: options.emitOutput })) {
+      throw error;
+    }
     throw await wrapCliCommandError('init', error);
   }
 }

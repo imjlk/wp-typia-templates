@@ -6,6 +6,7 @@ import { PROJECT_TOOLS_PACKAGE_ROOT } from "./template-registry.js";
 
 interface PackageManifest {
 	dependencies?: Record<string, string>;
+	devDependencies?: Record<string, string>;
 	version?: string;
 }
 
@@ -15,6 +16,10 @@ export interface PackageVersions {
 	blockTypesPackageVersion: string;
 	projectToolsPackageVersion: string;
 	restPackageVersion: string;
+	tsxPackageVersion: string;
+	typiaPackageVersion: string;
+	typiaUnpluginPackageVersion: string;
+	typescriptPackageVersion: string;
 	wpTypiaPackageExactVersion: string;
 	wpTypiaPackageVersion: string;
 }
@@ -28,6 +33,10 @@ interface PackageManifestLocation {
 const require = createRequire(import.meta.url);
 const DEFAULT_VERSION_RANGE = "^0.0.0";
 const DEFAULT_EXACT_VERSION = "0.0.0";
+const DEFAULT_TSX_PACKAGE_VERSION = "^4.20.5";
+const DEFAULT_TYPIA_PACKAGE_VERSION = "^12.0.1";
+const DEFAULT_TYPIA_UNPLUGIN_PACKAGE_VERSION = "^12.0.1";
+const DEFAULT_TYPESCRIPT_PACKAGE_VERSION = "^5.9.2";
 
 let cachedPackageVersions:
 	| {
@@ -63,6 +72,14 @@ function normalizeExactVersion(value: string | undefined): string {
 		return DEFAULT_EXACT_VERSION;
 	}
 	return trimmed.replace(/^[~^<>=]+/, "");
+}
+
+function normalizeVersionRangeWithFallback(
+	value: string | undefined,
+	fallback: string,
+): string {
+	const normalized = normalizeVersionRange(value);
+	return normalized === DEFAULT_VERSION_RANGE ? fallback : normalized;
 }
 
 function createContentFingerprint(source: string): string {
@@ -155,6 +172,9 @@ export function getPackageVersions(): PackageVersions {
 	const createManifestLocation = resolvePackageManifestLocation(
 		path.join(PROJECT_TOOLS_PACKAGE_ROOT, "package.json"),
 	);
+	const monorepoManifestLocation = resolvePackageManifestLocation(
+		path.join(PROJECT_TOOLS_PACKAGE_ROOT, "..", "..", "package.json"),
+	);
 	const blockRuntimeManifestLocation = resolvePackageManifestLocation(
 		path.join(PROJECT_TOOLS_PACKAGE_ROOT, "..", "wp-typia-block-runtime", "package.json"),
 	);
@@ -171,10 +191,19 @@ export function getPackageVersions(): PackageVersions {
 		resolveInstalledPackageManifestLocation("@wp-typia/block-types");
 	const installedRestManifestLocation =
 		resolveInstalledPackageManifestLocation("@wp-typia/rest");
+	const installedTsxManifestLocation =
+		resolveInstalledPackageManifestLocation("tsx");
+	const installedTypiaManifestLocation =
+		resolveInstalledPackageManifestLocation("typia");
+	const installedTypiaUnpluginManifestLocation =
+		resolveInstalledPackageManifestLocation("@typia/unplugin");
+	const installedTypescriptManifestLocation =
+		resolveInstalledPackageManifestLocation("typescript");
 	const installedWpTypiaManifestLocation =
 		resolveInstalledPackageManifestLocation("wp-typia");
 	const cacheKey = composePackageVersionsCacheKey([
 		createManifestLocation,
+		monorepoManifestLocation,
 		blockRuntimeManifestLocation,
 		wpTypiaManifestLocation,
 		installedProjectToolsManifestLocation,
@@ -182,6 +211,10 @@ export function getPackageVersions(): PackageVersions {
 		installedBlockRuntimeManifestLocation,
 		installedBlockTypesManifestLocation,
 		installedRestManifestLocation,
+		installedTsxManifestLocation,
+		installedTypiaManifestLocation,
+		installedTypiaUnpluginManifestLocation,
+		installedTypescriptManifestLocation,
 		installedWpTypiaManifestLocation,
 	]);
 
@@ -193,6 +226,7 @@ export function getPackageVersions(): PackageVersions {
 		readPackageManifest(createManifestLocation) ??
 		readPackageManifest(installedProjectToolsManifestLocation) ??
 		{};
+	const monorepoManifest = readPackageManifest(monorepoManifestLocation) ?? {};
 	const blockRuntimeManifest =
 		readPackageManifest(blockRuntimeManifestLocation) ??
 		readPackageManifest(installedBlockRuntimeManifestLocation) ??
@@ -221,6 +255,32 @@ export function getPackageVersions(): PackageVersions {
 		restPackageVersion: normalizeVersionRange(
 			createManifest.dependencies?.["@wp-typia/rest"] ??
 				readPackageManifest(installedRestManifestLocation)?.version,
+		),
+		tsxPackageVersion: normalizeVersionRangeWithFallback(
+			monorepoManifest.dependencies?.tsx ??
+				monorepoManifest.devDependencies?.tsx ??
+				readPackageManifest(installedTsxManifestLocation)?.version,
+			DEFAULT_TSX_PACKAGE_VERSION,
+		),
+		typiaPackageVersion: normalizeVersionRangeWithFallback(
+			monorepoManifest.dependencies?.typia ??
+				monorepoManifest.devDependencies?.typia ??
+				createManifest.dependencies?.typia ??
+				readPackageManifest(installedTypiaManifestLocation)?.version,
+			DEFAULT_TYPIA_PACKAGE_VERSION,
+		),
+		typiaUnpluginPackageVersion: normalizeVersionRangeWithFallback(
+			monorepoManifest.dependencies?.["@typia/unplugin"] ??
+				monorepoManifest.devDependencies?.["@typia/unplugin"] ??
+				readPackageManifest(installedTypiaUnpluginManifestLocation)?.version,
+			DEFAULT_TYPIA_UNPLUGIN_PACKAGE_VERSION,
+		),
+		typescriptPackageVersion: normalizeVersionRangeWithFallback(
+			monorepoManifest.dependencies?.typescript ??
+				monorepoManifest.devDependencies?.typescript ??
+				createManifest.dependencies?.typescript ??
+				readPackageManifest(installedTypescriptManifestLocation)?.version,
+			DEFAULT_TYPESCRIPT_PACKAGE_VERSION,
 		),
 		wpTypiaPackageExactVersion: normalizeExactVersion(wpTypiaManifest.version),
 		wpTypiaPackageVersion: normalizeVersionRange(wpTypiaManifest.version),
