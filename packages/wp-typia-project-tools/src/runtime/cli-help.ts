@@ -18,7 +18,7 @@ export function formatHelpText(): string {
   wp-typia create <project-dir> [--template persistence] [--external-layer-source <./path|github:owner/repo/path[#ref]|npm-package>] [--external-layer-id <layer-id>] [--alternate-render-targets <email,mjml,plain-text>] [--data-storage <post-meta|custom-table>] [--persistence-policy <authenticated|public>] [--namespace <value>] [--text-domain <value>] [--php-prefix <value>] [--with-migration-ui] [--with-wp-env] [--with-test-preset] [--yes] [--dry-run] [--no-install] [--package-manager <id>]
   wp-typia create <project-dir> [--template compound] [--external-layer-source <./path|github:owner/repo/path[#ref]|npm-package>] [--external-layer-id <layer-id>] [--inner-blocks-preset <freeform|ordered|horizontal|locked-structure>] [--alternate-render-targets <email,mjml,plain-text>] [--data-storage <post-meta|custom-table>] [--persistence-policy <authenticated|public>] [--namespace <value>] [--text-domain <value>] [--php-prefix <value>] [--with-migration-ui] [--with-wp-env] [--with-test-preset] [--yes] [--dry-run] [--no-install] [--package-manager <id>]
   wp-typia <project-dir> [create flags...]
-  wp-typia init [project-dir]
+  wp-typia init [project-dir] [--apply] [--package-manager <id>]
   wp-typia add admin-view <name> [--source <rest-resource:slug>]
   wp-typia add block <name> [--template <basic|interactivity|persistence|compound>] [--external-layer-source <./path|github:owner/repo/path[#ref]|npm-package>] [--external-layer-id <layer-id>] [--inner-blocks-preset <freeform|ordered|horizontal|locked-structure>] [--alternate-render-targets <email,mjml,plain-text>] [--data-storage <post-meta|custom-table>] [--persistence-policy <authenticated|public>]
   wp-typia add variation <name> --block <block-slug>
@@ -47,7 +47,7 @@ Output environment:
 Notes:
   \`wp-typia create\` is the canonical scaffold command.
   \`wp-typia <project-dir>\` remains a backward-compatible alias to \`create\` when \`<project-dir>\` is the only positional argument.
-  \`wp-typia init\` is a preview-only retrofit planner for existing projects. It does not write files yet.
+  \`wp-typia init\` previews the minimum retrofit sync surface by default; rerun with \`--apply\` to write package.json updates and generated helper scripts.
   Use \`--template workspace\` as shorthand for \`@wp-typia/create-workspace-template\`, the official empty workspace scaffold behind \`wp-typia add ...\`.
   Interactive add flows let you choose a template when \`--template\` is omitted; non-interactive runs default to \`basic\`.
   \`add admin-view\` scaffolds an opt-in DataViews-powered WordPress admin screen under \`src/admin-views/\`; pass \`--source rest-resource:<slug>\` to reuse a list-capable REST resource.
@@ -63,7 +63,7 @@ Notes:
   \`add editor-plugin\` scaffolds a document-level editor extension under \`src/editor-plugins/\`; legacy aliases \`PluginSidebar\` and \`PluginDocumentSettingPanel\` resolve to \`sidebar\` and \`document-setting-panel\`.
   \`add hooked-block\` patches an existing workspace block's \`block.json\` \`blockHooks\` metadata.
   \`wp-typia doctor\` always checks environment readiness and reports when it only ran environment-level diagnostics; official workspace roots also get inventory, source-tree drift, shared convention checks, and iframe/API v3 compatibility checks.
-  \`wp-typia init\` previews the minimum sync/doctor/migration adoption layer for supported existing layouts before a future write mode exists.
+  \`wp-typia init\` previews or applies the minimum sync/doctor/migration adoption layer for supported existing layouts; pass \`--package-manager <id>\` to pin emitted scripts and next steps.
   \`wp-typia migrate doctor --all\` checks migration target alignment, snapshots, fixtures, and generated migration artifacts.
   \`migrate\` is the canonical migration command; \`migrations\` is no longer supported.`;
 }

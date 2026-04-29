@@ -70,6 +70,14 @@ interface InitFilePlan {
 	purpose: string;
 }
 
+/**
+ * One existing block target that `wp-typia init` can retrofit into the shared
+ * sync surface.
+ *
+ * Each path stays relative to the project root so generated helper scripts can
+ * resolve the current block metadata and TypeScript source of truth without
+ * guessing layout-specific locations.
+ */
 export interface RetrofitInitBlockTarget {
 	attributeTypeName: string;
 	blockJsonFile: string;
@@ -80,6 +88,13 @@ export interface RetrofitInitBlockTarget {
 	typesFile: string;
 }
 
+/**
+ * Preview or apply result returned by `wp-typia init`.
+ *
+ * The plan describes the detected retrofit layout, package-level mutations,
+ * helper files, next steps, and any warnings gathered while preparing or
+ * applying the minimum sync surface for an existing project.
+ */
 export interface RetrofitInitPlan {
 	blockTargets: RetrofitInitBlockTarget[];
 	commandMode: InitCommandMode;
@@ -290,8 +305,11 @@ function buildScriptChanges(
 function buildPackageManagerFieldChange(
 	packageJson: ProjectPackageJson | null,
 	packageManager: PackageManagerId,
+	options: {
+		persistExplicitOverride?: boolean;
+	} = {},
 ): InitPackageManagerFieldChange | undefined {
-	if (packageManager === "npm") {
+	if (!options.persistExplicitOverride && packageManager === "npm") {
 		return undefined;
 	}
 
@@ -352,18 +370,14 @@ function isObjectLikeSourceType(
 	typesFile: string,
 	sourceTypeName: string,
 ): boolean {
-	try {
-		const analyzedTypes = analyzeSourceTypes(
-			{
-				projectRoot: projectDir,
-				typesFile,
-			},
-			[sourceTypeName],
-		);
-		return analyzedTypes[sourceTypeName]?.kind === "object";
-	} catch {
-		return false;
-	}
+	const analyzedTypes = analyzeSourceTypes(
+		{
+			projectRoot: projectDir,
+			typesFile,
+		},
+		[sourceTypeName],
+	);
+	return analyzedTypes[sourceTypeName]?.kind === "object";
 }
 
 function inferRetrofitAttributeTypeName(
@@ -721,18 +735,24 @@ function buildLayoutDetails(projectDir: string): {
 }
 
 function hasExistingWpTypiaProjectSurface(
+	projectDir: string,
 	packageJson: ProjectPackageJson | null,
 ): boolean {
 	const scripts = packageJson?.scripts ?? {};
 	const hasSyncSurface =
 		typeof scripts.sync === "string" || typeof scripts["sync-types"] === "string";
+	const hasHelperFiles = [
+		path.join("scripts", "block-config.ts"),
+		path.join("scripts", "sync-project.ts"),
+		path.join("scripts", "sync-types-to-block-json.ts"),
+	].every((relativePath) => fs.existsSync(path.join(projectDir, relativePath)));
 	const hasRuntimeDeps =
 		typeof getExistingDependencyVersion(packageJson, "@wp-typia/block-runtime") ===
 			"string" &&
 		typeof getExistingDependencyVersion(packageJson, "@wp-typia/block-types") ===
 			"string";
 
-	return hasSyncSurface && hasRuntimeDeps;
+	return hasSyncSurface && hasHelperFiles && hasRuntimeDeps;
 }
 
 function buildPlannedFiles(
@@ -1084,6 +1104,14 @@ function buildApplyFailureError(error: unknown): Error {
 	);
 }
 
+/**
+ * Inspect one project directory and return the current retrofit init plan.
+ *
+ * @param projectDir Project root or nested path that should be analyzed.
+ * @param options Optional package-manager override used for emitted scripts and
+ * follow-up guidance.
+ * @returns The preview-only retrofit init plan for the resolved project.
+ */
 export function getInitPlan(
 	projectDir: string,
 	options: {
@@ -1100,6 +1128,12 @@ export function getInitPlan(
 	const workspace = tryResolveWorkspaceProject(resolvedProjectDir);
 
 	if (workspace) {
+		const workspacePackageJson = readProjectPackageJson(workspace.projectDir);
+		const workspacePackageManager = resolveInitPackageManager(
+			workspace.projectDir,
+			workspacePackageJson,
+			options.packageManager,
+		);
 		const cliSpecifier = getWpTypiaCliSpecifier();
 		return createRetrofitPlan({
 			blockTargets: [],
@@ -1112,8 +1146,12 @@ export function getInitPlan(
 			generatedArtifacts: [],
 			nextSteps: [
 				"Use `wp-typia add <kind> <name>` to extend the official workspace instead of rerunning init.",
-				formatRunScript(packageManager, "sync"),
-				formatPackageExecCommand(packageManager, cliSpecifier, "doctor"),
+				formatRunScript(workspacePackageManager, "sync"),
+				formatPackageExecCommand(
+					workspacePackageManager,
+					cliSpecifier,
+					"doctor",
+				),
 			],
 			notes: [
 				"The official workspace template already owns inventory, doctor, and add-command workflows.",
@@ -1122,7 +1160,7 @@ export function getInitPlan(
 				addDevDependencies: [],
 				scripts: [],
 			},
-			packageManager,
+			packageManager: workspacePackageManager,
 			plannedFiles: [],
 			projectDir: workspace.projectDir,
 			projectName: workspace.packageName,
@@ -1140,12 +1178,18 @@ export function getInitPlan(
 	const packageManagerFieldChange = buildPackageManagerFieldChange(
 		packageJson,
 		packageManager,
+		{
+			persistExplicitOverride: typeof options.packageManager === "string",
+		},
 	);
 	const rawPlannedFiles =
 		layout.kind === "generated-project" || layout.kind === "official-workspace"
 			? []
 			: buildPlannedFiles(resolvedProjectDir, layout.kind);
-	const hasExistingSurface = hasExistingWpTypiaProjectSurface(packageJson);
+	const hasExistingSurface = hasExistingWpTypiaProjectSurface(
+		resolvedProjectDir,
+		packageJson,
+	);
 	const status: InitPlanStatus =
 		hasExistingSurface &&
 		dependencyChanges.length === 0 &&
@@ -1200,6 +1244,17 @@ export function getInitPlan(
 	});
 }
 
+/**
+ * Apply the previewed retrofit init plan to disk.
+ *
+ * The command snapshots package.json and generated helper targets before
+ * writing, then rolls those files back automatically if any write fails.
+ *
+ * @param projectDir Project root that should receive the retrofit surface.
+ * @param options Optional package-manager override used for emitted scripts and
+ * follow-up guidance.
+ * @returns The applied retrofit init plan describing the persisted changes.
+ */
 export async function applyInitPlan(
 	projectDir: string,
 	options: {
@@ -1279,6 +1334,14 @@ export async function applyInitPlan(
 	});
 }
 
+/**
+ * Execute `wp-typia init` in preview or apply mode.
+ *
+ * @param options Resolved command options including the target project
+ * directory, optional package-manager override, and whether writes should be
+ * applied.
+ * @returns The previewed or applied retrofit init plan.
+ */
 export async function runInitCommand(options: {
 	apply?: boolean;
 	packageManager?: string;

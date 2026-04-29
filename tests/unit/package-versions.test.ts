@@ -28,6 +28,10 @@ async function importPackageVersionsModule(options: {
 		blockTypesPackageVersion: string;
 		projectToolsPackageVersion: string;
 		restPackageVersion: string;
+		tsxPackageVersion: string;
+		typiaPackageVersion: string;
+		typiaUnpluginPackageVersion: string;
+		typescriptPackageVersion: string;
 		wpTypiaPackageExactVersion: string;
 		wpTypiaPackageVersion: string;
 	};
@@ -91,6 +95,10 @@ describe("package version helpers", () => {
 			blockTypesPackageVersion: "^2.3.4",
 			projectToolsPackageVersion: "^4.5.6",
 			restPackageVersion: "^3.4.5",
+			tsxPackageVersion: "^4.20.5",
+			typiaPackageVersion: "^0.0.0",
+			typiaUnpluginPackageVersion: "^12.0.1",
+			typescriptPackageVersion: "^0.0.0",
 			wpTypiaPackageExactVersion: "0.0.0",
 			wpTypiaPackageVersion: "^0.0.0",
 		});
@@ -122,6 +130,10 @@ describe("package version helpers", () => {
 			blockTypesPackageVersion: "^2.3.4",
 			projectToolsPackageVersion: "^4.5.6",
 			restPackageVersion: "^3.4.5",
+			tsxPackageVersion: "^4.20.5",
+			typiaPackageVersion: "^0.0.0",
+			typiaUnpluginPackageVersion: "^12.0.1",
+			typescriptPackageVersion: "^0.0.0",
 			wpTypiaPackageExactVersion: "0.0.0",
 			wpTypiaPackageVersion: "^0.0.0",
 		});
@@ -157,6 +169,10 @@ describe("package version helpers", () => {
 			blockTypesPackageVersion: "^0.3.0",
 			projectToolsPackageVersion: "^0.8.0",
 			restPackageVersion: "~0.4.0",
+			tsxPackageVersion: "^4.20.5",
+			typiaPackageVersion: "^0.0.0",
+			typiaUnpluginPackageVersion: "^12.0.1",
+			typescriptPackageVersion: "^0.0.0",
 			wpTypiaPackageExactVersion: "0.8.0",
 			wpTypiaPackageVersion: "^0.8.0",
 		});
@@ -211,6 +227,10 @@ describe("package version helpers", () => {
 			blockTypesPackageVersion: "^0.2.0",
 			projectToolsPackageVersion: "^0.11.0",
 			restPackageVersion: "^0.3.1",
+			tsxPackageVersion: "^4.20.5",
+			typiaPackageVersion: "^0.0.0",
+			typiaUnpluginPackageVersion: "^12.0.1",
+			typescriptPackageVersion: "^0.0.0",
 			wpTypiaPackageExactVersion: "0.0.0",
 			wpTypiaPackageVersion: "^0.0.0",
 		});
@@ -234,6 +254,10 @@ describe("package version helpers", () => {
 			blockTypesPackageVersion: "^0.0.0",
 			projectToolsPackageVersion: "^0.0.0",
 			restPackageVersion: "^0.0.0",
+			tsxPackageVersion: "^4.20.5",
+			typiaPackageVersion: "^0.0.0",
+			typiaUnpluginPackageVersion: "^12.0.1",
+			typescriptPackageVersion: "^0.0.0",
 			wpTypiaPackageExactVersion: "0.0.0",
 			wpTypiaPackageVersion: "^0.0.0",
 		});
@@ -278,6 +302,10 @@ describe("package version helpers", () => {
 			blockTypesPackageVersion: "^2.3.4",
 			projectToolsPackageVersion: "^11.22.33",
 			restPackageVersion: "^30.40.50",
+			tsxPackageVersion: "^4.20.5",
+			typiaPackageVersion: "^0.0.0",
+			typiaUnpluginPackageVersion: "^12.0.1",
+			typescriptPackageVersion: "^0.0.0",
 			wpTypiaPackageExactVersion: "0.0.0",
 			wpTypiaPackageVersion: "^0.0.0",
 		});

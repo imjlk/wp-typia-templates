@@ -34,9 +34,7 @@ const require = createRequire(import.meta.url);
 const DEFAULT_VERSION_RANGE = "^0.0.0";
 const DEFAULT_EXACT_VERSION = "0.0.0";
 const DEFAULT_TSX_PACKAGE_VERSION = "^4.20.5";
-const DEFAULT_TYPIA_PACKAGE_VERSION = "^12.0.1";
 const DEFAULT_TYPIA_UNPLUGIN_PACKAGE_VERSION = "^12.0.1";
-const DEFAULT_TYPESCRIPT_PACKAGE_VERSION = "^5.9.2";
 
 let cachedPackageVersions:
 	| {
@@ -267,7 +265,7 @@ export function getPackageVersions(): PackageVersions {
 				monorepoManifest.devDependencies?.typia ??
 				createManifest.dependencies?.typia ??
 				readPackageManifest(installedTypiaManifestLocation)?.version,
-			DEFAULT_TYPIA_PACKAGE_VERSION,
+			DEFAULT_VERSION_RANGE,
 		),
 		typiaUnpluginPackageVersion: normalizeVersionRangeWithFallback(
 			monorepoManifest.dependencies?.["@typia/unplugin"] ??
@@ -280,7 +278,7 @@ export function getPackageVersions(): PackageVersions {
 				monorepoManifest.devDependencies?.typescript ??
 				createManifest.dependencies?.typescript ??
 				readPackageManifest(installedTypescriptManifestLocation)?.version,
-			DEFAULT_TYPESCRIPT_PACKAGE_VERSION,
+			DEFAULT_VERSION_RANGE,
 		),
 		wpTypiaPackageExactVersion: normalizeExactVersion(wpTypiaManifest.version),
 		wpTypiaPackageVersion: normalizeVersionRange(wpTypiaManifest.version),

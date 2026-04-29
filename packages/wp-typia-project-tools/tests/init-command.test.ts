@@ -7,6 +7,7 @@ import { getPackageVersions } from "../src/runtime/package-versions.js";
 import {
 	cleanupScaffoldTempRoot,
 	createScaffoldTempRoot,
+	scaffoldOfficialWorkspace,
 	wpTypiaPackageManifest,
 } from "./helpers/scaffold-test-harness.js";
 
@@ -165,6 +166,38 @@ describe("wp-typia init", () => {
 		);
 	});
 
+	test("persists explicit npm overrides over conflicting packageManager metadata", async () => {
+		const projectDir = path.join(tempRoot, "retrofit-explicit-npm");
+		scaffoldRetrofitProject(projectDir, {
+			interfaceName: "RetrofitExplicitNpmAttributes",
+			packageJson: {
+				packageManager: "bun@1.3.11",
+			},
+		});
+
+		const previewPlan = getInitPlan(projectDir, {
+			packageManager: "npm",
+		});
+		const appliedPlan = await applyInitPlan(projectDir, {
+			packageManager: "npm",
+		});
+		const packageJson = JSON.parse(
+			fs.readFileSync(path.join(projectDir, "package.json"), "utf8"),
+		) as {
+			packageManager?: string;
+		};
+
+		expect(previewPlan.packageChanges.packageManagerField).toEqual(
+			expect.objectContaining({
+				action: "update",
+				currentValue: "bun@1.3.11",
+				requiredValue: "npm@11.6.1",
+			}),
+		);
+		expect(appliedPlan.packageManager).toBe("npm");
+		expect(packageJson.packageManager).toBe("npm@11.6.1");
+	});
+
 	test("applies retrofit helper files and preserves legacy root block paths", async () => {
 		const projectDir = path.join(tempRoot, "retrofit-legacy-root");
 		scaffoldRetrofitProject(projectDir, {
@@ -236,10 +269,40 @@ describe("wp-typia init", () => {
 		}
 	});
 
+	test("resolves official workspace package-manager guidance from the workspace root", async () => {
+		const projectDir = path.join(tempRoot, "workspace-init-package-manager");
+		await scaffoldOfficialWorkspace(projectDir);
+		const packageJsonPath = path.join(projectDir, "package.json");
+		const packageJson = JSON.parse(
+			fs.readFileSync(packageJsonPath, "utf8"),
+		) as Record<string, unknown>;
+		fs.writeFileSync(
+			packageJsonPath,
+			`${JSON.stringify(
+				{
+					...packageJson,
+					packageManager: "bun@1.3.11",
+				},
+				null,
+				2,
+			)}\n`,
+			"utf8",
+		);
+
+		const plan = getInitPlan(path.join(projectDir, "src"));
+
+		expect(plan.projectDir).toBe(projectDir);
+		expect(plan.packageManager).toBe("bun");
+		expect(plan.nextSteps).toContain("bun run sync");
+		expect(plan.nextSteps).toContain(
+			`bunx wp-typia@${wpTypiaPackageManifest.version} doctor`,
+		);
+	});
+
 	test("reports already-initialized projects without planning redundant changes", () => {
 		const projectDir = path.join(tempRoot, "retrofit-already-initialized");
 		const versions = getPackageVersions();
-		fs.mkdirSync(projectDir, { recursive: true });
+		fs.mkdirSync(path.join(projectDir, "scripts"), { recursive: true });
 		fs.writeFileSync(
 			path.join(projectDir, "package.json"),
 			`${JSON.stringify(
@@ -263,6 +326,21 @@ describe("wp-typia init", () => {
 				null,
 				2,
 			)}\n`,
+			"utf8",
+		);
+		fs.writeFileSync(
+			path.join(projectDir, "scripts", "block-config.ts"),
+			"export const BLOCKS = [];\n",
+			"utf8",
+		);
+		fs.writeFileSync(
+			path.join(projectDir, "scripts", "sync-project.ts"),
+			"export {};\n",
+			"utf8",
+		);
+		fs.writeFileSync(
+			path.join(projectDir, "scripts", "sync-types-to-block-json.ts"),
+			"export {};\n",
 			"utf8",
 		);
 
