@@ -114,7 +114,7 @@ function resolveAdminViewDataViewsPackageManifest(): PackageManifestSummary | un
 
 function isAdminViewDataViewsPackagePublished(): boolean {
 	const packageJson = resolveAdminViewDataViewsPackageManifest();
-	return packageJson?.private === false;
+	return packageJson !== undefined && packageJson.private !== true;
 }
 
 function assertAdminViewPackageAvailability(): void {
