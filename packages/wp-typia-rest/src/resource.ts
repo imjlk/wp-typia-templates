@@ -281,6 +281,17 @@ export type RestResource<
   RestResourceUpdateMethods<TEndpoints> &
   RestResourceDeleteMethods<TEndpoints>;
 
+type RestResourceWithListQuery<
+  TEndpoints extends RestResourceEndpointSet,
+  TIdField extends string | undefined,
+  TListQuerySource,
+> = RestResource<TEndpoints, TIdField, TListQuerySource> & {
+  listQuery: RestResourceListQueryBridge<
+    TListQuerySource,
+    EndpointRequest<RestResourceEndpointForKey<TEndpoints, 'list'>>
+  >;
+};
+
 function createResourceMethod<Req, Res>(endpoint: ApiEndpoint<Req, Res>) {
   return (request: Req, options?: EndpointCallOptions) =>
     callEndpoint(endpoint, request, options);
@@ -292,21 +303,36 @@ export function defineRestResourceListQuery<TSource, TRequest>(
   return { toRequest };
 }
 
-export function toRestResourceListRequest<TSource, TRequest, TResponse>(
-  resource: RestResourceWithList<TRequest, TResponse> & {
-    listQuery?: RestResourceListQueryBridge<TSource, TRequest>;
-  },
+export function toRestResourceListRequest<
+  TSource,
+  TEndpoints extends RestResourceEndpointSet,
+  TIdField extends string | undefined,
+>(
+  resource: RestResourceWithListQuery<TEndpoints, TIdField, TSource>,
   source: TSource,
-): TRequest {
-  if (!resource.listQuery) {
-    throw new Error(
-      'toRestResourceListRequest requires the resource to define listQuery.',
-    );
-  }
-
+): EndpointRequest<RestResourceEndpointForKey<TEndpoints, 'list'>> {
   return resource.listQuery.toRequest(source);
 }
 
+export function defineRestResource<
+  TEndpoints extends RestResourceEndpointSet,
+  TIdField extends string | undefined = string | undefined,
+  TListQuerySource = never,
+>(
+  definition: RestResourceDefinition<TEndpoints, TIdField, TListQuerySource> & {
+    listQuery: RestResourceListQueryBridge<
+      TListQuerySource,
+      EndpointRequest<RestResourceEndpointForKey<TEndpoints, 'list'>>
+    >;
+  },
+): RestResourceWithListQuery<TEndpoints, TIdField, TListQuerySource>;
+export function defineRestResource<
+  TEndpoints extends RestResourceEndpointSet,
+  TIdField extends string | undefined = string | undefined,
+  TListQuerySource = never,
+>(
+  definition: RestResourceDefinition<TEndpoints, TIdField, TListQuerySource>,
+): RestResource<TEndpoints, TIdField, TListQuerySource>;
 export function defineRestResource<
   TEndpoints extends RestResourceEndpointSet,
   TIdField extends string | undefined = string | undefined,
