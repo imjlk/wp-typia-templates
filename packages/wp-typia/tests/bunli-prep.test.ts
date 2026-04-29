@@ -119,6 +119,10 @@ describe('wp-typia Bunli preparation', () => {
       path.join(packageRoot, 'bin', 'wp-typia.js'),
       'utf8',
     );
+    const runtimeRoutingSource = fs.readFileSync(
+      path.join(packageRoot, 'bin', 'runtime-routing.js'),
+      'utf8',
+    );
 
     expect(fullRuntimeCommands).toEqual(
       Array.from(WP_TYPIA_BUN_REQUIRED_TOP_LEVEL_COMMAND_NAMES),
@@ -130,7 +134,8 @@ describe('wp-typia Bunli preparation', () => {
     expect(binEntrypointSource).toMatch(
       /from ['"]\.\/routing-metadata\.generated\.js['"]/,
     );
-    expect(binEntrypointSource).toMatch(/from ['"]\.\/argv-walker\.js['"]/);
+    expect(binEntrypointSource).toMatch(/from ['"]\.\/runtime-routing\.js['"]/);
+    expect(runtimeRoutingSource).toMatch(/from ['"]\.\/argv-walker\.js['"]/);
     expect(binEntrypointSource).not.toContain(
       'const fullRuntimeCommands = new Set([',
     );

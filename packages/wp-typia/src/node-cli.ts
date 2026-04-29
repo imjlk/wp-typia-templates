@@ -14,7 +14,6 @@ import {
   DOCTOR_OPTION_METADATA,
   extractKnownOptionValuesFromArgv,
   formatNodeFallbackOptionHelp,
-  GLOBAL_OPTION_METADATA,
   INIT_OPTION_METADATA,
   MIGRATE_OPTION_METADATA,
   parseCommandArgvWithMetadata,
@@ -472,7 +471,7 @@ const NODE_FALLBACK_COMMAND_DISPATCHERS = {
     await executeAddCommand({
       cwd,
       flags: mergedFlags,
-      interactive: false,
+      interactive: undefined,
       kind: positionals[1],
       name: positionals[2],
     });
@@ -499,7 +498,7 @@ const NODE_FALLBACK_COMMAND_DISPATCHERS = {
         cwd,
         emitOutput: mergedFlags.format !== 'json',
         flags: mergedFlags,
-        interactive: false,
+        interactive: mergedFlags.format === 'json' ? false : undefined,
         projectDir,
       });
     } catch (error) {

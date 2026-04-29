@@ -7,6 +7,11 @@ export const fullRuntimeCommands = Object.freeze([
   'completions',
   'complete',
 ]);
+export const interactiveRuntimeCommands = Object.freeze([
+  'create',
+  'add',
+  'migrate',
+]);
 export const longValueOptions = Object.freeze([
   '--alternate-render-targets',
   '--anchor',
@@ -40,5 +45,20 @@ export const longValueOptions = Object.freeze([
   '--to',
   '--to-migration-version',
   '--variant',
+]);
+export const reservedCommands = Object.freeze([
+  'create',
+  'init',
+  'sync',
+  'add',
+  'migrate',
+  'templates',
+  'doctor',
+  'mcp',
+  'help',
+  'version',
+  'skills',
+  'completions',
+  'complete',
 ]);
 export const shortValueOptions = Object.freeze(['-c', '-p', '-t']);

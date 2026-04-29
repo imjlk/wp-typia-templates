@@ -7,10 +7,15 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 
 import {
   fullRuntimeCommands,
+  interactiveRuntimeCommands,
   longValueOptions,
+  reservedCommands,
   shortValueOptions,
 } from './routing-metadata.generated.js';
-import { findFirstPositional } from './argv-walker.js';
+import {
+  getRuntimeRoutingInvocation,
+  shouldRouteToFullRuntime,
+} from './runtime-routing.js';
 
 const packageRoot = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
@@ -20,7 +25,9 @@ const cliEntrypoint = path.join(packageRoot, 'dist-bunli', 'cli.js');
 const nodeCliEntrypoint = path.join(packageRoot, 'dist-bunli', 'node-cli.js');
 const bunBinary = process.env.BUN_BIN || 'bun';
 const fullRuntimeCommandSet = new Set(fullRuntimeCommands);
+const interactiveRuntimeCommandSet = new Set(interactiveRuntimeCommands);
 const longValueOptionSet = new Set(longValueOptions);
+const reservedCommandSet = new Set(reservedCommands);
 const shortValueOptionSet = new Set(shortValueOptions);
 const buildScriptEntrypoint = path.join(
   packageRoot,
@@ -69,17 +76,29 @@ function ensureBuiltRuntime() {
 }
 
 const argv = process.argv.slice(2);
-const command = findFirstPositional(argv, {
+const { command } = getRuntimeRoutingInvocation(argv, {
   longValueOptions: longValueOptionSet,
+  reservedCommands: reservedCommandSet,
   shortValueOptions: shortValueOptionSet,
 });
-const shouldUseFullRuntime = command
+const commandRequiresFullRuntime = command
   ? fullRuntimeCommandSet.has(command)
   : false;
 const hasBuiltRuntime = ensureBuiltRuntime();
 const hasWorkingBun = isWorkingBunBinary();
+const shouldUseFullRuntime = shouldRouteToFullRuntime({
+  argv,
+  fullRuntimeCommands: fullRuntimeCommandSet,
+  hasBuiltRuntime,
+  hasWorkingBun,
+  interactiveRuntimeCommands: interactiveRuntimeCommandSet,
+  longValueOptions: longValueOptionSet,
+  reservedCommands: reservedCommandSet,
+  shortValueOptions: shortValueOptionSet,
+});
 
-// Keep common help on the human-readable Node fallback even when Bun is present.
+// Keep common help and explicit non-TUI calls on the human-readable Node fallback
+// even when Bun is present.
 if (hasWorkingBun && hasBuiltRuntime && shouldUseFullRuntime) {
   const result = spawnSync(bunBinary, [cliEntrypoint, ...argv], {
     cwd: process.cwd(),
@@ -89,7 +108,7 @@ if (hasWorkingBun && hasBuiltRuntime && shouldUseFullRuntime) {
   process.exit(result.status ?? 1);
 }
 
-if (shouldUseFullRuntime) {
+if (commandRequiresFullRuntime) {
   if (!hasBuiltRuntime) {
     console.error(
       'Error: wp-typia could not locate its built CLI runtime. Reinstall the published package, or run `bun run build` when using a source checkout.',

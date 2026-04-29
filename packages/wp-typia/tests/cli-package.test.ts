@@ -10,6 +10,14 @@ import {
 } from '../src/command-contract';
 import { formatAddKindUsagePlaceholder } from '../src/add-kind-registry';
 import {
+  fullRuntimeCommands,
+  interactiveRuntimeCommands,
+  longValueOptions,
+  reservedCommands,
+  shortValueOptions,
+} from '../bin/routing-metadata.generated.js';
+import { shouldRouteToFullRuntime } from '../bin/runtime-routing.js';
+import {
   hasFlagBeforeTerminator,
   parseGlobalFlags,
   runNodeCli,
@@ -116,6 +124,30 @@ function withoutLocalBunEnv(): NodeJS.ProcessEnv {
     BUN_BIN: path.join(os.tmpdir(), 'wp-typia-missing-bun'),
     PATH: path.dirname(process.execPath),
   };
+}
+
+function shouldRouteTestInvocationToFullRuntime(
+  argv: string[],
+  options: {
+    hasBuiltRuntime?: boolean;
+    hasWorkingBun?: boolean;
+    isTTY?: boolean;
+    term?: string;
+  } = {},
+): boolean {
+  return shouldRouteToFullRuntime({
+    argv,
+    fullRuntimeCommands,
+    hasBuiltRuntime: options.hasBuiltRuntime ?? true,
+    hasWorkingBun: options.hasWorkingBun ?? true,
+    interactiveRuntimeCommands,
+    longValueOptions,
+    reservedCommands,
+    shortValueOptions,
+    stdin: { isTTY: options.isTTY ?? true },
+    stdout: { isTTY: options.isTTY ?? true },
+    term: options.term ?? 'xterm-256color',
+  });
 }
 
 function createSyncFixture(options: {
@@ -340,6 +372,72 @@ describe('wp-typia package', () => {
     expect(nodeCliSource).not.toMatch(/process\.exit\s*\(\s*1\s*\)/);
     expect(cliSource).toContain('process.exitCode = 1');
     expect(cliSource).not.toMatch(/process\.exit\s*\(\s*1\s*\)/);
+  });
+
+  test('routes interactive create/add/migrate invocations to the Bunli runtime when Bun and a TTY are available', () => {
+    expect(shouldRouteTestInvocationToFullRuntime(['create'])).toBe(true);
+    expect(shouldRouteTestInvocationToFullRuntime(['create', '--dry-run'])).toBe(
+      true,
+    );
+    expect(shouldRouteTestInvocationToFullRuntime(['add'])).toBe(true);
+    expect(shouldRouteTestInvocationToFullRuntime(['migrate'])).toBe(true);
+    expect(shouldRouteTestInvocationToFullRuntime(['demo-block'])).toBe(true);
+    expect(shouldRouteTestInvocationToFullRuntime(['mcp', 'list'])).toBe(true);
+
+    expect(
+      shouldRouteTestInvocationToFullRuntime(['create'], {
+        hasWorkingBun: false,
+      }),
+    ).toBe(false);
+    expect(
+      shouldRouteTestInvocationToFullRuntime(['create'], {
+        hasBuiltRuntime: false,
+      }),
+    ).toBe(false);
+    expect(
+      shouldRouteTestInvocationToFullRuntime(['create'], {
+        isTTY: false,
+      }),
+    ).toBe(false);
+    expect(
+      shouldRouteTestInvocationToFullRuntime(['create'], {
+        term: 'dumb',
+      }),
+    ).toBe(false);
+    expect(shouldRouteTestInvocationToFullRuntime(['create', '--help'])).toBe(
+      false,
+    );
+    expect(shouldRouteTestInvocationToFullRuntime(['create', '-h'])).toBe(
+      false,
+    );
+    expect(
+      shouldRouteTestInvocationToFullRuntime([
+        'create',
+        '--help=false',
+        '--help',
+      ]),
+    ).toBe(false);
+    expect(
+      shouldRouteTestInvocationToFullRuntime([
+        'create',
+        'demo-block',
+        '--format',
+        'json',
+      ]),
+    ).toBe(false);
+    expect(
+      shouldRouteTestInvocationToFullRuntime([
+        'create',
+        'demo-block',
+        '--yes',
+      ]),
+    ).toBe(false);
+    expect(
+      shouldRouteTestInvocationToFullRuntime(['create', 'demo-block', '-y']),
+    ).toBe(false);
+    expect(shouldRouteTestInvocationToFullRuntime(['temlates', 'list'])).toBe(
+      false,
+    );
   });
 
   test('renders help output through the canonical bin', () => {
