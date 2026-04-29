@@ -57,7 +57,9 @@ async function importTranspiledTypeScriptModule(modulePath) {
 
 function renderRoutingMetadataFiles({
   fullRuntimeCommands,
+  interactiveRuntimeCommands,
   longValueOptions,
+  reservedCommands,
   shortValueOptions,
 }) {
   const renderStringArray = (values) => {
@@ -77,8 +79,14 @@ function renderRoutingMetadataFiles({
 export const fullRuntimeCommands = Object.freeze(${renderStringArray(
     fullRuntimeCommands,
   )});
+export const interactiveRuntimeCommands = Object.freeze(${renderStringArray(
+    interactiveRuntimeCommands,
+  )});
 export const longValueOptions = Object.freeze(${renderStringArray(
     longValueOptions,
+  )});
+export const reservedCommands = Object.freeze(${renderStringArray(
+    reservedCommands,
   )});
 export const shortValueOptions = Object.freeze(${renderStringArray(
     shortValueOptions,
@@ -88,7 +96,9 @@ export const shortValueOptions = Object.freeze(${renderStringArray(
 // Do not edit directly.
 
 export declare const fullRuntimeCommands: readonly string[];
+export declare const interactiveRuntimeCommands: readonly string[];
 export declare const longValueOptions: readonly string[];
+export declare const reservedCommands: readonly string[];
 export declare const shortValueOptions: readonly string[];
 `;
 
@@ -107,7 +117,11 @@ function failCheck(pathname) {
 
 const [
   { COMMAND_ROUTING_METADATA },
-  { WP_TYPIA_BUN_REQUIRED_TOP_LEVEL_COMMAND_NAMES },
+  {
+    WP_TYPIA_BUN_REQUIRED_TOP_LEVEL_COMMAND_NAMES,
+    WP_TYPIA_INTERACTIVE_RUNTIME_TOP_LEVEL_COMMAND_NAMES,
+    WP_TYPIA_RESERVED_TOP_LEVEL_COMMAND_NAMES,
+  },
 ] = await Promise.all([
   importTranspiledTypeScriptModule(commandOptionMetadataModulePath),
   importTranspiledTypeScriptModule(commandRegistryModulePath),
@@ -117,7 +131,11 @@ const renderedFiles = renderRoutingMetadataFiles({
   fullRuntimeCommands: Array.from(
     WP_TYPIA_BUN_REQUIRED_TOP_LEVEL_COMMAND_NAMES,
   ),
+  interactiveRuntimeCommands: Array.from(
+    WP_TYPIA_INTERACTIVE_RUNTIME_TOP_LEVEL_COMMAND_NAMES,
+  ),
   longValueOptions: COMMAND_ROUTING_METADATA.longValueOptions,
+  reservedCommands: Array.from(WP_TYPIA_RESERVED_TOP_LEVEL_COMMAND_NAMES),
   shortValueOptions: COMMAND_ROUTING_METADATA.shortValueOptions,
 });
 

@@ -10,6 +10,7 @@ export const WP_TYPIA_COMMAND_REGISTRY = [
   {
     commandTree: true,
     description: 'Scaffold a new wp-typia project.',
+    interactiveRuntime: true,
     name: 'create',
     nodeFallback: true,
     optionGroups: ['create'],
@@ -36,6 +37,7 @@ export const WP_TYPIA_COMMAND_REGISTRY = [
   {
     commandTree: true,
     description: 'Extend an official wp-typia workspace.',
+    interactiveRuntime: true,
     name: 'add',
     nodeFallback: true,
     optionGroups: ['add'],
@@ -55,6 +57,7 @@ export const WP_TYPIA_COMMAND_REGISTRY = [
   {
     commandTree: true,
     description: 'Run migration workflows.',
+    interactiveRuntime: true,
     name: 'migrate',
     nodeFallback: true,
     optionGroups: ['migrate'],
@@ -149,6 +152,10 @@ export type WpTypiaNodeFallbackCommandName = Extract<
   WpTypiaCommandRegistryEntry,
   { nodeFallback: true }
 >['name'];
+export type WpTypiaInteractiveRuntimeCommandName = Extract<
+  WpTypiaCommandRegistryEntry,
+  { interactiveRuntime: true }
+>['name'];
 export type WpTypiaTopLevelCommandName = WpTypiaCommandTreeEntry['name'];
 
 export const WP_TYPIA_RESERVED_TOP_LEVEL_COMMAND_NAMES =
@@ -160,6 +167,18 @@ export const WP_TYPIA_NODE_FALLBACK_TOP_LEVEL_COMMAND_NAMES =
   WP_TYPIA_COMMAND_REGISTRY.filter((command) => command.nodeFallback).map(
     (command) => command.name,
   ) as readonly WpTypiaNodeFallbackCommandName[];
+
+export const WP_TYPIA_INTERACTIVE_RUNTIME_TOP_LEVEL_COMMAND_NAMES =
+  WP_TYPIA_COMMAND_REGISTRY.filter(
+    (
+      command,
+    ): command is Extract<
+      WpTypiaCommandRegistryEntry,
+      { interactiveRuntime: true }
+    > => 'interactiveRuntime' in command && command.interactiveRuntime,
+  ).map(
+    (command) => command.name,
+  ) as readonly WpTypiaInteractiveRuntimeCommandName[];
 
 export const WP_TYPIA_TOP_LEVEL_COMMAND_NAMES =
   WP_TYPIA_COMMAND_REGISTRY.filter((command) => command.commandTree).map(
