@@ -187,6 +187,17 @@ export function buildInteractivityTypesSource(
 				],
 				name: `${variables.pascalCase}Context`,
 			},
+			{
+				members: [
+					{ name: "clicks", typeExpression: "number" },
+					{ name: "isAnimating", typeExpression: "boolean" },
+					{ name: "isVisible", typeExpression: "boolean" },
+					{ name: "progress", typeExpression: "number" },
+					{ name: "clampedClicks", typeExpression: "number" },
+					{ name: "isComplete", typeExpression: "boolean" },
+				],
+				name: `${variables.pascalCase}State`,
+			},
 		],
 		typeAliases: [
 			{

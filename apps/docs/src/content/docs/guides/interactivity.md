@@ -19,26 +19,56 @@ npx wp-typia my-interactive-block --template interactivity --package-manager npm
 
 ## Where the behavior lives
 
-- `src/view.ts` defines the Interactivity API store
+- `src/interactivity.ts` defines the Interactivity API store runtime
+- `src/interactivity-store.ts` adds optional typed directive/store helpers on top of the official API
 - `block.json` wires the frontend module
-- `src/types.ts` still drives `block.json` and `typia.manifest.json`
+- `src/types.ts` still drives `block.json`, `typia.manifest.json`, and the generated Interactivity context/state types
+
+The helper layer does not replace `@wordpress/interactivity`. It keeps the
+official `store()`, `getContext()`, and `data-wp-*` model visible while letting
+generated projects opt into typed directive strings such as action, state,
+callback, and context paths.
 
 ## Example
 
 ```ts
 import { store } from '@wordpress/interactivity';
+import { counterStore } from './interactivity-store';
 
-const { state, actions } = store('my-plugin/my-block', {
-  state: {
-    isOpen: false,
-  },
+const context = counterStore.createContext({
+  clicks: 0,
+  isAnimating: false,
+  isVisible: true,
+  animation: 'none',
+  maxClicks: 3,
+});
+
+const directiveMap = {
+  interactive: counterStore.directive.interactive,
+  context: JSON.stringify(context),
+  onClick: counterStore.directive.action('handleClick'),
+  hidden: counterStore.directive.negate(
+    counterStore.directive.state('isVisible'),
+  ),
+  text: counterStore.directive.state('clicks'),
+};
+
+store(counterStore.namespace, {
   actions: {
-    toggle() {
-      state.isOpen = !state.isOpen;
+    handleClick() {},
+  },
+  callbacks: counterStore.callbacks,
+  state: {
+    get clicks() {
+      return 0;
     },
   },
 });
 ```
+
+The generated helper also supports `directive.callback('init')` and
+`directive.context('clicks')` when a project wants typed callback or context
+paths without replacing direct `data-wp-*` usage.
 
 ## When to reach for the reference app instead
 

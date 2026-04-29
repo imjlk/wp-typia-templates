@@ -674,6 +674,10 @@ describe('@wp-typia/project-tools scaffold core', () => {
         path.join(targetDir, 'src', 'interactivity.ts'),
         'utf8',
       );
+      const generatedInteractivityStore = fs.readFileSync(
+        path.join(targetDir, 'src', 'interactivity-store.ts'),
+        'utf8',
+      );
       const generatedManifest = JSON.parse(
         fs.readFileSync(
           path.join(targetDir, 'src', 'typia.manifest.json'),
@@ -765,6 +769,7 @@ describe('@wp-typia/project-tools scaffold core', () => {
         generatedManifest.attributes.clickCount.typia.constraints.typeTag,
       ).toBe('uint32');
       expect(generatedTypes).toContain('ValidationResult');
+      expect(generatedTypes).toContain('export interface DemoInteractivityState');
       expect(generatedHooks).toContain('useTypiaValidation');
       expect(generatedHooks).toContain('createUseTypiaValidationHook');
       expect(generatedValidators).toContain('from "./validator-toolkit"');
@@ -779,6 +784,9 @@ describe('@wp-typia/project-tools scaffold core', () => {
       expect(generatedEdit).toContain('@wp-typia/block-runtime/inspector');
       expect(generatedEdit).toContain(
         "import type { BlockEditProps } from '@wp-typia/block-types/blocks/registration';",
+      );
+      expect(generatedEdit).toContain(
+        "import { demoInteractivityStore } from './interactivity-store';",
       );
       expect(generatedEdit).toContain(
         'type EditProps = BlockEditProps<DemoInteractivityAttributes>;',
@@ -813,9 +821,21 @@ describe('@wp-typia/project-tools scaffold core', () => {
         'wp-block-demo-space-demo-interactivity__content',
       );
       expect(generatedEdit).toContain(
-        'data-wp-class--is-active="state.isAnimating"',
+        "const isAnimatingDirective = demoInteractivityStore.directive.state('isAnimating');",
       );
       expect(generatedEdit).not.toContain('data-wp-class="is-active"');
+      expect(generatedEdit).toContain(
+        "const clicksDirective = demoInteractivityStore.directive.state('clicks');",
+      );
+      expect(generatedEdit).toContain(
+        'data-wp-text={clicksDirective}',
+      );
+      expect(generatedEdit).toContain(
+        'data-wp-class--is-active={isAnimatingDirective}',
+      );
+      expect(generatedEdit).toContain(
+        "data-wp-on--click={isPreviewing ? demoInteractivityStore.directive.action('handleClick') : undefined}",
+      );
       expect(generatedValidators).toContain('from "./validator-toolkit"');
       expect(generatedBlockMetadata).toContain(
         'defineScaffoldBlockMetadata(rawMetadata)',
@@ -847,11 +867,19 @@ describe('@wp-typia/project-tools scaffold core', () => {
       expect(generatedInteractivity).not.toContain('onInteraction:');
       expect(generatedInteractivity).not.toContain('onDestroy:');
       expect(generatedInteractivity).toContain(
-        "import type { DemoInteractivityContext } from './types';",
+        "import {\n  demoInteractivityStore,\n  type DemoInteractivityStoreActions,\n} from './interactivity-store';",
+      );
+      expect(generatedInteractivity).toContain(
+        "import type { DemoInteractivityContext, DemoInteractivityState } from './types';",
       );
       expect(generatedInteractivity).toContain(
         'return getContext<DemoInteractivityContext>();',
       );
+      expect(generatedInteractivity).toContain('const actions: DemoInteractivityStoreActions = {');
+      expect(generatedInteractivity).toContain('const state = {');
+      expect(generatedInteractivity).toContain('} satisfies DemoInteractivityState;');
+      expect(generatedInteractivity).toContain('store(demoInteractivityStore.namespace, {');
+      expect(generatedInteractivity).toContain('callbacks: demoInteractivityStore.callbacks,');
       expect(generatedInteractivity).toContain('withSyncEvent');
       expect(generatedInteractivity).toContain('reset: withSyncEvent');
       expect(generatedInteractivity).toContain('event.stopPropagation();');
@@ -890,6 +918,9 @@ describe('@wp-typia/project-tools scaffold core', () => {
       expect(generatedSave).not.toContain('autoPlayInterval');
       expect(generatedSave).not.toContain('lastInteraction');
       expect(generatedSave).toContain("import { __ } from '@wordpress/i18n';");
+      expect(generatedSave).toContain(
+        "import { demoInteractivityStore } from './interactivity-store';",
+      );
       expect(generatedSave).toContain("__( 'Clicks:', 'demo-interactivity' )");
       expect(generatedSave).toContain(
         "aria-label={ __( 'Click progress', 'demo-interactivity' ) }",
@@ -903,7 +934,7 @@ describe('@wp-typia/project-tools scaffold core', () => {
       expect(generatedSave).toContain('className="screen-reader-text"');
       expect(generatedSave).toContain('role="progressbar"');
       expect(generatedSave).toContain(
-        'data-wp-bind--aria-valuenow="state.clampedClicks"',
+        "const clampedClicksDirective = demoInteractivityStore.directive.state('clampedClicks');",
       );
       expect(generatedSave).toContain('role="status"');
       expect(generatedSave).toContain('aria-live="polite"');
@@ -915,9 +946,27 @@ describe('@wp-typia/project-tools scaffold core', () => {
         'wp-block-demo-space-demo-interactivity__content',
       );
       expect(generatedSave).toContain(
-        'data-wp-class--is-active="state.isAnimating"',
+        "const isAnimatingDirective = demoInteractivityStore.directive.state('isAnimating');",
       );
       expect(generatedSave).not.toContain('data-wp-class="is-active"');
+      expect(generatedSave).toContain(
+        "const clickActionDirective = demoInteractivityStore.directive.action('handleClick');",
+      );
+      expect(generatedSave).toContain(
+        "const visibilityHiddenDirective = demoInteractivityStore.directive.negate(",
+      );
+      expect(generatedSave).toContain(
+        'data-wp-bind--aria-valuenow={clampedClicksDirective}',
+      );
+      expect(generatedSave).toContain(
+        'data-wp-class--is-active={isAnimatingDirective}',
+      );
+      expect(generatedSave).toContain(
+        'data-wp-on--click={clickActionDirective}',
+      );
+      expect(generatedSave).toContain(
+        'data-wp-bind--hidden={visibilityHiddenDirective}',
+      );
       expect(generatedSave).not.toContain(
         'data-wp-text="state.clicks"\n              aria-live=',
       );
@@ -930,6 +979,69 @@ describe('@wp-typia/project-tools scaffold core', () => {
       );
       expect(generatedEditorStyle).toContain(
         '.wp-block-demo-space-demo-interactivity',
+      );
+      expect(generatedInteractivityStore).toContain('export function defineInteractivityStore<');
+      expect(generatedInteractivityStore).toContain('action<Key extends InteractivityMethodKey<Actions>>');
+      expect(generatedInteractivityStore).toContain('callback<Key extends InteractivityMethodKey<Callbacks>>');
+      expect(generatedInteractivityStore).toContain('negate<Path extends string>(');
+      expect(generatedInteractivityStore).toContain('export interface DemoInteractivityStoreActions');
+      expect(generatedInteractivityStore).toContain('export interface DemoInteractivityStoreCallbacks {}');
+      expect(generatedInteractivityStore).toContain(
+        "export const demoInteractivityStore = defineInteractivityStore({",
+      );
+      fs.writeFileSync(
+        path.join(targetDir, 'src', 'interactivity-directive-typing.ts'),
+        `import {
+  defineInteractivityStore,
+  demoInteractivityStore,
+} from './interactivity-store';
+import type {
+  DemoInteractivityContext,
+  DemoInteractivityState,
+} from './types';
+
+void demoInteractivityStore.directive.action('handleClick');
+void demoInteractivityStore.directive.state('clicks');
+void demoInteractivityStore.directive.context('clicks');
+void demoInteractivityStore.directive.negate(
+  demoInteractivityStore.directive.state('isVisible')
+);
+void demoInteractivityStore.createContext({
+  clicks: 0,
+  isAnimating: false,
+  isVisible: true,
+  animation: 'none',
+  maxClicks: 1,
+});
+
+const customStore = defineInteractivityStore({
+  namespace: 'demo-space/demo-interactivity',
+  state: {} as DemoInteractivityState,
+  context: {} as DemoInteractivityContext,
+  actions: {
+    handleClick() {},
+  },
+  callbacks: {
+    init() {},
+  },
+});
+
+void customStore.directive.callback('init');
+
+// @ts-expect-error invalid generated action key
+demoInteractivityStore.directive.action('missingAction');
+// @ts-expect-error invalid generated state key
+demoInteractivityStore.directive.state('missingState');
+// @ts-expect-error invalid generated context key
+demoInteractivityStore.directive.context('missingContext');
+// @ts-expect-error missing required context field
+demoInteractivityStore.createContext({
+  clicks: 0,
+  isAnimating: false,
+  isVisible: true,
+  animation: 'none',
+});
+`,
       );
       runGeneratedScript(targetDir, 'scripts/sync-types-to-block-json.ts');
       runGeneratedScript(targetDir, 'scripts/sync-types-to-block-json.ts', [
