@@ -339,13 +339,14 @@ export function buildCreateDryRunPayload(
 }
 
 /**
- * Builds the completion payload shown after an init preview succeeds.
+ * Builds the completion payload shown after an init preview or apply succeeds.
  *
- * @param plan Preview-only retrofit init plan for one project directory.
+ * @param plan Retrofit init plan for one project directory.
  * @returns A structured alternate-buffer completion payload.
  */
 export function buildInitCompletionPayload(
   plan: {
+    commandMode: 'apply' | 'preview-only';
     detectedLayout: {
       blockNames: string[];
       description: string;
@@ -371,18 +372,19 @@ export function buildInitCompletionPayload(
       }>;
     };
     plannedFiles: Array<{
+      action: 'add' | 'update';
       path: string;
       purpose: string;
     }>;
     packageManager: PackageManagerId;
     projectDir: string;
     projectName: string;
-    status: 'already-initialized' | 'preview';
+    status: 'already-initialized' | 'applied' | 'preview';
     summary: string;
   },
   markerOptions?: OutputMarkerOptions,
 ): AlternateBufferCompletionPayload {
-  const plannedChanges = [
+  const changeLines = [
     ...plan.packageChanges.addDevDependencies.map(
       (dependency) =>
         `devDependency ${dependency.action} ${dependency.name} -> ${dependency.requiredValue}`,
@@ -397,18 +399,49 @@ export function buildInitCompletionPayload(
         `script ${script.action} ${script.name} -> ${script.requiredValue}`,
     ),
     ...plan.plannedFiles.map(
-      (filePlan) => `file add ${filePlan.path} (${filePlan.purpose})`,
+      (filePlan) =>
+        `file ${filePlan.action} ${filePlan.path} (${filePlan.purpose})`,
     ),
-    ...plan.generatedArtifacts.map(
-      (artifactPath) => `generated artifact ${artifactPath}`,
-    ),
+    ...(plan.commandMode === 'preview-only'
+      ? plan.generatedArtifacts.map(
+          (artifactPath) => `generated artifact ${artifactPath}`,
+        )
+      : []),
   ];
+  const modeLine =
+    plan.commandMode === 'apply'
+      ? plan.status === 'already-initialized'
+        ? 'Mode: apply requested; no files were written because the retrofit surface already existed.'
+        : 'Mode: apply; package.json and retrofit helper files were written.'
+      : 'Mode: preview only; no files were written.';
+  const optionalTitle =
+    plan.commandMode === 'apply'
+      ? `Applied adoption changes (${changeLines.length}):`
+      : `Planned adoption changes (${changeLines.length}):`;
+  const title =
+    plan.status === 'already-initialized'
+      ? formatOutputMarker(
+          'success',
+          `wp-typia init: ${plan.projectName} is already initialized`,
+          markerOptions,
+        )
+      : plan.commandMode === 'apply'
+        ? formatOutputMarker(
+            'success',
+            `Applied retrofit init for ${plan.projectName}`,
+            markerOptions,
+          )
+        : formatOutputMarker(
+            'dryRun',
+            `Retrofit init plan for ${plan.projectName}`,
+            markerOptions,
+          );
 
   return {
     nextSteps: plan.nextSteps,
-    optionalLines: plannedChanges,
+    optionalLines: changeLines,
     optionalNote: plan.summary,
-    optionalTitle: `Planned adoption changes (${plannedChanges.length}):`,
+    optionalTitle,
     summaryLines: [
       `Project directory: ${plan.projectDir}`,
       `Detected layout: ${plan.detectedLayout.description}`,
@@ -416,20 +449,9 @@ export function buildInitCompletionPayload(
         ? [`Block targets: ${plan.detectedLayout.blockNames.join(', ')}`]
         : []),
       `Package manager: ${plan.packageManager}`,
-      'Mode: preview only; no files were written.',
+      modeLine,
     ],
-    title:
-      plan.status === 'already-initialized'
-        ? formatOutputMarker(
-            'success',
-            `wp-typia init: ${plan.projectName} is already initialized`,
-            markerOptions,
-          )
-        : formatOutputMarker(
-            'dryRun',
-            `Retrofit init plan for ${plan.projectName}`,
-            markerOptions,
-          ),
+    title,
     warningLines: plan.notes,
   };
 }

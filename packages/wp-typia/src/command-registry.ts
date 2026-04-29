@@ -17,10 +17,11 @@ export const WP_TYPIA_COMMAND_REGISTRY = [
   },
   {
     commandTree: true,
-    description: 'Preview the minimum retrofit plan for an existing project.',
+    description:
+      'Preview or apply the minimum retrofit plan for an existing project.',
     name: 'init',
     nodeFallback: true,
-    optionGroups: [],
+    optionGroups: ['init'],
     requiresBunRuntime: false,
   },
   {

@@ -46,7 +46,7 @@ const metadata: Record<GeneratedNames, GeneratedCommandMeta> = {
     },
   'init': {
       name: 'init',
-      description: 'Preview the minimum wp-typia retrofit plan for an existing project.',
+      description: 'Preview or apply the minimum wp-typia retrofit plan for an existing project.',
       path: './src/commands/init'
     },
   'mcp': {

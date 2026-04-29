@@ -15,6 +15,7 @@ import {
   extractKnownOptionValuesFromArgv,
   formatNodeFallbackOptionHelp,
   GLOBAL_OPTION_METADATA,
+  INIT_OPTION_METADATA,
   MIGRATE_OPTION_METADATA,
   parseCommandArgvWithMetadata,
   resolveCommandOptionValues,
@@ -244,7 +245,10 @@ function renderInitHelp() {
     '',
     ...NODE_FALLBACK_RUNTIME_SUMMARY_LINES,
     '',
-    'Preview-only retrofit planner for existing WordPress block or plugin projects. No files are written yet.',
+    'Preview-by-default retrofit planner for existing WordPress block or plugin projects. Re-run with --apply to write package.json updates and helper scripts.',
+    '',
+    'Supported flags:',
+    ...formatNodeFallbackOptionHelp(INIT_OPTION_METADATA),
   ]);
 }
 
@@ -535,7 +539,12 @@ const NODE_FALLBACK_COMMAND_DISPATCHERS = {
   }: NodeFallbackDispatchContext) => {
     const plan = await executeInitCommand(
       {
+        apply: Boolean(mergedFlags.apply),
         cwd,
+        packageManager:
+          typeof mergedFlags['package-manager'] === 'string'
+            ? mergedFlags['package-manager']
+            : undefined,
         projectDir: positionals[1],
       },
       {
