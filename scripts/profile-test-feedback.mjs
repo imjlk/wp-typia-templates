@@ -8,6 +8,7 @@ import { fileURLToPath } from 'node:url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const repoRoot = path.resolve(__dirname, '..');
+const PROFILE_OUTPUT_MAX_BUFFER = 64 * 1024 * 1024;
 
 const SUITES = Object.freeze([
   {
@@ -130,6 +131,7 @@ function runSuite(suite) {
       FORCE_COLOR: '0',
       NO_COLOR: '1',
     },
+    maxBuffer: PROFILE_OUTPUT_MAX_BUFFER,
     stdio: ['ignore', 'pipe', 'pipe'],
   });
   const durationMs = performance.now() - startedAt;

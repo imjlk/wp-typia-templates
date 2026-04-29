@@ -54,7 +54,7 @@ way to refresh a local baseline without editing CI.
 
 ### Reference sample
 
-A local profiling run on April 30, 2026 measured:
+A recent local profiling run measured:
 
 - `repo:test:quick` at about `70s`
 - `project-tools:test:quick` at about `283s`
