@@ -43,12 +43,12 @@ const DEFAULT_WP_TYPIA_DATAVIEWS_VERSION = "^0.1.0";
 const DEFAULT_WORDPRESS_DATAVIEWS_VERSION = "^14.1.0";
 const ADMIN_VIEW_ALLOW_UNPUBLISHED_DATAVIEWS_ENV =
 	"WP_TYPIA_ALLOW_UNPUBLISHED_DATAVIEWS";
-const WP_TYPIA_DATAVIEWS_WORKSPACE_PACKAGE_DIR = "wp-typia-dataviews";
+// Lift this gate in the same release that publishes @wp-typia/dataviews.
+const ADMIN_VIEW_PUBLIC_INSTALLS_ENABLED = false;
 
 const require = createRequire(import.meta.url);
 
 interface PackageManifestSummary {
-	private?: boolean;
 	version?: string;
 }
 
@@ -87,41 +87,12 @@ function readPackageManifestVersion(packageJsonPath: string): string | undefined
 	return readPackageManifest(packageJsonPath)?.version;
 }
 
-function readInstalledPackageManifest(packageName: string): PackageManifestSummary | undefined {
-	try {
-		return readPackageManifest(require.resolve(`${packageName}/package.json`));
-	} catch {
-		return undefined;
-	}
-}
-
 function isAdminViewUnpublishedDataViewsOverrideEnabled(): boolean {
 	return process.env[ADMIN_VIEW_ALLOW_UNPUBLISHED_DATAVIEWS_ENV]?.trim() === "1";
 }
 
-function resolveAdminViewDataViewsPackageManifest(): PackageManifestSummary | undefined {
-	return (
-		readPackageManifest(
-			path.join(
-				PROJECT_TOOLS_PACKAGE_ROOT,
-				"..",
-				WP_TYPIA_DATAVIEWS_WORKSPACE_PACKAGE_DIR,
-				"package.json",
-			),
-		) ?? readInstalledPackageManifest("@wp-typia/dataviews")
-	);
-}
-
-function isAdminViewDataViewsPackagePublished(): boolean {
-	const packageJson = resolveAdminViewDataViewsPackageManifest();
-	return packageJson !== undefined && packageJson.private !== true;
-}
-
 function assertAdminViewPackageAvailability(): void {
-	if (
-		isAdminViewUnpublishedDataViewsOverrideEnabled() ||
-		isAdminViewDataViewsPackagePublished()
-	) {
+	if (isAdminViewUnpublishedDataViewsOverrideEnabled() || ADMIN_VIEW_PUBLIC_INSTALLS_ENABLED) {
 		return;
 	}
 
