@@ -121,6 +121,8 @@ Extend an official wp-typia workspace from the workspace root.
 
 ```bash
 wp-typia add block <name> --template basic
+wp-typia add admin-view <name>
+wp-typia add admin-view <name> --source rest-resource:products
 wp-typia add variation <name> --block <block-slug>
 wp-typia add style <name> --block <block-slug>
 wp-typia add transform <name> --from <namespace/block> --to <block-slug|namespace/block-slug>
@@ -141,7 +143,8 @@ Common flags:
 | ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
 | `--template <basic \| interactivity \| persistence \| compound>` | Built-in block family for `add block`.                                                                                          |
 | `--dry-run`                                                      | Preview workspace file updates and completion guidance.                                                                         |
-| `--block <block-slug>`                                           | Target block for variation, style, and binding-source workflows.                                                                |
+| `--block <block-slug>`                                           | Target block for variation, style, and end-to-end binding-source workflows.                                                     |
+| `--attribute <attribute>`                                        | Target block attribute for end-to-end binding-source workflows.                                                                 |
 | `--from <namespace/block>`                                       | Source block name for transform workflows.                                                                                      |
 | `--to <block-slug \| namespace/block-slug>`                      | Target workspace block for transform workflows.                                                                                 |
 | `--anchor <block-name>`                                          | Anchor block for hooked-block workflows.                                                                                        |
@@ -149,6 +152,7 @@ Common flags:
 | `--slot <sidebar \| document-setting-panel>`                     | Editor shell slot for editor-plugin scaffolds; legacy aliases `PluginSidebar` and `PluginDocumentSettingPanel` remain accepted. |
 | `--namespace <vendor/v1>`                                        | REST namespace for REST resource and AI feature workflows.                                                                      |
 | `--methods <method[,method...]>`                                 | REST methods for REST resource workflows.                                                                                       |
+| `--source <locator>`                                             | Optional data source locator for admin-view workflows, such as `rest-resource:products`.                                        |
 | `--external-layer-source <source>`                               | Compose an external layer package on top of a built-in block template.                                                          |
 | `--external-layer-id <id>`                                       | Select a specific external layer.                                                                                               |
 | `--inner-blocks-preset <id>`                                     | Select a compound `InnerBlocks` preset.                                                                                         |
@@ -168,6 +172,15 @@ the document settings sidebar. Existing automation that still passes
 `PluginSidebar` or `PluginDocumentSettingPanel` continues to resolve to the
 matching canonical slot.
 
+Binding-source scaffolds can stop at registration-only wiring, or you can pass
+both `--block` and `--attribute` to connect the source to a generated block
+attribute end to end.
+
+Admin-view scaffolds can optionally bind to a generated data source with
+`--source`. For example, `rest-resource:products` points at a matching
+`wp-typia add rest-resource products` scaffold. Published npm installs
+currently gate `admin-view` scaffolds until `@wp-typia/dataviews` is published.
+
 ## `init`
 
 Preview or apply the minimum adoption plan for an existing project.
@@ -175,15 +188,20 @@ Preview or apply the minimum adoption plan for an existing project.
 ```bash
 wp-typia init [project-dir]
 wp-typia init [project-dir] --apply
+wp-typia init [project-dir] --package-manager <bun|npm|pnpm|yarn>
 wp-typia init [project-dir] --format json
 ```
 
+| Flag                                             | Description                                                                                          |
+| ------------------------------------------------ | ---------------------------------------------------------------------------------------------------- |
+| `--apply`                                        | Write the planned `package.json` updates and retrofit helper files instead of previewing only.       |
+| `--package-manager <bun \| npm \| pnpm \| yarn>` | Package manager to use for emitted scripts and next steps.                                           |
+| `--format json`                                  | Emit the standard CLI success envelope and keep the detailed retrofit plan nested under `data.plan`. |
+
 `init` reports dependency, script, generated artifact, and migration follow-up
-steps for supported single-block and multi-block layouts. `--apply` writes the
-planned `package.json` changes and retrofit helper files with
-rollback-on-failure protection. `--format json` emits the standard CLI success
-envelope (`{ ok: true, data: ... }`) and keeps the detailed init plan nested
-under `data.plan`.
+steps for supported single-block and multi-block layouts. The command previews
+changes by default, and `--apply` switches to rollback-protected writes for
+`package.json` and the generated retrofit helper files.
 
 ## `sync`
 
