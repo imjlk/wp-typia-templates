@@ -87,19 +87,33 @@ function readPackageManifestVersion(packageJsonPath: string): string | undefined
 	return readPackageManifest(packageJsonPath)?.version;
 }
 
+function readInstalledPackageManifest(packageName: string): PackageManifestSummary | undefined {
+	try {
+		return readPackageManifest(require.resolve(`${packageName}/package.json`));
+	} catch {
+		return undefined;
+	}
+}
+
 function isAdminViewUnpublishedDataViewsOverrideEnabled(): boolean {
 	return process.env[ADMIN_VIEW_ALLOW_UNPUBLISHED_DATAVIEWS_ENV]?.trim() === "1";
 }
 
-function isAdminViewDataViewsPackagePublished(): boolean {
-	const packageJson = readPackageManifest(
-		path.join(
-			PROJECT_TOOLS_PACKAGE_ROOT,
-			"..",
-			WP_TYPIA_DATAVIEWS_WORKSPACE_PACKAGE_DIR,
-			"package.json",
-		),
+function resolveAdminViewDataViewsPackageManifest(): PackageManifestSummary | undefined {
+	return (
+		readPackageManifest(
+			path.join(
+				PROJECT_TOOLS_PACKAGE_ROOT,
+				"..",
+				WP_TYPIA_DATAVIEWS_WORKSPACE_PACKAGE_DIR,
+				"package.json",
+			),
+		) ?? readInstalledPackageManifest("@wp-typia/dataviews")
 	);
+}
+
+function isAdminViewDataViewsPackagePublished(): boolean {
+	const packageJson = resolveAdminViewDataViewsPackageManifest();
 	return packageJson?.private === false;
 }
 
