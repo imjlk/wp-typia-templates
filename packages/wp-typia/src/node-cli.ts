@@ -47,6 +47,7 @@ import {
   executeTemplatesCommand,
 } from './runtime-bridge';
 import {
+  buildStructuredInitSuccessPayload,
   buildStructuredCompletionSuccessPayload,
   buildSyncDryRunPayload,
   extractCompletionProjectDir,
@@ -552,13 +553,7 @@ const NODE_FALLBACK_COMMAND_DISPATCHERS = {
     );
     if (mergedFlags.format === 'json') {
       printLine(
-        JSON.stringify(
-          {
-            init: plan,
-          },
-          null,
-          2,
-        ),
+        JSON.stringify(buildStructuredInitSuccessPayload(plan), null, 2),
       );
     }
   },

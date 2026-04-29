@@ -39,6 +39,70 @@ export type StructuredCompletionSuccessPayload = {
   } & Record<string, unknown>;
 };
 
+type InitPlanLayoutKind =
+  | 'generated-project'
+  | 'multi-block'
+  | 'official-workspace'
+  | 'single-block'
+  | 'unsupported';
+
+type StructuredInitPlan = {
+  commandMode: 'apply' | 'preview-only';
+  detectedLayout: {
+    blockNames: string[];
+    description: string;
+    kind: InitPlanLayoutKind;
+  };
+  generatedArtifacts: string[];
+  nextSteps: string[];
+  notes: string[];
+  packageChanges: {
+    addDevDependencies: Array<{
+      action: 'add' | 'update';
+      name: string;
+      requiredValue: string;
+    }>;
+    packageManagerField?: {
+      action: 'add' | 'update';
+      requiredValue: string;
+    };
+    scripts: Array<{
+      action: 'add' | 'update';
+      name: string;
+      requiredValue: string;
+    }>;
+  };
+  plannedFiles: Array<{
+    action: 'add' | 'update';
+    path: string;
+    purpose: string;
+  }>;
+  packageManager: PackageManagerId;
+  projectDir: string;
+  projectName: string;
+  status: 'already-initialized' | 'applied' | 'preview';
+  summary: string;
+};
+
+export type StructuredInitSuccessPayload = {
+  ok: true;
+  data: {
+    command: 'init';
+    completion: SerializableCompletionPayload;
+    detectedLayout: StructuredInitPlan['detectedLayout'];
+    files?: string[];
+    mode: 'apply' | 'preview';
+    nextSteps?: string[];
+    packageManager: PackageManagerId;
+    plan: StructuredInitPlan;
+    projectDir: string;
+    status: StructuredInitPlan['status'];
+    summary: string;
+    title?: string;
+    warnings?: string[];
+  };
+};
+
 export type SerializableCompletionPayload = {
   nextSteps?: string[];
   optionalLines?: string[];
@@ -117,10 +181,14 @@ function toNonEmptyArray(values: string[] | undefined): string[] | undefined {
   return values && values.length > 0 ? values : undefined;
 }
 
-function extractPlannedFiles(payload: SerializableCompletionPayload): string[] | undefined {
+function extractPlannedFiles(
+  payload: SerializableCompletionPayload,
+): string[] | undefined {
   const files = payload.optionalLines
     ?.map((line) => line.match(/^(?:delete|update|write)\s+(.+)$/u)?.[1])
-    .filter((value): value is string => typeof value === 'string' && value.length > 0);
+    .filter(
+      (value): value is string => typeof value === 'string' && value.length > 0,
+    );
 
   return toNonEmptyArray(files);
 }
@@ -201,6 +269,39 @@ export function buildStructuredCompletionSuccessPayload(
             warnings: serializedCompletion.warningLines,
           }
         : {}),
+    },
+  };
+}
+
+export function buildStructuredInitSuccessPayload(
+  plan: StructuredInitPlan,
+): StructuredInitSuccessPayload {
+  const completion = serializeCompletionPayload(
+    buildInitCompletionPayload(plan),
+  );
+  const files = Array.from(
+    new Set([
+      ...plan.plannedFiles.map((filePlan) => filePlan.path),
+      ...(plan.commandMode === 'preview-only' ? plan.generatedArtifacts : []),
+    ]),
+  );
+
+  return {
+    ok: true,
+    data: {
+      command: 'init',
+      completion,
+      detectedLayout: plan.detectedLayout,
+      files: toNonEmptyArray(files),
+      mode: plan.commandMode === 'apply' ? 'apply' : 'preview',
+      nextSteps: toNonEmptyArray(plan.nextSteps),
+      packageManager: plan.packageManager,
+      plan,
+      projectDir: plan.projectDir,
+      status: plan.status,
+      summary: plan.summary,
+      title: completion.title,
+      warnings: toNonEmptyArray(plan.notes),
     },
   };
 }
