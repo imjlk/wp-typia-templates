@@ -32,6 +32,10 @@ import {
 	CLI_DIAGNOSTIC_CODES,
 	createCliDiagnosticCodeError,
 } from "./cli-diagnostics.js";
+import {
+	DEFAULT_WORDPRESS_DATAVIEWS_VERSION,
+	DEFAULT_WP_TYPIA_DATAVIEWS_VERSION,
+} from "./package-versions.js";
 
 const ADMIN_VIEW_SOURCE_KIND = "rest-resource";
 const ADMIN_VIEWS_SCRIPT = "build/admin-views/index.js";
@@ -39,8 +43,6 @@ const ADMIN_VIEWS_ASSET = "build/admin-views/index.asset.php";
 const ADMIN_VIEWS_STYLE = "build/admin-views/style-index.css";
 const ADMIN_VIEWS_STYLE_RTL = "build/admin-views/style-index-rtl.css";
 const ADMIN_VIEWS_PHP_GLOB = "/inc/admin-views/*.php";
-const DEFAULT_WP_TYPIA_DATAVIEWS_VERSION = "^0.1.0";
-const DEFAULT_WORDPRESS_DATAVIEWS_VERSION = "^14.1.0";
 const ADMIN_VIEW_ALLOW_UNPUBLISHED_DATAVIEWS_ENV =
 	"WP_TYPIA_ALLOW_UNPUBLISHED_DATAVIEWS";
 // Lift this gate in the same release that publishes @wp-typia/dataviews.
