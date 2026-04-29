@@ -35,6 +35,17 @@ const DEFAULT_VERSION_RANGE = "^0.0.0";
 const DEFAULT_EXACT_VERSION = "0.0.0";
 const DEFAULT_TSX_PACKAGE_VERSION = "^4.20.5";
 const DEFAULT_TYPIA_UNPLUGIN_PACKAGE_VERSION = "^12.0.1";
+/**
+ * Explicit fallback ranges for managed WordPress-facing workspace dependencies.
+ *
+ * These remain centralized here even when individual scaffold flows resolve a
+ * fresher local or installed manifest version first, so add-command defaults do
+ * not drift across runtime modules.
+ */
+export const DEFAULT_WORDPRESS_ABILITIES_VERSION = "^0.10.0";
+export const DEFAULT_WORDPRESS_CORE_ABILITIES_VERSION = "^0.9.0";
+export const DEFAULT_WORDPRESS_DATAVIEWS_VERSION = "^14.1.0";
+export const DEFAULT_WP_TYPIA_DATAVIEWS_VERSION = "^0.1.0";
 
 let cachedPackageVersions:
 	| {

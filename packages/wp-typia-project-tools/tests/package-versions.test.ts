@@ -125,4 +125,42 @@ describe("package version cache invalidation", () => {
 		expect(result.stdout).toBe("");
 		expect(result.stderr).toBe("");
 	});
+
+	test("centralizes managed workspace dependency fallback ranges", async () => {
+		const packageVersionsModuleUrl = pathToFileURL(
+			path.join(import.meta.dir, "..", "src", "runtime", "package-versions.ts"),
+		).href;
+		const {
+			DEFAULT_WORDPRESS_ABILITIES_VERSION,
+			DEFAULT_WORDPRESS_CORE_ABILITIES_VERSION,
+			DEFAULT_WORDPRESS_DATAVIEWS_VERSION,
+			DEFAULT_WP_TYPIA_DATAVIEWS_VERSION,
+		} = await import(packageVersionsModuleUrl);
+
+		const abilityRuntimeSource = fs.readFileSync(
+			path.join(import.meta.dir, "..", "src", "runtime", "cli-add-workspace-ability.ts"),
+			"utf8",
+		);
+		const adminViewRuntimeSource = fs.readFileSync(
+			path.join(import.meta.dir, "..", "src", "runtime", "cli-add-workspace-admin-view.ts"),
+			"utf8",
+		);
+
+		expect(DEFAULT_WORDPRESS_ABILITIES_VERSION).toBe("^0.10.0");
+		expect(DEFAULT_WORDPRESS_CORE_ABILITIES_VERSION).toBe("^0.9.0");
+		expect(DEFAULT_WORDPRESS_DATAVIEWS_VERSION).toBe("^14.1.0");
+		expect(DEFAULT_WP_TYPIA_DATAVIEWS_VERSION).toBe("^0.1.0");
+		expect(abilityRuntimeSource).not.toContain("const WP_ABILITIES_PACKAGE_VERSION");
+		expect(abilityRuntimeSource).not.toContain(
+			"const WP_CORE_ABILITIES_PACKAGE_VERSION",
+		);
+		expect(adminViewRuntimeSource).not.toContain(
+			"const DEFAULT_WP_TYPIA_DATAVIEWS_VERSION",
+		);
+		expect(adminViewRuntimeSource).not.toContain(
+			"const DEFAULT_WORDPRESS_DATAVIEWS_VERSION",
+		);
+		expect(abilityRuntimeSource).toContain('from "./package-versions.js"');
+		expect(adminViewRuntimeSource).toContain('from "./package-versions.js"');
+	});
 });

@@ -37,14 +37,16 @@ import {
 	type ScaffoldCompatibilityPolicy,
 	updatePluginHeaderCompatibility,
 } from "./scaffold-compatibility.js";
+import {
+	DEFAULT_WORDPRESS_ABILITIES_VERSION,
+	DEFAULT_WORDPRESS_CORE_ABILITIES_VERSION,
+} from "./package-versions.js";
 
 const ABILITY_SERVER_GLOB = "/inc/abilities/*.php";
 const ABILITY_EDITOR_SCRIPT = "build/abilities/index.js";
 const ABILITY_EDITOR_ASSET = "build/abilities/index.asset.php";
 const ABILITY_REGISTRY_END_MARKER = "// wp-typia add ability entries end";
 const ABILITY_REGISTRY_START_MARKER = "// wp-typia add ability entries start";
-const WP_ABILITIES_PACKAGE_VERSION = "^0.10.0";
-const WP_CORE_ABILITIES_PACKAGE_VERSION = "^0.9.0";
 const WP_ABILITIES_SCRIPT_MODULE_ID = "@wordpress/abilities";
 const WP_CORE_ABILITIES_SCRIPT_MODULE_ID = "@wordpress/core-abilities";
 
@@ -775,11 +777,11 @@ async function ensureAbilityPackageScripts(
 		...(packageJson.dependencies ?? {}),
 		[WP_ABILITIES_SCRIPT_MODULE_ID]: resolveManagedDependencyVersion(
 			packageJson.dependencies?.[WP_ABILITIES_SCRIPT_MODULE_ID],
-			WP_ABILITIES_PACKAGE_VERSION,
+			DEFAULT_WORDPRESS_ABILITIES_VERSION,
 		),
 		[WP_CORE_ABILITIES_SCRIPT_MODULE_ID]: resolveManagedDependencyVersion(
 			packageJson.dependencies?.[WP_CORE_ABILITIES_SCRIPT_MODULE_ID],
-			WP_CORE_ABILITIES_PACKAGE_VERSION,
+			DEFAULT_WORDPRESS_CORE_ABILITIES_VERSION,
 		),
 	};
 
