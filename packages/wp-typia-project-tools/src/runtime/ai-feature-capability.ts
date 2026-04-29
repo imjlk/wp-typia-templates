@@ -1,4 +1,7 @@
 /** Declares whether a generated feature is optional or required at runtime. */
+import { pickHigherVersionFloor } from './version-floor.js';
+
+/** Declares whether a generated feature is optional or required at runtime. */
 export type AiFeatureCapabilityMode = 'optional' | 'required';
 
 /** Describes the minimum compatible platform versions for a feature. */
@@ -132,50 +135,6 @@ const DEFAULT_AI_FEATURE_REGISTRY: Readonly<
   accumulator[definition.id] = definition;
   return accumulator;
 }, {});
-
-function parseVersionFloorParts(value: string): number[] {
-  return value.split('.').map((part, index) => {
-    if (!/^\d+$/.test(part)) {
-      throw new Error(
-        `parseVersionFloorParts received an invalid version floor "${value}" at segment ${index + 1}.`,
-      );
-    }
-    return Number.parseInt(part, 10);
-  });
-}
-
-function compareVersionFloors(left: string, right: string): number {
-  const leftParts = parseVersionFloorParts(left);
-  const rightParts = parseVersionFloorParts(right);
-  const length = Math.max(leftParts.length, rightParts.length);
-
-  for (let index = 0; index < length; index += 1) {
-    const leftValue = leftParts[index] ?? 0;
-    const rightValue = rightParts[index] ?? 0;
-    if (leftValue > rightValue) {
-      return 1;
-    }
-    if (leftValue < rightValue) {
-      return -1;
-    }
-  }
-
-  return 0;
-}
-
-function pickHigherVersionFloor(
-  current: string | undefined,
-  candidate: string | undefined,
-): string | undefined {
-  if (!candidate) {
-    return current;
-  }
-  if (!current) {
-    return candidate;
-  }
-
-  return compareVersionFloors(current, candidate) >= 0 ? current : candidate;
-}
 
 function normalizeSelections(
   selections: readonly AiFeatureCapabilitySelection[],

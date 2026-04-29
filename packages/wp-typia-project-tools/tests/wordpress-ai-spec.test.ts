@@ -256,18 +256,111 @@ describe('WordPress AI AbilitySpec foundation', () => {
     ]);
   });
 
+  test('returns an empty AI capability plan when no features are selected', () => {
+    expect(resolveAiFeatureCapabilityPlan([])).toEqual({
+      hardMinimums: {},
+      optionalFeatures: [],
+      requiredFeatures: [],
+    });
+  });
+
+  test('deduplicates repeated feature ids and lets required mode win', () => {
+    const plan = resolveAiFeatureCapabilityPlan([
+      {
+        featureId: AI_FEATURE_DEFINITIONS.wordpressAiClient.id,
+        mode: 'optional',
+      },
+      {
+        featureId: AI_FEATURE_DEFINITIONS.wordpressAiClient.id,
+        mode: 'required',
+      },
+      {
+        featureId: AI_FEATURE_DEFINITIONS.wordpressAiClient.id,
+        mode: 'optional',
+      },
+    ]);
+
+    expect(plan.requiredFeatures.map((feature) => feature.id)).toEqual([
+      AI_FEATURE_DEFINITIONS.wordpressAiClient.id,
+    ]);
+    expect(plan.optionalFeatures).toEqual([]);
+    expect(plan.hardMinimums).toEqual({
+      wordpress: '7.0',
+    });
+  });
+
+  test('picks the highest WordPress and PHP minimums across required AI features only', () => {
+    const plan = resolveAiFeatureCapabilityPlan(
+      [
+        {
+          featureId: 'required-low',
+          mode: 'required',
+        },
+        {
+          featureId: 'required-high',
+          mode: 'required',
+        },
+        {
+          featureId: 'optional-higher',
+          mode: 'optional',
+        },
+      ],
+      {
+        'optional-higher': {
+          description: 'Optional higher floors',
+          id: 'optional-higher',
+          label: 'Optional higher floors',
+          minimumVersions: {
+            php: '8.3',
+            wordpress: '7.2',
+          },
+        },
+        'required-high': {
+          description: 'Required high floors',
+          id: 'required-high',
+          label: 'Required high floors',
+          minimumVersions: {
+            php: '8.1',
+            wordpress: '7.0',
+          },
+        },
+        'required-low': {
+          description: 'Required low floors',
+          id: 'required-low',
+          label: 'Required low floors',
+          minimumVersions: {
+            php: '8.0',
+            wordpress: '6.8',
+          },
+        },
+      },
+    );
+
+    expect(plan.hardMinimums).toEqual({
+      php: '8.1',
+      wordpress: '7.0',
+    });
+    expect(plan.requiredFeatures.map((feature) => feature.id)).toEqual([
+      'required-low',
+      'required-high',
+    ]);
+    expect(plan.optionalFeatures.map((feature) => feature.id)).toEqual([
+      'optional-higher',
+    ]);
+  });
+
   test('maps optional and required AI scaffold compatibility into headers and generated config', () => {
     const optionalPolicy = resolveScaffoldCompatibilityPolicy(
       OPTIONAL_WORDPRESS_AI_CLIENT_COMPATIBILITY,
     );
-    expect(optionalPolicy.pluginHeader).toEqual(
-      DEFAULT_SCAFFOLD_COMPATIBILITY,
-    );
+    expect(optionalPolicy.pluginHeader).toEqual(DEFAULT_SCAFFOLD_COMPATIBILITY);
     expect(createScaffoldCompatibilityConfig(optionalPolicy)).toMatchObject({
       mode: 'optional',
       optionalFeatures: ['WordPress AI Client'],
       requiredFeatures: [],
-      runtimeGates: ['WordPress AI Client: wordpress-core-feature WordPress AI Client'],
+      runtimeGates: [
+        'WordPress AI Client: wordpress-core-feature WordPress AI Client',
+      ],
     });
 
     const requiredPolicy = resolveScaffoldCompatibilityPolicy(
