@@ -29,6 +29,7 @@ import {
 	INTERACTIVITY_INDEX_TEMPLATE,
 	INTERACTIVITY_SAVE_TEMPLATE,
 	INTERACTIVITY_SCRIPT_TEMPLATE,
+	INTERACTIVITY_STORE_TEMPLATE,
 	INTERACTIVITY_VALIDATORS_TEMPLATE,
 	MANIFEST_DEFAULTS_DOCUMENT_WRAPPER_TEMPLATE,
 	MANIFEST_DOCUMENT_WRAPPER_TEMPLATE,
@@ -205,6 +206,10 @@ function buildInteractivityCodeArtifacts(
 				{
 					relativePath: "src/interactivity.ts",
 					template: INTERACTIVITY_SCRIPT_TEMPLATE,
+				},
+				{
+					relativePath: "src/interactivity-store.ts",
+					template: INTERACTIVITY_STORE_TEMPLATE,
 				},
 				{
 					relativePath: "src/validators.ts",
