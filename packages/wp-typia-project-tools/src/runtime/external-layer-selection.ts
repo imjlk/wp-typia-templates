@@ -16,15 +16,22 @@ export interface ResolvedExternalLayerSelection {
 	externalLayerSource?: string;
 }
 
+type ResolveExternalTemplateSeed = typeof resolveTemplateSeed;
+type ListExternalTemplateLayers = typeof listSelectableExternalTemplateLayers;
+
 export async function resolveOptionalInteractiveExternalLayerId({
 	callerCwd,
 	externalLayerId,
 	externalLayerSource,
+	listExternalTemplateLayers = listSelectableExternalTemplateLayers,
+	resolveExternalTemplateSeed = resolveTemplateSeed,
 	selectExternalLayerId,
 }: {
 	callerCwd: string;
 	externalLayerId?: string;
 	externalLayerSource?: string;
+	listExternalTemplateLayers?: ListExternalTemplateLayers;
+	resolveExternalTemplateSeed?: ResolveExternalTemplateSeed;
 	selectExternalLayerId?: (
 		options: ExternalLayerSelectionOption[],
 	) => Promise<string>;
@@ -36,12 +43,12 @@ export async function resolveOptionalInteractiveExternalLayerId({
 		};
 	}
 
-	const layerSeed = await resolveTemplateSeed(
+	const layerSeed = await resolveExternalTemplateSeed(
 		parseTemplateLocator(externalLayerSource),
 		callerCwd,
 	);
 	try {
-		const selectableLayers = await listSelectableExternalTemplateLayers(
+		const selectableLayers = await listExternalTemplateLayers(
 			layerSeed.rootDir,
 		);
 		if (selectableLayers.length <= 1) {
@@ -61,7 +68,6 @@ export async function resolveOptionalInteractiveExternalLayerId({
 			};
 		}
 
-		await layerSeed.cleanup?.();
 		throw new Error(
 			`Unknown external layer "${selectedLayerId}". Expected one of: ${selectableLayers.map((layer) => layer.id).join(", ")}`,
 		);
