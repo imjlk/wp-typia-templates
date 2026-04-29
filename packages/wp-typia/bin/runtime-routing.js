@@ -5,20 +5,22 @@ function normalizeSet(values) {
 }
 
 function hasBooleanFlagBeforeTerminator(argv, longFlag, shortFlag) {
+  let matched = false;
   for (const arg of argv) {
     if (arg === '--') {
-      return false;
+      break;
     }
     if (arg === longFlag || (shortFlag && arg === shortFlag)) {
-      return true;
+      matched = true;
+      continue;
     }
     if (arg.startsWith(`${longFlag}=`)) {
       const value = arg.slice(longFlag.length + 1).toLowerCase();
-      return value !== 'false' && value !== '0' && value !== 'no';
+      matched = value !== 'false' && value !== '0' && value !== 'no';
     }
   }
 
-  return false;
+  return matched;
 }
 
 function hasLongOptionBeforeTerminator(argv, optionName) {

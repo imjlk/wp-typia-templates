@@ -391,6 +391,11 @@ describe('wp-typia package', () => {
     ).toBe(false);
     expect(
       shouldRouteTestInvocationToFullRuntime(['create'], {
+        hasBuiltRuntime: false,
+      }),
+    ).toBe(false);
+    expect(
+      shouldRouteTestInvocationToFullRuntime(['create'], {
         isTTY: false,
       }),
     ).toBe(false);
@@ -405,6 +410,13 @@ describe('wp-typia package', () => {
     expect(shouldRouteTestInvocationToFullRuntime(['create', '-h'])).toBe(
       false,
     );
+    expect(
+      shouldRouteTestInvocationToFullRuntime([
+        'create',
+        '--help=false',
+        '--help',
+      ]),
+    ).toBe(false);
     expect(
       shouldRouteTestInvocationToFullRuntime([
         'create',
