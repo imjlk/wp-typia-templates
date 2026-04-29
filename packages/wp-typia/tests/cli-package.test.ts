@@ -376,9 +376,9 @@ describe('wp-typia package', () => {
 
   test('routes interactive create/add/migrate invocations to the Bunli runtime when Bun and a TTY are available', () => {
     expect(shouldRouteTestInvocationToFullRuntime(['create'])).toBe(true);
-    expect(shouldRouteTestInvocationToFullRuntime(['create', '--dry-run'])).toBe(
-      true,
-    );
+    expect(
+      shouldRouteTestInvocationToFullRuntime(['create', '--dry-run']),
+    ).toBe(true);
     expect(shouldRouteTestInvocationToFullRuntime(['add'])).toBe(true);
     expect(shouldRouteTestInvocationToFullRuntime(['migrate'])).toBe(true);
     expect(shouldRouteTestInvocationToFullRuntime(['demo-block'])).toBe(true);
@@ -426,11 +426,7 @@ describe('wp-typia package', () => {
       ]),
     ).toBe(false);
     expect(
-      shouldRouteTestInvocationToFullRuntime([
-        'create',
-        'demo-block',
-        '--yes',
-      ]),
+      shouldRouteTestInvocationToFullRuntime(['create', 'demo-block', '--yes']),
     ).toBe(false);
     expect(
       shouldRouteTestInvocationToFullRuntime(['create', 'demo-block', '-y']),
@@ -491,27 +487,55 @@ describe('wp-typia package', () => {
         },
       );
       const parsed = parseJsonObjectFromOutput<{
-        init?: {
-          commandMode?: string;
-          detectedLayout?: { kind?: string; blockNames?: string[] };
-          nextSteps?: string[];
-          packageChanges?: {
-            scripts?: Array<{ name?: string }>;
+        data?: {
+          command?: string;
+          completion?: {
+            title?: string;
           };
+          detectedLayout?: { kind?: string; blockNames?: string[] };
+          files?: string[];
+          mode?: string;
+          nextSteps?: string[];
+          packageManager?: string;
+          plan?: {
+            commandMode?: string;
+            packageChanges?: {
+              scripts?: Array<{ name?: string }>;
+            };
+          };
+          projectDir?: string;
           status?: string;
         };
+        ok?: boolean;
       }>(output);
 
-      expect(parsed.init?.status).toBe('preview');
-      expect(parsed.init?.commandMode).toBe('preview-only');
-      expect(parsed.init?.detectedLayout?.kind).toBe('single-block');
-      expect(parsed.init?.detectedLayout?.blockNames).toEqual([
+      expect(parsed.ok).toBe(true);
+      expect(parsed.data?.command).toBe('init');
+      expect(parsed.data?.status).toBe('preview');
+      expect(parsed.data?.mode).toBe('preview');
+      expect(parsed.data?.plan?.commandMode).toBe('preview-only');
+      expect(parsed.data?.detectedLayout?.kind).toBe('single-block');
+      expect(parsed.data?.detectedLayout?.blockNames).toEqual([
         'create-block/retrofit-init',
       ]);
       expect(
-        parsed.init?.packageChanges?.scripts?.map((script) => script.name),
+        parsed.data?.plan?.packageChanges?.scripts?.map(
+          (script) => script.name,
+        ),
       ).toEqual(['sync', 'sync-types', 'typecheck']);
-      expect(parsed.init?.nextSteps).toContain(
+      expect(parsed.data?.projectDir).toBe(fs.realpathSync(fixtureRoot));
+      expect(parsed.data?.packageManager).toBe('npm');
+      expect(parsed.data?.files).toEqual(
+        expect.arrayContaining([
+          'scripts/block-config.ts',
+          'scripts/sync-types-to-block-json.ts',
+          'scripts/sync-project.ts',
+          'src/typia.manifest.json',
+          'src/typia.schema.json',
+        ]),
+      );
+      expect(parsed.data?.completion?.title).toContain('Retrofit init plan');
+      expect(parsed.data?.nextSteps).toContain(
         `npx --yes wp-typia@${packageManifest.version} doctor`,
       );
     } finally {
@@ -539,12 +563,22 @@ describe('wp-typia package', () => {
         },
       );
       const parsed = parseJsonObjectFromOutput<{
-        init?: {
-          commandMode?: string;
+        data?: {
+          command?: string;
+          completion?: {
+            title?: string;
+          };
+          files?: string[];
+          mode?: string;
           packageManager?: string;
-          plannedFiles?: Array<{ action?: string; path?: string }>;
+          plan?: {
+            commandMode?: string;
+            plannedFiles?: Array<{ action?: string; path?: string }>;
+          };
+          projectDir?: string;
           status?: string;
         };
+        ok?: boolean;
       }>(output);
       const packageJson = JSON.parse(
         fs.readFileSync(path.join(fixtureRoot, 'package.json'), 'utf8'),
@@ -553,10 +587,14 @@ describe('wp-typia package', () => {
         scripts?: Record<string, string>;
       };
 
-      expect(parsed.init?.status).toBe('applied');
-      expect(parsed.init?.commandMode).toBe('apply');
-      expect(parsed.init?.packageManager).toBe('pnpm');
-      expect(parsed.init?.plannedFiles).toEqual(
+      expect(parsed.ok).toBe(true);
+      expect(parsed.data?.command).toBe('init');
+      expect(parsed.data?.status).toBe('applied');
+      expect(parsed.data?.mode).toBe('apply');
+      expect(parsed.data?.plan?.commandMode).toBe('apply');
+      expect(parsed.data?.packageManager).toBe('pnpm');
+      expect(parsed.data?.projectDir).toBe(fs.realpathSync(fixtureRoot));
+      expect(parsed.data?.plan?.plannedFiles).toEqual(
         expect.arrayContaining([
           expect.objectContaining({
             action: 'add',
@@ -572,6 +610,14 @@ describe('wp-typia package', () => {
           }),
         ]),
       );
+      expect(parsed.data?.files).toEqual(
+        expect.arrayContaining([
+          'scripts/block-config.ts',
+          'scripts/sync-types-to-block-json.ts',
+          'scripts/sync-project.ts',
+        ]),
+      );
+      expect(parsed.data?.completion?.title).toContain('Applied retrofit init');
       expect(packageJson.packageManager).toBe('pnpm@8.3.1');
       expect(packageJson.scripts?.sync).toBe('tsx scripts/sync-project.ts');
       expect(packageJson.scripts?.typecheck).toBe(

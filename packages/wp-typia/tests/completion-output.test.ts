@@ -12,6 +12,7 @@ import {
   buildAddCompletionPayload,
   buildAddDryRunPayload,
   buildStructuredCompletionSuccessPayload,
+  buildStructuredInitSuccessPayload,
   buildSyncDryRunPayload,
 } from '../src/runtime-bridge-output';
 
@@ -326,6 +327,67 @@ describe('alternate-buffer completion output helpers', () => {
       'scripts/block-config.ts',
       'src/blocks/old-card/block.json',
     ]);
+  });
+
+  test('structured init success payload uses the standard CLI envelope', () => {
+    const payload = buildStructuredInitSuccessPayload({
+      commandMode: 'preview-only',
+      detectedLayout: {
+        blockNames: ['demo-space/promo-card'],
+        description: 'Single block layout',
+        kind: 'single-block',
+      },
+      generatedArtifacts: ['src/typia.manifest.json', 'src/typia.schema.json'],
+      nextSteps: ['npm run sync -- --check', 'npm run typecheck'],
+      notes: ['Preview only: no files were written.'],
+      packageChanges: {
+        addDevDependencies: [
+          {
+            action: 'add',
+            name: '@wp-typia/project-tools',
+            requiredValue: '^0.0.0-test',
+          },
+        ],
+        scripts: [
+          {
+            action: 'add',
+            name: 'sync',
+            requiredValue: 'tsx scripts/sync-project.ts',
+          },
+        ],
+      },
+      packageManager: 'npm',
+      plannedFiles: [
+        {
+          action: 'add',
+          path: 'scripts/sync-project.ts',
+          purpose: 'Project-level sync entrypoint',
+        },
+      ],
+      projectDir: '/tmp/demo-workspace',
+      projectName: 'demo-workspace',
+      status: 'preview',
+      summary: 'Preview the minimum retrofit surface.',
+    });
+
+    expect(payload.ok).toBe(true);
+    expect(payload.data.command).toBe('init');
+    expect(payload.data.mode).toBe('preview');
+    expect(payload.data.projectDir).toBe('/tmp/demo-workspace');
+    expect(payload.data.plan.commandMode).toBe('preview-only');
+    expect(payload.data.files).toEqual([
+      'scripts/sync-project.ts',
+      'src/typia.manifest.json',
+      'src/typia.schema.json',
+    ]);
+    expect(payload.data.nextSteps).toEqual([
+      'npm run sync -- --check',
+      'npm run typecheck',
+    ]);
+    expect(payload.data.warnings).toEqual([
+      'Preview only: no files were written.',
+    ]);
+    expect(payload.data.completion.title).toContain('Retrofit init plan');
   });
 
   test('dry-run sync payload previews the generated sync commands', () => {

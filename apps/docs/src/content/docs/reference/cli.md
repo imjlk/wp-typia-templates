@@ -170,16 +170,20 @@ matching canonical slot.
 
 ## `init`
 
-Preview the minimum adoption plan for an existing project. The command is
-read-only today.
+Preview or apply the minimum adoption plan for an existing project.
 
 ```bash
 wp-typia init [project-dir]
+wp-typia init [project-dir] --apply
 wp-typia init [project-dir] --format json
 ```
 
 `init` reports dependency, script, generated artifact, and migration follow-up
-steps for supported single-block and multi-block layouts.
+steps for supported single-block and multi-block layouts. `--apply` writes the
+planned `package.json` changes and retrofit helper files with
+rollback-on-failure protection. `--format json` emits the standard CLI success
+envelope (`{ ok: true, data: ... }`) and keeps the detailed init plan nested
+under `data.plan`.
 
 ## `sync`
 
