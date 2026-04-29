@@ -1,5 +1,14 @@
 # @wp-typia/create-workspace-template
 
+## 0.16.0 — 2026-04-29
+
+### Minor changes
+
+- [e8e3b8a](https://github.com/imjlk/wp-typia/commit/e8e3b8acd03902626260c2189948d99876df5d17) Elevate binding-source scaffolds with optional end-to-end block target wiring, including typed attribute updates, supported-attributes doctor checks, and CLI/docs coverage. — Thanks @imjlk!
+- [7fe9336](https://github.com/imjlk/wp-typia/commit/7fe93360fa7cc5dc03a6c2e24d5e8fda4b502a9b) Add first-class `wp-typia add style` and `wp-typia add transform` workspace
+  scaffolds, including workspace inventory sections, block entrypoint wiring,
+  doctor coverage, CLI/TUI metadata, generated-project build coverage, and docs. — Thanks @imjlk!
+
 ## 0.15.0 — 2026-04-20
 
 ### Minor changes

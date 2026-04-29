@@ -1,5 +1,32 @@
 # @wp-typia/project-tools
 
+## 0.21.0 — 2026-04-29
+
+### Minor changes
+
+- [fe04635](https://github.com/imjlk/wp-typia/commit/fe046350f7cd80f3590d1ea8bf5b3c55750ec655) Unify add-kind metadata and execution behind a single registry, restore the canonical add-kind ordering, and clarify interactive block-template selection while keeping non-interactive add flows defaulted to `basic`. — Thanks @imjlk!
+- [e8e3b8a](https://github.com/imjlk/wp-typia/commit/e8e3b8acd03902626260c2189948d99876df5d17) Elevate binding-source scaffolds with optional end-to-end block target wiring, including typed attribute updates, supported-attributes doctor checks, and CLI/docs coverage. — Thanks @imjlk!
+- [eaac994](https://github.com/imjlk/wp-typia/commit/eaac994a143dc2d4d20b51fe18dc6ced029ab95a) Add non-failing `wp-typia doctor` warnings for workspace block iframe/API v3
+  readiness, including block metadata, stylesheet registration, global DOM access,
+  and wrapper-props checks with machine-readable diagnostic codes. — Thanks @imjlk!
+- [7fe9336](https://github.com/imjlk/wp-typia/commit/7fe93360fa7cc5dc03a6c2e24d5e8fda4b502a9b) Add first-class `wp-typia add style` and `wp-typia add transform` workspace
+  scaffolds, including workspace inventory sections, block entrypoint wiring,
+  doctor coverage, CLI/TUI metadata, generated-project build coverage, and docs. — Thanks @imjlk!
+- [b5e2652](https://github.com/imjlk/wp-typia/commit/b5e265284d79c4362c25015a02650f369b8fb0ed) Add `wp-typia init --apply` for existing projects so the CLI can write the planned retrofit package.json updates and helper scripts with rollback-on-failure protection, package-manager-aware next steps, and shared init option metadata across the Bunli and Node fallback runtimes. — Thanks @imjlk!
+
+### Patch changes
+
+- [869efe1](https://github.com/imjlk/wp-typia/commit/869efe15799ef28ed4f7d669e7fbf23738937d66) Cache guarded remote external template sources across repeated scaffold runs and document the cache bypass/directory environment overrides. — Thanks @imjlk!
+- [d8f7756](https://github.com/imjlk/wp-typia/commit/d8f77564ed297609db783d7c21c42fa175da82ae) Made editor-plugin scaffolding slot-aware with canonical `sidebar` and `document-setting-panel` surfaces, while preserving `PluginSidebar` as a legacy alias. — Thanks @imjlk!
+- [fab19de](https://github.com/imjlk/wp-typia/commit/fab19dee0a47c70afa749831dfc382490b6f1deb) Honor `NO_COLOR` as an ASCII-safe CLI output marker signal while documenting `WP_TYPIA_ASCII` precedence. — Thanks @imjlk!
+- [c832b13](https://github.com/imjlk/wp-typia/commit/c832b13b9a6dce4e06f2f5dddeebe06d0ed82412) Tagged high-frequency CLI validation failures with explicit diagnostic codes so structured JSON errors rely less on message regex inference. — Thanks @imjlk!
+- [7e63d89](https://github.com/imjlk/wp-typia/commit/7e63d898c5c167d453b265cd63d8f2bcb19da1e1) Consolidated generated workspace PHP/string helpers and package metadata types behind shared runtime utilities. — Thanks @imjlk!
+- [48c778d](https://github.com/imjlk/wp-typia/commit/48c778d0b7cbc593b835f2421b63a7c7ea32fc21) Documented package version cache invalidation and exposed `clearPackageVersionsCache()` for long-lived linked integrations. — Thanks @imjlk!
+- [d0a0f0c](https://github.com/imjlk/wp-typia/commit/d0a0f0c609122099194b7fef120d444dbbf8e7a1) Document the supported CLI diagnostic code contract, export recovery metadata
+  for machine-readable integrations, and tighten representative structured failure
+  coverage across create, add, sync, init, and doctor flows. — Thanks @imjlk!
+- [b7d7fc1](https://github.com/imjlk/wp-typia/commit/b7d7fc17cf633c1678381a6ed408e42c3ec408de) Added an opt-in DataViews admin view scaffold with REST resource source wiring and CLI metadata. — Thanks @imjlk!
+
 ## 0.20.2 — 2026-04-26
 
 ### Patch changes
