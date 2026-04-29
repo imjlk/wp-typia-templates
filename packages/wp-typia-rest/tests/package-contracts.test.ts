@@ -46,6 +46,7 @@ describe('@wp-typia/rest export contracts', () => {
     expect('callEndpoint' in restHttp).toBe(false);
     expect(typeof restReact.useEndpointQuery).toBe('function');
     expect(typeof restReact.useRestResourceListQuery).toBe('function');
+    expect(typeof restReact.useRestResourceCreateMutation).toBe('function');
     expect('callEndpoint' in restReact).toBe(false);
   });
 

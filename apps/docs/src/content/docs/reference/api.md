@@ -308,6 +308,7 @@ baseline.
 - `createEndpoint<Req, Res>()`
 - `callEndpoint<Req, Res>()`
 - `defineRestResource(...)`
+- `defineRestResourceListQuery(...)`
 - `toRestResourceListRequest(...)`
 - `resolveRestRouteUrl(routePath, root?)`
 - `createQueryDecoder<T>()`

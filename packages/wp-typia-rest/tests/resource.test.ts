@@ -88,7 +88,10 @@ describe('@wp-typia/rest resource helpers', () => {
           validateResponse: (input: unknown) =>
             typeof input === 'object' &&
             input !== null &&
-            Array.isArray((input as { items?: unknown }).items)
+            Array.isArray((input as { items?: unknown }).items) &&
+            (input as { items: unknown[] }).items.every(
+              (value) => typeof value === 'number',
+            )
               ? toValidationResult(success(input as { items: number[] }))
               : toValidationResult(
                   failure<{ items: number[] }>(
@@ -161,7 +164,10 @@ describe('@wp-typia/rest resource helpers', () => {
           validateResponse: (input: unknown) =>
             typeof input === 'object' &&
             input !== null &&
-            Array.isArray((input as { items?: unknown }).items)
+            Array.isArray((input as { items?: unknown }).items) &&
+            (input as { items: unknown[] }).items.every(
+              (value) => typeof value === 'number',
+            )
               ? toValidationResult(success(input as { items: number[] }))
               : toValidationResult(
                   failure<{ items: number[] }>(
@@ -203,7 +209,10 @@ describe('@wp-typia/rest resource helpers', () => {
       validateResponse: (input: unknown) =>
         typeof input === 'object' &&
         input !== null &&
-        Array.isArray((input as { items?: unknown }).items)
+        Array.isArray((input as { items?: unknown }).items) &&
+        (input as { items: unknown[] }).items.every(
+          (value) => typeof value === 'number',
+        )
           ? toValidationResult(success(input as { items: number[] }))
           : toValidationResult(
               failure<{ items: number[] }>('{ items: number[] }', '$.items'),
@@ -255,7 +264,10 @@ describe('@wp-typia/rest resource helpers', () => {
       validateResponse: (input: unknown) =>
         typeof input === 'object' &&
         input !== null &&
-        Array.isArray((input as { items?: unknown }).items)
+        Array.isArray((input as { items?: unknown }).items) &&
+        (input as { items: unknown[] }).items.every(
+          (value) => typeof value === 'number',
+        )
           ? toValidationResult(success(input as { items: number[] }))
           : toValidationResult(
               failure<{ items: number[] }>('{ items: number[] }', '$.items'),
