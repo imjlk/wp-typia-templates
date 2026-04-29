@@ -28,6 +28,10 @@ import {
 	type WorkspaceMutationSnapshot,
 	snapshotWorkspaceFiles,
 } from "./cli-add-shared.js";
+import {
+	CLI_DIAGNOSTIC_CODES,
+	createCliDiagnosticCodeError,
+} from "./cli-diagnostics.js";
 
 const ADMIN_VIEW_SOURCE_KIND = "rest-resource";
 const ADMIN_VIEWS_SCRIPT = "build/admin-views/index.js";
@@ -37,8 +41,16 @@ const ADMIN_VIEWS_STYLE_RTL = "build/admin-views/style-index-rtl.css";
 const ADMIN_VIEWS_PHP_GLOB = "/inc/admin-views/*.php";
 const DEFAULT_WP_TYPIA_DATAVIEWS_VERSION = "^0.1.0";
 const DEFAULT_WORDPRESS_DATAVIEWS_VERSION = "^14.1.0";
+const ADMIN_VIEW_ALLOW_UNPUBLISHED_DATAVIEWS_ENV =
+	"WP_TYPIA_ALLOW_UNPUBLISHED_DATAVIEWS";
+const WP_TYPIA_DATAVIEWS_WORKSPACE_PACKAGE_DIR = "wp-typia-dataviews";
 
 const require = createRequire(import.meta.url);
+
+interface PackageManifestSummary {
+	private?: boolean;
+	version?: string;
+}
 
 interface AdminViewRestResourceSource {
 	kind: typeof ADMIN_VIEW_SOURCE_KIND;
@@ -63,15 +75,46 @@ function normalizeVersionRange(value: string | undefined, fallback: string): str
 	return /^[~^<>=]/u.test(trimmed) ? trimmed : `^${trimmed}`;
 }
 
-function readPackageManifestVersion(packageJsonPath: string): string | undefined {
+function readPackageManifest(packageJsonPath: string): PackageManifestSummary | undefined {
 	try {
-		const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf8")) as {
-			version?: string;
-		};
-		return packageJson.version;
+		return JSON.parse(fs.readFileSync(packageJsonPath, "utf8")) as PackageManifestSummary;
 	} catch {
 		return undefined;
 	}
+}
+
+function readPackageManifestVersion(packageJsonPath: string): string | undefined {
+	return readPackageManifest(packageJsonPath)?.version;
+}
+
+function isAdminViewUnpublishedDataViewsOverrideEnabled(): boolean {
+	return process.env[ADMIN_VIEW_ALLOW_UNPUBLISHED_DATAVIEWS_ENV]?.trim() === "1";
+}
+
+function isAdminViewDataViewsPackagePublished(): boolean {
+	const packageJson = readPackageManifest(
+		path.join(
+			PROJECT_TOOLS_PACKAGE_ROOT,
+			"..",
+			WP_TYPIA_DATAVIEWS_WORKSPACE_PACKAGE_DIR,
+			"package.json",
+		),
+	);
+	return packageJson?.private === false;
+}
+
+function assertAdminViewPackageAvailability(): void {
+	if (
+		isAdminViewUnpublishedDataViewsOverrideEnabled() ||
+		isAdminViewDataViewsPackagePublished()
+	) {
+		return;
+	}
+
+	throw createCliDiagnosticCodeError(
+		CLI_DIAGNOSTIC_CODES.INVALID_ARGUMENT,
+		"`wp-typia add admin-view` is temporarily unavailable because `@wp-typia/dataviews` is not published to npm for public installs yet.",
+	);
 }
 
 function detectJsonIndent(source: string): string | number {
@@ -1016,6 +1059,7 @@ export async function runAddAdminViewCommand({
 	source?: string;
 }> {
 	const workspace = resolveWorkspaceProject(cwd);
+	assertAdminViewPackageAvailability();
 	const adminViewSlug = assertValidGeneratedSlug(
 		"Admin view name",
 		normalizeBlockSlug(adminViewName),
