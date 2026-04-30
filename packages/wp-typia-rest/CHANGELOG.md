@@ -1,5 +1,13 @@
 # @wp-typia/rest
 
+## 0.3.12 — 2026-04-30
+
+### Patch changes
+
+- [4f36355](https://github.com/imjlk/wp-typia/commit/4f363553d4a1749d11d8da497cca61224efe9bf0) Add resource-level REST facades to `@wp-typia/rest` so existing endpoint
+  contracts can be grouped behind typed list/read/create/update/delete helpers,
+  including optional list-query bridges and matching React resource hooks. — Thanks @imjlk!
+
 ## 0.3.11 — 2026-04-20
 
 ### Patch changes
