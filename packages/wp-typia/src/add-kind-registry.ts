@@ -144,6 +144,54 @@ const BLOCK_VISIBLE_FIELD_ORDER = [
   'data-storage',
   'persistence-policy',
 ] as const satisfies ReadonlyArray<AddFieldName>;
+const NAME_ONLY_VISIBLE_FIELDS = [
+  'kind',
+  'name',
+] as const satisfies ReadonlyArray<AddFieldName>;
+const NAME_SOURCE_VISIBLE_FIELDS = [
+  'kind',
+  'name',
+  'source',
+] as const satisfies ReadonlyArray<AddFieldName>;
+const NAME_BLOCK_ATTRIBUTE_VISIBLE_FIELDS = [
+  'kind',
+  'name',
+  'block',
+  'attribute',
+] as const satisfies ReadonlyArray<AddFieldName>;
+const NAME_BLOCK_VISIBLE_FIELDS = [
+  'kind',
+  'name',
+  'block',
+] as const satisfies ReadonlyArray<AddFieldName>;
+const NAME_SLOT_VISIBLE_FIELDS = [
+  'kind',
+  'name',
+  'slot',
+] as const satisfies ReadonlyArray<AddFieldName>;
+const NAME_ANCHOR_POSITION_VISIBLE_FIELDS = [
+  'kind',
+  'name',
+  'anchor',
+  'position',
+] as const satisfies ReadonlyArray<AddFieldName>;
+const NAME_FROM_TO_VISIBLE_FIELDS = [
+  'kind',
+  'name',
+  'from',
+  'to',
+] as const satisfies ReadonlyArray<AddFieldName>;
+const NAME_NAMESPACE_METHODS_VISIBLE_FIELDS = [
+  'kind',
+  'name',
+  'namespace',
+  'methods',
+] as const satisfies ReadonlyArray<AddFieldName>;
+const NAME_NAMESPACE_VISIBLE_FIELDS = [
+  'kind',
+  'name',
+  'namespace',
+] as const satisfies ReadonlyArray<AddFieldName>;
 
 function readOptionalStringFlag(
   flags: Record<string, unknown>,
@@ -160,6 +208,40 @@ function readOptionalStringFlag(
     );
   }
   return value;
+}
+
+function requireStringFlag(
+  flags: Record<string, unknown>,
+  name: string,
+  message: string,
+): string {
+  const value = readOptionalStringFlag(flags, name);
+  if (!value) {
+    throw createCliDiagnosticCodeError(
+      CLI_DIAGNOSTIC_CODES.MISSING_ARGUMENT,
+      message,
+    );
+  }
+
+  return value;
+}
+
+function readOptionalPairedStringFlags(
+  flags: Record<string, unknown>,
+  leftName: string,
+  rightName: string,
+  message: string,
+): readonly [string | undefined, string | undefined] {
+  const leftValue = readOptionalStringFlag(flags, leftName);
+  const rightValue = readOptionalStringFlag(flags, rightName);
+  if (Boolean(leftValue) !== Boolean(rightValue)) {
+    throw createCliDiagnosticCodeError(
+      CLI_DIAGNOSTIC_CODES.MISSING_ARGUMENT,
+      message,
+    );
+  }
+
+  return [leftValue, rightValue] as const;
 }
 
 function requireAddKindName(
@@ -205,6 +287,28 @@ function defineAddKindRegistryEntry<TResult extends AddKindExecutionResultBase>(
   return entry;
 }
 
+function createNamedExecutionPlan<TResult extends AddKindExecutionResultBase>(
+  context: AddKindExecutionContext,
+  options: {
+    execute: (params: { cwd: string; name: string }) => Promise<TResult>;
+    getValues: (result: TResult) => Record<string, string>;
+    getWarnings?: (result: TResult) => string[] | undefined;
+    missingNameMessage: string;
+    name?: string;
+    warnLine?: PrintLine;
+  },
+): AddKindExecutionPlan<TResult> {
+  const name =
+    options.name ?? requireAddKindName(context, options.missingNameMessage);
+
+  return {
+    execute: (cwd) => options.execute({ cwd, name }),
+    getValues: options.getValues,
+    ...(options.getWarnings ? { getWarnings: options.getWarnings } : {}),
+    ...(options.warnLine ? { warnLine: options.warnLine } : {}),
+  };
+}
+
 export function isAddPersistenceTemplate(template?: string): boolean {
   return template === 'persistence' || template === 'compound';
 }
@@ -232,24 +336,27 @@ export const ADD_KIND_REGISTRY = {
       );
       const source = readOptionalStringFlag(context.flags, 'source');
 
-      return {
-        execute: (cwd) =>
+      return createNamedExecutionPlan(context, {
+        execute: ({ cwd, name }) =>
           context.addRuntime.runAddAdminViewCommand({
             adminViewName: name,
             cwd,
             source,
           }),
-        getValues: (result: AddAdminViewResult) => ({
+        getValues: (result) => ({
           adminViewSlug: result.adminViewSlug,
           ...(result.source ? { source: result.source } : {}),
         }),
-      };
+        missingNameMessage:
+          '`wp-typia add admin-view` requires <name>. Usage: wp-typia add admin-view <name> [--source <rest-resource:slug|core-data:kind/name>].',
+        name,
+      });
     },
     sortOrder: 10,
     supportsDryRun: true,
     usage:
       'wp-typia add admin-view <name> [--source <rest-resource:slug|core-data:kind/name>] [--dry-run]',
-    visibleFieldNames: () => ['kind', 'name', 'source'],
+    visibleFieldNames: () => NAME_SOURCE_VISIBLE_FIELDS,
   }),
   'binding-source': defineAddKindRegistryEntry<AddBindingSourceResult>({
     completion: {
@@ -278,37 +385,38 @@ export const ADD_KIND_REGISTRY = {
         context,
         '`wp-typia add binding-source` requires <name>. Usage: wp-typia add binding-source <name> [--block <block-slug|namespace/block-slug> --attribute <attribute>].',
       );
-      const blockName = readOptionalStringFlag(context.flags, 'block');
-      const attributeName = readOptionalStringFlag(context.flags, 'attribute');
-      if (Boolean(blockName) !== Boolean(attributeName)) {
-        throw createCliDiagnosticCodeError(
-          CLI_DIAGNOSTIC_CODES.MISSING_ARGUMENT,
-          '`wp-typia add binding-source` requires --block and --attribute to be provided together.',
-        );
-      }
+      const [blockName, attributeName] = readOptionalPairedStringFlags(
+        context.flags,
+        'block',
+        'attribute',
+        '`wp-typia add binding-source` requires --block and --attribute to be provided together.',
+      );
 
-      return {
-        execute: (cwd) =>
+      return createNamedExecutionPlan(context, {
+        execute: ({ cwd, name }) =>
           context.addRuntime.runAddBindingSourceCommand({
             attributeName,
             bindingSourceName: name,
             blockName,
             cwd,
           }),
-        getValues: (result: AddBindingSourceResult) => ({
+        getValues: (result) => ({
           ...(result.attributeName
             ? { attributeName: result.attributeName }
             : {}),
           ...(result.blockSlug ? { blockSlug: result.blockSlug } : {}),
           bindingSourceSlug: result.bindingSourceSlug,
         }),
-      };
+        missingNameMessage:
+          '`wp-typia add binding-source` requires <name>. Usage: wp-typia add binding-source <name> [--block <block-slug|namespace/block-slug> --attribute <attribute>].',
+        name,
+      });
     },
     sortOrder: 70,
     supportsDryRun: true,
     usage:
       'wp-typia add binding-source <name> [--block <block-slug|namespace/block-slug> --attribute <attribute>] [--dry-run]',
-    visibleFieldNames: () => ['kind', 'name', 'block', 'attribute'],
+    visibleFieldNames: () => NAME_BLOCK_ATTRIBUTE_VISIBLE_FIELDS,
   }),
   block: defineAddKindRegistryEntry<AddBlockResult>({
     completion: {
@@ -380,8 +488,8 @@ export const ADD_KIND_REGISTRY = {
       }
       resolvedTemplateId ??= 'basic';
 
-      return {
-        execute: (cwd) =>
+      return createNamedExecutionPlan(context, {
+        execute: ({ cwd, name }) =>
           context.addRuntime.runAddBlockCommand({
             alternateRenderTargets,
             blockName: name,
@@ -401,13 +509,16 @@ export const ADD_KIND_REGISTRY = {
               : undefined,
             templateId: resolvedTemplateId,
           }),
-        getValues: (result: AddBlockResult) => ({
+        getValues: (result) => ({
           blockSlugs: result.blockSlugs.join(', '),
           templateId: result.templateId,
         }),
-        getWarnings: (result: AddBlockResult) => result.warnings,
+        getWarnings: (result) => result.warnings,
+        missingNameMessage:
+          '`wp-typia add block` requires <name>. Usage: wp-typia add block <name> [--template <basic|interactivity|persistence|compound>]',
+        name,
         warnLine: context.warnLine,
-      };
+      });
     },
     sortOrder: 20,
     supportsDryRun: true,
@@ -445,26 +556,23 @@ export const ADD_KIND_REGISTRY = {
     description: 'Add a typed server/client workflow ability scaffold',
     nameLabel: 'Ability name',
     async prepareExecution(context) {
-      const name = requireAddKindName(
-        context,
-        '`wp-typia add ability` requires <name>. Usage: wp-typia add ability <name>.',
-      );
-
-      return {
-        execute: (cwd) =>
+      return createNamedExecutionPlan(context, {
+        execute: ({ cwd, name }) =>
           context.addRuntime.runAddAbilityCommand({
             abilityName: name,
             cwd,
           }),
-        getValues: (result: AddAbilityResult) => ({
+        getValues: (result) => ({
           abilitySlug: result.abilitySlug,
         }),
-      };
+        missingNameMessage:
+          '`wp-typia add ability` requires <name>. Usage: wp-typia add ability <name>.',
+      });
     },
     sortOrder: 90,
     supportsDryRun: true,
     usage: 'wp-typia add ability <name> [--dry-run]',
-    visibleFieldNames: () => ['kind', 'name'],
+    visibleFieldNames: () => NAME_ONLY_VISIBLE_FIELDS,
   }),
   'editor-plugin': defineAddKindRegistryEntry<AddEditorPluginResult>({
     completion: {
@@ -488,24 +596,27 @@ export const ADD_KIND_REGISTRY = {
       );
       const slot = readOptionalStringFlag(context.flags, 'slot');
 
-      return {
-        execute: (cwd) =>
+      return createNamedExecutionPlan(context, {
+        execute: ({ cwd, name }) =>
           context.addRuntime.runAddEditorPluginCommand({
             cwd,
             editorPluginName: name,
             slot,
           }),
-        getValues: (result: AddEditorPluginResult) => ({
+        getValues: (result) => ({
           editorPluginSlug: result.editorPluginSlug,
           slot: result.slot,
         }),
-      };
+        missingNameMessage:
+          '`wp-typia add editor-plugin` requires <name>. Usage: wp-typia add editor-plugin <name> [--slot <sidebar|document-setting-panel>].',
+        name,
+      });
     },
     sortOrder: 120,
     supportsDryRun: true,
     usage:
       'wp-typia add editor-plugin <name> [--slot <sidebar|document-setting-panel>] [--dry-run]',
-    visibleFieldNames: () => ['kind', 'name', 'slot'],
+    visibleFieldNames: () => NAME_SLOT_VISIBLE_FIELDS,
   }),
   'hooked-block': defineAddKindRegistryEntry<AddHookedBlockResult>({
     completion: {
@@ -528,41 +639,40 @@ export const ADD_KIND_REGISTRY = {
         context,
         '`wp-typia add hooked-block` requires <block-slug>. Usage: wp-typia add hooked-block <block-slug> --anchor <anchor-block-name> --position <before|after|firstChild|lastChild>.',
       );
-      const anchorBlockName = readOptionalStringFlag(context.flags, 'anchor');
-      if (!anchorBlockName) {
-        throw createCliDiagnosticCodeError(
-          CLI_DIAGNOSTIC_CODES.MISSING_ARGUMENT,
-          '`wp-typia add hooked-block` requires --anchor <anchor-block-name>.',
-        );
-      }
-      const position = readOptionalStringFlag(context.flags, 'position');
-      if (!position) {
-        throw createCliDiagnosticCodeError(
-          CLI_DIAGNOSTIC_CODES.MISSING_ARGUMENT,
-          '`wp-typia add hooked-block` requires --position <before|after|firstChild|lastChild>.',
-        );
-      }
+      const anchorBlockName = requireStringFlag(
+        context.flags,
+        'anchor',
+        '`wp-typia add hooked-block` requires --anchor <anchor-block-name>.',
+      );
+      const position = requireStringFlag(
+        context.flags,
+        'position',
+        '`wp-typia add hooked-block` requires --position <before|after|firstChild|lastChild>.',
+      );
 
-      return {
-        execute: (cwd) =>
+      return createNamedExecutionPlan(context, {
+        execute: ({ cwd, name }) =>
           context.addRuntime.runAddHookedBlockCommand({
             anchorBlockName,
             blockName: name,
             cwd,
             position,
           }),
-        getValues: (result: AddHookedBlockResult) => ({
+        getValues: (result) => ({
           anchorBlockName: result.anchorBlockName,
           blockSlug: result.blockSlug,
           position: result.position,
         }),
-      };
+        missingNameMessage:
+          '`wp-typia add hooked-block` requires <block-slug>. Usage: wp-typia add hooked-block <block-slug> --anchor <anchor-block-name> --position <before|after|firstChild|lastChild>.',
+        name,
+      });
     },
     sortOrder: 110,
     supportsDryRun: true,
     usage:
       'wp-typia add hooked-block <block-slug> --anchor <anchor-block-name> --position <before|after|firstChild|lastChild> [--dry-run]',
-    visibleFieldNames: () => ['kind', 'name', 'anchor', 'position'],
+    visibleFieldNames: () => NAME_ANCHOR_POSITION_VISIBLE_FIELDS,
   }),
   pattern: defineAddKindRegistryEntry<AddPatternResult>({
     completion: {
@@ -579,26 +689,23 @@ export const ADD_KIND_REGISTRY = {
     description: 'Add a PHP block pattern shell',
     nameLabel: 'Pattern name',
     async prepareExecution(context) {
-      const name = requireAddKindName(
-        context,
-        '`wp-typia add pattern` requires <name>. Usage: wp-typia add pattern <name>.',
-      );
-
-      return {
-        execute: (cwd) =>
+      return createNamedExecutionPlan(context, {
+        execute: ({ cwd, name }) =>
           context.addRuntime.runAddPatternCommand({
             cwd,
             patternName: name,
           }),
-        getValues: (result: AddPatternResult) => ({
+        getValues: (result) => ({
           patternSlug: result.patternSlug,
         }),
-      };
+        missingNameMessage:
+          '`wp-typia add pattern` requires <name>. Usage: wp-typia add pattern <name>.',
+      });
     },
     sortOrder: 60,
     supportsDryRun: true,
     usage: 'wp-typia add pattern <name> [--dry-run]',
-    visibleFieldNames: () => ['kind', 'name'],
+    visibleFieldNames: () => NAME_ONLY_VISIBLE_FIELDS,
   }),
   style: defineAddKindRegistryEntry<AddBlockStyleResult>({
     completion: {
@@ -620,31 +727,32 @@ export const ADD_KIND_REGISTRY = {
         context,
         '`wp-typia add style` requires <name>. Usage: wp-typia add style <name> --block <block-slug>.',
       );
-      const blockSlug = readOptionalStringFlag(context.flags, 'block');
-      if (!blockSlug) {
-        throw createCliDiagnosticCodeError(
-          CLI_DIAGNOSTIC_CODES.MISSING_ARGUMENT,
-          '`wp-typia add style` requires --block <block-slug>.',
-        );
-      }
+      const blockSlug = requireStringFlag(
+        context.flags,
+        'block',
+        '`wp-typia add style` requires --block <block-slug>.',
+      );
 
-      return {
-        execute: (cwd) =>
+      return createNamedExecutionPlan(context, {
+        execute: ({ cwd, name }) =>
           context.addRuntime.runAddBlockStyleCommand({
             blockName: blockSlug,
             cwd,
             styleName: name,
           }),
-        getValues: (result: AddBlockStyleResult) => ({
+        getValues: (result) => ({
           blockSlug: result.blockSlug,
           styleSlug: result.styleSlug,
         }),
-      };
+        missingNameMessage:
+          '`wp-typia add style` requires <name>. Usage: wp-typia add style <name> --block <block-slug>.',
+        name,
+      });
     },
     sortOrder: 40,
     supportsDryRun: true,
     usage: 'wp-typia add style <name> --block <block-slug> [--dry-run]',
-    visibleFieldNames: () => ['kind', 'name', 'block'],
+    visibleFieldNames: () => NAME_BLOCK_VISIBLE_FIELDS,
   }),
   transform: defineAddKindRegistryEntry<AddBlockTransformResult>({
     completion: {
@@ -667,42 +775,41 @@ export const ADD_KIND_REGISTRY = {
         context,
         '`wp-typia add transform` requires <name>. Usage: wp-typia add transform <name> --from <namespace/block> --to <block-slug|namespace/block-slug>.',
       );
-      const fromBlockName = readOptionalStringFlag(context.flags, 'from');
-      if (!fromBlockName) {
-        throw createCliDiagnosticCodeError(
-          CLI_DIAGNOSTIC_CODES.MISSING_ARGUMENT,
-          '`wp-typia add transform` requires --from <namespace/block>.',
-        );
-      }
-      const toBlockName = readOptionalStringFlag(context.flags, 'to');
-      if (!toBlockName) {
-        throw createCliDiagnosticCodeError(
-          CLI_DIAGNOSTIC_CODES.MISSING_ARGUMENT,
-          '`wp-typia add transform` requires --to <block-slug|namespace/block-slug>.',
-        );
-      }
+      const fromBlockName = requireStringFlag(
+        context.flags,
+        'from',
+        '`wp-typia add transform` requires --from <namespace/block>.',
+      );
+      const toBlockName = requireStringFlag(
+        context.flags,
+        'to',
+        '`wp-typia add transform` requires --to <block-slug|namespace/block-slug>.',
+      );
 
-      return {
-        execute: (cwd) =>
+      return createNamedExecutionPlan(context, {
+        execute: ({ cwd, name }) =>
           context.addRuntime.runAddBlockTransformCommand({
             cwd,
             fromBlockName,
             toBlockName,
             transformName: name,
           }),
-        getValues: (result: AddBlockTransformResult) => ({
+        getValues: (result) => ({
           blockSlug: result.blockSlug,
           fromBlockName: result.fromBlockName,
           toBlockName: result.toBlockName,
           transformSlug: result.transformSlug,
         }),
-      };
+        missingNameMessage:
+          '`wp-typia add transform` requires <name>. Usage: wp-typia add transform <name> --from <namespace/block> --to <block-slug|namespace/block-slug>.',
+        name,
+      });
     },
     sortOrder: 50,
     supportsDryRun: true,
     usage:
       'wp-typia add transform <name> --from <namespace/block> --to <block-slug|namespace/block-slug> [--dry-run]',
-    visibleFieldNames: () => ['kind', 'name', 'from', 'to'],
+    visibleFieldNames: () => NAME_FROM_TO_VISIBLE_FIELDS,
   }),
   'rest-resource': defineAddKindRegistryEntry<AddRestResourceResult>({
     completion: {
@@ -728,26 +835,29 @@ export const ADD_KIND_REGISTRY = {
       const methods = readOptionalStringFlag(context.flags, 'methods');
       const namespace = readOptionalStringFlag(context.flags, 'namespace');
 
-      return {
-        execute: (cwd) =>
+      return createNamedExecutionPlan(context, {
+        execute: ({ cwd, name }) =>
           context.addRuntime.runAddRestResourceCommand({
             cwd,
             methods,
             namespace,
             restResourceName: name,
           }),
-        getValues: (result: AddRestResourceResult) => ({
+        getValues: (result) => ({
           methods: result.methods.join(', '),
           namespace: result.namespace,
           restResourceSlug: result.restResourceSlug,
         }),
-      };
+        missingNameMessage:
+          '`wp-typia add rest-resource` requires <name>. Usage: wp-typia add rest-resource <name> [--namespace <vendor/v1>] [--methods <list,read,create>].',
+        name,
+      });
     },
     sortOrder: 80,
     supportsDryRun: true,
     usage:
       'wp-typia add rest-resource <name> [--namespace <vendor/v1>] [--methods <list,read,create,update,delete>] [--dry-run]',
-    visibleFieldNames: () => ['kind', 'name', 'namespace', 'methods'],
+    visibleFieldNames: () => NAME_NAMESPACE_METHODS_VISIBLE_FIELDS,
   }),
   'ai-feature': defineAddKindRegistryEntry<AddAiFeatureResult>({
     completion: {
@@ -771,26 +881,29 @@ export const ADD_KIND_REGISTRY = {
       );
       const namespace = readOptionalStringFlag(context.flags, 'namespace');
 
-      return {
-        execute: (cwd) =>
+      return createNamedExecutionPlan(context, {
+        execute: ({ cwd, name }) =>
           context.addRuntime.runAddAiFeatureCommand({
             aiFeatureName: name,
             cwd,
             namespace,
           }),
-        getValues: (result: AddAiFeatureResult) => ({
+        getValues: (result) => ({
           aiFeatureSlug: result.aiFeatureSlug,
           namespace: result.namespace,
         }),
-        getWarnings: (result: AddAiFeatureResult) => result.warnings,
+        getWarnings: (result) => result.warnings,
+        missingNameMessage:
+          '`wp-typia add ai-feature` requires <name>. Usage: wp-typia add ai-feature <name> [--namespace <vendor/v1>].',
+        name,
         warnLine: context.warnLine,
-      };
+      });
     },
     sortOrder: 100,
     supportsDryRun: true,
     usage:
       'wp-typia add ai-feature <name> [--namespace <vendor/v1>] [--dry-run]',
-    visibleFieldNames: () => ['kind', 'name', 'namespace'],
+    visibleFieldNames: () => NAME_NAMESPACE_VISIBLE_FIELDS,
   }),
   variation: defineAddKindRegistryEntry<AddVariationResult>({
     completion: {
@@ -812,31 +925,32 @@ export const ADD_KIND_REGISTRY = {
         context,
         '`wp-typia add variation` requires <name>. Usage: wp-typia add variation <name> --block <block-slug>',
       );
-      const blockSlug = readOptionalStringFlag(context.flags, 'block');
-      if (!blockSlug) {
-        throw createCliDiagnosticCodeError(
-          CLI_DIAGNOSTIC_CODES.MISSING_ARGUMENT,
-          '`wp-typia add variation` requires --block <block-slug>.',
-        );
-      }
+      const blockSlug = requireStringFlag(
+        context.flags,
+        'block',
+        '`wp-typia add variation` requires --block <block-slug>.',
+      );
 
-      return {
-        execute: (cwd) =>
+      return createNamedExecutionPlan(context, {
+        execute: ({ cwd, name }) =>
           context.addRuntime.runAddVariationCommand({
             blockName: blockSlug,
             cwd,
             variationName: name,
           }),
-        getValues: (result: AddVariationResult) => ({
+        getValues: (result) => ({
           blockSlug: result.blockSlug,
           variationSlug: result.variationSlug,
         }),
-      };
+        missingNameMessage:
+          '`wp-typia add variation` requires <name>. Usage: wp-typia add variation <name> --block <block-slug>',
+        name,
+      });
     },
     sortOrder: 30,
     supportsDryRun: true,
     usage: 'wp-typia add variation <name> --block <block-slug> [--dry-run]',
-    visibleFieldNames: () => ['kind', 'name', 'block'],
+    visibleFieldNames: () => NAME_BLOCK_VISIBLE_FIELDS,
   }),
 } as const satisfies AddKindRegistry;
 

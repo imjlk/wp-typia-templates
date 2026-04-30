@@ -336,6 +336,110 @@ describe('wp-typia add command bridge', () => {
     ).toBe(true);
   }, 15_000);
 
+  test('interactive add block validates the missing name before prompting', async () => {
+    const projectDir = path.join(tempRoot, 'demo-add-interactive-missing-name');
+    const selectedPrompts: string[] = [];
+    const prompt: ReadlinePrompt = {
+      close() {},
+      async select(message: string) {
+        selectedPrompts.push(message);
+        throw new Error('select() should not be called before name validation');
+      },
+      async text() {
+        throw new Error('text() should not be called before name validation');
+      },
+    };
+
+    await scaffoldOfficialWorkspace(projectDir);
+    linkWorkspaceNodeModules(projectDir);
+
+    await expect(
+      executeAddCommand({
+        cwd: projectDir,
+        emitOutput: false,
+        flags: {},
+        interactive: true,
+        kind: 'block',
+        prompt,
+      }),
+    ).rejects.toThrow(
+      '`wp-typia add block` requires <name>. Usage: wp-typia add block <name> [--template <basic|interactivity|persistence|compound>]',
+    );
+    expect(selectedPrompts).toEqual([]);
+  }, 15_000);
+
+  test('named add commands validate the missing name before flag-specific errors', async () => {
+    const projectDir = path.join(
+      tempRoot,
+      'demo-add-missing-name-validation-order',
+    );
+
+    await scaffoldOfficialWorkspace(projectDir);
+    linkWorkspaceNodeModules(projectDir);
+
+    const cases = [
+      {
+        flags: {
+          block: 'counter-card',
+        },
+        kind: 'variation' as const,
+        message:
+          '`wp-typia add variation` requires <name>. Usage: wp-typia add variation <name> --block <block-slug>',
+      },
+      {
+        flags: {},
+        kind: 'style' as const,
+        message:
+          '`wp-typia add style` requires <name>. Usage: wp-typia add style <name> --block <block-slug>.',
+      },
+      {
+        flags: {
+          to: 'counter-card',
+        },
+        kind: 'transform' as const,
+        message:
+          '`wp-typia add transform` requires <name>. Usage: wp-typia add transform <name> --from <namespace/block> --to <block-slug|namespace/block-slug>.',
+      },
+      {
+        flags: {
+          position: 'after',
+        },
+        kind: 'hooked-block' as const,
+        message:
+          '`wp-typia add hooked-block` requires <block-slug>. Usage: wp-typia add hooked-block <block-slug> --anchor <anchor-block-name> --position <before|after|firstChild|lastChild>.',
+      },
+      {
+        flags: {
+          block: 'counter-card',
+        },
+        kind: 'binding-source' as const,
+        message:
+          '`wp-typia add binding-source` requires <name>. Usage: wp-typia add binding-source <name> [--block <block-slug|namespace/block-slug> --attribute <attribute>].',
+      },
+    ] satisfies Array<{
+      flags: Record<string, unknown>;
+      kind:
+        | 'binding-source'
+        | 'hooked-block'
+        | 'style'
+        | 'transform'
+        | 'variation';
+      message: string;
+    }>;
+
+    for (const { flags, kind, message } of cases) {
+      await expect(
+        executeAddCommand({
+          cwd: projectDir,
+          emitOutput: false,
+          flags,
+          interactive: false,
+          kind,
+        }),
+      ).rejects.toThrow(message);
+    }
+  }, 15_000);
+
   test('every registered add kind currently advertises dry-run support', () => {
     expect(ADD_KIND_IDS.every((kind) => supportsAddKindDryRun(kind))).toBe(
       true,

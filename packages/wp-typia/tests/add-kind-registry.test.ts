@@ -5,6 +5,7 @@ import {
   ADD_KIND_REGISTRY,
   type AddKindId,
   type AddKindExecutionPlanFor,
+  getAddVisibleFieldNames,
 } from '../src/add-kind-registry';
 
 type ExpectTrue<TValue extends true> = TValue;
@@ -157,4 +158,48 @@ test('keeps shared add-kind ids aligned with registry sort order', () => {
       .sort(([, left], [, right]) => left.sortOrder - right.sortOrder)
       .map(([kind]) => kind),
   ).toEqual([...ADD_KIND_IDS]);
+});
+
+test('keeps shared visible-field groups aligned for refactored add kinds', () => {
+  expect(getAddVisibleFieldNames({ kind: 'admin-view' })).toEqual([
+    'kind',
+    'name',
+    'source',
+  ]);
+  expect(getAddVisibleFieldNames({ kind: 'style' })).toEqual([
+    'kind',
+    'name',
+    'block',
+  ]);
+  expect(getAddVisibleFieldNames({ kind: 'variation' })).toEqual([
+    'kind',
+    'name',
+    'block',
+  ]);
+  expect(getAddVisibleFieldNames({ kind: 'transform' })).toEqual([
+    'kind',
+    'name',
+    'from',
+    'to',
+  ]);
+  expect(getAddVisibleFieldNames({ kind: 'hooked-block' })).toEqual([
+    'kind',
+    'name',
+    'anchor',
+    'position',
+  ]);
+  expect(getAddVisibleFieldNames({ kind: 'block', template: 'basic' })).toEqual(
+    ['kind', 'name', 'template'],
+  );
+  expect(
+    getAddVisibleFieldNames({ kind: 'block', template: 'compound' }),
+  ).toEqual([
+    'kind',
+    'name',
+    'template',
+    'alternate-render-targets',
+    'inner-blocks-preset',
+    'data-storage',
+    'persistence-policy',
+  ]);
 });
