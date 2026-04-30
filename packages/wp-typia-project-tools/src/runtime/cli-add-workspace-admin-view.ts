@@ -43,7 +43,7 @@ const ADMIN_VIEW_REST_SOURCE_KIND = "rest-resource";
 const ADMIN_VIEW_CORE_DATA_SOURCE_KIND = "core-data";
 const ADMIN_VIEW_CORE_DATA_ENTITY_KIND_IDS = ["postType", "taxonomy"] as const;
 const ADMIN_VIEW_CORE_DATA_ENTITY_SEGMENT_PATTERN = /^[A-Za-z][A-Za-z0-9_-]*$/u;
-const ADMIN_VIEW_CORE_DATA_ENTITY_NAME_PATTERN = /^[a-z][a-z0-9_-]*$/u;
+const ADMIN_VIEW_CORE_DATA_ENTITY_NAME_PATTERN = /^[a-z0-9][a-z0-9_-]*$/u;
 const ADMIN_VIEW_SOURCE_USAGE =
 	"wp-typia add admin-view <name> --source <rest-resource:slug|core-data:kind/name>";
 const ADMIN_VIEWS_SCRIPT = "build/admin-views/index.js";
@@ -185,13 +185,13 @@ function assertValidCoreDataEntitySegment(label: string, value: string): string 
 }
 
 function assertValidCoreDataEntityName(value: string): string {
-	const normalized = assertValidCoreDataEntitySegment(
-		"Admin view source entity name",
-		value,
-	);
+	const normalized = value.trim();
+	if (!normalized) {
+		throw new Error(`Admin view source entity name is required. Use \`${ADMIN_VIEW_SOURCE_USAGE}\`.`);
+	}
 	if (!ADMIN_VIEW_CORE_DATA_ENTITY_NAME_PATTERN.test(normalized)) {
 		throw new Error(
-			"Admin view source entity name must start with a lowercase letter and contain only lowercase letters, numbers, underscores, or hyphens.",
+			"Admin view source entity name must start with a lowercase letter or number and contain only lowercase letters, numbers, underscores, or hyphens.",
 		);
 	}
 

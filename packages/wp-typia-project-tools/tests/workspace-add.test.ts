@@ -3699,8 +3699,66 @@ test("admin view core-data sources reject uppercase entity names", async () => {
   );
 
   expect(errorMessage).toContain(
-    "entity name must start with a lowercase letter"
+    "entity name must start with a lowercase letter or number"
   );
+}, 20_000);
+
+test("admin view core-data sources accept numeric-leading entity names", async () => {
+  const targetDir = path.join(
+    tempRoot,
+    "demo-workspace-add-admin-view-core-data-numeric-leading"
+  );
+
+  await scaffoldProject({
+    projectDir: targetDir,
+    templateId: workspaceTemplatePackageManifest.name,
+    packageManager: "npm",
+    noInstall: true,
+    answers: {
+      author: "Test Runner",
+      description: "Demo workspace add admin view core data numeric leading",
+      namespace: "demo-space",
+      phpPrefix: "demo_space",
+      slug: "demo-workspace-add-admin-view-core-data-numeric-leading",
+      textDomain: "demo-space",
+      title: "Demo Workspace Add Admin View Core Data Numeric Leading",
+    },
+  });
+
+  linkWorkspaceNodeModules(targetDir);
+
+  runCli(
+    "node",
+    [
+      entryPath,
+      "add",
+      "admin-view",
+      "audit-logs",
+      "--source",
+      "core-data:postType/2fa_logs",
+    ],
+    {
+      cwd: targetDir,
+      env: withUnpublishedDataViewsEnv(),
+    }
+  );
+
+  const blockConfigSource = fs.readFileSync(
+    path.join(targetDir, "scripts", "block-config.ts"),
+    "utf8"
+  );
+  const doctorOutput = runCli("node", [entryPath, "doctor", "--format", "json"], {
+    cwd: targetDir,
+  });
+  const doctorChecks = parseJsonObjectFromOutput<{
+    checks: Array<{ detail: string; label: string; status: string }>;
+  }>(doctorOutput);
+
+  expect(blockConfigSource).toContain('source: "core-data:postType/2fa_logs"');
+  expect(
+    doctorChecks.checks.find((check) => check.label === "Admin view config audit-logs")
+      ?.status
+  ).toBe("pass");
 }, 20_000);
 
 test("admin view workflow accepts formatted shared webpack entries", async () => {
