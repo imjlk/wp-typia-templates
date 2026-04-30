@@ -45,6 +45,108 @@ describe('wp-typia add command bridge', () => {
     ).toBe(true);
   });
 
+  test('scaffolds interactivity block templates with typed store helpers', async () => {
+    const projectDir = path.join(tempRoot, 'demo-add-interactivity-template');
+
+    await scaffoldOfficialWorkspace(projectDir);
+    linkWorkspaceNodeModules(projectDir);
+
+    const payload = await executeAddCommand({
+      cwd: projectDir,
+      emitOutput: false,
+      flags: {
+        template: 'interactivity',
+      },
+      interactive: false,
+      kind: 'block',
+      name: 'signal-board',
+    });
+
+    const blockDir = path.join(projectDir, 'src', 'blocks', 'signal-board');
+    const generatedInteractivityStore = fs.readFileSync(
+      path.join(blockDir, 'interactivity-store.ts'),
+      'utf8',
+    );
+    const generatedInteractivityRuntime = fs.readFileSync(
+      path.join(blockDir, 'interactivity.ts'),
+      'utf8',
+    );
+    const generatedSave = fs.readFileSync(
+      path.join(blockDir, 'save.tsx'),
+      'utf8',
+    );
+
+    expect(payload?.summaryLines).toContain('Template family: interactivity');
+    expect(fs.existsSync(path.join(blockDir, 'interactivity-store.ts'))).toBe(
+      true,
+    );
+    expect(fs.existsSync(path.join(blockDir, 'interactivity.ts'))).toBe(true);
+    expect(generatedInteractivityStore).toContain(
+      'type InteractivityCallable = (...args: unknown[]) => unknown;',
+    );
+    expect(generatedInteractivityStore).not.toContain(
+      'type InteractivityCallable = Function;',
+    );
+    expect(generatedInteractivityStore).not.toContain(
+      'type InteractivityActionHandler = Function;',
+    );
+    expect(generatedInteractivityStore).toContain(
+      'action<Key extends InteractivityMethodKey<Actions>>',
+    );
+    expect(generatedInteractivityStore).toContain(
+      'callback<Key extends InteractivityMethodKey<Callbacks>>',
+    );
+    expect(generatedInteractivityStore).toContain(
+      'context<Key extends InteractivityKey<Context>>',
+    );
+    expect(generatedInteractivityStore).toContain(
+      'negate<Path extends string>(',
+    );
+    expect(generatedInteractivityStore).toContain(
+      'export interface SignalBoardStoreActions',
+    );
+    expect(generatedInteractivityStore).toContain(
+      'export interface SignalBoardStoreCallbacks {}',
+    );
+    expect(generatedInteractivityStore).toContain(
+      'export const signalBoardStore = defineInteractivityStore({',
+    );
+    expect(generatedInteractivityRuntime).toContain(
+      "import {\n  signalBoardStore,\n  type SignalBoardStoreActions,\n} from './interactivity-store';",
+    );
+    expect(generatedInteractivityRuntime).toContain(
+      'const actions: SignalBoardStoreActions = {',
+    );
+    expect(generatedInteractivityRuntime).toContain(
+      'store(signalBoardStore.namespace, {',
+    );
+    expect(generatedInteractivityRuntime).toContain(
+      'callbacks: signalBoardStore.callbacks,',
+    );
+    expect(generatedSave).toContain(
+      "const clickActionDirective = signalBoardStore.directive.action('handleClick');",
+    );
+    expect(generatedSave).toContain(
+      'const visibilityHiddenDirective = signalBoardStore.directive.negate(',
+    );
+    expect(generatedSave).toContain(
+      "signalBoardStore.directive.state('isVisible')",
+    );
+    expect(generatedSave).toContain(
+      "const clampedClicksDirective = signalBoardStore.directive.state('clampedClicks');",
+    );
+    expect(generatedSave).toContain(
+      "const resetActionDirective = signalBoardStore.directive.action('reset');",
+    );
+    expect(generatedSave).toContain(
+      "'data-wp-interactive': signalBoardStore.directive.interactive,",
+    );
+    expect(generatedSave).toContain(
+      'data-wp-bind--aria-valuenow={clampedClicksDirective}',
+    );
+    expect(generatedSave).toContain('data-wp-on--click={clickActionDirective}');
+  });
+
   test('passes binding-source target flags through the add bridge', async () => {
     const projectDir = path.join(tempRoot, 'demo-add-binding-target');
 
