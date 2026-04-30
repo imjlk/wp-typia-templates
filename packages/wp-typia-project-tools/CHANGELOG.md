@@ -1,5 +1,13 @@
 # @wp-typia/project-tools
 
+## 0.22.1 — 2026-04-30
+
+### Patch changes
+
+- [d331ad4](https://github.com/imjlk/wp-typia/commit/d331ad48e1d0f5f96c649390a87b18c248612377) Harden the interactivity block scaffold by replacing loose `Function` typings
+  with safer callable signatures, and add regression coverage for workspace
+  interactivity helpers plus add-kind execution-plan compatibility. — Thanks @imjlk!
+
 ## 0.22.0 — 2026-04-30
 
 ### Minor changes
