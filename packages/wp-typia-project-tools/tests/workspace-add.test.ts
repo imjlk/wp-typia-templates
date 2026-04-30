@@ -3570,6 +3570,8 @@ test("canonical CLI can add a taxonomy core-data admin screen", async () => {
     }
   );
 
+  typecheckGeneratedProject(targetDir);
+
   const blockConfigSource = fs.readFileSync(
     path.join(targetDir, "scripts", "block-config.ts"),
     "utf8"
@@ -3609,7 +3611,7 @@ test("canonical CLI can add a taxonomy core-data admin screen", async () => {
   );
   expect(dataSource).not.toContain("updatedAt");
   expect(dataSource).not.toContain("status:");
-}, 20_000);
+}, 60_000);
 
 test("admin view core-data sources reject unsupported entity families", async () => {
   const targetDir = path.join(
