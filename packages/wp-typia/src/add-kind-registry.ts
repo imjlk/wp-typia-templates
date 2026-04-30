@@ -224,7 +224,7 @@ export const ADD_KIND_REGISTRY = {
     async prepareExecution(context) {
       const name = requireAddKindName(
         context,
-        '`wp-typia add admin-view` requires <name>. Usage: wp-typia add admin-view <name> [--source <rest-resource:slug>].',
+        '`wp-typia add admin-view` requires <name>. Usage: wp-typia add admin-view <name> [--source <rest-resource:slug>]. Future core-data locators are not implemented yet.',
       );
       const source = readOptionalStringFlag(context.flags, 'source');
 

@@ -101,6 +101,7 @@ bun run docs:build
 - [`docs/block-generator-architecture.md`](https://imjlk.github.io/wp-typia/architecture/block-generator-architecture/) records the typed generator architecture and phase map
 - [`docs/block-generator-tool-contract.md`](https://imjlk.github.io/wp-typia/architecture/block-generator-tool-contract/) records the non-mutating staged controller/tool payload contract on top of the typed generator boundary
 - [`docs/external-template-layer-composition.md`](https://imjlk.github.io/wp-typia/architecture/external-template-layer-composition/) records the external layer package RFC on top of the built-in shared scaffold model
+- [`docs/core-data-adapter-boundary.md`](https://imjlk.github.io/wp-typia/maintainers/core-data-adapter-boundary/) records when future `@wordpress/core-data` adapters should be preferred over `@wp-typia/rest`
 - [`docs/formatting-toolchain-policy.md`](https://imjlk.github.io/wp-typia/maintainers/formatting-toolchain-policy/) records the formatter baseline and CI gate
 - [`docs/maintenance-automation-policy.md`](https://imjlk.github.io/wp-typia/maintainers/maintenance-automation-policy/) records the dependency update and audit baseline
 

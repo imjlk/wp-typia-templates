@@ -151,7 +151,7 @@ function parseAdminViewSource(source?: string): AdminViewSource | undefined {
 	const [kind, slug, extra] = trimmed.split(":");
 	if (kind !== ADMIN_VIEW_SOURCE_KIND || !slug || extra !== undefined) {
 		throw new Error(
-			"Admin view source must use `rest-resource:<slug>` for now.",
+			"Admin view source must use `rest-resource:<slug>` for now. A future `core-data:<kind>/<name>` locator is intentionally not implemented yet.",
 		);
 	}
 
@@ -1029,7 +1029,8 @@ async function writeAdminViewRegistry(
  * @param options.cwd Working directory used to resolve the nearest official workspace.
  * Defaults to `process.cwd()`.
  * @param options.source Optional data source locator. `rest-resource:<slug>`
- * wires the screen to an existing list-capable REST resource.
+ * wires the screen to an existing list-capable REST resource. Future
+ * `core-data:<kind>/<name>` support is intentionally deferred.
  * @returns A promise that resolves with the normalized `adminViewSlug`, optional
  * `source`, and owning `projectDir` after scaffold files and inventory entries
  * are written successfully.
