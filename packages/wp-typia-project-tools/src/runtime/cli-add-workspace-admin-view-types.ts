@@ -1,0 +1,63 @@
+import type { WorkspaceRestResourceInventoryEntry } from './workspace-inventory.js';
+
+export const ADMIN_VIEW_REST_SOURCE_KIND = 'rest-resource';
+export const ADMIN_VIEW_CORE_DATA_SOURCE_KIND = 'core-data';
+export const ADMIN_VIEW_CORE_DATA_ENTITY_KIND_IDS = [
+  'postType',
+  'taxonomy',
+] as const;
+export const ADMIN_VIEW_CORE_DATA_ENTITY_SEGMENT_PATTERN =
+  /^[A-Za-z][A-Za-z0-9_-]*$/u;
+export const ADMIN_VIEW_CORE_DATA_ENTITY_NAME_PATTERN =
+  /^[a-z0-9][a-z0-9_-]*$/u;
+export const ADMIN_VIEW_SOURCE_USAGE =
+  'wp-typia add admin-view <name> --source <rest-resource:slug|core-data:kind/name>';
+export const ADMIN_VIEWS_SCRIPT = 'build/admin-views/index.js';
+export const ADMIN_VIEWS_ASSET = 'build/admin-views/index.asset.php';
+export const ADMIN_VIEWS_STYLE = 'build/admin-views/style-index.css';
+export const ADMIN_VIEWS_STYLE_RTL = 'build/admin-views/style-index-rtl.css';
+export const ADMIN_VIEWS_PHP_GLOB = '/inc/admin-views/*.php';
+export const ADMIN_VIEW_ALLOW_UNPUBLISHED_DATAVIEWS_ENV =
+  'WP_TYPIA_ALLOW_UNPUBLISHED_DATAVIEWS';
+// Lift this gate in the same release that publishes @wp-typia/dataviews.
+export const ADMIN_VIEW_PUBLIC_INSTALLS_ENABLED = false;
+
+export interface AdminViewRestResourceSource {
+  kind: typeof ADMIN_VIEW_REST_SOURCE_KIND;
+  slug: string;
+}
+
+export type AdminViewCoreDataEntityKind =
+  (typeof ADMIN_VIEW_CORE_DATA_ENTITY_KIND_IDS)[number];
+
+export interface AdminViewCoreDataSource {
+  entityKind: AdminViewCoreDataEntityKind;
+  entityName: string;
+  kind: typeof ADMIN_VIEW_CORE_DATA_SOURCE_KIND;
+}
+
+export type AdminViewSource =
+  | AdminViewCoreDataSource
+  | AdminViewRestResourceSource;
+
+export type AdminViewRestResource = WorkspaceRestResourceInventoryEntry;
+
+export function isAdminViewCoreDataSource(
+  source: AdminViewSource | undefined,
+): source is AdminViewCoreDataSource {
+  return source?.kind === ADMIN_VIEW_CORE_DATA_SOURCE_KIND;
+}
+
+export function isAdminViewRestResourceSource(
+  source: AdminViewSource | undefined,
+): source is AdminViewRestResourceSource {
+  return source?.kind === ADMIN_VIEW_REST_SOURCE_KIND;
+}
+
+export function formatAdminViewSourceLocator(source: AdminViewSource): string {
+  if (isAdminViewCoreDataSource(source)) {
+    return `${source.kind}:${source.entityKind}/${source.entityName}`;
+  }
+
+  return `${source.kind}:${source.slug}`;
+}

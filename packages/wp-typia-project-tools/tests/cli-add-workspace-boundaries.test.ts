@@ -1,104 +1,213 @@
-import { expect, test } from "bun:test";
-import fs from "node:fs";
-import path from "node:path";
+import { expect, test } from 'bun:test';
+import fs from 'node:fs';
+import path from 'node:path';
 
-const runtimeRoot = path.join(import.meta.dir, "..", "src", "runtime");
+const runtimeRoot = path.join(import.meta.dir, '..', 'src', 'runtime');
 
-test("cli-add-workspace delegates asset, rest-resource, ai-feature, and admin-view workflows to focused helpers", () => {
-	const addWorkspaceSource = fs.readFileSync(
-		path.join(runtimeRoot, "cli-add-workspace.ts"),
-		"utf8",
-	);
-	const assetsSource = fs.readFileSync(
-		path.join(runtimeRoot, "cli-add-workspace-assets.ts"),
-		"utf8",
-	);
-	const restSource = fs.readFileSync(
-		path.join(runtimeRoot, "cli-add-workspace-rest.ts"),
-		"utf8",
-	);
-	const restAnchorsSource = fs.readFileSync(
-		path.join(runtimeRoot, "cli-add-workspace-rest-anchors.ts"),
-		"utf8",
-	);
-	const restSourceEmittersSource = fs.readFileSync(
-		path.join(runtimeRoot, "cli-add-workspace-rest-source-emitters.ts"),
-		"utf8",
-	);
-	const aiSource = fs.readFileSync(
-		path.join(runtimeRoot, "cli-add-workspace-ai.ts"),
-		"utf8",
-	);
-	const aiAnchorsSource = fs.readFileSync(
-		path.join(runtimeRoot, "cli-add-workspace-ai-anchors.ts"),
-		"utf8",
-	);
-	const aiSourceEmittersSource = fs.readFileSync(
-		path.join(runtimeRoot, "cli-add-workspace-ai-source-emitters.ts"),
-		"utf8",
-	);
-	const adminViewSource = fs.readFileSync(
-		path.join(runtimeRoot, "cli-add-workspace-admin-view.ts"),
-		"utf8",
-	);
+test('cli-add-workspace delegates asset, rest-resource, ai-feature, and admin-view workflows to focused helpers', () => {
+  const addWorkspaceSource = fs.readFileSync(
+    path.join(runtimeRoot, 'cli-add-workspace.ts'),
+    'utf8',
+  );
+  const assetsSource = fs.readFileSync(
+    path.join(runtimeRoot, 'cli-add-workspace-assets.ts'),
+    'utf8',
+  );
+  const restSource = fs.readFileSync(
+    path.join(runtimeRoot, 'cli-add-workspace-rest.ts'),
+    'utf8',
+  );
+  const restAnchorsSource = fs.readFileSync(
+    path.join(runtimeRoot, 'cli-add-workspace-rest-anchors.ts'),
+    'utf8',
+  );
+  const restSourceEmittersSource = fs.readFileSync(
+    path.join(runtimeRoot, 'cli-add-workspace-rest-source-emitters.ts'),
+    'utf8',
+  );
+  const aiSource = fs.readFileSync(
+    path.join(runtimeRoot, 'cli-add-workspace-ai.ts'),
+    'utf8',
+  );
+  const aiAnchorsSource = fs.readFileSync(
+    path.join(runtimeRoot, 'cli-add-workspace-ai-anchors.ts'),
+    'utf8',
+  );
+  const aiSourceEmittersSource = fs.readFileSync(
+    path.join(runtimeRoot, 'cli-add-workspace-ai-source-emitters.ts'),
+    'utf8',
+  );
+  const adminViewSource = fs.readFileSync(
+    path.join(runtimeRoot, 'cli-add-workspace-admin-view.ts'),
+    'utf8',
+  );
+  const adminViewSourceHelpers = fs.readFileSync(
+    path.join(runtimeRoot, 'cli-add-workspace-admin-view-source.ts'),
+    'utf8',
+  );
+  const adminViewTemplatesSource = fs.readFileSync(
+    path.join(runtimeRoot, 'cli-add-workspace-admin-view-templates.ts'),
+    'utf8',
+  );
+  const adminViewScaffoldSource = fs.readFileSync(
+    path.join(runtimeRoot, 'cli-add-workspace-admin-view-scaffold.ts'),
+    'utf8',
+  );
 
-	expect(addWorkspaceSource).toContain('from "./cli-add-workspace-admin-view.js"');
-	expect(addWorkspaceSource).toContain('from "./cli-add-workspace-assets.js"');
-	expect(addWorkspaceSource).toContain('from "./cli-add-workspace-rest.js"');
-	expect(addWorkspaceSource).toContain('from "./cli-add-workspace-ai.js"');
-	expect(addWorkspaceSource).toContain("runAddAiFeatureCommand");
-	expect(addWorkspaceSource).toContain("runAddAdminViewCommand");
-	expect(addWorkspaceSource).toContain("runAddBindingSourceCommand");
-	expect(addWorkspaceSource).toContain("runAddEditorPluginCommand");
-	expect(addWorkspaceSource).toContain("runAddPatternCommand");
-	expect(addWorkspaceSource).toContain("runAddRestResourceCommand");
-	expect(addWorkspaceSource).not.toContain("function buildPatternSource(");
-	expect(addWorkspaceSource).not.toContain("function buildAiFeatureTypesSource(");
-	expect(addWorkspaceSource).not.toContain("function buildBindingSourceServerSource(");
-	expect(addWorkspaceSource).not.toContain("async function ensureAiFeatureBootstrapAnchors(");
-	expect(addWorkspaceSource).not.toContain("async function ensureBindingSourceBootstrapAnchors(");
-	expect(addWorkspaceSource).not.toContain("async function ensureEditorPluginBootstrapAnchors(");
-	expect(addWorkspaceSource).not.toContain("function buildRestResourceTypesSource(");
-	expect(addWorkspaceSource).not.toContain("async function ensureRestResourceBootstrapAnchors(");
-	expect(addWorkspaceSource).not.toContain("async function ensureAdminViewBootstrapAnchors(");
-	expect(addWorkspaceSource).not.toMatch(
-		/export\s*\{[^}]*ensureAdminViewBootstrapAnchors[^}]*\}/u,
-	);
-	expect(addWorkspaceSource).not.toContain("export async function runAddAdminViewCommand(");
-	expect(addWorkspaceSource).not.toContain("export async function runAddAiFeatureCommand(");
-	expect(addWorkspaceSource).not.toContain("export async function runAddPatternCommand(");
-	expect(addWorkspaceSource).not.toContain("export async function runAddBindingSourceCommand(");
-	expect(addWorkspaceSource).not.toContain("export async function runAddEditorPluginCommand(");
-	expect(addWorkspaceSource).not.toContain("export async function runAddRestResourceCommand(");
-	expect(assetsSource).toContain("function buildPatternSource(");
-	expect(assetsSource).toContain("function buildBindingSourceServerSource(");
-	expect(assetsSource).toContain("function buildEditorPluginEntrySource(");
-	expect(assetsSource).toContain("export async function runAddPatternCommand(");
-	expect(assetsSource).toContain("export async function runAddBindingSourceCommand(");
-	expect(assetsSource).toContain("export async function runAddEditorPluginCommand(");
-	expect(restSource).toContain('from "./cli-add-workspace-rest-anchors.js"');
-	expect(restSource).toContain('from "./cli-add-workspace-rest-source-emitters.js"');
-	expect(restSource).not.toContain("function buildRestResourceTypesSource(");
-	expect(restSource).not.toContain("async function ensureRestResourceBootstrapAnchors(");
-	expect(restSource).toContain("function buildRestResourcePhpSource(");
-	expect(restSource).toContain("export async function runAddRestResourceCommand(");
-	expect(restSourceEmittersSource).toContain("function buildRestResourceTypesSource(");
-	expect(restSourceEmittersSource).toContain("function buildRestResourceApiSource(");
-	expect(restSourceEmittersSource).toContain("function buildRestResourceDataSource(");
-	expect(restAnchorsSource).toContain("async function ensureRestResourceBootstrapAnchors(");
-	expect(restAnchorsSource).toContain("async function ensureRestResourceSyncScriptAnchors(");
-	expect(aiSource).toContain('from "./cli-add-workspace-ai-anchors.js"');
-	expect(aiSource).toContain('from "./cli-add-workspace-ai-source-emitters.js"');
-	expect(aiSource).not.toContain("function buildAiFeatureTypesSource(");
-	expect(aiSource).not.toContain("async function ensureAiFeatureBootstrapAnchors(");
-	expect(aiSource).toContain("function buildAiFeaturePhpSource(");
-	expect(aiSource).toContain("export async function runAddAiFeatureCommand(");
-	expect(aiSourceEmittersSource).toContain("function buildAiFeatureTypesSource(");
-	expect(aiSourceEmittersSource).toContain("function buildAiFeatureApiSource(");
-	expect(aiSourceEmittersSource).toContain("function buildAiFeatureDataSource(");
-	expect(aiAnchorsSource).toContain("async function ensureAiFeatureBootstrapAnchors(");
-	expect(aiAnchorsSource).toContain("async function ensureAiFeatureSyncRestAnchors(");
-	expect(adminViewSource).toContain("function buildAdminViewScreenSource(");
-	expect(adminViewSource).toContain("async function ensureAdminViewBootstrapAnchors(");
-	expect(adminViewSource).toContain("export async function runAddAdminViewCommand(");
+  expect(addWorkspaceSource).toContain(
+    'from "./cli-add-workspace-admin-view.js"',
+  );
+  expect(addWorkspaceSource).toContain('from "./cli-add-workspace-assets.js"');
+  expect(addWorkspaceSource).toContain('from "./cli-add-workspace-rest.js"');
+  expect(addWorkspaceSource).toContain('from "./cli-add-workspace-ai.js"');
+  expect(addWorkspaceSource).toContain('runAddAiFeatureCommand');
+  expect(addWorkspaceSource).toContain('runAddAdminViewCommand');
+  expect(addWorkspaceSource).toContain('runAddBindingSourceCommand');
+  expect(addWorkspaceSource).toContain('runAddEditorPluginCommand');
+  expect(addWorkspaceSource).toContain('runAddPatternCommand');
+  expect(addWorkspaceSource).toContain('runAddRestResourceCommand');
+  expect(addWorkspaceSource).not.toContain('function buildPatternSource(');
+  expect(addWorkspaceSource).not.toContain(
+    'function buildAiFeatureTypesSource(',
+  );
+  expect(addWorkspaceSource).not.toContain(
+    'function buildBindingSourceServerSource(',
+  );
+  expect(addWorkspaceSource).not.toContain(
+    'async function ensureAiFeatureBootstrapAnchors(',
+  );
+  expect(addWorkspaceSource).not.toContain(
+    'async function ensureBindingSourceBootstrapAnchors(',
+  );
+  expect(addWorkspaceSource).not.toContain(
+    'async function ensureEditorPluginBootstrapAnchors(',
+  );
+  expect(addWorkspaceSource).not.toContain(
+    'function buildRestResourceTypesSource(',
+  );
+  expect(addWorkspaceSource).not.toContain(
+    'async function ensureRestResourceBootstrapAnchors(',
+  );
+  expect(addWorkspaceSource).not.toContain(
+    'async function ensureAdminViewBootstrapAnchors(',
+  );
+  expect(addWorkspaceSource).not.toMatch(
+    /export\s*\{[^}]*ensureAdminViewBootstrapAnchors[^}]*\}/u,
+  );
+  expect(addWorkspaceSource).not.toContain(
+    'export async function runAddAdminViewCommand(',
+  );
+  expect(addWorkspaceSource).not.toContain(
+    'export async function runAddAiFeatureCommand(',
+  );
+  expect(addWorkspaceSource).not.toContain(
+    'export async function runAddPatternCommand(',
+  );
+  expect(addWorkspaceSource).not.toContain(
+    'export async function runAddBindingSourceCommand(',
+  );
+  expect(addWorkspaceSource).not.toContain(
+    'export async function runAddEditorPluginCommand(',
+  );
+  expect(addWorkspaceSource).not.toContain(
+    'export async function runAddRestResourceCommand(',
+  );
+  expect(assetsSource).toContain('function buildPatternSource(');
+  expect(assetsSource).toContain('function buildBindingSourceServerSource(');
+  expect(assetsSource).toContain('function buildEditorPluginEntrySource(');
+  expect(assetsSource).toContain('export async function runAddPatternCommand(');
+  expect(assetsSource).toContain(
+    'export async function runAddBindingSourceCommand(',
+  );
+  expect(assetsSource).toContain(
+    'export async function runAddEditorPluginCommand(',
+  );
+  expect(restSource).toContain('from "./cli-add-workspace-rest-anchors.js"');
+  expect(restSource).toContain(
+    'from "./cli-add-workspace-rest-source-emitters.js"',
+  );
+  expect(restSource).not.toContain('function buildRestResourceTypesSource(');
+  expect(restSource).not.toContain(
+    'async function ensureRestResourceBootstrapAnchors(',
+  );
+  expect(restSource).toContain('function buildRestResourcePhpSource(');
+  expect(restSource).toContain(
+    'export async function runAddRestResourceCommand(',
+  );
+  expect(restSourceEmittersSource).toContain(
+    'function buildRestResourceTypesSource(',
+  );
+  expect(restSourceEmittersSource).toContain(
+    'function buildRestResourceApiSource(',
+  );
+  expect(restSourceEmittersSource).toContain(
+    'function buildRestResourceDataSource(',
+  );
+  expect(restAnchorsSource).toContain(
+    'async function ensureRestResourceBootstrapAnchors(',
+  );
+  expect(restAnchorsSource).toContain(
+    'async function ensureRestResourceSyncScriptAnchors(',
+  );
+  expect(aiSource).toContain('from "./cli-add-workspace-ai-anchors.js"');
+  expect(aiSource).toContain(
+    'from "./cli-add-workspace-ai-source-emitters.js"',
+  );
+  expect(aiSource).not.toContain('function buildAiFeatureTypesSource(');
+  expect(aiSource).not.toContain(
+    'async function ensureAiFeatureBootstrapAnchors(',
+  );
+  expect(aiSource).toContain('function buildAiFeaturePhpSource(');
+  expect(aiSource).toContain('export async function runAddAiFeatureCommand(');
+  expect(aiSourceEmittersSource).toContain(
+    'function buildAiFeatureTypesSource(',
+  );
+  expect(aiSourceEmittersSource).toContain('function buildAiFeatureApiSource(');
+  expect(aiSourceEmittersSource).toContain(
+    'function buildAiFeatureDataSource(',
+  );
+  expect(aiAnchorsSource).toContain(
+    'async function ensureAiFeatureBootstrapAnchors(',
+  );
+  expect(aiAnchorsSource).toContain(
+    'async function ensureAiFeatureSyncRestAnchors(',
+  );
+  expect(adminViewSource).toContain(
+    'export async function runAddAdminViewCommand(',
+  );
+  expect(adminViewSource).toContain(
+    "from './cli-add-workspace-admin-view-source.js'",
+  );
+  expect(adminViewSource).toContain(
+    "from './cli-add-workspace-admin-view-scaffold.js'",
+  );
+  expect(adminViewSource).not.toContain('function buildAdminViewScreenSource(');
+  expect(adminViewSource).not.toContain(
+    'async function ensureAdminViewBootstrapAnchors(',
+  );
+  expect(adminViewSourceHelpers).toContain(
+    'export function parseAdminViewSource(',
+  );
+  expect(adminViewSourceHelpers).toContain(
+    'export function assertAdminViewPackageAvailability(',
+  );
+  expect(adminViewScaffoldSource).toContain(
+    "from './cli-add-workspace-admin-view-templates.js'",
+  );
+  expect(adminViewScaffoldSource).toContain("from './package-versions.js'");
+  expect(adminViewScaffoldSource).toContain(
+    'async function ensureAdminViewBootstrapAnchors(',
+  );
+  expect(adminViewScaffoldSource).toContain(
+    'export async function scaffoldAdminViewWorkspace(',
+  );
+  expect(adminViewTemplatesSource).toContain(
+    'export function buildAdminViewScreenSource(',
+  );
+  expect(adminViewTemplatesSource).toContain(
+    'export function buildAdminViewPhpSource(',
+  );
+  expect(adminViewTemplatesSource).not.toContain(
+    'export async function runAddAdminViewCommand(',
+  );
 });
