@@ -108,10 +108,10 @@ function summarizeArtifactAttributes(
 type ArtifactAttributeSummary = ReturnType<typeof summarizeArtifactAttributes>;
 type CodeArtifactHashSummary = Record<string, string>;
 const SNAPSHOT_TEMPLATE_IDS = [
-	"basic",
-	"interactivity",
-	"persistence",
-	"compound",
+  'basic',
+  'interactivity',
+  'persistence',
+  'compound',
 ] as const satisfies ReadonlyArray<BuiltInTemplateId>;
 
 const EXPECTED_ARTIFACT_ATTRIBUTE_SUMMARIES: Record<
@@ -237,7 +237,8 @@ const EXPECTED_ARTIFACT_ATTRIBUTE_SUMMARIES: Record<
         },
         intro: {
           blockJson: {
-            default: 'Add and reorder internal items inside this compound block.',
+            default:
+              'Add and reorder internal items inside this compound block.',
             selector: '.wp-block-demo-space-demo-compound__intro',
             source: 'html',
             type: 'string',
@@ -586,7 +587,7 @@ const EXPECTED_CODE_ARTIFACT_HASH_SUMMARIES: Record<
     'src/editor.scss': '7da532bf2acdc7c1',
     'src/hooks.ts': '3c1b432bd711ee70',
     'src/index.tsx': '09971fea0bb30b8f',
-    'src/interactivity-store.ts': '265758339878f831',
+    'src/interactivity-store.ts': 'be4a237b99d622ce',
     'src/interactivity.ts': '02607a60ca356d79',
     'src/manifest-defaults-document.ts': '16818959f3d5a7d6',
     'src/manifest-document.ts': 'b8fffee2c728488e',
@@ -614,8 +615,7 @@ const EXPECTED_CODE_ARTIFACT_HASH_SUMMARIES: Record<
     'src/blocks/demo-compound-item/index.tsx': '5b5805db42c0b1f6',
     'src/blocks/demo-compound-item/manifest-defaults-document.ts':
       '16818959f3d5a7d6',
-    'src/blocks/demo-compound-item/manifest-document.ts':
-      'b8fffee2c728488e',
+    'src/blocks/demo-compound-item/manifest-document.ts': 'b8fffee2c728488e',
     'src/blocks/demo-compound-item/save.tsx': 'e2a9d7c5df3e615f',
     'src/blocks/demo-compound-item/validators.ts': '7123c8ea0e650172',
     'src/blocks/demo-compound/block-metadata.ts': '50956333a97a824a',
@@ -712,12 +712,8 @@ describe('built-in block artifacts', () => {
       'from "./built-in-block-code-templates/compound.js"',
     );
     expect(basicTemplateSource).toContain('export const BASIC_EDIT_TEMPLATE =');
-    expect(compoundTemplateSource).toContain(
-      "from './compound-parent.js'",
-    );
-    expect(compoundTemplateSource).toContain(
-      "from './compound-child.js'",
-    );
+    expect(compoundTemplateSource).toContain("from './compound-parent.js'");
+    expect(compoundTemplateSource).toContain("from './compound-child.js'");
     expect(compoundTemplateSource).toContain(
       "from './compound-persistence.js'",
     );
@@ -1011,7 +1007,9 @@ describe('built-in block artifacts', () => {
       templateId: 'persistence',
       variables,
     });
-    const relativePaths = codeArtifacts.map((artifact) => artifact.relativePath);
+    const relativePaths = codeArtifacts.map(
+      (artifact) => artifact.relativePath,
+    );
 
     expect(relativePaths).toContain('src/render-targets.php');
     expect(relativePaths).toContain('src/render.php');
@@ -1019,12 +1017,15 @@ describe('built-in block artifacts', () => {
     expect(relativePaths).toContain('src/render-mjml.php');
     expect(relativePaths).toContain('src/render-text.php');
     expect(
-      codeArtifacts.find((artifact) => artifact.relativePath === 'src/render.php')?.source,
+      codeArtifacts.find(
+        (artifact) => artifact.relativePath === 'src/render.php',
+      )?.source,
     ).toContain("render_target( 'web'");
     expect(
-      codeArtifacts.find((artifact) => artifact.relativePath === 'src/render-targets.php')
-        ?.source,
-    ).toContain("function demo_space_demo_persistence_render_target");
+      codeArtifacts.find(
+        (artifact) => artifact.relativePath === 'src/render-targets.php',
+      )?.source,
+    ).toContain('function demo_space_demo_persistence_render_target');
   });
 
   test('compound persistence artifacts emit alternate render target entries when requested', () => {
@@ -1041,7 +1042,9 @@ describe('built-in block artifacts', () => {
       templateId: 'compound',
       variables,
     });
-    const relativePaths = codeArtifacts.map((artifact) => artifact.relativePath);
+    const relativePaths = codeArtifacts.map(
+      (artifact) => artifact.relativePath,
+    );
     const parentDir = `src/blocks/${variables.slugKebabCase}`;
 
     expect(relativePaths).toContain(`${parentDir}/render-targets.php`);
@@ -1050,14 +1053,16 @@ describe('built-in block artifacts', () => {
     expect(relativePaths).toContain(`${parentDir}/render-text.php`);
     expect(relativePaths).not.toContain(`${parentDir}/render-mjml.php`);
     expect(
-      codeArtifacts.find((artifact) => artifact.relativePath === `${parentDir}/render.php`)
-        ?.source,
+      codeArtifacts.find(
+        (artifact) => artifact.relativePath === `${parentDir}/render.php`,
+      )?.source,
     ).toContain("render_target( 'web'");
     expect(
       codeArtifacts.find(
-        (artifact) => artifact.relativePath === `${parentDir}/render-targets.php`,
+        (artifact) =>
+          artifact.relativePath === `${parentDir}/render-targets.php`,
       )?.source,
-    ).toContain("function demo_space_demo_compound_render_target");
+    ).toContain('function demo_space_demo_compound_render_target');
   });
 
   test.each([
@@ -1115,21 +1120,21 @@ describe('built-in block artifacts', () => {
       [
         'src/hooks.ts',
         'src/blocks/demo-compound/block-metadata.ts',
-          'src/blocks/demo-compound/manifest-document.ts',
-          'src/blocks/demo-compound/manifest-defaults-document.ts',
-          'src/blocks/demo-compound/edit.tsx',
-          'src/blocks/demo-compound/save.tsx',
-          'src/blocks/demo-compound/index.tsx',
+        'src/blocks/demo-compound/manifest-document.ts',
+        'src/blocks/demo-compound/manifest-defaults-document.ts',
+        'src/blocks/demo-compound/edit.tsx',
+        'src/blocks/demo-compound/save.tsx',
+        'src/blocks/demo-compound/index.tsx',
         'src/blocks/demo-compound/hooks.ts',
         'src/blocks/demo-compound/validators.ts',
-          'src/blocks/demo-compound/children.ts',
-          'src/blocks/demo-compound/interactivity.ts',
-          'src/blocks/demo-compound-item/block-metadata.ts',
-          'src/blocks/demo-compound-item/manifest-document.ts',
-          'src/blocks/demo-compound-item/manifest-defaults-document.ts',
-          'src/blocks/demo-compound-item/edit.tsx',
-          'src/blocks/demo-compound-item/save.tsx',
-          'src/blocks/demo-compound-item/index.tsx',
+        'src/blocks/demo-compound/children.ts',
+        'src/blocks/demo-compound/interactivity.ts',
+        'src/blocks/demo-compound-item/block-metadata.ts',
+        'src/blocks/demo-compound-item/manifest-document.ts',
+        'src/blocks/demo-compound-item/manifest-defaults-document.ts',
+        'src/blocks/demo-compound-item/edit.tsx',
+        'src/blocks/demo-compound-item/save.tsx',
+        'src/blocks/demo-compound-item/index.tsx',
         'src/blocks/demo-compound-item/hooks.ts',
         'src/blocks/demo-compound-item/validators.ts',
         'src/blocks/demo-compound/style.scss',
