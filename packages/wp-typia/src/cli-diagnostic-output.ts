@@ -31,6 +31,12 @@ function resolveEntrypointCliCommand(argv: string[]): string {
   return findFirstPositional(argv, COMMAND_ROUTING_METADATA) ?? 'wp-typia';
 }
 
+function writeStructuredCliJsonToStderr(
+  payload: Record<string, unknown>,
+): void {
+  process.stderr.write(`${JSON.stringify(payload, null, 2)}\n`);
+}
+
 export function prefersStructuredCliArgv(argv: string[]): boolean {
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index];
@@ -70,7 +76,7 @@ export function emitCliDiagnosticFailure(
 ): true | never {
   const diagnostic = createCliCommandError(options);
   if (prefersStructuredCliOutput(args)) {
-    args.output({
+    writeStructuredCliJsonToStderr({
       ...(options.extraOutput ?? {}),
       error: serializeCliDiagnosticError(diagnostic),
       ok: false,
@@ -90,21 +96,15 @@ export function writeStructuredCliDiagnosticError(
     return false;
   }
 
-  console.log(
-    JSON.stringify(
-      {
-        error: serializeCliDiagnosticError(
-          createCliCommandError({
-            command: resolveEntrypointCliCommand(argv),
-            error,
-          }),
-        ),
-        ok: false,
-      },
-      null,
-      2,
+  writeStructuredCliJsonToStderr({
+    error: serializeCliDiagnosticError(
+      createCliCommandError({
+        command: resolveEntrypointCliCommand(argv),
+        error,
+      }),
     ),
-  );
+    ok: false,
+  });
   process.exitCode = 1;
   return true;
 }

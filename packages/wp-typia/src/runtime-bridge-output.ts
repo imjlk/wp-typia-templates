@@ -28,14 +28,6 @@ export type StructuredCompletionSuccessPayload = {
     command: string;
     completion?: SerializableCompletionPayload;
     files?: string[];
-    nextSteps?: string[];
-    optionalLines?: string[];
-    optionalNote?: string;
-    optionalTitle?: string;
-    preambleLines?: string[];
-    summaryLines?: string[];
-    title?: string;
-    warnings?: string[];
   } & Record<string, unknown>;
 };
 
@@ -92,14 +84,11 @@ export type StructuredInitSuccessPayload = {
     detectedLayout: StructuredInitPlan['detectedLayout'];
     files?: string[];
     mode: 'apply' | 'preview';
-    nextSteps?: string[];
     packageManager: PackageManagerId;
     plan: StructuredInitPlan;
     projectDir: string;
     status: StructuredInitPlan['status'];
     summary: string;
-    title?: string;
-    warnings?: string[];
   };
 };
 
@@ -259,14 +248,6 @@ export function buildStructuredCompletionSuccessPayload(
         ? {
             completion: serializedCompletion,
             files: extractPlannedFiles(serializedCompletion),
-            nextSteps: serializedCompletion.nextSteps,
-            optionalLines: serializedCompletion.optionalLines,
-            optionalNote: serializedCompletion.optionalNote,
-            optionalTitle: serializedCompletion.optionalTitle,
-            preambleLines: serializedCompletion.preambleLines,
-            summaryLines: serializedCompletion.summaryLines,
-            title: serializedCompletion.title,
-            warnings: serializedCompletion.warningLines,
           }
         : {}),
     },
@@ -294,14 +275,11 @@ export function buildStructuredInitSuccessPayload(
       detectedLayout: plan.detectedLayout,
       files: toNonEmptyArray(files),
       mode: plan.commandMode === 'apply' ? 'apply' : 'preview',
-      nextSteps: toNonEmptyArray(plan.nextSteps),
       packageManager: plan.packageManager,
       plan,
       projectDir: plan.projectDir,
       status: plan.status,
       summary: plan.summary,
-      title: completion.title,
-      warnings: toNonEmptyArray(plan.notes),
     },
   };
 }
