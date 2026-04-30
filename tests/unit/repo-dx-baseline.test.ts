@@ -133,6 +133,20 @@ describe('repository DX baseline', () => {
           'content',
           'docs',
           'maintainers',
+          'core-data-adapter-boundary.md',
+        ),
+      ),
+    ).toBe(true);
+    expect(
+      fs.existsSync(
+        path.join(
+          repoRoot,
+          'apps',
+          'docs',
+          'src',
+          'content',
+          'docs',
+          'maintainers',
           'formatting-toolchain-policy.md',
         ),
       ),
@@ -305,6 +319,9 @@ describe('repository DX baseline', () => {
       'Root ESLint covers repository infrastructure code',
     );
     expect(readme).toContain(
+      '[Core Data Adapter Boundary](https://imjlk.github.io/wp-typia/maintainers/core-data-adapter-boundary/)',
+    );
+    expect(readme).toContain(
       '[Formatting Toolchain Policy](https://imjlk.github.io/wp-typia/maintainers/formatting-toolchain-policy/)',
     );
     expect(readme).toContain(
@@ -336,6 +353,9 @@ describe('repository DX baseline', () => {
     );
     expect(contributing).toContain(
       '[`docs/external-template-layer-composition.md`](https://imjlk.github.io/wp-typia/architecture/external-template-layer-composition/)',
+    );
+    expect(contributing).toContain(
+      '[`docs/core-data-adapter-boundary.md`](https://imjlk.github.io/wp-typia/maintainers/core-data-adapter-boundary/)',
     );
     expect(contributing).toContain(
       '[`docs/formatting-toolchain-policy.md`](https://imjlk.github.io/wp-typia/maintainers/formatting-toolchain-policy/)',

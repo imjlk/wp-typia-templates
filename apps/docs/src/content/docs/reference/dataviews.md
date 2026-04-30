@@ -179,6 +179,13 @@ to export individual endpoint helpers, or it can group them with
 `defineRestResource(...)` from `@wp-typia/rest` and let the admin view consume
 the same resource facade.
 
+Future opt-in work may add `core-data:<kind>/<name>` entity sources for
+WordPress-owned collections, but that locator is intentionally deferred until
+the maintainer boundary in
+[`docs/core-data-adapter-boundary.md`](../maintainers/core-data-adapter-boundary.md)
+graduates into an implementation PR. Current public scaffolds only support
+`rest-resource:<slug>`.
+
 Prefer custom UI instead of DataViews when the interaction is primarily a
 guided flow, a canvas/editor experience, a dense dashboard with unrelated
 widgets, or a purpose-built form where table/list/grid view state is incidental.

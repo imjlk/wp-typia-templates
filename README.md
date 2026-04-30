@@ -254,6 +254,7 @@ npx wp-typia create my-block --template @scope/create-block-template --variant h
 - [Retrofit and Init Direction](RETROFIT_INIT_DIRECTION.md)
 - [Error and Export Contract Guide](https://imjlk.github.io/wp-typia/reference/error-export-contracts/)
 - [Formatting Toolchain Policy](https://imjlk.github.io/wp-typia/maintainers/formatting-toolchain-policy/)
+- [Core Data Adapter Boundary](https://imjlk.github.io/wp-typia/maintainers/core-data-adapter-boundary/)
 - [Maintenance Automation Policy](https://imjlk.github.io/wp-typia/maintainers/maintenance-automation-policy/)
 - [Package Manifest Policy](https://imjlk.github.io/wp-typia/maintainers/package-manifest-policy/)
 - [Scaffold Toolchain Policy](https://imjlk.github.io/wp-typia/maintainers/scaffold-toolchain-policy/)

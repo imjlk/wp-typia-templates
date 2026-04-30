@@ -139,26 +139,26 @@ wp-typia add hooked-block <block-slug> --anchor core/post-content --position aft
 
 Common flags:
 
-| Flag                                                             | Description                                                                                                                     |
-| ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| `--template <basic \| interactivity \| persistence \| compound>` | Built-in block family for `add block`.                                                                                          |
-| `--dry-run`                                                      | Preview workspace file updates and completion guidance.                                                                         |
-| `--block <block-slug>`                                           | Target block for variation, style, and end-to-end binding-source workflows.                                                     |
-| `--attribute <attribute>`                                        | Target block attribute for end-to-end binding-source workflows.                                                                 |
-| `--from <namespace/block>`                                       | Source block name for transform workflows.                                                                                      |
-| `--to <block-slug \| namespace/block-slug>`                      | Target workspace block for transform workflows.                                                                                 |
-| `--anchor <block-name>`                                          | Anchor block for hooked-block workflows.                                                                                        |
-| `--position <before \| after \| firstChild \| lastChild>`        | Hook position for hooked blocks.                                                                                                |
-| `--slot <sidebar \| document-setting-panel>`                     | Editor shell slot for editor-plugin scaffolds; legacy aliases `PluginSidebar` and `PluginDocumentSettingPanel` remain accepted. |
-| `--namespace <vendor/v1>`                                        | REST namespace for REST resource and AI feature workflows.                                                                      |
-| `--methods <method[,method...]>`                                 | REST methods for REST resource workflows.                                                                                       |
-| `--source <locator>`                                             | Optional data source locator for admin-view workflows, such as `rest-resource:products`.                                        |
-| `--external-layer-source <source>`                               | Compose an external layer package on top of a built-in block template.                                                          |
-| `--external-layer-id <id>`                                       | Select a specific external layer.                                                                                               |
-| `--inner-blocks-preset <id>`                                     | Select a compound `InnerBlocks` preset.                                                                                         |
-| `--alternate-render-targets <list>`                              | Add alternate render targets for persistence-capable dynamic scaffolds.                                                         |
-| `--data-storage <post-meta \| custom-table>`                     | Select persistence storage.                                                                                                     |
-| `--persistence-policy <authenticated \| public>`                 | Select persistence write policy.                                                                                                |
+| Flag                                                             | Description                                                                                                                                                              |
+| ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `--template <basic \| interactivity \| persistence \| compound>` | Built-in block family for `add block`.                                                                                                                                   |
+| `--dry-run`                                                      | Preview workspace file updates and completion guidance.                                                                                                                  |
+| `--block <block-slug>`                                           | Target block for variation, style, and end-to-end binding-source workflows.                                                                                              |
+| `--attribute <attribute>`                                        | Target block attribute for end-to-end binding-source workflows.                                                                                                          |
+| `--from <namespace/block>`                                       | Source block name for transform workflows.                                                                                                                               |
+| `--to <block-slug \| namespace/block-slug>`                      | Target workspace block for transform workflows.                                                                                                                          |
+| `--anchor <block-name>`                                          | Anchor block for hooked-block workflows.                                                                                                                                 |
+| `--position <before \| after \| firstChild \| lastChild>`        | Hook position for hooked blocks.                                                                                                                                         |
+| `--slot <sidebar \| document-setting-panel>`                     | Editor shell slot for editor-plugin scaffolds; legacy aliases `PluginSidebar` and `PluginDocumentSettingPanel` remain accepted.                                          |
+| `--namespace <vendor/v1>`                                        | REST namespace for REST resource and AI feature workflows.                                                                                                               |
+| `--methods <method[,method...]>`                                 | REST methods for REST resource workflows.                                                                                                                                |
+| `--source <locator>`                                             | Optional data source locator for admin-view workflows. Current public support is `rest-resource:products`; `core-data:<kind>/<name>` is reserved for future opt-in work. |
+| `--external-layer-source <source>`                               | Compose an external layer package on top of a built-in block template.                                                                                                   |
+| `--external-layer-id <id>`                                       | Select a specific external layer.                                                                                                                                        |
+| `--inner-blocks-preset <id>`                                     | Select a compound `InnerBlocks` preset.                                                                                                                                  |
+| `--alternate-render-targets <list>`                              | Add alternate render targets for persistence-capable dynamic scaffolds.                                                                                                  |
+| `--data-storage <post-meta \| custom-table>`                     | Select persistence storage.                                                                                                                                              |
+| `--persistence-policy <authenticated \| public>`                 | Select persistence write policy.                                                                                                                                         |
 
 Use variations when you want alternate inserter presets for the same block,
 Block Styles when you want a named visual class for an existing block, transforms
@@ -180,6 +180,9 @@ Admin-view scaffolds can optionally bind to a generated data source with
 `--source`. For example, `rest-resource:products` points at a matching
 `wp-typia add rest-resource products` scaffold. Published npm installs
 currently gate `admin-view` scaffolds until `@wp-typia/dataviews` is published.
+Future maintainer direction also leaves room for an explicit
+`core-data:<kind>/<name>` source shape, but that remains deferred until the
+core-data adapter boundary is implemented.
 
 ## `init`
 

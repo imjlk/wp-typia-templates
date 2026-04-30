@@ -196,6 +196,10 @@ export default defineConfig({
               link: '/maintainers/bunli-cli-migration/',
             },
             {
+              label: 'Core Data Adapter Boundary',
+              link: '/maintainers/core-data-adapter-boundary/',
+            },
+            {
               label: 'Formatting Toolchain Policy',
               link: '/maintainers/formatting-toolchain-policy/',
             },
