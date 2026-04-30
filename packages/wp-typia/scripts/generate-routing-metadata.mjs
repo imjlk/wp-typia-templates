@@ -1,8 +1,9 @@
 import fs from 'node:fs/promises';
+import { createRequire } from 'node:module';
 import path from 'node:path';
-import { pathToFileURL } from 'node:url';
 
 const packageRoot = path.resolve(import.meta.dirname, '..');
+const require = createRequire(import.meta.url);
 const routingMetadataFile = path.join(
   packageRoot,
   'bin',
@@ -23,16 +24,21 @@ const commandRegistryModulePath = path.join(
   'src',
   'command-registry.ts',
 );
+const addKindIdsModulePath = path.join(packageRoot, 'src', 'add-kind-ids.ts');
 const checkOnly = process.argv.includes('--check');
 
-async function importTranspiledTypeScriptModule(modulePath) {
-  const [{ default: ts }, source] = await Promise.all([
+async function importTranspiledTypeScriptModule(
+  modulePath,
+  siblingModules = [],
+) {
+  const [{ default: ts }, source, ...siblingSources] = await Promise.all([
     import('typescript'),
     fs.readFile(modulePath, 'utf8'),
+    ...siblingModules.map((siblingPath) => fs.readFile(siblingPath, 'utf8')),
   ]);
   const transpiled = ts.transpileModule(source, {
     compilerOptions: {
-      module: ts.ModuleKind.ESNext,
+      module: ts.ModuleKind.CommonJS,
       target: ts.ScriptTarget.ES2020,
     },
     fileName: modulePath,
@@ -44,12 +50,32 @@ async function importTranspiledTypeScriptModule(modulePath) {
   );
   const tempFile = path.join(
     tempDir,
-    path.basename(modulePath).replace(/\.ts$/u, '.mjs'),
+    path.basename(modulePath).replace(/\.ts$/u, '.js'),
   );
 
-  await fs.writeFile(tempFile, transpiled.outputText, 'utf8');
+  await Promise.all([
+    fs.writeFile(
+      path.join(tempDir, 'package.json'),
+      JSON.stringify({ type: 'commonjs' }),
+      'utf8',
+    ),
+    fs.writeFile(tempFile, transpiled.outputText, 'utf8'),
+    ...siblingModules.map((siblingPath, index) =>
+      fs.writeFile(
+        path.join(tempDir, path.basename(siblingPath).replace(/\.ts$/u, '.js')),
+        ts.transpileModule(siblingSources[index], {
+          compilerOptions: {
+            module: ts.ModuleKind.CommonJS,
+            target: ts.ScriptTarget.ES2020,
+          },
+          fileName: siblingPath,
+        }).outputText,
+        'utf8',
+      ),
+    ),
+  ]);
   try {
-    return await import(pathToFileURL(tempFile).href);
+    return require(tempFile);
   } finally {
     await fs.rm(tempDir, { force: true, recursive: true });
   }
@@ -124,7 +150,9 @@ const [
   },
 ] = await Promise.all([
   importTranspiledTypeScriptModule(commandOptionMetadataModulePath),
-  importTranspiledTypeScriptModule(commandRegistryModulePath),
+  importTranspiledTypeScriptModule(commandRegistryModulePath, [
+    addKindIdsModulePath,
+  ]),
 ]);
 
 const renderedFiles = renderRoutingMetadataFiles({

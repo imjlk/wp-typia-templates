@@ -1,6 +1,11 @@
 import { expect, test } from 'bun:test';
 
-import { type AddKindExecutionPlanFor } from '../src/add-kind-registry';
+import {
+  ADD_KIND_IDS,
+  ADD_KIND_REGISTRY,
+  type AddKindId,
+  type AddKindExecutionPlanFor,
+} from '../src/add-kind-registry';
 
 type ExpectTrue<TValue extends true> = TValue;
 type IsEqual<TLeft, TRight> =
@@ -23,18 +28,32 @@ type BindingSourcePlanCompatibility = ExpectTrue<
     Parameters<AddKindExecutionPlanFor<'binding-source'>['getValues']>[0]
   >
 >;
+type SharedAddKindIdCompatibility = ExpectTrue<
+  IsEqual<keyof typeof ADD_KIND_REGISTRY, AddKindId>
+>;
 
 const addKindPlanCompatibilityChecks: {
   'admin-view': AdminViewPlanCompatibility;
   'binding-source': BindingSourcePlanCompatibility;
+  registryKeys: SharedAddKindIdCompatibility;
 } = {
   'admin-view': true,
   'binding-source': true,
+  registryKeys: true,
 };
 
 test('preserves compile-time compatibility between execute and getValues for representative add kinds', () => {
   expect(addKindPlanCompatibilityChecks).toEqual({
     'admin-view': true,
     'binding-source': true,
+    registryKeys: true,
   });
+});
+
+test('keeps shared add-kind ids aligned with registry sort order', () => {
+  expect(
+    Object.entries(ADD_KIND_REGISTRY)
+      .sort(([, left], [, right]) => left.sortOrder - right.sortOrder)
+      .map(([kind]) => kind),
+  ).toEqual([...ADD_KIND_IDS]);
 });

@@ -1,3 +1,5 @@
+import { ADD_KIND_IDS } from './add-kind-ids';
+
 export const WP_TYPIA_CANONICAL_CREATE_USAGE = 'wp-typia create <project-dir>';
 export const WP_TYPIA_POSITIONAL_ALIAS_USAGE = 'wp-typia <project-dir>';
 export const WP_TYPIA_CANONICAL_MIGRATE_USAGE = 'wp-typia migrate <subcommand>';
@@ -42,17 +44,7 @@ export const WP_TYPIA_COMMAND_REGISTRY = [
     nodeFallback: true,
     optionGroups: ['add'],
     requiresBunRuntime: false,
-    subcommands: [
-      'block',
-      'variation',
-      'style',
-      'transform',
-      'pattern',
-      'binding-source',
-      'rest-resource',
-      'editor-plugin',
-      'hooked-block',
-    ],
+    subcommands: ADD_KIND_IDS,
   },
   {
     commandTree: true,
