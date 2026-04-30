@@ -242,11 +242,7 @@ function parseAdminViewSource(source?: string): AdminViewSource | undefined {
 	if (kind === ADMIN_VIEW_REST_SOURCE_KIND) {
 		return {
 			kind,
-			slug: assertValidGeneratedSlug(
-				"Admin view source slug",
-				normalizeBlockSlug(locator),
-				ADMIN_VIEW_SOURCE_USAGE,
-			),
+			slug: assertValidGeneratedSlug("Admin view source slug", locator, ADMIN_VIEW_SOURCE_USAGE),
 		};
 	}
 

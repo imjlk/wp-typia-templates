@@ -3656,6 +3656,53 @@ test("admin view core-data sources reject unsupported entity families", async ()
   expect(errorMessage).toContain("currently support only: postType, taxonomy");
 }, 20_000);
 
+test("admin view rest-resource sources reject extra locator segments", async () => {
+  const targetDir = path.join(
+    tempRoot,
+    "demo-workspace-add-admin-view-rest-resource-malformed"
+  );
+
+  await scaffoldProject({
+    projectDir: targetDir,
+    templateId: workspaceTemplatePackageManifest.name,
+    packageManager: "npm",
+    noInstall: true,
+    answers: {
+      author: "Test Runner",
+      description: "Demo workspace add admin view rest resource malformed",
+      namespace: "demo-space",
+      phpPrefix: "demo_space",
+      slug: "demo-workspace-add-admin-view-rest-resource-malformed",
+      textDomain: "demo-space",
+      title: "Demo Workspace Add Admin View Rest Resource Malformed",
+    },
+  });
+
+  linkWorkspaceNodeModules(targetDir);
+
+  const errorMessage = getCommandErrorMessage(() =>
+    runCli(
+      "node",
+      [
+        entryPath,
+        "add",
+        "admin-view",
+        "snapshots",
+        "--source",
+        "rest-resource:products:v2",
+      ],
+      {
+        cwd: targetDir,
+        env: withUnpublishedDataViewsEnv(),
+      }
+    )
+  );
+
+  expect(errorMessage).toContain(
+    "Admin view source slug must start with a letter and contain only lowercase letters, numbers, and hyphens."
+  );
+}, 20_000);
+
 test("admin view core-data sources reject uppercase entity names", async () => {
   const targetDir = path.join(
     tempRoot,
