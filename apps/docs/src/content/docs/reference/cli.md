@@ -123,6 +123,7 @@ Extend an official wp-typia workspace from the workspace root.
 wp-typia add block <name> --template basic
 wp-typia add admin-view <name>
 wp-typia add admin-view <name> --source rest-resource:products
+wp-typia add admin-view <name> --source core-data:postType/post
 wp-typia add variation <name> --block <block-slug>
 wp-typia add style <name> --block <block-slug>
 wp-typia add transform <name> --from <namespace/block> --to <block-slug|namespace/block-slug>
@@ -152,7 +153,7 @@ Common flags:
 | `--slot <sidebar \| document-setting-panel>`                     | Editor shell slot for editor-plugin scaffolds; legacy aliases `PluginSidebar` and `PluginDocumentSettingPanel` remain accepted.                                          |
 | `--namespace <vendor/v1>`                                        | REST namespace for REST resource and AI feature workflows.                                                                                                               |
 | `--methods <method[,method...]>`                                 | REST methods for REST resource workflows.                                                                                                                                |
-| `--source <locator>`                                             | Optional data source locator for admin-view workflows. Current public support is `rest-resource:products`; `core-data:<kind>/<name>` is reserved for future opt-in work. |
+| `--source <locator>`                                             | Optional data source locator for admin-view workflows. Current public support includes `rest-resource:products`, `core-data:postType/post`, and `core-data:taxonomy/category`. |
 | `--external-layer-source <source>`                               | Compose an external layer package on top of a built-in block template.                                                                                                   |
 | `--external-layer-id <id>`                                       | Select a specific external layer.                                                                                                                                        |
 | `--inner-blocks-preset <id>`                                     | Select a compound `InnerBlocks` preset.                                                                                                                                  |
@@ -180,9 +181,11 @@ Admin-view scaffolds can optionally bind to a generated data source with
 `--source`. For example, `rest-resource:products` points at a matching
 `wp-typia add rest-resource products` scaffold. Published npm installs
 currently gate `admin-view` scaffolds until `@wp-typia/dataviews` is published.
-Future maintainer direction also leaves room for an explicit
-`core-data:<kind>/<name>` source shape, but that remains deferred until the
-core-data adapter boundary is implemented.
+The first core-data wave also accepts `core-data:postType/<post-type>` and
+`core-data:taxonomy/<taxonomy>` for WordPress-owned entity collections. That
+path adds direct `@wordpress/core-data` and `@wordpress/data` dependencies only
+for the generated workspace and follows the boundary documented in the
+core-data adapter guide.
 
 ## `init`
 

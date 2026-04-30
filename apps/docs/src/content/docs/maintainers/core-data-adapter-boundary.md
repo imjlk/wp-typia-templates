@@ -105,18 +105,19 @@ If the same scaffold also renders a DataViews UI:
 
 ## DataViews admin-view source policy
 
-A future admin-view implementation may accept:
+The first shipped admin-view implementation accepts:
 
-- `core-data:<kind>/<name>`
+- `core-data:postType/<post-type>`
+- `core-data:taxonomy/<taxonomy>`
 
-That source shape is useful because it makes the entity boundary explicit at the
-CLI layer and keeps it distinct from:
+That source shape makes the entity boundary explicit at the CLI layer and keeps
+it distinct from:
 
 - `rest-resource:<slug>`
 
-However, that locator should remain future work until the first adapter target
-is implemented. Current public surface area still supports only
-`rest-resource:<slug>`.
+The first wave stays deliberately narrow. It does not treat every core-data
+entity as automatically in-scope, and it does not change the plugin-owned REST
+path.
 
 ## Validation and ownership boundary
 
@@ -141,9 +142,11 @@ This keeps the distinction understandable:
 - no client-side `addEntities`-driven expansion of arbitrary plugin resources in
   the first wave
 
-## Follow-up implementation lane
+## Current implementation status
 
-When the implementation work starts, it should begin with an opt-in admin-view
-source and thin typed entity wrappers, not a broad runtime abstraction rewrite.
+The current implementation keeps the first adapter intentionally small:
 
-The current follow-up implementation lane is tracked in issue `#644`.
+- opt-in only through `wp-typia add admin-view --source core-data:<kind>/<name>`
+- bounded to the `postType` and `taxonomy` entity families
+- based on thin typed wrappers over the existing core-data hooks
+- still separate from `rest-resource:<slug>` and `@wp-typia/rest`

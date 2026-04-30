@@ -224,7 +224,7 @@ export const ADD_KIND_REGISTRY = {
     async prepareExecution(context) {
       const name = requireAddKindName(
         context,
-        '`wp-typia add admin-view` requires <name>. Usage: wp-typia add admin-view <name> [--source <rest-resource:slug>]. Future core-data locators are not implemented yet.',
+        '`wp-typia add admin-view` requires <name>. Usage: wp-typia add admin-view <name> [--source <rest-resource:slug|core-data:kind/name>].',
       );
       const source = readOptionalStringFlag(context.flags, 'source');
 
@@ -244,7 +244,7 @@ export const ADD_KIND_REGISTRY = {
     sortOrder: 10,
     supportsDryRun: true,
     usage:
-      'wp-typia add admin-view <name> [--source <rest-resource:slug>] [--dry-run]',
+      'wp-typia add admin-view <name> [--source <rest-resource:slug|core-data:kind/name>] [--dry-run]',
     visibleFieldNames: () => ['kind', 'name', 'source'],
   }),
   'binding-source': defineAddKindRegistryEntry<AddBindingSourceResult>({

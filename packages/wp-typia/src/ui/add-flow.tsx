@@ -209,11 +209,11 @@ function AddFlowFields({
         ? createElement(FirstPartyTextField, {
             ...getWrappedFieldNeighbors(orderedVisibleFields, 'source'),
             description:
-              'Optional data source locator, for example rest-resource:products',
+              'Optional data source locator, for example rest-resource:products or core-data:postType/post',
             key: 'source',
             label: 'Data source',
             name: 'source',
-            placeholder: 'rest-resource:products',
+            placeholder: 'core-data:postType/post',
           })
         : null,
       visibleFields.has('alternate-render-targets')

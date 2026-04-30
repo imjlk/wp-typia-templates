@@ -52,7 +52,8 @@ Notes:
   Interactive add flows let you choose a template when \`--template\` is omitted; non-interactive runs default to \`basic\`.
   \`add admin-view\` scaffolds an opt-in DataViews-powered WordPress admin screen under \`src/admin-views/\`.
   Pass \`--source rest-resource:<slug>\` to reuse a list-capable REST resource.
-  Future core-data locators and public installs remain deferred until \`@wp-typia/dataviews\` is published to npm.
+  Pass \`--source core-data:postType/post\` or \`--source core-data:taxonomy/category\` to bind a WordPress-owned entity collection.
+  Public installs currently gate this workflow until \`@wp-typia/dataviews\` is published to npm.
   \`query-loop\` is create-only. Use \`wp-typia create <project-dir> --template query-loop\`; \`wp-typia add block\` accepts only basic, interactivity, persistence, and compound families.
   \`add variation\` uses an existing workspace block from \`scripts/block-config.ts\`.
   \`add style\` registers a Block Styles option for an existing generated block.

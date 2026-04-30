@@ -161,6 +161,7 @@ state, and pagination without changing default block scaffolds:
 ```sh
 wp-typia add admin-view products
 wp-typia add admin-view products --source rest-resource:products
+wp-typia add admin-view posts --source core-data:postType/post
 ```
 
 Current public CLI releases gate `wp-typia add admin-view` until
@@ -179,12 +180,18 @@ to export individual endpoint helpers, or it can group them with
 `defineRestResource(...)` from `@wp-typia/rest` and let the admin view consume
 the same resource facade.
 
-Future opt-in work may add `core-data:<kind>/<name>` entity sources for
-WordPress-owned collections, but that locator is intentionally deferred until
-the maintainer boundary in
+Current public scaffolds also support `core-data:<kind>/<name>` entity sources
+for a narrow first-wave boundary:
+
+- `core-data:postType/<post-type>`
+- `core-data:taxonomy/<taxonomy>`
+
+That path adds direct `@wordpress/core-data` and `@wordpress/data`
+dependencies only for the generated workspace and keeps the fetching/edit
+boundary on the WordPress entity store. The maintainer boundary in
 [`docs/core-data-adapter-boundary.md`](../maintainers/core-data-adapter-boundary.md)
-graduates into an implementation PR. Current public scaffolds only support
-`rest-resource:<slug>`.
+explains why this first implementation stays narrower than the REST-resource
+path.
 
 Prefer custom UI instead of DataViews when the interaction is primarily a
 guided flow, a canvas/editor experience, a dense dashboard with unrelated

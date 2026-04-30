@@ -207,7 +207,7 @@ export const ADD_OPTION_METADATA = {
   },
   source: {
     description:
-      'Optional data source locator for admin-view workflows, such as rest-resource:products.',
+      'Optional data source locator for admin-view workflows, such as rest-resource:products or core-data:postType/post.',
     type: 'string',
   },
   template: {

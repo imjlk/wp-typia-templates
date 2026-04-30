@@ -1349,19 +1349,21 @@ function checkWorkspaceAdminViewConfig(
 	}
 
 	const source = adminView.source.trim();
-	const sourceMatch = /^rest-resource:([a-z][a-z0-9-]*)$/u.exec(source);
-	const restResourceSlug = sourceMatch?.[1];
+	const restSourceMatch = /^rest-resource:([a-z][a-z0-9-]*)$/u.exec(source);
+	const coreDataSourceMatch =
+		/^core-data:(postType|taxonomy)\/([A-Za-z][A-Za-z0-9_-]*)$/u.exec(source);
+	const restResourceSlug = restSourceMatch?.[1];
 	const restResource = restResourceSlug
 		? inventory.restResources.find((entry) => entry.slug === restResourceSlug)
 		: undefined;
-	const isValid = Boolean(restResource?.methods.includes("list"));
+	const isValid = Boolean(restResource?.methods.includes("list")) || Boolean(coreDataSourceMatch);
 
 	return createDoctorCheck(
 		`Admin view config ${adminView.slug}`,
 		isValid ? "pass" : "fail",
 		isValid
 			? `Admin view source ${source} is list-capable`
-			: "Admin view source must use rest-resource:<slug> and reference a list-capable REST resource",
+			: "Admin view source must use rest-resource:<slug> with a list-capable REST resource or core-data:<postType|taxonomy>/<name>",
 	);
 }
 
