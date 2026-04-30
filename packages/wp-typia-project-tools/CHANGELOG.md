@@ -1,5 +1,31 @@
 # @wp-typia/project-tools
 
+## 0.22.0 — 2026-04-30
+
+### Minor changes
+
+- [51ffdd4](https://github.com/imjlk/wp-typia/commit/51ffdd42d3e722fa2454e32f873b60409e007f2e) Generate typed Interactivity API helper scaffolds for action, callback, state,
+  context, and negate directive paths, and wire the interactivity template to
+  share those helpers across edit, save, and runtime store files. — Thanks @imjlk!
+
+### Patch changes
+
+- [5a3fe52](https://github.com/imjlk/wp-typia/commit/5a3fe52e6074932ffd15c3d978d67d606b39d955) Add opt-in core-data admin-view sources for post types and taxonomies, including
+  CLI validation, generated screen/data scaffolds, and conditional WordPress data
+  package wiring. — Thanks @imjlk!
+- [99db45f](https://github.com/imjlk/wp-typia/commit/99db45fa5b5b15803d1e4c9dccfda2197e1804a0) Centralize runtime version-floor parsing and comparison helpers shared by
+  scaffold compatibility and AI feature capability planning, and add edge-case
+  coverage for empty, duplicate, and mixed AI capability selections. — Thanks @imjlk!
+- [3cf71b3](https://github.com/imjlk/wp-typia/commit/3cf71b3a24c1b49f483e183ac0e096da69f266cd) Gate `wp-typia add admin-view` in public installs until
+  `@wp-typia/dataviews` is published to npm, while preserving an internal test
+  override for monorepo validation. — Thanks @imjlk!
+- [37bb7d4](https://github.com/imjlk/wp-typia/commit/37bb7d42da5b42e3ebc554a33d7d9857726adeaf) Ensure interactive external layer selection cleans up resolved layer seeds only
+  once when selection or layer discovery fails. — Thanks @imjlk!
+- [54632a0](https://github.com/imjlk/wp-typia/commit/54632a06e24a33e81efaf87acd655fe994cafb94) Centralize managed WordPress dependency fallback ranges for ability and
+  admin-view scaffolds in `package-versions.ts` so add-command defaults do not
+  drift across runtime modules. — Thanks @imjlk!
+- Updated dependencies: rest (npm)@0.3.12
+
 ## 0.21.0 — 2026-04-29
 
 ### Minor changes
