@@ -19,7 +19,7 @@ export function formatHelpText(): string {
   wp-typia create <project-dir> [--template compound] [--external-layer-source <./path|github:owner/repo/path[#ref]|npm-package>] [--external-layer-id <layer-id>] [--inner-blocks-preset <freeform|ordered|horizontal|locked-structure>] [--alternate-render-targets <email,mjml,plain-text>] [--data-storage <post-meta|custom-table>] [--persistence-policy <authenticated|public>] [--namespace <value>] [--text-domain <value>] [--php-prefix <value>] [--with-migration-ui] [--with-wp-env] [--with-test-preset] [--yes] [--dry-run] [--no-install] [--package-manager <id>]
   wp-typia <project-dir> [create flags...]
   wp-typia init [project-dir] [--apply] [--package-manager <id>]
-  wp-typia add admin-view <name> [--source <rest-resource:slug>]
+  wp-typia add admin-view <name> [--source <rest-resource:slug|core-data:kind/name>]
   wp-typia add block <name> [--template <basic|interactivity|persistence|compound>] [--external-layer-source <./path|github:owner/repo/path[#ref]|npm-package>] [--external-layer-id <layer-id>] [--inner-blocks-preset <freeform|ordered|horizontal|locked-structure>] [--alternate-render-targets <email,mjml,plain-text>] [--data-storage <post-meta|custom-table>] [--persistence-policy <authenticated|public>]
   wp-typia add variation <name> --block <block-slug>
   wp-typia add style <name> --block <block-slug>
@@ -52,7 +52,8 @@ Notes:
   Interactive add flows let you choose a template when \`--template\` is omitted; non-interactive runs default to \`basic\`.
   \`add admin-view\` scaffolds an opt-in DataViews-powered WordPress admin screen under \`src/admin-views/\`.
   Pass \`--source rest-resource:<slug>\` to reuse a list-capable REST resource.
-  Future core-data locators and public installs remain deferred until \`@wp-typia/dataviews\` is published to npm.
+  Pass \`--source core-data:postType/post\` or \`--source core-data:taxonomy/category\` to bind a WordPress-owned entity collection.
+  Public installs currently gate this workflow until \`@wp-typia/dataviews\` is published to npm.
   \`query-loop\` is create-only. Use \`wp-typia create <project-dir> --template query-loop\`; \`wp-typia add block\` accepts only basic, interactivity, persistence, and compound families.
   \`add variation\` uses an existing workspace block from \`scripts/block-config.ts\`.
   \`add style\` registers a Block Styles option for an existing generated block.

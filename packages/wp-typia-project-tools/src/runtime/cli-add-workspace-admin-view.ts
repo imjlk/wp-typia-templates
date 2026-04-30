@@ -34,10 +34,18 @@ import {
 } from "./cli-diagnostics.js";
 import {
 	DEFAULT_WORDPRESS_DATAVIEWS_VERSION,
+	DEFAULT_WORDPRESS_CORE_DATA_VERSION,
+	DEFAULT_WORDPRESS_DATA_VERSION,
 	DEFAULT_WP_TYPIA_DATAVIEWS_VERSION,
 } from "./package-versions.js";
 
-const ADMIN_VIEW_SOURCE_KIND = "rest-resource";
+const ADMIN_VIEW_REST_SOURCE_KIND = "rest-resource";
+const ADMIN_VIEW_CORE_DATA_SOURCE_KIND = "core-data";
+const ADMIN_VIEW_CORE_DATA_ENTITY_KIND_IDS = ["postType", "taxonomy"] as const;
+const ADMIN_VIEW_CORE_DATA_ENTITY_SEGMENT_PATTERN = /^[A-Za-z][A-Za-z0-9_-]*$/u;
+const ADMIN_VIEW_CORE_DATA_ENTITY_NAME_PATTERN = /^[a-z0-9][a-z0-9_-]*$/u;
+const ADMIN_VIEW_SOURCE_USAGE =
+	"wp-typia add admin-view <name> --source <rest-resource:slug|core-data:kind/name>";
 const ADMIN_VIEWS_SCRIPT = "build/admin-views/index.js";
 const ADMIN_VIEWS_ASSET = "build/admin-views/index.asset.php";
 const ADMIN_VIEWS_STYLE = "build/admin-views/style-index.css";
@@ -55,11 +63,19 @@ interface PackageManifestSummary {
 }
 
 interface AdminViewRestResourceSource {
-	kind: typeof ADMIN_VIEW_SOURCE_KIND;
+	kind: typeof ADMIN_VIEW_REST_SOURCE_KIND;
 	slug: string;
 }
 
-type AdminViewSource = AdminViewRestResourceSource;
+type AdminViewCoreDataEntityKind = (typeof ADMIN_VIEW_CORE_DATA_ENTITY_KIND_IDS)[number];
+
+interface AdminViewCoreDataSource {
+	entityKind: AdminViewCoreDataEntityKind;
+	entityName: string;
+	kind: typeof ADMIN_VIEW_CORE_DATA_SOURCE_KIND;
+}
+
+type AdminViewSource = AdminViewCoreDataSource | AdminViewRestResourceSource;
 
 type AdminViewRestResource = ReturnType<typeof readWorkspaceInventory>["restResources"][number];
 
@@ -142,34 +158,119 @@ function getAdminViewRelativeModuleSpecifier(adminViewSlug: string, workspaceFil
 	return relativeModulePath.startsWith(".") ? relativeModulePath : `./${relativeModulePath}`;
 }
 
+function isAdminViewCoreDataSource(
+	source: AdminViewSource | undefined,
+): source is AdminViewCoreDataSource {
+	return source?.kind === ADMIN_VIEW_CORE_DATA_SOURCE_KIND;
+}
+
+function isAdminViewRestResourceSource(
+	source: AdminViewSource | undefined,
+): source is AdminViewRestResourceSource {
+	return source?.kind === ADMIN_VIEW_REST_SOURCE_KIND;
+}
+
+function assertValidCoreDataEntitySegment(label: string, value: string): string {
+	const trimmed = value.trim();
+	if (!trimmed) {
+		throw new Error(`${label} is required. Use \`${ADMIN_VIEW_SOURCE_USAGE}\`.`);
+	}
+	if (!ADMIN_VIEW_CORE_DATA_ENTITY_SEGMENT_PATTERN.test(trimmed)) {
+		throw new Error(
+			`${label} must start with a letter and contain only letters, numbers, underscores, or hyphens.`,
+		);
+	}
+
+	return trimmed;
+}
+
+function assertValidCoreDataEntityName(value: string): string {
+	const normalized = value.trim();
+	if (!normalized) {
+		throw new Error(`Admin view source entity name is required. Use \`${ADMIN_VIEW_SOURCE_USAGE}\`.`);
+	}
+	if (!ADMIN_VIEW_CORE_DATA_ENTITY_NAME_PATTERN.test(normalized)) {
+		throw new Error(
+			"Admin view source entity name must start with a lowercase letter or number and contain only lowercase letters, numbers, underscores, or hyphens.",
+		);
+	}
+
+	return normalized;
+}
+
+function assertValidCoreDataEntityKind(value: string): AdminViewCoreDataEntityKind {
+	const normalized = assertValidCoreDataEntitySegment(
+		"Admin view source entity kind",
+		value,
+	);
+	if (
+		!(ADMIN_VIEW_CORE_DATA_ENTITY_KIND_IDS as readonly string[]).includes(
+			normalized,
+		)
+	) {
+		throw new Error(
+			`Admin view core-data sources currently support only: ${ADMIN_VIEW_CORE_DATA_ENTITY_KIND_IDS.join(", ")}.`,
+		);
+	}
+
+	return normalized as AdminViewCoreDataEntityKind;
+}
+
+function formatAdminViewSourceLocator(source: AdminViewSource): string {
+	if (isAdminViewCoreDataSource(source)) {
+		return `${source.kind}:${source.entityKind}/${source.entityName}`;
+	}
+
+	return `${source.kind}:${source.slug}`;
+}
+
 function parseAdminViewSource(source?: string): AdminViewSource | undefined {
 	const trimmed = source?.trim();
 	if (!trimmed) {
 		return undefined;
 	}
 
-	const [kind, slug, extra] = trimmed.split(":");
-	if (kind !== ADMIN_VIEW_SOURCE_KIND || !slug || extra !== undefined) {
+	const separatorIndex = trimmed.indexOf(":");
+	const kind = separatorIndex === -1 ? trimmed : trimmed.slice(0, separatorIndex);
+	const locator = separatorIndex === -1 ? "" : trimmed.slice(separatorIndex + 1);
+	if (!locator) {
 		throw new Error(
-			"Admin view source must use `rest-resource:<slug>` for now. A future `core-data:<kind>/<name>` locator is intentionally not implemented yet.",
+			"Admin view source must use `rest-resource:<slug>` or `core-data:<kind>/<name>`.",
 		);
 	}
 
-	return {
-		kind,
-		slug: assertValidGeneratedSlug(
-			"Admin view source slug",
-			normalizeBlockSlug(slug),
-			"wp-typia add admin-view <name> --source rest-resource:<slug>",
-		),
-	};
+	if (kind === ADMIN_VIEW_REST_SOURCE_KIND) {
+		return {
+			kind,
+			slug: assertValidGeneratedSlug("Admin view source slug", locator, ADMIN_VIEW_SOURCE_USAGE),
+		};
+	}
+
+	if (kind === ADMIN_VIEW_CORE_DATA_SOURCE_KIND) {
+		const [entityKind, entityName, extra] = locator.split("/");
+		if (!entityKind || !entityName || extra !== undefined) {
+			throw new Error(
+				"Admin view core-data sources must use `core-data:<kind>/<name>`, for example `core-data:postType/post`.",
+			);
+		}
+
+		return {
+			entityKind: assertValidCoreDataEntityKind(entityKind),
+			entityName: assertValidCoreDataEntityName(entityName),
+			kind,
+		};
+	}
+
+	throw new Error(
+		"Admin view source must use `rest-resource:<slug>` or `core-data:<kind>/<name>`.",
+	);
 }
 
 function resolveRestResourceSource(
 	restResources: AdminViewRestResource[],
 	source: AdminViewSource | undefined,
 ): AdminViewRestResource | undefined {
-	if (!source) {
+	if (!isAdminViewRestResourceSource(source)) {
 		return undefined;
 	}
 
@@ -199,7 +300,9 @@ function buildAdminViewConfigEntry(
 		`\t\tfile: ${quoteTsString(`src/admin-views/${adminViewSlug}/index.tsx`)},`,
 		`\t\tphpFile: ${quoteTsString(`inc/admin-views/${adminViewSlug}.php`)},`,
 		`\t\tslug: ${quoteTsString(adminViewSlug)},`,
-		source ? `\t\tsource: ${quoteTsString(`${source.kind}:${source.slug}`)},` : null,
+		source
+			? `\t\tsource: ${quoteTsString(formatAdminViewSourceLocator(source))},`
+			: null,
 		"\t},",
 	]
 		.filter((line): line is string => typeof line === "string")
@@ -214,11 +317,16 @@ function buildAdminViewRegistrySource(adminViewSlugs: string[]): string {
 	return `${importLines}${importLines ? "\n\n" : ""}// wp-typia add admin-view entries\n`;
 }
 
+/**
+ * Build the generated admin-view item and dataset types for the selected source.
+ */
 function buildAdminViewTypesSource(
 	adminViewSlug: string,
 	restResource: AdminViewRestResource | undefined,
+	coreDataSource: AdminViewCoreDataSource | undefined,
 ): string {
 	const pascalName = toPascalCase(adminViewSlug);
+	const coreDataRecordTypeName = `${pascalName}CoreDataRecord`;
 	const itemTypeName = `${pascalName}AdminViewItem`;
 	const dataSetTypeName = `${pascalName}AdminViewDataSet`;
 
@@ -232,6 +340,76 @@ function buildAdminViewTypesSource(
 		return `import type { ${restPascalName}Record } from ${quoteTsString(restTypesModule)};
 
 export type ${itemTypeName} = ${restPascalName}Record;
+
+export interface ${dataSetTypeName} {
+\titems: ${itemTypeName}[];
+\tpaginationInfo: {
+\t\ttotalItems: number;
+\t\ttotalPages: number;
+\t};
+}
+`;
+	}
+
+	if (coreDataSource) {
+		if (coreDataSource.entityKind === "taxonomy") {
+			return `export interface ${coreDataRecordTypeName} {
+\tcount?: number;
+\tdescription?: string;
+\tid: number;
+\tlink?: string;
+\tmeta?: Record<string, unknown>;
+\tname?: string;
+\tparent?: number;
+\tslug?: string;
+\ttaxonomy?: string;
+\t[key: string]: unknown;
+}
+
+export interface ${itemTypeName} {
+\tcount: number;
+\tdescription: string;
+\tid: number;
+\tlink: string;
+\tname: string;
+\tparent: number;
+\traw: ${coreDataRecordTypeName};
+\tslug: string;
+\ttaxonomy: string;
+}
+
+export interface ${dataSetTypeName} {
+\titems: ${itemTypeName}[];
+\tpaginationInfo: {
+\t\ttotalItems: number;
+\t\ttotalPages: number;
+\t};
+}
+`;
+		}
+
+		return `export interface ${coreDataRecordTypeName} {
+\tid: number;
+\tdate?: string;
+\tmodified?: string;
+\tname?: string;
+\tslug?: string;
+\tstatus?: string;
+\ttitle?: string | {
+\t\traw?: string;
+\t\trendered?: string;
+\t};
+\t[key: string]: unknown;
+}
+
+export interface ${itemTypeName} {
+\tid: number;
+\traw: ${coreDataRecordTypeName};
+\tslug: string;
+\tstatus: string;
+\ttitle: string;
+\tupdatedAt: string;
+}
 
 export interface ${dataSetTypeName} {
 \titems: ${itemTypeName}[];
@@ -263,23 +441,43 @@ export interface ${dataSetTypeName} {
 `;
 }
 
+/**
+ * Build the generated DataViews config source for an admin-view scaffold.
+ */
 function buildAdminViewConfigSource(
 	adminViewSlug: string,
 	textDomain: string,
+	source: AdminViewSource | undefined,
 	restResource: AdminViewRestResource | undefined,
 ): string {
 	const pascalName = toPascalCase(adminViewSlug);
 	const camelName = toCamelCase(adminViewSlug);
 	const itemTypeName = `${pascalName}AdminViewItem`;
 	const dataViewsName = `${camelName}AdminDataViews`;
+	const isCoreDataSource = source?.kind === ADMIN_VIEW_CORE_DATA_SOURCE_KIND;
+	const isTaxonomyCoreDataSource =
+		source?.kind === ADMIN_VIEW_CORE_DATA_SOURCE_KIND &&
+		source.entityKind === "taxonomy";
 	const defaultViewFields = restResource
 		? "['id']"
-		: "['title', 'status', 'updatedAt']";
+		: isTaxonomyCoreDataSource
+			? "['name', 'slug', 'count']"
+			: isCoreDataSource
+			? "['title', 'slug', 'status', 'updatedAt']"
+			: "['title', 'status', 'updatedAt']";
 	const searchEnabled = restResource ? "false" : "true";
-	const titleFieldSource = restResource ? "" : "\ttitleField: 'title',\n";
+	const titleFieldSource = restResource
+		? ""
+		: isTaxonomyCoreDataSource
+			? "\ttitleField: 'name',\n"
+			: "\ttitleField: 'title',\n";
 	const defaultViewEnhancementsSource = restResource
 		? ""
-		: `\t\tsort: {
+		: isTaxonomyCoreDataSource
+			? "\t\ttitleField: 'name',\n"
+			: isCoreDataSource
+			? "\t\ttitleField: 'title',\n"
+			: `\t\tsort: {
 \t\t\tdirection: 'desc',
 \t\t\tfield: 'updatedAt',
 \t\t},
@@ -287,6 +485,57 @@ function buildAdminViewConfigSource(
 `;
 	const additionalFieldsSource = restResource
 		? "\t\t// REST-backed screens start with the guaranteed ID column. Add project-owned fields here once they are declared on the REST record type."
+		: isTaxonomyCoreDataSource
+			? `\t\tcount: {
+\t\t\tlabel: __( 'Count', ${quoteTsString(textDomain)} ),
+\t\t\tschema: { type: 'integer' },
+\t\t},
+\t\tdescription: {
+\t\t\tlabel: __( 'Description', ${quoteTsString(textDomain)} ),
+\t\t\tschema: { type: 'string' },
+\t\t},
+\t\tlink: {
+\t\t\tlabel: __( 'Link', ${quoteTsString(textDomain)} ),
+\t\t\tschema: { format: 'uri', type: 'string' },
+\t\t},
+\t\tname: {
+\t\t\tenableGlobalSearch: true,
+\t\t\tlabel: __( 'Name', ${quoteTsString(textDomain)} ),
+\t\t\tschema: { type: 'string' },
+\t\t},
+\t\tparent: {
+\t\t\tlabel: __( 'Parent', ${quoteTsString(textDomain)} ),
+\t\t\tschema: { type: 'integer' },
+\t\t},
+\t\tslug: {
+\t\t\tenableGlobalSearch: true,
+\t\t\tlabel: __( 'Slug', ${quoteTsString(textDomain)} ),
+\t\t\tschema: { type: 'string' },
+\t\t},
+\t\ttaxonomy: {
+\t\t\tlabel: __( 'Taxonomy', ${quoteTsString(textDomain)} ),
+\t\t\tschema: { type: 'string' },
+\t\t},`
+		: isCoreDataSource
+			? `\t\tslug: {
+\t\t\tenableGlobalSearch: true,
+\t\t\tlabel: __( 'Slug', ${quoteTsString(textDomain)} ),
+\t\t\tschema: { type: 'string' },
+\t\t},
+\t\tstatus: {
+\t\t\tlabel: __( 'Status', ${quoteTsString(textDomain)} ),
+\t\t\tschema: { type: 'string' },
+\t\t},
+\t\ttitle: {
+\t\t\tenableGlobalSearch: true,
+\t\t\tlabel: __( 'Name', ${quoteTsString(textDomain)} ),
+\t\t\tschema: { type: 'string' },
+\t\t},
+\t\tupdatedAt: {
+\t\t\tlabel: __( 'Updated', ${quoteTsString(textDomain)} ),
+\t\t\tschema: { format: 'date-time', type: 'string' },
+\t\t\ttype: 'datetime',
+\t\t},`
 		: `\t\towner: {
 \t\t\tlabel: __( 'Owner', ${quoteTsString(textDomain)} ),
 \t\t\tschema: { type: 'string' },
@@ -489,6 +738,226 @@ export async function ${fetchName}(
 `;
 }
 
+/**
+ * Build a core-data-backed admin-view data module for a supported entity family.
+ */
+function buildCoreDataAdminViewDataSource(
+	adminViewSlug: string,
+	coreDataSource: AdminViewCoreDataSource,
+): string {
+	const pascalName = toPascalCase(adminViewSlug);
+	const camelName = toCamelCase(adminViewSlug);
+	const coreDataRecordTypeName = `${pascalName}CoreDataRecord`;
+	const dataSetTypeName = `${pascalName}AdminViewDataSet`;
+	const itemTypeName = `${pascalName}AdminViewItem`;
+	const queryTypeName = `${pascalName}AdminViewQuery`;
+	const dataViewsName = `${camelName}AdminDataViews`;
+	const useEntityRecordName = `use${pascalName}EntityRecord`;
+	const useEntityRecordsName = `use${pascalName}EntityRecords`;
+	const useAdminViewDataName = `use${pascalName}AdminViewData`;
+
+	if (coreDataSource.entityKind === "taxonomy") {
+		return `import type { DataViewsView } from '@wp-typia/dataviews';
+import { useEntityRecord, useEntityRecords } from '@wordpress/core-data';
+import { useMemo } from '@wordpress/element';
+
+import { ${dataViewsName} } from './config';
+import type {
+\t${coreDataRecordTypeName},
+\t${dataSetTypeName},
+\t${itemTypeName},
+} from './types';
+
+export interface ${queryTypeName} {
+\tpage?: number;
+\tper_page?: number;
+\tsearch?: string;
+}
+
+const CORE_DATA_ENTITY_KIND = ${quoteTsString(coreDataSource.entityKind)};
+const CORE_DATA_ENTITY_NAME = ${quoteTsString(coreDataSource.entityName)};
+
+function normalizeCoreDataNumber(value: unknown): number {
+\treturn typeof value === 'number' && Number.isFinite(value) ? value : 0;
+}
+
+function normalizeCoreDataString(value: unknown): string {
+\treturn typeof value === 'string' ? value : '';
+}
+
+function normalizeTaxonomyRecord(record: ${coreDataRecordTypeName}): ${itemTypeName} {
+\treturn {
+\t\tcount: normalizeCoreDataNumber(record.count),
+\t\tdescription: normalizeCoreDataString(record.description),
+\t\tid: record.id,
+\t\tlink: normalizeCoreDataString(record.link),
+\t\tname: normalizeCoreDataString(record.name) || normalizeCoreDataString(record.slug),
+\t\tparent: normalizeCoreDataNumber(record.parent),
+\t\traw: record,
+\t\tslug: normalizeCoreDataString(record.slug),
+\t\ttaxonomy: normalizeCoreDataString(record.taxonomy),
+\t};
+\t}
+
+export function ${useEntityRecordName}(recordId: number | undefined) {
+\treturn useEntityRecord<${coreDataRecordTypeName}>(
+\t\tCORE_DATA_ENTITY_KIND,
+\t\tCORE_DATA_ENTITY_NAME,
+\t\trecordId ?? 0,
+\t\t{ enabled: typeof recordId === 'number' },
+\t);
+\t}
+
+export function ${useEntityRecordsName}(view: DataViewsView<${itemTypeName}>) {
+\tconst query = ${dataViewsName}.toQueryArgs<${queryTypeName}>(view, {
+\t\tperPageParam: 'per_page',
+\t});
+
+\treturn useEntityRecords<${coreDataRecordTypeName}>(
+\t\tCORE_DATA_ENTITY_KIND,
+\t\tCORE_DATA_ENTITY_NAME,
+\t\tquery,
+\t);
+\t}
+
+export function ${useAdminViewDataName}(view: DataViewsView<${itemTypeName}>) {
+\tconst { hasResolved, isResolving, records, totalItems, totalPages } =
+\t\t${useEntityRecordsName}(view);
+\tconst items = useMemo(
+\t\t() => (records ?? []).map((record) => normalizeTaxonomyRecord(record)),
+\t\t[records],
+\t);
+\tconst dataSet = useMemo<${dataSetTypeName}>(
+\t\t() => ({
+\t\t\titems,
+\t\t\tpaginationInfo: {
+\t\t\t\ttotalItems: totalItems ?? items.length,
+\t\t\t\ttotalPages: Math.max(1, totalPages ?? 1),
+\t\t\t},
+\t\t}),
+\t\t[items, totalItems, totalPages],
+\t);
+\tconst error =
+\t\t!isResolving && hasResolved && records === null
+\t\t\t? 'Unable to load core-data entity records.'
+\t\t\t: null;
+
+\treturn {
+\t\tdataSet,
+\t\terror,
+\t\tisLoading: isResolving,
+\t};
+\t}
+`;
+	}
+
+	return `import type { DataViewsView } from '@wp-typia/dataviews';
+import { useEntityRecord, useEntityRecords } from '@wordpress/core-data';
+import { useMemo } from '@wordpress/element';
+
+import { ${dataViewsName} } from './config';
+import type {
+\t${coreDataRecordTypeName},
+\t${dataSetTypeName},
+\t${itemTypeName},
+} from './types';
+
+export interface ${queryTypeName} {
+\tpage?: number;
+\tper_page?: number;
+\tsearch?: string;
+}
+
+const CORE_DATA_ENTITY_KIND = ${quoteTsString(coreDataSource.entityKind)};
+const CORE_DATA_ENTITY_NAME = ${quoteTsString(coreDataSource.entityName)};
+
+function normalizeCoreDataString(value: unknown): string {
+\treturn typeof value === 'string' ? value : '';
+}
+
+function normalizeCoreDataTitle(record: ${coreDataRecordTypeName}): string {
+\tif (typeof record.title === 'string') {
+\t\treturn record.title;
+\t}
+\tif (record.title && typeof record.title === 'object') {
+\t\tif (typeof record.title.rendered === 'string') {
+\t\t\treturn record.title.rendered;
+\t\t}
+\t\tif (typeof record.title.raw === 'string') {
+\t\t\treturn record.title.raw;
+\t\t}
+\t}
+
+\treturn normalizeCoreDataString(record.name) || normalizeCoreDataString(record.slug);
+}
+
+function normalizeCoreDataUpdatedAt(record: ${coreDataRecordTypeName}): string {
+\treturn normalizeCoreDataString(record.modified) || normalizeCoreDataString(record.date);
+}
+
+function normalizeCoreDataRecord(record: ${coreDataRecordTypeName}): ${itemTypeName} {
+\treturn {
+\t\tid: record.id,
+\t\traw: record,
+\t\tslug: normalizeCoreDataString(record.slug),
+\t\tstatus: normalizeCoreDataString(record.status),
+\t\ttitle: normalizeCoreDataTitle(record),
+\t\tupdatedAt: normalizeCoreDataUpdatedAt(record),
+\t};
+}
+
+export function ${useEntityRecordName}(recordId: number | undefined) {
+\treturn useEntityRecord<${coreDataRecordTypeName}>(
+\t\tCORE_DATA_ENTITY_KIND,
+\t\tCORE_DATA_ENTITY_NAME,
+\t\trecordId ?? 0,
+\t\t{ enabled: typeof recordId === 'number' },
+\t);
+}
+
+export function ${useEntityRecordsName}(view: DataViewsView<${itemTypeName}>) {
+\tconst query = ${dataViewsName}.toQueryArgs<${queryTypeName}>(view, {
+\t\tperPageParam: 'per_page',
+\t});
+
+\treturn useEntityRecords<${coreDataRecordTypeName}>(
+\t\tCORE_DATA_ENTITY_KIND,
+\t\tCORE_DATA_ENTITY_NAME,
+\t\tquery,
+\t);
+}
+
+export function ${useAdminViewDataName}(view: DataViewsView<${itemTypeName}>) {
+\tconst { hasResolved, isResolving, records, totalItems, totalPages } =
+\t\t${useEntityRecordsName}(view);
+\tconst items = useMemo(
+\t\t() => (records ?? []).map((record) => normalizeCoreDataRecord(record)),
+\t\t[records],
+\t);
+\tconst dataSet = useMemo<${dataSetTypeName}>(
+\t\t() => ({
+\t\t\titems,
+\t\t\tpaginationInfo: {
+\t\t\t\ttotalItems: totalItems ?? items.length,
+\t\t\t\ttotalPages: Math.max(1, totalPages ?? 1),
+\t\t\t},
+\t\t}),
+\t\t[items, totalItems, totalPages],
+\t);
+\tconst error =
+\t\t!isResolving && hasResolved && records === null
+\t\t\t? 'Unable to load core-data entity records.'
+\t\t\t: null;
+
+\treturn {
+\t\tdataSet,
+\t\terror,
+\t\tisLoading: isResolving,
+\t};
+}
+`;
+}
+
 function buildAdminViewScreenSource(
 	adminViewSlug: string,
 	textDomain: string,
@@ -593,6 +1062,86 @@ export function ${componentName}() {
 \t\t\t\t\t>
 \t\t\t\t\t\t{ __( 'Reload', ${quoteTsString(textDomain)} ) }
 \t\t\t\t\t</Button>
+\t\t\t\t</div>
+\t\t\t</header>
+\t\t\t{ error ? (
+\t\t\t\t<Notice isDismissible={ false } status="error">
+\t\t\t\t\t{ error }
+\t\t\t\t</Notice>
+\t\t\t) : null }
+\t\t\t<TypedDataViews<${itemTypeName}> { ...config } />
+\t\t</div>
+\t);
+}
+`;
+}
+
+function buildCoreDataAdminViewScreenSource(
+	adminViewSlug: string,
+	textDomain: string,
+): string {
+	const pascalName = toPascalCase(adminViewSlug);
+	const camelName = toCamelCase(adminViewSlug);
+	const itemTypeName = `${pascalName}AdminViewItem`;
+	const dataSetTypeName = `${pascalName}AdminViewDataSet`;
+	const componentName = `${pascalName}AdminViewScreen`;
+	const dataViewsName = `${camelName}AdminDataViews`;
+	const useAdminViewDataName = `use${pascalName}AdminViewData`;
+	const title = toTitleCase(adminViewSlug);
+
+	return `import type { DataViewsConfig, DataViewsView } from '@wp-typia/dataviews';
+import { Notice, Spinner } from '@wordpress/components';
+import { useState } from '@wordpress/element';
+import { __ } from '@wordpress/i18n';
+import { DataViews } from '@wordpress/dataviews/wp';
+
+import { ${dataViewsName} } from './config';
+import { ${useAdminViewDataName} } from './data';
+import type { ${dataSetTypeName}, ${itemTypeName} } from './types';
+
+const TypedDataViews = DataViews as unknown as <TItem extends object>(
+\tprops: DataViewsConfig<TItem>,
+) => ReturnType<typeof DataViews>;
+
+const EMPTY_DATA_SET: ${dataSetTypeName} = {
+\titems: [],
+\tpaginationInfo: {
+\t\ttotalItems: 0,
+\t\ttotalPages: 1,
+\t},
+};
+
+export function ${componentName}() {
+\tconst [view, setView] = useState<DataViewsView<${itemTypeName}>>(
+\t\t${dataViewsName}.defaultView,
+\t);
+\tconst {
+\t\tdataSet = EMPTY_DATA_SET,
+\t\terror,
+\t\tisLoading,
+\t} = ${useAdminViewDataName}(view);
+\tconst config = ${dataViewsName}.createConfig({
+\t\tdata: dataSet.items,
+\t\tisLoading,
+\t\tonChangeView: setView,
+\t\tpaginationInfo: dataSet.paginationInfo,
+\t\tview,
+\t});
+
+\treturn (
+\t\t<div className="wp-typia-admin-view-screen">
+\t\t\t<header className="wp-typia-admin-view-screen__header">
+\t\t\t\t<div>
+\t\t\t\t\t<p className="wp-typia-admin-view-screen__eyebrow">
+\t\t\t\t\t\t{ __( 'DataViews admin screen', ${quoteTsString(textDomain)} ) }
+\t\t\t\t\t</p>
+\t\t\t\t\t<h1>{ __( ${quoteTsString(title)}, ${quoteTsString(textDomain)} ) }</h1>
+\t\t\t\t\t<p>
+\t\t\t\t\t\t{ __( 'This screen reads from the WordPress core-data entity store. Extend data.ts when you need entity-specific field mapping or edit flows.', ${quoteTsString(textDomain)} ) }
+\t\t\t\t\t</p>
+\t\t\t\t</div>
+\t\t\t\t<div className="wp-typia-admin-view-screen__actions">
+\t\t\t\t\t{ isLoading ? <Spinner /> : null }
 \t\t\t\t</div>
 \t\t\t</header>
 \t\t\t{ error ? (
@@ -784,7 +1333,10 @@ add_action( 'admin_enqueue_scripts', '${enqueueFunctionName}' );
 `;
 }
 
-async function ensureAdminViewPackageDependencies(workspace: WorkspaceProject): Promise<void> {
+async function ensureAdminViewPackageDependencies(
+	workspace: WorkspaceProject,
+	adminViewSource: AdminViewSource | undefined,
+): Promise<void> {
 	const packageJsonPath = path.join(workspace.projectDir, "package.json");
 	const wpTypiaDataViewsVersion = resolvePackageVersionRange(
 		"@wp-typia/dataviews",
@@ -795,16 +1347,35 @@ async function ensureAdminViewPackageDependencies(workspace: WorkspaceProject): 
 		"@wordpress/dataviews",
 		DEFAULT_WORDPRESS_DATAVIEWS_VERSION,
 	);
-
+	const wordpressCoreDataVersion = resolvePackageVersionRange(
+		"@wordpress/core-data",
+		DEFAULT_WORDPRESS_CORE_DATA_VERSION,
+	);
+	const wordpressDataVersion = resolvePackageVersionRange(
+		"@wordpress/data",
+		DEFAULT_WORDPRESS_DATA_VERSION,
+	);
 	await patchFile(packageJsonPath, (source) => {
 		const packageJson = JSON.parse(source) as {
 			dependencies?: Record<string, string>;
 			devDependencies?: Record<string, string>;
 		};
+		const coreDataDependencies: Record<string, string> =
+			isAdminViewCoreDataSource(adminViewSource)
+				? {
+						"@wordpress/core-data":
+							packageJson.dependencies?.["@wordpress/core-data"] ??
+							wordpressCoreDataVersion,
+						"@wordpress/data":
+							packageJson.dependencies?.["@wordpress/data"] ??
+							wordpressDataVersion,
+				  }
+				: {};
 		const nextDependencies = {
 			...(packageJson.dependencies ?? {}),
 			"@wordpress/dataviews":
 				packageJson.dependencies?.["@wordpress/dataviews"] ?? wordpressDataViewsVersion,
+			...coreDataDependencies,
 		};
 		const nextDevDependencies = {
 			...(packageJson.devDependencies ?? {}),
@@ -1029,8 +1600,9 @@ async function writeAdminViewRegistry(
  * @param options.cwd Working directory used to resolve the nearest official workspace.
  * Defaults to `process.cwd()`.
  * @param options.source Optional data source locator. `rest-resource:<slug>`
- * wires the screen to an existing list-capable REST resource. Future
- * `core-data:<kind>/<name>` support is intentionally deferred.
+ * wires the screen to an existing list-capable REST resource.
+ * `core-data:<kind>/<name>` binds the screen to a supported WordPress-owned
+ * core-data entity collection.
  * @returns A promise that resolves with the normalized `adminViewSlug`, optional
  * `source`, and owning `projectDir` after scaffold files and inventory entries
  * are written successfully.
@@ -1051,7 +1623,7 @@ export async function runAddAdminViewCommand({
 	const adminViewSlug = assertValidGeneratedSlug(
 		"Admin view name",
 		normalizeBlockSlug(adminViewName),
-		"wp-typia add admin-view <name> [--source rest-resource:<slug>]",
+		"wp-typia add admin-view <name> [--source <rest-resource:slug|core-data:kind/name>]",
 	);
 	const parsedSource = parseAdminViewSource(source);
 	const inventory = readWorkspaceInventory(workspace.projectDir);
@@ -1059,6 +1631,9 @@ export async function runAddAdminViewCommand({
 		inventory.restResources,
 		parsedSource,
 	);
+	const coreDataSource = isAdminViewCoreDataSource(parsedSource)
+		? parsedSource
+		: undefined;
 	assertAdminViewDoesNotExist(workspace.projectDir, adminViewSlug, inventory);
 
 	const blockConfigPath = path.join(workspace.projectDir, "scripts", "block-config.ts");
@@ -1090,13 +1665,13 @@ export async function runAddAdminViewCommand({
 	try {
 		await fsp.mkdir(adminViewDir, { recursive: true });
 		await fsp.mkdir(path.dirname(adminViewPhpPath), { recursive: true });
-		await ensureAdminViewPackageDependencies(workspace);
+		await ensureAdminViewPackageDependencies(workspace, parsedSource);
 		await ensureAdminViewBootstrapAnchors(workspace);
 		await ensureAdminViewBuildScriptAnchors(workspace);
 		await ensureAdminViewWebpackAnchors(workspace);
 		await fsp.writeFile(
 			path.join(adminViewDir, "types.ts"),
-			buildAdminViewTypesSource(adminViewSlug, restResource),
+			buildAdminViewTypesSource(adminViewSlug, restResource, coreDataSource),
 			"utf8",
 		);
 		await fsp.writeFile(
@@ -1104,20 +1679,31 @@ export async function runAddAdminViewCommand({
 			buildAdminViewConfigSource(
 				adminViewSlug,
 				workspace.workspace.textDomain,
+				parsedSource,
 				restResource,
 			),
 			"utf8",
 		);
 		await fsp.writeFile(
 			path.join(adminViewDir, "data.ts"),
-			restResource
+			coreDataSource
+				? buildCoreDataAdminViewDataSource(adminViewSlug, coreDataSource)
+				: restResource
 				? buildRestAdminViewDataSource(adminViewSlug, restResource)
 				: buildDefaultAdminViewDataSource(adminViewSlug),
 			"utf8",
 		);
 		await fsp.writeFile(
 			path.join(adminViewDir, "Screen.tsx"),
-			buildAdminViewScreenSource(adminViewSlug, workspace.workspace.textDomain),
+			coreDataSource
+				? buildCoreDataAdminViewScreenSource(
+						adminViewSlug,
+						workspace.workspace.textDomain,
+				  )
+				: buildAdminViewScreenSource(
+						adminViewSlug,
+						workspace.workspace.textDomain,
+				  ),
 			"utf8",
 		);
 		await fsp.writeFile(
@@ -1143,7 +1729,9 @@ export async function runAddAdminViewCommand({
 		return {
 			adminViewSlug,
 			projectDir: workspace.projectDir,
-			source: parsedSource ? `${parsedSource.kind}:${parsedSource.slug}` : undefined,
+			source: parsedSource
+				? formatAdminViewSourceLocator(parsedSource)
+				: undefined,
 		};
 	} catch (error) {
 		await rollbackWorkspaceMutation(mutationSnapshot);

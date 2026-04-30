@@ -114,7 +114,8 @@ export interface WorkspaceAiFeatureInventoryEntry {
  * @property file Relative path to the generated admin view shared entry file.
  * @property phpFile Relative path to the generated WordPress admin page glue.
  * @property slug Normalized admin view slug.
- * @property source Optional source locator such as `rest-resource:products`.
+ * @property source Optional source locator such as `rest-resource:products` or
+ * `core-data:postType/post`.
  */
 export interface WorkspaceAdminViewInventoryEntry {
 	file: string;

@@ -133,6 +133,8 @@ describe("package version cache invalidation", () => {
 		const {
 			DEFAULT_WORDPRESS_ABILITIES_VERSION,
 			DEFAULT_WORDPRESS_CORE_ABILITIES_VERSION,
+			DEFAULT_WORDPRESS_CORE_DATA_VERSION,
+			DEFAULT_WORDPRESS_DATA_VERSION,
 			DEFAULT_WORDPRESS_DATAVIEWS_VERSION,
 			DEFAULT_WP_TYPIA_DATAVIEWS_VERSION,
 		} = await import(packageVersionsModuleUrl);
@@ -148,6 +150,8 @@ describe("package version cache invalidation", () => {
 
 		expect(DEFAULT_WORDPRESS_ABILITIES_VERSION).toBe("^0.10.0");
 		expect(DEFAULT_WORDPRESS_CORE_ABILITIES_VERSION).toBe("^0.9.0");
+		expect(DEFAULT_WORDPRESS_CORE_DATA_VERSION).toBe("^7.44.0");
+		expect(DEFAULT_WORDPRESS_DATA_VERSION).toBe("^9.28.0");
 		expect(DEFAULT_WORDPRESS_DATAVIEWS_VERSION).toBe("^14.1.0");
 		expect(DEFAULT_WP_TYPIA_DATAVIEWS_VERSION).toBe("^0.1.0");
 		expect(abilityRuntimeSource).not.toContain("const WP_ABILITIES_PACKAGE_VERSION");
@@ -159,6 +163,12 @@ describe("package version cache invalidation", () => {
 		);
 		expect(adminViewRuntimeSource).not.toContain(
 			"const DEFAULT_WORDPRESS_DATAVIEWS_VERSION",
+		);
+		expect(adminViewRuntimeSource).not.toContain(
+			"const DEFAULT_WORDPRESS_CORE_DATA_VERSION",
+		);
+		expect(adminViewRuntimeSource).not.toContain(
+			"const DEFAULT_WORDPRESS_DATA_VERSION",
 		);
 		expect(abilityRuntimeSource).toContain('from "./package-versions.js"');
 		expect(adminViewRuntimeSource).toContain('from "./package-versions.js"');

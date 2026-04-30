@@ -3342,6 +3342,8 @@ test("canonical CLI can add a DataViews admin screen with a REST resource source
 
   expect(packageJson.devDependencies?.["@wp-typia/dataviews"]).toBeTruthy();
   expect(packageJson.dependencies?.["@wordpress/dataviews"]).toBeTruthy();
+  expect(packageJson.dependencies?.["@wordpress/core-data"]).toBeUndefined();
+  expect(packageJson.dependencies?.["@wordpress/data"]).toBeUndefined();
   expect(blockConfigSource).toContain('slug: "snapshots"');
   expect(blockConfigSource).toContain('source: "rest-resource:snapshots"');
   expect(blockConfigSource).toContain(
@@ -3424,6 +3426,389 @@ test("canonical CLI can add a DataViews admin screen with a REST resource source
   ).toBe(true);
   typecheckGeneratedProject(targetDir);
 }, 60_000);
+
+test("canonical CLI can add a DataViews admin screen with a core-data source", async () => {
+  const targetDir = path.join(
+    tempRoot,
+    "demo-workspace-add-admin-view-core-data"
+  );
+
+  await scaffoldProject({
+    projectDir: targetDir,
+    templateId: workspaceTemplatePackageManifest.name,
+    packageManager: "npm",
+    noInstall: true,
+    answers: {
+      author: "Test Runner",
+      description: "Demo workspace add admin view core data",
+      namespace: "demo-space",
+      phpPrefix: "demo_space",
+      slug: "demo-workspace-add-admin-view-core-data",
+      textDomain: "demo-space",
+      title: "Demo Workspace Add Admin View Core Data",
+    },
+  });
+
+  linkWorkspaceNodeModules(targetDir);
+
+  runCli(
+    "node",
+    [
+      entryPath,
+      "add",
+      "admin-view",
+      "posts",
+      "--source",
+      "core-data:postType/post",
+    ],
+    {
+      cwd: targetDir,
+      env: withUnpublishedDataViewsEnv(),
+    }
+  );
+
+  const packageJson = JSON.parse(
+    fs.readFileSync(path.join(targetDir, "package.json"), "utf8")
+  ) as {
+    dependencies?: Record<string, string>;
+    devDependencies?: Record<string, string>;
+  };
+  const blockConfigSource = fs.readFileSync(
+    path.join(targetDir, "scripts", "block-config.ts"),
+    "utf8"
+  );
+  const dataSource = fs.readFileSync(
+    path.join(targetDir, "src", "admin-views", "posts", "data.ts"),
+    "utf8"
+  );
+  const screenSource = fs.readFileSync(
+    path.join(targetDir, "src", "admin-views", "posts", "Screen.tsx"),
+    "utf8"
+  );
+  const configSource = fs.readFileSync(
+    path.join(targetDir, "src", "admin-views", "posts", "config.ts"),
+    "utf8"
+  );
+  const typesSource = fs.readFileSync(
+    path.join(targetDir, "src", "admin-views", "posts", "types.ts"),
+    "utf8"
+  );
+
+  expect(packageJson.devDependencies?.["@wp-typia/dataviews"]).toBeTruthy();
+  expect(packageJson.dependencies?.["@wordpress/dataviews"]).toBeTruthy();
+  expect(packageJson.dependencies?.["@wordpress/core-data"]).toBeTruthy();
+  expect(packageJson.dependencies?.["@wordpress/data"]).toBeTruthy();
+  expect(blockConfigSource).toContain('source: "core-data:postType/post"');
+  expect(dataSource).toContain("useEntityRecord");
+  expect(dataSource).toContain("useEntityRecords");
+  expect(dataSource).toContain('const CORE_DATA_ENTITY_KIND = "postType"');
+  expect(dataSource).toContain('const CORE_DATA_ENTITY_NAME = "post"');
+  expect(dataSource).toContain("perPageParam: 'per_page'");
+  expect(dataSource).toContain("export function usePostsAdminViewData");
+  expect(screenSource).toContain("usePostsAdminViewData");
+  expect(screenSource).toContain("WordPress core-data entity store");
+  expect(screenSource).not.toContain("setReloadToken");
+  expect(configSource).toContain("fields: ['title', 'slug', 'status', 'updatedAt']");
+  expect(configSource).toContain("search: true");
+  expect(configSource).not.toContain("sort:");
+  expect(typesSource).toContain("export interface PostsCoreDataRecord");
+  expect(typesSource).toContain("raw: PostsCoreDataRecord");
+
+  const doctorOutput = runCli("node", [entryPath, "doctor", "--format", "json"], {
+    cwd: targetDir,
+  });
+  const doctorChecks = parseJsonObjectFromOutput<{
+    checks: Array<{ detail: string; label: string; status: string }>;
+  }>(doctorOutput);
+  expect(
+    doctorChecks.checks.find((check) => check.label === "Admin view config posts")
+      ?.status
+  ).toBe("pass");
+
+  linkWorkspaceNodeModules(targetDir);
+  runCli("npm", ["run", "build"], { cwd: targetDir });
+  typecheckGeneratedProject(targetDir);
+}, 60_000);
+
+test("canonical CLI can add a taxonomy core-data admin screen", async () => {
+  const targetDir = path.join(
+    tempRoot,
+    "demo-workspace-add-admin-view-core-data-taxonomy"
+  );
+
+  await scaffoldProject({
+    projectDir: targetDir,
+    templateId: workspaceTemplatePackageManifest.name,
+    packageManager: "npm",
+    noInstall: true,
+    answers: {
+      author: "Test Runner",
+      description: "Demo workspace add admin view core data taxonomy",
+      namespace: "demo-space",
+      phpPrefix: "demo_space",
+      slug: "demo-workspace-add-admin-view-core-data-taxonomy",
+      textDomain: "demo-space",
+      title: "Demo Workspace Add Admin View Core Data Taxonomy",
+    },
+  });
+
+  linkWorkspaceNodeModules(targetDir);
+
+  runCli(
+    "node",
+    [
+      entryPath,
+      "add",
+      "admin-view",
+      "categories",
+      "--source",
+      "core-data:taxonomy/category",
+    ],
+    {
+      cwd: targetDir,
+      env: withUnpublishedDataViewsEnv(),
+    }
+  );
+
+  typecheckGeneratedProject(targetDir);
+
+  const blockConfigSource = fs.readFileSync(
+    path.join(targetDir, "scripts", "block-config.ts"),
+    "utf8"
+  );
+  const dataSource = fs.readFileSync(
+    path.join(targetDir, "src", "admin-views", "categories", "data.ts"),
+    "utf8"
+  );
+  const configSource = fs.readFileSync(
+    path.join(targetDir, "src", "admin-views", "categories", "config.ts"),
+    "utf8"
+  );
+  const typesSource = fs.readFileSync(
+    path.join(targetDir, "src", "admin-views", "categories", "types.ts"),
+    "utf8"
+  );
+
+  expect(blockConfigSource).toContain('source: "core-data:taxonomy/category"');
+  expect(typesSource).toContain("export interface CategoriesCoreDataRecord");
+  expect(typesSource).toContain("count?: number");
+  expect(typesSource).toContain("name?: string");
+  expect(typesSource).toContain("taxonomy?: string");
+  expect(typesSource).toContain("count: number");
+  expect(typesSource).toContain("name: string");
+  expect(configSource).toContain("fields: ['name', 'slug', 'count']");
+  expect(configSource).toContain("titleField: 'name'");
+  expect(configSource).toContain("label: __( 'Count'");
+  expect(configSource).toContain("label: __( 'Taxonomy'");
+  expect(configSource).not.toContain("updatedAt");
+  expect(configSource).not.toContain("Status");
+  expect(dataSource).toContain('const CORE_DATA_ENTITY_KIND = "taxonomy"');
+  expect(dataSource).toContain('const CORE_DATA_ENTITY_NAME = "category"');
+  expect(dataSource).toContain("function normalizeTaxonomyRecord");
+  expect(dataSource).toContain("count: normalizeCoreDataNumber(record.count)");
+  expect(dataSource).toContain(
+    "name: normalizeCoreDataString(record.name) || normalizeCoreDataString(record.slug)"
+  );
+  expect(dataSource).not.toContain("updatedAt");
+  expect(dataSource).not.toContain("status:");
+}, 60_000);
+
+test("admin view core-data sources reject unsupported entity families", async () => {
+  const targetDir = path.join(
+    tempRoot,
+    "demo-workspace-add-admin-view-core-data-invalid"
+  );
+
+  await scaffoldProject({
+    projectDir: targetDir,
+    templateId: workspaceTemplatePackageManifest.name,
+    packageManager: "npm",
+    noInstall: true,
+    answers: {
+      author: "Test Runner",
+      description: "Demo workspace add admin view core data invalid",
+      namespace: "demo-space",
+      phpPrefix: "demo_space",
+      slug: "demo-workspace-add-admin-view-core-data-invalid",
+      textDomain: "demo-space",
+      title: "Demo Workspace Add Admin View Core Data Invalid",
+    },
+  });
+
+  linkWorkspaceNodeModules(targetDir);
+
+  const errorMessage = getCommandErrorMessage(() =>
+    runCli(
+      "node",
+      [
+        entryPath,
+        "add",
+        "admin-view",
+        "plugins",
+        "--source",
+        "core-data:root/plugin",
+      ],
+      {
+        cwd: targetDir,
+        env: withUnpublishedDataViewsEnv(),
+      }
+    )
+  );
+
+  expect(errorMessage).toContain("currently support only: postType, taxonomy");
+}, 20_000);
+
+test("admin view rest-resource sources reject extra locator segments", async () => {
+  const targetDir = path.join(
+    tempRoot,
+    "demo-workspace-add-admin-view-rest-resource-malformed"
+  );
+
+  await scaffoldProject({
+    projectDir: targetDir,
+    templateId: workspaceTemplatePackageManifest.name,
+    packageManager: "npm",
+    noInstall: true,
+    answers: {
+      author: "Test Runner",
+      description: "Demo workspace add admin view rest resource malformed",
+      namespace: "demo-space",
+      phpPrefix: "demo_space",
+      slug: "demo-workspace-add-admin-view-rest-resource-malformed",
+      textDomain: "demo-space",
+      title: "Demo Workspace Add Admin View Rest Resource Malformed",
+    },
+  });
+
+  linkWorkspaceNodeModules(targetDir);
+
+  const errorMessage = getCommandErrorMessage(() =>
+    runCli(
+      "node",
+      [
+        entryPath,
+        "add",
+        "admin-view",
+        "snapshots",
+        "--source",
+        "rest-resource:products:v2",
+      ],
+      {
+        cwd: targetDir,
+        env: withUnpublishedDataViewsEnv(),
+      }
+    )
+  );
+
+  expect(errorMessage).toContain(
+    "Admin view source slug must start with a letter and contain only lowercase letters, numbers, and hyphens."
+  );
+}, 20_000);
+
+test("admin view core-data sources reject uppercase entity names", async () => {
+  const targetDir = path.join(
+    tempRoot,
+    "demo-workspace-add-admin-view-core-data-uppercase"
+  );
+
+  await scaffoldProject({
+    projectDir: targetDir,
+    templateId: workspaceTemplatePackageManifest.name,
+    packageManager: "npm",
+    noInstall: true,
+    answers: {
+      author: "Test Runner",
+      description: "Demo workspace add admin view core data uppercase",
+      namespace: "demo-space",
+      phpPrefix: "demo_space",
+      slug: "demo-workspace-add-admin-view-core-data-uppercase",
+      textDomain: "demo-space",
+      title: "Demo Workspace Add Admin View Core Data Uppercase",
+    },
+  });
+
+  linkWorkspaceNodeModules(targetDir);
+
+  const errorMessage = getCommandErrorMessage(() =>
+    runCli(
+      "node",
+      [
+        entryPath,
+        "add",
+        "admin-view",
+        "posts",
+        "--source",
+        "core-data:postType/Post",
+      ],
+      {
+        cwd: targetDir,
+        env: withUnpublishedDataViewsEnv(),
+      }
+    )
+  );
+
+  expect(errorMessage).toContain(
+    "entity name must start with a lowercase letter or number"
+  );
+}, 20_000);
+
+test("admin view core-data sources accept numeric-leading entity names", async () => {
+  const targetDir = path.join(
+    tempRoot,
+    "demo-workspace-add-admin-view-core-data-numeric-leading"
+  );
+
+  await scaffoldProject({
+    projectDir: targetDir,
+    templateId: workspaceTemplatePackageManifest.name,
+    packageManager: "npm",
+    noInstall: true,
+    answers: {
+      author: "Test Runner",
+      description: "Demo workspace add admin view core data numeric leading",
+      namespace: "demo-space",
+      phpPrefix: "demo_space",
+      slug: "demo-workspace-add-admin-view-core-data-numeric-leading",
+      textDomain: "demo-space",
+      title: "Demo Workspace Add Admin View Core Data Numeric Leading",
+    },
+  });
+
+  linkWorkspaceNodeModules(targetDir);
+
+  runCli(
+    "node",
+    [
+      entryPath,
+      "add",
+      "admin-view",
+      "audit-logs",
+      "--source",
+      "core-data:postType/2fa_logs",
+    ],
+    {
+      cwd: targetDir,
+      env: withUnpublishedDataViewsEnv(),
+    }
+  );
+
+  const blockConfigSource = fs.readFileSync(
+    path.join(targetDir, "scripts", "block-config.ts"),
+    "utf8"
+  );
+  const doctorOutput = runCli("node", [entryPath, "doctor", "--format", "json"], {
+    cwd: targetDir,
+  });
+  const doctorChecks = parseJsonObjectFromOutput<{
+    checks: Array<{ detail: string; label: string; status: string }>;
+  }>(doctorOutput);
+
+  expect(blockConfigSource).toContain('source: "core-data:postType/2fa_logs"');
+  expect(
+    doctorChecks.checks.find((check) => check.label === "Admin view config audit-logs")
+      ?.status
+  ).toBe("pass");
+}, 20_000);
 
 test("admin view workflow accepts formatted shared webpack entries", async () => {
   const targetDir = path.join(

@@ -162,10 +162,10 @@ export interface RunAddRestResourceCommandOptions {
  * normalized into the generated slug.
  * @property cwd Working directory used to resolve the nearest official workspace.
  * Defaults to `process.cwd()`.
- * @property source Optional data source locator. The first supported source is
- * `rest-resource:<slug>`, which wires the generated screen to an existing
- * list-capable REST resource. A future opt-in `core-data:<kind>/<name>`
- * locator remains intentionally reserved for later implementation work.
+ * @property source Optional data source locator. `rest-resource:<slug>` wires
+ * the generated screen to an existing list-capable REST resource.
+ * `core-data:<kind>/<name>` binds the screen to a supported WordPress-owned
+ * entity collection such as `core-data:postType/post`.
  */
 export interface RunAddAdminViewCommandOptions {
 	adminViewName: string;
@@ -718,7 +718,7 @@ export function assertEditorPluginDoesNotExist(projectDir: string, editorPluginS
  */
 export function formatAddHelpText(): string {
 	return `Usage:
-  wp-typia add admin-view <name> [--source <rest-resource:slug>] [--dry-run]
+  wp-typia add admin-view <name> [--source <rest-resource:slug|core-data:kind/name>] [--dry-run]
   wp-typia add block <name> [--template <${ADD_BLOCK_TEMPLATE_IDS.join("|")}>] [--external-layer-source <./path|github:owner/repo/path[#ref]|npm-package>] [--external-layer-id <layer-id>] [--inner-blocks-preset <freeform|ordered|horizontal|locked-structure>] [--alternate-render-targets <email,mjml,plain-text>] [--data-storage <post-meta|custom-table>] [--persistence-policy <authenticated|public>] [--dry-run]
   wp-typia add variation <name> --block <block-slug> [--dry-run]
   wp-typia add style <name> --block <block-slug> [--dry-run]
@@ -737,7 +737,8 @@ Notes:
   Interactive add flows let you choose a template when \`--template\` is omitted; non-interactive runs default to \`basic\`.
   \`add admin-view\` scaffolds an opt-in DataViews-powered WordPress admin screen under \`src/admin-views/\`.
   Pass \`--source rest-resource:<slug>\` to reuse a list-capable REST resource.
-  Future core-data locators and public installs remain deferred until \`@wp-typia/dataviews\` is published to npm.
+  Pass \`--source core-data:postType/post\` or \`--source core-data:taxonomy/category\` to bind a WordPress-owned entity collection.
+  Public installs currently gate this workflow until \`@wp-typia/dataviews\` is published to npm.
   \`query-loop\` is a create-time scaffold family. Use \`wp-typia create <project-dir> --template query-loop\` instead of \`wp-typia add block\`.
   \`add variation\` targets an existing block slug from \`scripts/block-config.ts\`.
   \`add style\` registers a Block Styles option for an existing generated block.
