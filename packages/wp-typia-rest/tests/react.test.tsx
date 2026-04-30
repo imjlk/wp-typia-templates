@@ -19,7 +19,11 @@ import {
   createEndpointDataClient,
   useEndpointMutation,
   useEndpointQuery,
+  useRestResourceCreateMutation,
+  useRestResourceDeleteMutation,
   useRestResourceListQuery,
+  useRestResourceReadQuery,
+  useRestResourceUpdateMutation,
 } from '../src/react';
 import type { ApiFetch } from '@wordpress/api-fetch';
 
@@ -361,6 +365,279 @@ describe('@wp-typia/rest/react', () => {
 
     expect(fetchCount).toBe(2);
     expect(rendered.current.data).toEqual({ count: 2 });
+
+    await rendered.unmount();
+  });
+
+  test('useRestResourceReadQuery consumes a resource facade through the shared query cache', async () => {
+    let fetchCount = 0;
+    const resource = defineRestResource({
+      endpoints: {
+        read: createEndpoint<{ id: number }, { count: number }>({
+          method: 'GET',
+          path: '/demo/v1/resource-items/(?P<id>\\d+)',
+          validateRequest: (input: unknown) =>
+            typeof input === 'object' &&
+            input !== null &&
+            typeof (input as { id?: unknown }).id === 'number'
+              ? toValidationResult(success(input as { id: number }))
+              : toValidationResult(
+                  failure<{ id: number }>('{ id: number }', '$.id'),
+                ),
+          validateResponse: (input: unknown) =>
+            typeof input === 'object' &&
+            input !== null &&
+            typeof (input as { count?: unknown }).count === 'number'
+              ? toValidationResult(success(input as { count: number }))
+              : toValidationResult(
+                  failure<{ count: number }>('{ count: number }', '$.count'),
+                ),
+        }),
+      },
+    });
+    const client = createEndpointDataClient();
+    const rendered = await createHookRenderer(
+      () =>
+        useRestResourceReadQuery(
+          resource,
+          { id: 9 },
+          {
+            client,
+            fetchFn: asApiFetch(async () => {
+              fetchCount += 1;
+              return { count: fetchCount };
+            }),
+            staleTime: 30_000,
+          },
+        ),
+      client,
+    );
+
+    await waitForAssertion(() => {
+      expect(rendered.current.data).toEqual({ count: 1 });
+      expect(rendered.current.validation?.isValid).toBe(true);
+    });
+
+    client.invalidate(resource.endpoints.read, { id: 9 });
+    await flush();
+    await flush();
+
+    expect(fetchCount).toBe(2);
+    expect(rendered.current.data).toEqual({ count: 2 });
+
+    await rendered.unmount();
+  });
+
+  test('resource mutation hooks delegate to their endpoint helpers and invalidate shared queries', async () => {
+    let queryCount = 0;
+    const seenMethods: string[] = [];
+    const resource = defineRestResource({
+      endpoints: {
+        create: createEndpoint<
+          { title: string },
+          { action: 'create'; count: number }
+        >({
+          method: 'POST',
+          path: '/demo/v1/resource-items',
+          validateRequest: (input: unknown) =>
+            typeof input === 'object' &&
+            input !== null &&
+            typeof (input as { title?: unknown }).title === 'string'
+              ? toValidationResult(success(input as { title: string }))
+              : toValidationResult(
+                  failure<{ title: string }>('{ title: string }', '$.title'),
+                ),
+          validateResponse: (input: unknown) =>
+            typeof input === 'object' &&
+            input !== null &&
+            (input as { action?: unknown }).action === 'create' &&
+            typeof (input as { count?: unknown }).count === 'number'
+              ? toValidationResult(
+                  success(input as { action: 'create'; count: number }),
+                )
+              : toValidationResult(
+                  failure<{ action: 'create'; count: number }>(
+                    "{ action: 'create'; count: number }",
+                    '$.action',
+                  ),
+                ),
+        }),
+        delete: createEndpoint<
+          { id: number },
+          { action: 'delete'; count: number }
+        >({
+          method: 'DELETE',
+          path: '/demo/v1/resource-items/(?P<id>\\d+)',
+          validateRequest: (input: unknown) =>
+            typeof input === 'object' &&
+            input !== null &&
+            typeof (input as { id?: unknown }).id === 'number'
+              ? toValidationResult(success(input as { id: number }))
+              : toValidationResult(
+                  failure<{ id: number }>('{ id: number }', '$.id'),
+                ),
+          validateResponse: (input: unknown) =>
+            typeof input === 'object' &&
+            input !== null &&
+            (input as { action?: unknown }).action === 'delete' &&
+            typeof (input as { count?: unknown }).count === 'number'
+              ? toValidationResult(
+                  success(input as { action: 'delete'; count: number }),
+                )
+              : toValidationResult(
+                  failure<{ action: 'delete'; count: number }>(
+                    "{ action: 'delete'; count: number }",
+                    '$.action',
+                  ),
+                ),
+        }),
+        list: createEndpoint<{ page: number }, { count: number }>({
+          method: 'GET',
+          path: '/demo/v1/resource-items',
+          validateRequest: (input: unknown) =>
+            typeof input === 'object' &&
+            input !== null &&
+            typeof (input as { page?: unknown }).page === 'number'
+              ? toValidationResult(success(input as { page: number }))
+              : toValidationResult(
+                  failure<{ page: number }>('{ page: number }', '$.page'),
+                ),
+          validateResponse: (input: unknown) =>
+            typeof input === 'object' &&
+            input !== null &&
+            typeof (input as { count?: unknown }).count === 'number'
+              ? toValidationResult(success(input as { count: number }))
+              : toValidationResult(
+                  failure<{ count: number }>('{ count: number }', '$.count'),
+                ),
+        }),
+        update: createEndpoint<
+          { id: number; title: string },
+          { action: 'update'; count: number }
+        >({
+          method: 'PUT',
+          path: '/demo/v1/resource-items/(?P<id>\\d+)',
+          validateRequest: (input: unknown) =>
+            typeof input === 'object' &&
+            input !== null &&
+            typeof (input as { id?: unknown }).id === 'number' &&
+            typeof (input as { title?: unknown }).title === 'string'
+              ? toValidationResult(
+                  success(input as { id: number; title: string }),
+                )
+              : toValidationResult(
+                  failure<{ id: number; title: string }>(
+                    '{ id: number; title: string }',
+                    '$.id',
+                  ),
+                ),
+          validateResponse: (input: unknown) =>
+            typeof input === 'object' &&
+            input !== null &&
+            (input as { action?: unknown }).action === 'update' &&
+            typeof (input as { count?: unknown }).count === 'number'
+              ? toValidationResult(
+                  success(input as { action: 'update'; count: number }),
+                )
+              : toValidationResult(
+                  failure<{ action: 'update'; count: number }>(
+                    "{ action: 'update'; count: number }",
+                    '$.action',
+                  ),
+                ),
+        }),
+      },
+    });
+    const queryRequest = { page: 1 };
+    const fetchFn = asApiFetch(async (options: { method?: string }) => {
+      const method = options.method ?? 'GET';
+      seenMethods.push(method);
+
+      if (method === 'GET') {
+        return { count: queryCount };
+      }
+
+      queryCount += 1;
+      if (method === 'POST') {
+        return { action: 'create', count: queryCount };
+      }
+      if (method === 'PUT') {
+        return { action: 'update', count: queryCount };
+      }
+      return { action: 'delete', count: queryCount };
+    });
+    const rendered = await createHookRenderer(() => ({
+      create: useRestResourceCreateMutation(resource, {
+        fetchFn,
+        invalidate: {
+          endpoint: resource.endpoints.list,
+          request: queryRequest,
+        },
+      }),
+      delete: useRestResourceDeleteMutation(resource, {
+        fetchFn,
+        invalidate: {
+          endpoint: resource.endpoints.list,
+          request: queryRequest,
+        },
+      }),
+      list: useRestResourceListQuery(resource, queryRequest, {
+        fetchFn,
+        staleTime: 30_000,
+      }),
+      update: useRestResourceUpdateMutation(resource, {
+        fetchFn,
+        invalidate: {
+          endpoint: resource.endpoints.list,
+          request: queryRequest,
+        },
+      }),
+    }));
+
+    await waitForAssertion(() => {
+      expect(rendered.current.list.data).toEqual({ count: 0 });
+      expect(rendered.current.list.validation?.isValid).toBe(true);
+    });
+
+    await rendered.current.create.mutateAsync({ title: 'Hero card' });
+    await waitForAssertion(() => {
+      expect(rendered.current.create.data).toEqual({
+        action: 'create',
+        count: 1,
+      });
+      expect(rendered.current.create.validation?.isValid).toBe(true);
+      expect(rendered.current.list.data).toEqual({ count: 1 });
+    });
+
+    await rendered.current.update.mutateAsync({ id: 9, title: 'Hero v2' });
+    await waitForAssertion(() => {
+      expect(rendered.current.update.data).toEqual({
+        action: 'update',
+        count: 2,
+      });
+      expect(rendered.current.update.validation?.isValid).toBe(true);
+      expect(rendered.current.list.data).toEqual({ count: 2 });
+    });
+
+    await rendered.current.delete.mutateAsync({ id: 9 });
+    await waitForAssertion(() => {
+      expect(rendered.current.delete.data).toEqual({
+        action: 'delete',
+        count: 3,
+      });
+      expect(rendered.current.delete.validation?.isValid).toBe(true);
+      expect(rendered.current.list.data).toEqual({ count: 3 });
+    });
+
+    expect(seenMethods).toEqual([
+      'GET',
+      'POST',
+      'GET',
+      'PUT',
+      'GET',
+      'DELETE',
+      'GET',
+    ]);
 
     await rendered.unmount();
   });
