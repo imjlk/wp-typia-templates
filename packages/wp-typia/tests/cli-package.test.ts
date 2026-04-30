@@ -497,6 +497,7 @@ describe('wp-typia package', () => {
         data?: {
           command?: string;
           completion?: {
+            nextSteps?: string[];
             title?: string;
           };
           detectedLayout?: { kind?: string; blockNames?: string[] };
@@ -542,9 +543,10 @@ describe('wp-typia package', () => {
         ]),
       );
       expect(parsed.data?.completion?.title).toContain('Retrofit init plan');
-      expect(parsed.data?.nextSteps).toContain(
+      expect(parsed.data?.completion?.nextSteps).toContain(
         `npx --yes wp-typia@${packageManifest.version} doctor`,
       );
+      expect(parsed.data).not.toHaveProperty('nextSteps');
     } finally {
       fs.rmSync(fixtureRoot, { force: true, recursive: true });
     }
@@ -683,7 +685,6 @@ describe('wp-typia package', () => {
           files?: string[];
           projectDir?: string;
           template?: string;
-          title?: string;
         };
         ok?: boolean;
       }>(result.stdout);
@@ -698,8 +699,8 @@ describe('wp-typia package', () => {
         path.join(fs.realpathSync(tempRoot), 'demo-json'),
       );
       expect(parsed.data?.template).toBe('basic');
-      expect(parsed.data?.title).toContain('Dry run for Demo Json');
-      expect(parsed.data?.completion?.title).toBe(parsed.data?.title);
+      expect(parsed.data?.completion?.title).toContain('Dry run for Demo Json');
+      expect(parsed.data).not.toHaveProperty('title');
       expect(parsed.data?.files).toContain('package.json');
       expect(parsed.data?.files).toContain('src/index.tsx');
       expect(serialized).not.toMatch(/[✅🧪⏳⚠]/u);
@@ -1493,15 +1494,13 @@ describe('wp-typia package', () => {
           },
         },
       );
-      const diagnosticOutput = result.stderr.includes('{')
-        ? result.stderr
-        : result.stdout;
       const parsed = parseJsonObjectFromOutput<{
         error?: { code?: string; message?: string };
         ok?: boolean;
-      }>(diagnosticOutput);
+      }>(result.stderr);
 
       expect(result.status).toBe(1);
+      expect(result.stdout).toBe('');
       expect(parsed.ok).toBe(false);
       expect(parsed.error?.code).toBe('template-source-timeout');
       expect(parsed.error?.message).toContain(
@@ -1702,8 +1701,6 @@ describe('wp-typia package', () => {
           kind?: string;
           name?: string;
           projectDir?: string;
-          summaryLines?: string[];
-          title?: string;
         };
         ok?: boolean;
       }>(result.stdout);
@@ -1716,9 +1713,12 @@ describe('wp-typia package', () => {
       expect(parsed.data?.kind).toBe('block');
       expect(parsed.data?.name).toBe('promo-card');
       expect(parsed.data?.projectDir).toBe(fs.realpathSync(projectDir));
-      expect(parsed.data?.title).toContain('Added workspace block');
-      expect(parsed.data?.completion?.title).toBe(parsed.data?.title);
-      expect(parsed.data?.summaryLines).toContain('Template family: basic');
+      expect(parsed.data?.completion?.title).toContain('Added workspace block');
+      expect(parsed.data?.completion?.summaryLines).toContain(
+        'Template family: basic',
+      );
+      expect(parsed.data).not.toHaveProperty('title');
+      expect(parsed.data).not.toHaveProperty('summaryLines');
       expect(serialized).not.toMatch(/[✅🧪⏳⚠]/u);
       expect(
         fs.existsSync(
@@ -2019,13 +2019,13 @@ describe('wp-typia package', () => {
       '--format',
       'json',
     ]);
-    const parsed = JSON.parse(result.stdout.trim()) as {
+    const parsed = JSON.parse(result.stderr.trim()) as {
       error?: { code?: string; command?: string; kind?: string };
       ok?: boolean;
     };
 
     expect(result.status).toBe(1);
-    expect(result.stderr).toBe('');
+    expect(result.stdout).toBe('');
     expect(parsed.ok).toBe(false);
     expect(parsed.error?.kind).toBe('command-execution');
     expect(parsed.error?.command).toBe('mcp');
@@ -2040,13 +2040,13 @@ describe('wp-typia package', () => {
         env: withoutAIAgentEnv(),
       },
     );
-    const parsed = JSON.parse(result.stdout.trim()) as {
+    const parsed = JSON.parse(result.stderr.trim()) as {
       error?: { code?: string; command?: string; kind?: string };
       ok?: boolean;
     };
 
     expect(result.status).toBe(1);
-    expect(result.stderr).toBe('');
+    expect(result.stdout).toBe('');
     expect(parsed.ok).toBe(false);
     expect(parsed.error?.kind).toBe('command-execution');
     expect(parsed.error?.command).toBe('create');
@@ -2067,13 +2067,13 @@ describe('wp-typia package', () => {
           env: withoutAIAgentEnv(),
         },
       );
-      const parsed = JSON.parse(result.stdout.trim()) as {
+      const parsed = JSON.parse(result.stderr.trim()) as {
         error?: { code?: string; command?: string; kind?: string };
         ok?: boolean;
       };
 
       expect(result.status).toBe(1);
-      expect(result.stderr).toBe('');
+      expect(result.stdout).toBe('');
       expect(parsed.ok).toBe(false);
       expect(parsed.error?.kind).toBe('command-execution');
       expect(parsed.error?.command).toBe('sync');
@@ -2091,13 +2091,13 @@ describe('wp-typia package', () => {
         env: withoutAIAgentEnv(),
       },
     );
-    const parsed = JSON.parse(result.stdout.trim()) as {
+    const parsed = JSON.parse(result.stderr.trim()) as {
       error?: { code?: string; command?: string; kind?: string };
       ok?: boolean;
     };
 
     expect(result.status).toBe(1);
-    expect(result.stderr).toBe('');
+    expect(result.stdout).toBe('');
     expect(parsed.ok).toBe(false);
     expect(parsed.error?.kind).toBe('command-execution');
     expect(parsed.error?.command).toBe('wp-typia');
@@ -2120,13 +2120,13 @@ describe('wp-typia package', () => {
         env: withoutAIAgentEnv(),
       },
     );
-    const parsed = JSON.parse(result.stdout.trim()) as {
+    const parsed = JSON.parse(result.stderr.trim()) as {
       error?: { code?: string; command?: string; kind?: string };
       ok?: boolean;
     };
 
     expect(result.status).toBe(1);
-    expect(result.stderr).toBe('');
+    expect(result.stdout).toBe('');
     expect(parsed.ok).toBe(false);
     expect(parsed.error?.kind).toBe('command-execution');
     expect(parsed.error?.command).toBe('temlates');

@@ -327,6 +327,9 @@ describe('alternate-buffer completion output helpers', () => {
       'scripts/block-config.ts',
       'src/blocks/old-card/block.json',
     ]);
+    expect(payload.data).not.toHaveProperty('title');
+    expect(payload.data).not.toHaveProperty('summaryLines');
+    expect(payload.data).not.toHaveProperty('nextSteps');
   });
 
   test('structured init success payload uses the standard CLI envelope', () => {
@@ -380,14 +383,14 @@ describe('alternate-buffer completion output helpers', () => {
       'src/typia.manifest.json',
       'src/typia.schema.json',
     ]);
-    expect(payload.data.nextSteps).toEqual([
+    expect(payload.data.completion.nextSteps).toEqual([
       'npm run sync -- --check',
       'npm run typecheck',
     ]);
-    expect(payload.data.warnings).toEqual([
-      'Preview only: no files were written.',
-    ]);
     expect(payload.data.completion.title).toContain('Retrofit init plan');
+    expect(payload.data).not.toHaveProperty('nextSteps');
+    expect(payload.data).not.toHaveProperty('warnings');
+    expect(payload.data).not.toHaveProperty('title');
   });
 
   test('dry-run sync payload previews the generated sync commands', () => {

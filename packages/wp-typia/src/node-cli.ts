@@ -21,6 +21,7 @@ import {
   SYNC_OPTION_METADATA,
   TEMPLATES_OPTION_METADATA,
 } from './command-option-metadata';
+import { prefersStructuredCliArgv } from './cli-diagnostic-output';
 import {
   getTemplateById,
   listTemplates,
@@ -733,28 +734,21 @@ export async function runNodeCli(argv = process.argv.slice(2)): Promise<void> {
 export async function runNodeCliEntrypoint(
   argv = process.argv.slice(2),
 ): Promise<void> {
+  const prefersStructuredErrorOutput = prefersStructuredCliArgv(argv);
+
   try {
     await runNodeCli(argv);
   } catch (error) {
-    let prefersStructuredErrorOutput = false;
-    try {
-      const normalizedArgv = normalizeWpTypiaArgv(argv);
-      const { argv: argvWithoutConfigOverride } =
-        extractWpTypiaConfigOverride(normalizedArgv);
-      const { flags } = parseGlobalFlags(argvWithoutConfigOverride);
-      prefersStructuredErrorOutput = flags.format === 'json';
-    } catch {}
-
     if (prefersStructuredErrorOutput) {
-      console.error(
-        JSON.stringify(
+      process.stderr.write(
+        `${JSON.stringify(
           {
             ok: false,
             error: serializeCliDiagnosticError(error),
           },
           null,
           2,
-        ),
+        )}\n`,
       );
       process.exitCode = 1;
       return;

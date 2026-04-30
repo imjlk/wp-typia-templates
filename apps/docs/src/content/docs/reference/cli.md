@@ -34,6 +34,11 @@ and wrapper integrations. The `error.code` field is the integration contract;
 human-readable `message`, `summary`, and `detailLines` can change as guidance
 improves.
 
+- `ok: true` JSON success payloads are written to stdout.
+- `ok: false` JSON error payloads are written to stderr.
+- Completion-oriented success payloads keep human-facing title/summary/next-step
+  data under `data.completion`.
+
 ```json
 {
   "ok": false,
