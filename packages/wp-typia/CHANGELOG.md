@@ -1,5 +1,22 @@
 # wp-typia
 
+## 0.22.1 — 2026-04-30
+
+### Patch changes
+
+- [2147363](https://github.com/imjlk/wp-typia/commit/2147363cac6323a11a0779dd5ade2b1e85d0be0e) Route `wp-typia mcp --output-dir` through shared command option metadata so
+  routing metadata, argv walking, and Bun runtime help stay aligned. — Thanks @imjlk!
+- [f2254a9](https://github.com/imjlk/wp-typia/commit/f2254a9ab36fb43c2e97c50875ee4eddc5448131) Derive the `wp-typia add` command tree subcommands from shared add-kind ids so
+  CLI metadata, help, and routing consumers stay aligned when new add kinds are
+  added. — Thanks @imjlk!
+- [d331ad4](https://github.com/imjlk/wp-typia/commit/d331ad48e1d0f5f96c649390a87b18c248612377) Harden the interactivity block scaffold by replacing loose `Function` typings
+  with safer callable signatures, and add regression coverage for workspace
+  interactivity helpers plus add-kind execution-plan compatibility. — Thanks @imjlk!
+- [90ed375](https://github.com/imjlk/wp-typia/commit/90ed3751d27739b7780b480b04664c6b44475f7a) Standardize JSON CLI diagnostics so success payloads stay on stdout, error
+  payloads go to stderr, and completion-oriented success payloads use one
+  canonical nested completion shape. — Thanks @imjlk!
+- Updated dependencies: project-tools (npm)@0.22.1
+
 ## 0.22.0 — 2026-04-30
 
 ### Minor changes
