@@ -423,6 +423,10 @@ export const ADD_KIND_REGISTRY = {
     hiddenStringSubmitFields: ['external-layer-id', 'external-layer-source'],
     nameLabel: 'Block name',
     async prepareExecution(context) {
+      const name = requireAddKindName(
+        context,
+        '`wp-typia add block` requires <name>. Usage: wp-typia add block <name> [--template <basic|interactivity|persistence|compound>]',
+      );
       const externalLayerId = readOptionalStringFlag(
         context.flags,
         'external-layer-id',
@@ -472,8 +476,8 @@ export const ADD_KIND_REGISTRY = {
       }
       resolvedTemplateId ??= 'basic';
 
-      return createNamedExecutionPlan(context, {
-        execute: ({ cwd, name }) =>
+      return {
+        execute: (cwd) =>
           context.addRuntime.runAddBlockCommand({
             alternateRenderTargets,
             blockName: name,
@@ -498,10 +502,8 @@ export const ADD_KIND_REGISTRY = {
           templateId: result.templateId,
         }),
         getWarnings: (result) => result.warnings,
-        missingNameMessage:
-          '`wp-typia add block` requires <name>. Usage: wp-typia add block <name> [--template <basic|interactivity|persistence|compound>]',
         warnLine: context.warnLine,
-      });
+      };
     },
     sortOrder: 20,
     supportsDryRun: true,

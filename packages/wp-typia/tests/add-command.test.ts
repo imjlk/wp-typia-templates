@@ -336,6 +336,38 @@ describe('wp-typia add command bridge', () => {
     ).toBe(true);
   }, 15_000);
 
+  test('interactive add block validates the missing name before prompting', async () => {
+    const projectDir = path.join(tempRoot, 'demo-add-interactive-missing-name');
+    const selectedPrompts: string[] = [];
+    const prompt: ReadlinePrompt = {
+      close() {},
+      async select(message: string) {
+        selectedPrompts.push(message);
+        throw new Error('select() should not be called before name validation');
+      },
+      async text() {
+        throw new Error('text() should not be called before name validation');
+      },
+    };
+
+    await scaffoldOfficialWorkspace(projectDir);
+    linkWorkspaceNodeModules(projectDir);
+
+    await expect(
+      executeAddCommand({
+        cwd: projectDir,
+        emitOutput: false,
+        flags: {},
+        interactive: true,
+        kind: 'block',
+        prompt,
+      }),
+    ).rejects.toThrow(
+      '`wp-typia add block` requires <name>. Usage: wp-typia add block <name> [--template <basic|interactivity|persistence|compound>]',
+    );
+    expect(selectedPrompts).toEqual([]);
+  }, 15_000);
+
   test('every registered add kind currently advertises dry-run support', () => {
     expect(ADD_KIND_IDS.every((kind) => supportsAddKindDryRun(kind))).toBe(
       true,
