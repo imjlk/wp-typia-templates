@@ -50,7 +50,9 @@ Notes:
   \`wp-typia init\` previews the minimum retrofit sync surface by default; rerun with \`--apply\` to write package.json updates and generated helper scripts.
   Use \`--template workspace\` as shorthand for \`@wp-typia/create-workspace-template\`, the official empty workspace scaffold behind \`wp-typia add ...\`.
   Interactive add flows let you choose a template when \`--template\` is omitted; non-interactive runs default to \`basic\`.
-  \`add admin-view\` scaffolds an opt-in DataViews-powered WordPress admin screen under \`src/admin-views/\`; pass \`--source rest-resource:<slug>\` to reuse a list-capable REST resource. Future core-data entity locators stay intentionally deferred. Public installs currently gate this workflow until \`@wp-typia/dataviews\` is published to npm.
+  \`add admin-view\` scaffolds an opt-in DataViews-powered WordPress admin screen under \`src/admin-views/\`.
+  Pass \`--source rest-resource:<slug>\` to reuse a list-capable REST resource.
+  Future core-data locators and public installs remain deferred until \`@wp-typia/dataviews\` is published to npm.
   \`query-loop\` is create-only. Use \`wp-typia create <project-dir> --template query-loop\`; \`wp-typia add block\` accepts only basic, interactivity, persistence, and compound families.
   \`add variation\` uses an existing workspace block from \`scripts/block-config.ts\`.
   \`add style\` registers a Block Styles option for an existing generated block.

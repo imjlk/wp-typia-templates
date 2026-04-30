@@ -735,7 +735,9 @@ Notes:
   \`wp-typia add\` runs only inside official ${WORKSPACE_TEMPLATE_PACKAGE} workspaces scaffolded via \`wp-typia create <project-dir> --template workspace\`.
   Pass \`--dry-run\` to preview the workspace files that would change without writing them.
   Interactive add flows let you choose a template when \`--template\` is omitted; non-interactive runs default to \`basic\`.
-  \`add admin-view\` scaffolds an opt-in DataViews-powered WordPress admin screen under \`src/admin-views/\`; pass \`--source rest-resource:<slug>\` to reuse a list-capable REST resource. Future core-data entity locators stay intentionally deferred. Public installs currently gate this workflow until \`@wp-typia/dataviews\` is published to npm.
+  \`add admin-view\` scaffolds an opt-in DataViews-powered WordPress admin screen under \`src/admin-views/\`.
+  Pass \`--source rest-resource:<slug>\` to reuse a list-capable REST resource.
+  Future core-data locators and public installs remain deferred until \`@wp-typia/dataviews\` is published to npm.
   \`query-loop\` is a create-time scaffold family. Use \`wp-typia create <project-dir> --template query-loop\` instead of \`wp-typia add block\`.
   \`add variation\` targets an existing block slug from \`scripts/block-config.ts\`.
   \`add style\` registers a Block Styles option for an existing generated block.
