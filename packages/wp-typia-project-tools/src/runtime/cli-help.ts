@@ -19,7 +19,7 @@ export function formatHelpText(): string {
   wp-typia create <project-dir> [--template compound] [--external-layer-source <./path|github:owner/repo/path[#ref]|npm-package>] [--external-layer-id <layer-id>] [--inner-blocks-preset <freeform|ordered|horizontal|locked-structure>] [--alternate-render-targets <email,mjml,plain-text>] [--data-storage <post-meta|custom-table>] [--persistence-policy <authenticated|public>] [--namespace <value>] [--text-domain <value>] [--php-prefix <value>] [--with-migration-ui] [--with-wp-env] [--with-test-preset] [--yes] [--dry-run] [--no-install] [--package-manager <id>]
   wp-typia <project-dir> [create flags...]
   wp-typia init [project-dir] [--apply] [--package-manager <id>]
-  wp-typia add admin-view <name> [--source <rest-resource:slug>]
+  wp-typia add admin-view <name> [--source <rest-resource:slug|core-data:kind/name>]
   wp-typia add block <name> [--template <basic|interactivity|persistence|compound>] [--external-layer-source <./path|github:owner/repo/path[#ref]|npm-package>] [--external-layer-id <layer-id>] [--inner-blocks-preset <freeform|ordered|horizontal|locked-structure>] [--alternate-render-targets <email,mjml,plain-text>] [--data-storage <post-meta|custom-table>] [--persistence-policy <authenticated|public>]
   wp-typia add variation <name> --block <block-slug>
   wp-typia add style <name> --block <block-slug>

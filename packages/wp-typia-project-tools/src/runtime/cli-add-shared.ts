@@ -718,7 +718,7 @@ export function assertEditorPluginDoesNotExist(projectDir: string, editorPluginS
  */
 export function formatAddHelpText(): string {
 	return `Usage:
-  wp-typia add admin-view <name> [--source <rest-resource:slug>] [--dry-run]
+  wp-typia add admin-view <name> [--source <rest-resource:slug|core-data:kind/name>] [--dry-run]
   wp-typia add block <name> [--template <${ADD_BLOCK_TEMPLATE_IDS.join("|")}>] [--external-layer-source <./path|github:owner/repo/path[#ref]|npm-package>] [--external-layer-id <layer-id>] [--inner-blocks-preset <freeform|ordered|horizontal|locked-structure>] [--alternate-render-targets <email,mjml,plain-text>] [--data-storage <post-meta|custom-table>] [--persistence-policy <authenticated|public>] [--dry-run]
   wp-typia add variation <name> --block <block-slug> [--dry-run]
   wp-typia add style <name> --block <block-slug> [--dry-run]

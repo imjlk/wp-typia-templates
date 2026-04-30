@@ -3530,6 +3530,87 @@ test("canonical CLI can add a DataViews admin screen with a core-data source", a
   typecheckGeneratedProject(targetDir);
 }, 60_000);
 
+test("canonical CLI can add a taxonomy core-data admin screen", async () => {
+  const targetDir = path.join(
+    tempRoot,
+    "demo-workspace-add-admin-view-core-data-taxonomy"
+  );
+
+  await scaffoldProject({
+    projectDir: targetDir,
+    templateId: workspaceTemplatePackageManifest.name,
+    packageManager: "npm",
+    noInstall: true,
+    answers: {
+      author: "Test Runner",
+      description: "Demo workspace add admin view core data taxonomy",
+      namespace: "demo-space",
+      phpPrefix: "demo_space",
+      slug: "demo-workspace-add-admin-view-core-data-taxonomy",
+      textDomain: "demo-space",
+      title: "Demo Workspace Add Admin View Core Data Taxonomy",
+    },
+  });
+
+  linkWorkspaceNodeModules(targetDir);
+
+  runCli(
+    "node",
+    [
+      entryPath,
+      "add",
+      "admin-view",
+      "categories",
+      "--source",
+      "core-data:taxonomy/category",
+    ],
+    {
+      cwd: targetDir,
+      env: withUnpublishedDataViewsEnv(),
+    }
+  );
+
+  const blockConfigSource = fs.readFileSync(
+    path.join(targetDir, "scripts", "block-config.ts"),
+    "utf8"
+  );
+  const dataSource = fs.readFileSync(
+    path.join(targetDir, "src", "admin-views", "categories", "data.ts"),
+    "utf8"
+  );
+  const configSource = fs.readFileSync(
+    path.join(targetDir, "src", "admin-views", "categories", "config.ts"),
+    "utf8"
+  );
+  const typesSource = fs.readFileSync(
+    path.join(targetDir, "src", "admin-views", "categories", "types.ts"),
+    "utf8"
+  );
+
+  expect(blockConfigSource).toContain('source: "core-data:taxonomy/category"');
+  expect(typesSource).toContain("export interface CategoriesCoreDataRecord");
+  expect(typesSource).toContain("count?: number");
+  expect(typesSource).toContain("name?: string");
+  expect(typesSource).toContain("taxonomy?: string");
+  expect(typesSource).toContain("count: number");
+  expect(typesSource).toContain("name: string");
+  expect(configSource).toContain("fields: ['name', 'slug', 'count']");
+  expect(configSource).toContain("titleField: 'name'");
+  expect(configSource).toContain("label: __( 'Count'");
+  expect(configSource).toContain("label: __( 'Taxonomy'");
+  expect(configSource).not.toContain("updatedAt");
+  expect(configSource).not.toContain("Status");
+  expect(dataSource).toContain('const CORE_DATA_ENTITY_KIND = "taxonomy"');
+  expect(dataSource).toContain('const CORE_DATA_ENTITY_NAME = "category"');
+  expect(dataSource).toContain("function normalizeTaxonomyRecord");
+  expect(dataSource).toContain("count: normalizeCoreDataNumber(record.count)");
+  expect(dataSource).toContain(
+    "name: normalizeCoreDataString(record.name) || normalizeCoreDataString(record.slug)"
+  );
+  expect(dataSource).not.toContain("updatedAt");
+  expect(dataSource).not.toContain("status:");
+}, 20_000);
+
 test("admin view core-data sources reject unsupported entity families", async () => {
   const targetDir = path.join(
     tempRoot,

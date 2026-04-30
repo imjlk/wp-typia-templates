@@ -321,6 +321,9 @@ function buildAdminViewRegistrySource(adminViewSlugs: string[]): string {
 	return `${importLines}${importLines ? "\n\n" : ""}// wp-typia add admin-view entries\n`;
 }
 
+/**
+ * Build the generated admin-view item and dataset types for the selected source.
+ */
 function buildAdminViewTypesSource(
 	adminViewSlug: string,
 	restResource: AdminViewRestResource | undefined,
@@ -353,6 +356,42 @@ export interface ${dataSetTypeName} {
 	}
 
 	if (coreDataSource) {
+		if (coreDataSource.entityKind === "taxonomy") {
+			return `export interface ${coreDataRecordTypeName} {
+\tcount?: number;
+\tdescription?: string;
+\tid: number;
+\tlink?: string;
+\tmeta?: Record<string, unknown>;
+\tname?: string;
+\tparent?: number;
+\tslug?: string;
+\ttaxonomy?: string;
+\t[key: string]: unknown;
+}
+
+export interface ${itemTypeName} {
+\tcount: number;
+\tdescription: string;
+\tid: number;
+\tlink: string;
+\tname: string;
+\tparent: number;
+\traw: ${coreDataRecordTypeName};
+\tslug: string;
+\ttaxonomy: string;
+}
+
+export interface ${dataSetTypeName} {
+\titems: ${itemTypeName}[];
+\tpaginationInfo: {
+\t\ttotalItems: number;
+\t\ttotalPages: number;
+\t};
+}
+`;
+		}
+
 		return `export interface ${coreDataRecordTypeName} {
 \tid: number;
 \tdate?: string;
@@ -406,6 +445,9 @@ export interface ${dataSetTypeName} {
 `;
 }
 
+/**
+ * Build the generated DataViews config source for an admin-view scaffold.
+ */
 function buildAdminViewConfigSource(
 	adminViewSlug: string,
 	textDomain: string,
@@ -417,16 +459,27 @@ function buildAdminViewConfigSource(
 	const itemTypeName = `${pascalName}AdminViewItem`;
 	const dataViewsName = `${camelName}AdminDataViews`;
 	const isCoreDataSource = source?.kind === ADMIN_VIEW_CORE_DATA_SOURCE_KIND;
+	const isTaxonomyCoreDataSource =
+		source?.kind === ADMIN_VIEW_CORE_DATA_SOURCE_KIND &&
+		source.entityKind === "taxonomy";
 	const defaultViewFields = restResource
 		? "['id']"
-		: isCoreDataSource
+		: isTaxonomyCoreDataSource
+			? "['name', 'slug', 'count']"
+			: isCoreDataSource
 			? "['title', 'slug', 'status', 'updatedAt']"
 			: "['title', 'status', 'updatedAt']";
 	const searchEnabled = restResource ? "false" : "true";
-	const titleFieldSource = restResource ? "" : "\ttitleField: 'title',\n";
+	const titleFieldSource = restResource
+		? ""
+		: isTaxonomyCoreDataSource
+			? "\ttitleField: 'name',\n"
+			: "\ttitleField: 'title',\n";
 	const defaultViewEnhancementsSource = restResource
 		? ""
-		: isCoreDataSource
+		: isTaxonomyCoreDataSource
+			? "\t\ttitleField: 'name',\n"
+			: isCoreDataSource
 			? "\t\ttitleField: 'title',\n"
 			: `\t\tsort: {
 \t\t\tdirection: 'desc',
@@ -436,6 +489,37 @@ function buildAdminViewConfigSource(
 `;
 	const additionalFieldsSource = restResource
 		? "\t\t// REST-backed screens start with the guaranteed ID column. Add project-owned fields here once they are declared on the REST record type."
+		: isTaxonomyCoreDataSource
+			? `\t\tcount: {
+\t\t\tlabel: __( 'Count', ${quoteTsString(textDomain)} ),
+\t\t\tschema: { type: 'integer' },
+\t\t},
+\t\tdescription: {
+\t\t\tlabel: __( 'Description', ${quoteTsString(textDomain)} ),
+\t\t\tschema: { type: 'string' },
+\t\t},
+\t\tlink: {
+\t\t\tlabel: __( 'Link', ${quoteTsString(textDomain)} ),
+\t\t\tschema: { format: 'uri', type: 'string' },
+\t\t},
+\t\tname: {
+\t\t\tenableGlobalSearch: true,
+\t\t\tlabel: __( 'Name', ${quoteTsString(textDomain)} ),
+\t\t\tschema: { type: 'string' },
+\t\t},
+\t\tparent: {
+\t\t\tlabel: __( 'Parent', ${quoteTsString(textDomain)} ),
+\t\t\tschema: { type: 'integer' },
+\t\t},
+\t\tslug: {
+\t\t\tenableGlobalSearch: true,
+\t\t\tlabel: __( 'Slug', ${quoteTsString(textDomain)} ),
+\t\t\tschema: { type: 'string' },
+\t\t},
+\t\ttaxonomy: {
+\t\t\tlabel: __( 'Taxonomy', ${quoteTsString(textDomain)} ),
+\t\t\tschema: { type: 'string' },
+\t\t},`
 		: isCoreDataSource
 			? `\t\tslug: {
 \t\t\tenableGlobalSearch: true,
@@ -658,6 +742,9 @@ export async function ${fetchName}(
 `;
 }
 
+/**
+ * Build a core-data-backed admin-view data module for a supported entity family.
+ */
 function buildCoreDataAdminViewDataSource(
 	adminViewSlug: string,
 	coreDataSource: AdminViewCoreDataSource,
@@ -672,6 +759,101 @@ function buildCoreDataAdminViewDataSource(
 	const useEntityRecordName = `use${pascalName}EntityRecord`;
 	const useEntityRecordsName = `use${pascalName}EntityRecords`;
 	const useAdminViewDataName = `use${pascalName}AdminViewData`;
+
+	if (coreDataSource.entityKind === "taxonomy") {
+		return `import type { DataViewsView } from '@wp-typia/dataviews';
+import { useEntityRecord, useEntityRecords } from '@wordpress/core-data';
+import { useMemo } from '@wordpress/element';
+
+import { ${dataViewsName} } from './config';
+import type {
+\t${coreDataRecordTypeName},
+\t${dataSetTypeName},
+\t${itemTypeName},
+} from './types';
+
+export interface ${queryTypeName} {
+\tpage?: number;
+\tper_page?: number;
+\tsearch?: string;
+}
+
+const CORE_DATA_ENTITY_KIND = ${quoteTsString(coreDataSource.entityKind)};
+const CORE_DATA_ENTITY_NAME = ${quoteTsString(coreDataSource.entityName)};
+
+function normalizeCoreDataNumber(value: unknown): number {
+\treturn typeof value === 'number' && Number.isFinite(value) ? value : 0;
+}
+
+function normalizeCoreDataString(value: unknown): string {
+\treturn typeof value === 'string' ? value : '';
+}
+
+function normalizeTaxonomyRecord(record: ${coreDataRecordTypeName}): ${itemTypeName} {
+\treturn {
+\t\tcount: normalizeCoreDataNumber(record.count),
+\t\tdescription: normalizeCoreDataString(record.description),
+\t\tid: record.id,
+\t\tlink: normalizeCoreDataString(record.link),
+\t\tname: normalizeCoreDataString(record.name) || normalizeCoreDataString(record.slug),
+\t\tparent: normalizeCoreDataNumber(record.parent),
+\t\traw: record,
+\t\tslug: normalizeCoreDataString(record.slug),
+\t\ttaxonomy: normalizeCoreDataString(record.taxonomy),
+\t};
+\t}
+
+export function ${useEntityRecordName}(recordId: number | undefined) {
+\treturn useEntityRecord<${coreDataRecordTypeName}>(
+\t\tCORE_DATA_ENTITY_KIND,
+\t\tCORE_DATA_ENTITY_NAME,
+\t\trecordId ?? 0,
+\t\t{ enabled: typeof recordId === 'number' },
+\t);
+\t}
+
+export function ${useEntityRecordsName}(view: DataViewsView<${itemTypeName}>) {
+\tconst query = ${dataViewsName}.toQueryArgs<${queryTypeName}>(view, {
+\t\tperPageParam: 'per_page',
+\t});
+
+\treturn useEntityRecords<${coreDataRecordTypeName}>(
+\t\tCORE_DATA_ENTITY_KIND,
+\t\tCORE_DATA_ENTITY_NAME,
+\t\tquery,
+\t);
+\t}
+
+export function ${useAdminViewDataName}(view: DataViewsView<${itemTypeName}>) {
+\tconst { hasResolved, isResolving, records, totalItems, totalPages } =
+\t\t${useEntityRecordsName}(view);
+\tconst items = useMemo(
+\t\t() => (records ?? []).map((record) => normalizeTaxonomyRecord(record)),
+\t\t[records],
+\t);
+\tconst dataSet = useMemo<${dataSetTypeName}>(
+\t\t() => ({
+\t\t\titems,
+\t\t\tpaginationInfo: {
+\t\t\t\ttotalItems: totalItems ?? items.length,
+\t\t\t\ttotalPages: Math.max(1, totalPages ?? 1),
+\t\t\t},
+\t\t}),
+\t\t[items, totalItems, totalPages],
+\t);
+\tconst error =
+\t\t!isResolving && hasResolved && records === null
+\t\t\t? 'Unable to load core-data entity records.'
+\t\t\t: null;
+
+\treturn {
+\t\tdataSet,
+\t\terror,
+\t\tisLoading: isResolving,
+\t};
+\t}
+`;
+	}
 
 	return `import type { DataViewsView } from '@wp-typia/dataviews';
 import { useEntityRecord, useEntityRecords } from '@wordpress/core-data';
