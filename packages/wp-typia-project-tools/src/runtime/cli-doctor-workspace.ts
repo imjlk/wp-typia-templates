@@ -1351,7 +1351,7 @@ function checkWorkspaceAdminViewConfig(
 	const source = adminView.source.trim();
 	const restSourceMatch = /^rest-resource:([a-z][a-z0-9-]*)$/u.exec(source);
 	const coreDataSourceMatch =
-		/^core-data:(postType|taxonomy)\/([A-Za-z][A-Za-z0-9_-]*)$/u.exec(source);
+		/^core-data:(postType|taxonomy)\/([a-z][a-z0-9_-]*)$/u.exec(source);
 	const restResourceSlug = restSourceMatch?.[1];
 	const restResource = restResourceSlug
 		? inventory.restResources.find((entry) => entry.slug === restResourceSlug)
