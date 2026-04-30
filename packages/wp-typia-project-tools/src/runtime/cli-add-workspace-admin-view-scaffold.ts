@@ -129,6 +129,10 @@ async function ensureAdminViewBootstrapAnchors(
     let nextSource = source;
     const loadFunctionName = `${workspace.workspace.phpPrefix}_load_admin_views`;
     const loadHook = `add_action( 'plugins_loaded', '${loadFunctionName}' );`;
+    const loadHookPattern = new RegExp(
+      `add_action\\(\\s*['"]plugins_loaded['"]\\s*,\\s*['"]${loadFunctionName}['"]\\s*\\)\\s*;`,
+      'u',
+    );
     const loadFunction = `
 
 function ${loadFunctionName}() {
@@ -185,7 +189,7 @@ function ${loadFunctionName}() {
       }
     }
 
-    if (!nextSource.includes(loadHook)) {
+    if (!loadHookPattern.test(nextSource)) {
       appendPhpSnippet(loadHook);
     }
 

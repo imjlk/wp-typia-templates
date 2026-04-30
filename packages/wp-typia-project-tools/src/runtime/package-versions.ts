@@ -134,6 +134,20 @@ function readPackageManifest(
   return JSON.parse(location.source) as PackageManifest;
 }
 
+function tryReadPackageManifest(
+  location: PackageManifestLocation | null,
+): PackageManifest | null {
+  if (!location) {
+    return null;
+  }
+
+  try {
+    return readPackageManifest(location);
+  } catch {
+    return null;
+  }
+}
+
 function resolveInstalledPackageManifestLocation(
   packageName: string,
 ): PackageManifestLocation {
@@ -187,10 +201,8 @@ export function resolveManagedPackageVersionRange(options: {
   const installedManifestLocation = resolveInstalledPackageManifestLocation(
     options.packageName,
   );
-  const workspaceManifest = workspaceManifestLocation
-    ? readPackageManifest(workspaceManifestLocation)
-    : null;
-  const installedManifest = readPackageManifest(installedManifestLocation);
+  const workspaceManifest = tryReadPackageManifest(workspaceManifestLocation);
+  const installedManifest = tryReadPackageManifest(installedManifestLocation);
 
   return normalizeVersionRangeWithFallback(
     workspaceManifest?.version ?? installedManifest?.version,
