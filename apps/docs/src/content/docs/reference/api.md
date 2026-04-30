@@ -337,7 +337,10 @@ separate `@wp-typia/rest/react` subpath:
 - `useEndpointQuery(endpoint, request, options?)`
 - `useEndpointMutation(endpoint, options?)`
 - `useRestResourceListQuery(resource, request, options?)`
+- `useRestResourceReadQuery(resource, request, options?)`
 - `useRestResourceCreateMutation(resource, options?)`
+- `useRestResourceUpdateMutation(resource, options?)`
+- `useRestResourceDeleteMutation(resource, options?)`
 
 That hook layer is built directly on `callEndpoint(...)`, not on an external
 query library. `useEndpointQuery(...)` is GET-only in this first pass, while
