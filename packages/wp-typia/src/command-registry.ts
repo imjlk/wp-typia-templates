@@ -89,7 +89,7 @@ export const WP_TYPIA_COMMAND_REGISTRY = [
     description: 'Inspect or sync schema-driven MCP metadata.',
     name: 'mcp',
     nodeFallback: false,
-    optionGroups: [],
+    optionGroups: ['mcp'],
     requiresBunRuntime: true,
     subcommands: ['list', 'sync'],
   },

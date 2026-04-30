@@ -73,6 +73,10 @@ const templatesCommandSource = fs.readFileSync(
   path.join(packageRoot, 'src', 'commands', 'templates.ts'),
   'utf8',
 );
+const mcpCommandSource = fs.readFileSync(
+  path.join(packageRoot, 'src', 'commands', 'mcp.ts'),
+  'utf8',
+);
 const nodeCliSource = fs.readFileSync(
   path.join(packageRoot, 'src', 'node-cli.ts'),
   'utf8',
@@ -353,6 +357,9 @@ describe('wp-typia package', () => {
     expect(createCommandSource).toContain('resolveCommandOptionValues');
     expect(addCommandSource).toContain('resolveCommandOptionValues');
     expect(migrateCommandSource).toContain('resolveCommandOptionValues');
+    expect(mcpCommandSource).toContain('buildCommandOptions');
+    expect(mcpCommandSource).toContain('MCP_OPTION_METADATA');
+    expect(mcpCommandSource).not.toContain('schema: z.string().optional()');
   });
 
   test('gates interactive TUI rendering on real terminal capability and avoids hard exit short-circuits', () => {
