@@ -1,0 +1,178 @@
+import { assertValidGeneratedSlug } from './cli-add-shared.js';
+import {
+  CLI_DIAGNOSTIC_CODES,
+  createCliDiagnosticCodeError,
+} from './cli-diagnostics.js';
+import {
+  ADMIN_VIEW_ALLOW_UNPUBLISHED_DATAVIEWS_ENV,
+  ADMIN_VIEW_CORE_DATA_ENTITY_KIND_IDS,
+  ADMIN_VIEW_CORE_DATA_ENTITY_NAME_PATTERN,
+  ADMIN_VIEW_CORE_DATA_ENTITY_SEGMENT_PATTERN,
+  ADMIN_VIEW_CORE_DATA_SOURCE_KIND,
+  ADMIN_VIEW_PUBLIC_INSTALLS_ENABLED,
+  ADMIN_VIEW_REST_SOURCE_KIND,
+  ADMIN_VIEW_SOURCE_USAGE,
+  isAdminViewCoreDataSource,
+  isAdminViewRestResourceSource,
+  type AdminViewCoreDataEntityKind,
+  type AdminViewRestResource,
+  type AdminViewSource,
+} from './cli-add-workspace-admin-view-types.js';
+
+function isAdminViewUnpublishedDataViewsOverrideEnabled(): boolean {
+  return (
+    process.env[ADMIN_VIEW_ALLOW_UNPUBLISHED_DATAVIEWS_ENV]?.trim() === '1'
+  );
+}
+
+export function assertAdminViewPackageAvailability(): void {
+  if (
+    isAdminViewUnpublishedDataViewsOverrideEnabled() ||
+    ADMIN_VIEW_PUBLIC_INSTALLS_ENABLED
+  ) {
+    return;
+  }
+
+  throw createCliDiagnosticCodeError(
+    CLI_DIAGNOSTIC_CODES.INVALID_ARGUMENT,
+    '`wp-typia add admin-view` is temporarily unavailable because `@wp-typia/dataviews` is not published to npm for public installs yet.',
+  );
+}
+
+function assertValidCoreDataEntitySegment(
+  label: string,
+  value: string,
+): string {
+  const trimmed = value.trim();
+  if (!trimmed) {
+    throw new Error(
+      `${label} is required. Use \`${ADMIN_VIEW_SOURCE_USAGE}\`.`,
+    );
+  }
+  if (!ADMIN_VIEW_CORE_DATA_ENTITY_SEGMENT_PATTERN.test(trimmed)) {
+    throw new Error(
+      `${label} must start with a letter and contain only letters, numbers, underscores, or hyphens.`,
+    );
+  }
+
+  return trimmed;
+}
+
+function assertValidCoreDataEntityName(value: string): string {
+  const normalized = value.trim();
+  if (!normalized) {
+    throw new Error(
+      `Admin view source entity name is required. Use \`${ADMIN_VIEW_SOURCE_USAGE}\`.`,
+    );
+  }
+  if (!ADMIN_VIEW_CORE_DATA_ENTITY_NAME_PATTERN.test(normalized)) {
+    throw new Error(
+      'Admin view source entity name must start with a lowercase letter or number and contain only lowercase letters, numbers, underscores, or hyphens.',
+    );
+  }
+
+  return normalized;
+}
+
+function assertValidCoreDataEntityKind(
+  value: string,
+): AdminViewCoreDataEntityKind {
+  const normalized = assertValidCoreDataEntitySegment(
+    'Admin view source entity kind',
+    value,
+  );
+  if (
+    !(ADMIN_VIEW_CORE_DATA_ENTITY_KIND_IDS as readonly string[]).includes(
+      normalized,
+    )
+  ) {
+    throw new Error(
+      `Admin view core-data sources currently support only: ${ADMIN_VIEW_CORE_DATA_ENTITY_KIND_IDS.join(', ')}.`,
+    );
+  }
+
+  return normalized as AdminViewCoreDataEntityKind;
+}
+
+export function parseAdminViewSource(
+  source?: string,
+): AdminViewSource | undefined {
+  const trimmed = source?.trim();
+  if (!trimmed) {
+    return undefined;
+  }
+
+  const separatorIndex = trimmed.indexOf(':');
+  const kind =
+    separatorIndex === -1 ? trimmed : trimmed.slice(0, separatorIndex);
+  const locator =
+    separatorIndex === -1 ? '' : trimmed.slice(separatorIndex + 1);
+  if (!locator) {
+    throw new Error(
+      'Admin view source must use `rest-resource:<slug>` or `core-data:<kind>/<name>`.',
+    );
+  }
+
+  if (kind === ADMIN_VIEW_REST_SOURCE_KIND) {
+    return {
+      kind,
+      slug: assertValidGeneratedSlug(
+        'Admin view source slug',
+        locator,
+        ADMIN_VIEW_SOURCE_USAGE,
+      ),
+    };
+  }
+
+  if (kind === ADMIN_VIEW_CORE_DATA_SOURCE_KIND) {
+    const [entityKind, entityName, extra] = locator.split('/');
+    if (!entityKind || !entityName || extra !== undefined) {
+      throw new Error(
+        'Admin view core-data sources must use `core-data:<kind>/<name>`, for example `core-data:postType/post`.',
+      );
+    }
+
+    return {
+      entityKind: assertValidCoreDataEntityKind(entityKind),
+      entityName: assertValidCoreDataEntityName(entityName),
+      kind,
+    };
+  }
+
+  throw new Error(
+    'Admin view source must use `rest-resource:<slug>` or `core-data:<kind>/<name>`.',
+  );
+}
+
+export function resolveRestResourceSource(
+  restResources: AdminViewRestResource[],
+  source: AdminViewSource | undefined,
+): AdminViewRestResource | undefined {
+  if (!isAdminViewRestResourceSource(source)) {
+    return undefined;
+  }
+
+  const restResource = restResources.find(
+    (entry) => entry.slug === source.slug,
+  );
+  if (!restResource) {
+    throw new Error(
+      `Unknown REST resource source "${source.slug}". Choose one of: ${
+        restResources.map((entry) => entry.slug).join(', ') || '<none>'
+      }.`,
+    );
+  }
+  if (!restResource.methods.includes('list')) {
+    throw new Error(
+      `REST resource source "${source.slug}" must include the list method for DataViews pagination.`,
+    );
+  }
+
+  return restResource;
+}
+
+export function resolveAdminViewCoreDataSource(
+  source: AdminViewSource | undefined,
+) {
+  return isAdminViewCoreDataSource(source) ? source : undefined;
+}

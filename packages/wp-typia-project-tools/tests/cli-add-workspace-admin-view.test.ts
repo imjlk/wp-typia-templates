@@ -1,0 +1,106 @@
+import { afterEach, expect, test } from 'bun:test';
+
+import {
+  assertAdminViewPackageAvailability,
+  parseAdminViewSource,
+} from '../src/runtime/cli-add-workspace-admin-view-source.js';
+import {
+  buildAdminViewConfigSource,
+  buildAdminViewTypesSource,
+} from '../src/runtime/cli-add-workspace-admin-view-templates.js';
+import {
+  ADMIN_VIEW_ALLOW_UNPUBLISHED_DATAVIEWS_ENV,
+  type AdminViewCoreDataSource,
+  type AdminViewRestResource,
+} from '../src/runtime/cli-add-workspace-admin-view-types.js';
+
+const originalAdminViewGateEnv =
+  process.env[ADMIN_VIEW_ALLOW_UNPUBLISHED_DATAVIEWS_ENV];
+
+afterEach(() => {
+  if (originalAdminViewGateEnv === undefined) {
+    delete process.env[ADMIN_VIEW_ALLOW_UNPUBLISHED_DATAVIEWS_ENV];
+    return;
+  }
+
+  process.env[ADMIN_VIEW_ALLOW_UNPUBLISHED_DATAVIEWS_ENV] =
+    originalAdminViewGateEnv;
+});
+
+test('admin-view source parsing accepts supported rest-resource and core-data locators', () => {
+  expect(parseAdminViewSource()).toBeUndefined();
+  expect(parseAdminViewSource('rest-resource:orders')).toEqual({
+    kind: 'rest-resource',
+    slug: 'orders',
+  });
+  expect(parseAdminViewSource('core-data:taxonomy/category')).toEqual({
+    entityKind: 'taxonomy',
+    entityName: 'category',
+    kind: 'core-data',
+  });
+});
+
+test('admin-view source parsing rejects malformed or unsupported core-data locators', () => {
+  expect(() => parseAdminViewSource('core-data:root/plugin')).toThrow(
+    'Admin view core-data sources currently support only: postType, taxonomy.',
+  );
+  expect(() => parseAdminViewSource('rest-resource')).toThrow(
+    'Admin view source must use `rest-resource:<slug>` or `core-data:<kind>/<name>`.',
+  );
+});
+
+test('admin-view package availability stays gated unless the unpublished override is enabled', () => {
+  delete process.env[ADMIN_VIEW_ALLOW_UNPUBLISHED_DATAVIEWS_ENV];
+  expect(() => assertAdminViewPackageAvailability()).toThrow(
+    '`wp-typia add admin-view` is temporarily unavailable because `@wp-typia/dataviews` is not published to npm for public installs yet.',
+  );
+
+  process.env[ADMIN_VIEW_ALLOW_UNPUBLISHED_DATAVIEWS_ENV] = '1';
+  expect(() => assertAdminViewPackageAvailability()).not.toThrow();
+});
+
+test('admin-view template builders emit rest-resource imports and taxonomy-specific config', () => {
+  const restResource: AdminViewRestResource = {
+    apiFile: 'src/rest/orders/api.ts',
+    clientFile: 'src/rest/orders/client.ts',
+    dataFile: 'src/rest/orders/data.ts',
+    methods: ['list', 'read'],
+    namespace: 'demo/v1',
+    openApiFile: 'src/rest/orders/openapi.json',
+    phpFile: 'inc/rest/orders.php',
+    slug: 'orders',
+    typesFile: 'src/rest/orders/types.ts',
+    validatorsFile: 'src/rest/orders/validators.ts',
+  };
+  const taxonomySource: AdminViewCoreDataSource = {
+    entityKind: 'taxonomy',
+    entityName: 'category',
+    kind: 'core-data',
+  };
+
+  const restTypesSource = buildAdminViewTypesSource(
+    'snapshots',
+    restResource,
+    undefined,
+  );
+  const taxonomyConfigSource = buildAdminViewConfigSource(
+    'categories',
+    'demo-space',
+    taxonomySource,
+    undefined,
+  );
+
+  expect(restTypesSource).toContain(
+    'import type { OrdersRecord } from "../../rest/orders/types";',
+  );
+  expect(restTypesSource).toContain(
+    'export type SnapshotsAdminViewItem = OrdersRecord;',
+  );
+  expect(taxonomyConfigSource).toContain("titleField: 'name'");
+  expect(taxonomyConfigSource).toContain(
+    'defineDataViews<CategoriesAdminViewItem>',
+  );
+  expect(taxonomyConfigSource).toContain(
+    'label: __( \'Count\', "demo-space" )',
+  );
+});
