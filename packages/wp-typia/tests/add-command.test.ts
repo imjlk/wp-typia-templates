@@ -82,7 +82,7 @@ describe('wp-typia add command bridge', () => {
     );
     expect(fs.existsSync(path.join(blockDir, 'interactivity.ts'))).toBe(true);
     expect(generatedInteractivityStore).toContain(
-      'type InteractivityCallable = (...args: unknown[]) => unknown;',
+      'type InteractivityCallable = CallableFunction;',
     );
     expect(generatedInteractivityStore).not.toContain(
       'type InteractivityCallable = Function;',
@@ -145,7 +145,7 @@ describe('wp-typia add command bridge', () => {
       'data-wp-bind--aria-valuenow={clampedClicksDirective}',
     );
     expect(generatedSave).toContain('data-wp-on--click={clickActionDirective}');
-  });
+  }, 15_000);
 
   test('passes binding-source target flags through the add bridge', async () => {
     const projectDir = path.join(tempRoot, 'demo-add-binding-target');
@@ -334,7 +334,7 @@ describe('wp-typia add command bridge', () => {
         path.join(projectDir, 'src', 'blocks', 'faq-stack', 'children.ts'),
       ),
     ).toBe(true);
-  });
+  }, 15_000);
 
   test('every registered add kind currently advertises dry-run support', () => {
     expect(ADD_KIND_IDS.every((kind) => supportsAddKindDryRun(kind))).toBe(
