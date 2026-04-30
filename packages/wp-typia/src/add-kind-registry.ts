@@ -294,10 +294,12 @@ function createNamedExecutionPlan<TResult extends AddKindExecutionResultBase>(
     getValues: (result: TResult) => Record<string, string>;
     getWarnings?: (result: TResult) => string[] | undefined;
     missingNameMessage: string;
+    name?: string;
     warnLine?: PrintLine;
   },
 ): AddKindExecutionPlan<TResult> {
-  const name = requireAddKindName(context, options.missingNameMessage);
+  const name =
+    options.name ?? requireAddKindName(context, options.missingNameMessage);
 
   return {
     execute: (cwd) => options.execute({ cwd, name }),
@@ -328,6 +330,10 @@ export const ADD_KIND_REGISTRY = {
     description: 'Add an opt-in DataViews-powered admin screen',
     nameLabel: 'Admin view name',
     async prepareExecution(context) {
+      const name = requireAddKindName(
+        context,
+        '`wp-typia add admin-view` requires <name>. Usage: wp-typia add admin-view <name> [--source <rest-resource:slug|core-data:kind/name>].',
+      );
       const source = readOptionalStringFlag(context.flags, 'source');
 
       return createNamedExecutionPlan(context, {
@@ -343,6 +349,7 @@ export const ADD_KIND_REGISTRY = {
         }),
         missingNameMessage:
           '`wp-typia add admin-view` requires <name>. Usage: wp-typia add admin-view <name> [--source <rest-resource:slug|core-data:kind/name>].',
+        name,
       });
     },
     sortOrder: 10,
@@ -374,6 +381,10 @@ export const ADD_KIND_REGISTRY = {
     description: 'Add a shared block bindings source',
     nameLabel: 'Binding source name',
     async prepareExecution(context) {
+      const name = requireAddKindName(
+        context,
+        '`wp-typia add binding-source` requires <name>. Usage: wp-typia add binding-source <name> [--block <block-slug|namespace/block-slug> --attribute <attribute>].',
+      );
       const [blockName, attributeName] = readOptionalPairedStringFlags(
         context.flags,
         'block',
@@ -398,6 +409,7 @@ export const ADD_KIND_REGISTRY = {
         }),
         missingNameMessage:
           '`wp-typia add binding-source` requires <name>. Usage: wp-typia add binding-source <name> [--block <block-slug|namespace/block-slug> --attribute <attribute>].',
+        name,
       });
     },
     sortOrder: 70,
@@ -476,8 +488,8 @@ export const ADD_KIND_REGISTRY = {
       }
       resolvedTemplateId ??= 'basic';
 
-      return {
-        execute: (cwd) =>
+      return createNamedExecutionPlan(context, {
+        execute: ({ cwd, name }) =>
           context.addRuntime.runAddBlockCommand({
             alternateRenderTargets,
             blockName: name,
@@ -502,8 +514,11 @@ export const ADD_KIND_REGISTRY = {
           templateId: result.templateId,
         }),
         getWarnings: (result) => result.warnings,
+        missingNameMessage:
+          '`wp-typia add block` requires <name>. Usage: wp-typia add block <name> [--template <basic|interactivity|persistence|compound>]',
+        name,
         warnLine: context.warnLine,
-      };
+      });
     },
     sortOrder: 20,
     supportsDryRun: true,
@@ -575,6 +590,10 @@ export const ADD_KIND_REGISTRY = {
     description: 'Add a slot-aware document editor extension shell',
     nameLabel: 'Editor plugin name',
     async prepareExecution(context) {
+      const name = requireAddKindName(
+        context,
+        '`wp-typia add editor-plugin` requires <name>. Usage: wp-typia add editor-plugin <name> [--slot <sidebar|document-setting-panel>].',
+      );
       const slot = readOptionalStringFlag(context.flags, 'slot');
 
       return createNamedExecutionPlan(context, {
@@ -590,6 +609,7 @@ export const ADD_KIND_REGISTRY = {
         }),
         missingNameMessage:
           '`wp-typia add editor-plugin` requires <name>. Usage: wp-typia add editor-plugin <name> [--slot <sidebar|document-setting-panel>].',
+        name,
       });
     },
     sortOrder: 120,
@@ -615,6 +635,10 @@ export const ADD_KIND_REGISTRY = {
     description: 'Add block.json hook metadata to an existing block',
     nameLabel: 'Target block',
     async prepareExecution(context) {
+      const name = requireAddKindName(
+        context,
+        '`wp-typia add hooked-block` requires <block-slug>. Usage: wp-typia add hooked-block <block-slug> --anchor <anchor-block-name> --position <before|after|firstChild|lastChild>.',
+      );
       const anchorBlockName = requireStringFlag(
         context.flags,
         'anchor',
@@ -641,6 +665,7 @@ export const ADD_KIND_REGISTRY = {
         }),
         missingNameMessage:
           '`wp-typia add hooked-block` requires <block-slug>. Usage: wp-typia add hooked-block <block-slug> --anchor <anchor-block-name> --position <before|after|firstChild|lastChild>.',
+        name,
       });
     },
     sortOrder: 110,
@@ -698,6 +723,10 @@ export const ADD_KIND_REGISTRY = {
     description: 'Add a Block Styles registration to an existing block',
     nameLabel: 'Style name',
     async prepareExecution(context) {
+      const name = requireAddKindName(
+        context,
+        '`wp-typia add style` requires <name>. Usage: wp-typia add style <name> --block <block-slug>.',
+      );
       const blockSlug = requireStringFlag(
         context.flags,
         'block',
@@ -717,6 +746,7 @@ export const ADD_KIND_REGISTRY = {
         }),
         missingNameMessage:
           '`wp-typia add style` requires <name>. Usage: wp-typia add style <name> --block <block-slug>.',
+        name,
       });
     },
     sortOrder: 40,
@@ -741,6 +771,10 @@ export const ADD_KIND_REGISTRY = {
     description: 'Add a block-to-block transform into a workspace block',
     nameLabel: 'Transform name',
     async prepareExecution(context) {
+      const name = requireAddKindName(
+        context,
+        '`wp-typia add transform` requires <name>. Usage: wp-typia add transform <name> --from <namespace/block> --to <block-slug|namespace/block-slug>.',
+      );
       const fromBlockName = requireStringFlag(
         context.flags,
         'from',
@@ -768,6 +802,7 @@ export const ADD_KIND_REGISTRY = {
         }),
         missingNameMessage:
           '`wp-typia add transform` requires <name>. Usage: wp-typia add transform <name> --from <namespace/block> --to <block-slug|namespace/block-slug>.',
+        name,
       });
     },
     sortOrder: 50,
@@ -793,6 +828,10 @@ export const ADD_KIND_REGISTRY = {
     description: 'Add a plugin-level typed REST resource',
     nameLabel: 'REST resource name',
     async prepareExecution(context) {
+      const name = requireAddKindName(
+        context,
+        '`wp-typia add rest-resource` requires <name>. Usage: wp-typia add rest-resource <name> [--namespace <vendor/v1>] [--methods <list,read,create>].',
+      );
       const methods = readOptionalStringFlag(context.flags, 'methods');
       const namespace = readOptionalStringFlag(context.flags, 'namespace');
 
@@ -811,6 +850,7 @@ export const ADD_KIND_REGISTRY = {
         }),
         missingNameMessage:
           '`wp-typia add rest-resource` requires <name>. Usage: wp-typia add rest-resource <name> [--namespace <vendor/v1>] [--methods <list,read,create>].',
+        name,
       });
     },
     sortOrder: 80,
@@ -835,6 +875,10 @@ export const ADD_KIND_REGISTRY = {
     description: 'Add a server-owned WordPress AI feature endpoint',
     nameLabel: 'AI feature name',
     async prepareExecution(context) {
+      const name = requireAddKindName(
+        context,
+        '`wp-typia add ai-feature` requires <name>. Usage: wp-typia add ai-feature <name> [--namespace <vendor/v1>].',
+      );
       const namespace = readOptionalStringFlag(context.flags, 'namespace');
 
       return createNamedExecutionPlan(context, {
@@ -851,6 +895,7 @@ export const ADD_KIND_REGISTRY = {
         getWarnings: (result) => result.warnings,
         missingNameMessage:
           '`wp-typia add ai-feature` requires <name>. Usage: wp-typia add ai-feature <name> [--namespace <vendor/v1>].',
+        name,
         warnLine: context.warnLine,
       });
     },
@@ -876,6 +921,10 @@ export const ADD_KIND_REGISTRY = {
     description: 'Add a variation to an existing block',
     nameLabel: 'Variation name',
     async prepareExecution(context) {
+      const name = requireAddKindName(
+        context,
+        '`wp-typia add variation` requires <name>. Usage: wp-typia add variation <name> --block <block-slug>',
+      );
       const blockSlug = requireStringFlag(
         context.flags,
         'block',
@@ -895,6 +944,7 @@ export const ADD_KIND_REGISTRY = {
         }),
         missingNameMessage:
           '`wp-typia add variation` requires <name>. Usage: wp-typia add variation <name> --block <block-slug>',
+        name,
       });
     },
     sortOrder: 30,
