@@ -5,6 +5,7 @@ import * as path from 'node:path';
 
 import type { ReadlinePrompt } from '@wp-typia/project-tools/cli-prompt';
 import { ADD_KIND_IDS, supportsAddKindDryRun } from '../src/add-kind-registry';
+import { WP_TYPIA_COMMAND_REGISTRY } from '../src/command-registry';
 import { executeAddCommand } from '../src/runtime-bridge';
 import {
   linkWorkspaceNodeModules,
@@ -254,5 +255,12 @@ describe('wp-typia add command bridge', () => {
       'hooked-block',
       'editor-plugin',
     ]);
+  });
+
+  test('derives add subcommands from the canonical add-kind registry', () => {
+    expect(
+      WP_TYPIA_COMMAND_REGISTRY.find((command) => command.name === 'add')
+        ?.subcommands,
+    ).toEqual([...ADD_KIND_IDS]);
   });
 });

@@ -14,6 +14,7 @@ import {
   WP_TYPIA_TOP_LEVEL_COMMAND_NAMES,
   normalizeWpTypiaArgv,
 } from '../src/command-contract';
+import { ADD_KIND_IDS } from '../src/add-kind-registry';
 import { wpTypiaCommands } from '../src/command-list';
 import {
   fullRuntimeCommands,
@@ -237,6 +238,17 @@ describe('wp-typia Bunli preparation', () => {
     expect(
       fs.readFileSync(path.join(packageRoot, 'src', 'cli.ts'), 'utf8'),
     ).toContain('createCLI(');
+  });
+
+  test('future Bunli command tree exposes every supported add kind', () => {
+    const addCommand = WP_TYPIA_FUTURE_COMMAND_TREE.find(
+      (command) => command.name === 'add',
+    );
+
+    expect(addCommand?.subcommands).toEqual([...ADD_KIND_IDS]);
+    expect(addCommand?.subcommands).toContain('admin-view');
+    expect(addCommand?.subcommands).toContain('ability');
+    expect(addCommand?.subcommands).toContain('ai-feature');
   });
 
   test('maintainer docs keep wp-typia as the only CLI owner', () => {

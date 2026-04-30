@@ -4,6 +4,10 @@ import {
 } from '@wp-typia/project-tools/cli-diagnostics';
 import type * as CliAddRuntime from '@wp-typia/project-tools/cli-add';
 import type { ReadlinePrompt } from '@wp-typia/project-tools/cli-prompt';
+import { ADD_KIND_IDS, type AddKindId } from './add-kind-ids';
+
+export { ADD_KIND_IDS } from './add-kind-ids';
+export type { AddKindId } from './add-kind-ids';
 
 type PrintLine = (line: string) => void;
 type AddRuntime = typeof CliAddRuntime;
@@ -836,16 +840,9 @@ export const ADD_KIND_REGISTRY = {
   }),
 } as const satisfies AddKindRegistry;
 
-export type AddKindId = keyof typeof ADD_KIND_REGISTRY;
 export type AddKindExecutionPlanFor<TKey extends AddKindId> = Awaited<
   ReturnType<(typeof ADD_KIND_REGISTRY)[TKey]['prepareExecution']>
 >;
-export const ADD_KIND_IDS = (
-  Object.keys(ADD_KIND_REGISTRY) as AddKindId[]
-).sort(
-  (left, right) =>
-    ADD_KIND_REGISTRY[left].sortOrder - ADD_KIND_REGISTRY[right].sortOrder,
-);
 
 export function isAddKindId(value?: string): value is AddKindId {
   return (
