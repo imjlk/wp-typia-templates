@@ -12,6 +12,7 @@ import {
   extractKnownOptionValuesFromArgv,
   GLOBAL_OPTION_METADATA,
   INIT_OPTION_METADATA,
+  MCP_OPTION_METADATA,
   parseCommandArgvWithMetadata,
   resolveCommandOptionValues,
   SYNC_OPTION_METADATA,
@@ -182,6 +183,34 @@ describe('command option metadata helpers', () => {
     expect(parsed.positionals).toEqual(['doctor']);
   });
 
+  test('parses mcp output-dir flags from shared metadata', () => {
+    const spaced = parseCommandArgvWithMetadata(
+      ['mcp', 'sync', '--output-dir', '.bunli/mcp'],
+      {
+        extraBooleanOptionNames: ['help', 'version'],
+        parser: buildCommandOptionParser(
+          GLOBAL_OPTION_METADATA,
+          MCP_OPTION_METADATA,
+        ),
+      },
+    );
+    const inline = parseCommandArgvWithMetadata(
+      ['mcp', 'sync', '--output-dir=.cache/mcp'],
+      {
+        extraBooleanOptionNames: ['help', 'version'],
+        parser: buildCommandOptionParser(
+          GLOBAL_OPTION_METADATA,
+          MCP_OPTION_METADATA,
+        ),
+      },
+    );
+
+    expect(spaced.flags['output-dir']).toBe('.bunli/mcp');
+    expect(spaced.positionals).toEqual(['mcp', 'sync']);
+    expect(inline.flags['output-dir']).toBe('.cache/mcp');
+    expect(inline.positionals).toEqual(['mcp', 'sync']);
+  });
+
   test('derives canonical routing metadata from every command option group', () => {
     const expectedRoutingMetadata = buildArgvWalkerRoutingMetadata(
       ...Object.values(COMMAND_OPTION_METADATA_BY_GROUP),
@@ -192,6 +221,7 @@ describe('command option metadata helpers', () => {
       SYNC_OPTION_METADATA.check,
     );
     expect(COMMAND_ROUTING_METADATA.longValueOptions).toContain('--config');
+    expect(COMMAND_ROUTING_METADATA.longValueOptions).toContain('--output-dir');
     expect(COMMAND_ROUTING_METADATA.shortValueOptions).toContain('-c');
   });
 

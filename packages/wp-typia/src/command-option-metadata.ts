@@ -27,6 +27,7 @@ export type CommandOptionGroupName =
   | 'add'
   | 'init'
   | 'migrate'
+  | 'mcp'
   | 'sync'
   | 'doctor'
   | 'templates';
@@ -281,6 +282,16 @@ export const MIGRATE_OPTION_METADATA = {
 } as const satisfies CommandOptionMetadataMap;
 
 /**
+ * Shared `wp-typia mcp` option metadata.
+ */
+export const MCP_OPTION_METADATA = {
+  'output-dir': {
+    description: 'Output directory for generated MCP metadata.',
+    type: 'string',
+  },
+} as const satisfies CommandOptionMetadataMap;
+
+/**
  * Shared `wp-typia sync` option metadata used by both runtime entry paths.
  */
 export const SYNC_OPTION_METADATA = {
@@ -335,10 +346,6 @@ export const GLOBAL_OPTION_METADATA = {
     description: 'Template id for top-level `templates inspect` convenience.',
     type: 'string',
   },
-  'output-dir': {
-    description: 'Output directory for generated MCP metadata.',
-    type: 'string',
-  },
 } as const satisfies CommandOptionMetadataMap;
 
 export const COMMAND_OPTION_METADATA_BY_GROUP = {
@@ -348,6 +355,7 @@ export const COMMAND_OPTION_METADATA_BY_GROUP = {
   global: GLOBAL_OPTION_METADATA,
   init: INIT_OPTION_METADATA,
   migrate: MIGRATE_OPTION_METADATA,
+  mcp: MCP_OPTION_METADATA,
   sync: SYNC_OPTION_METADATA,
   templates: TEMPLATES_OPTION_METADATA,
 } as const satisfies Record<CommandOptionGroupName, CommandOptionMetadataMap>;

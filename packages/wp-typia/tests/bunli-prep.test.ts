@@ -343,6 +343,12 @@ describe('wp-typia Bunli preparation', () => {
     expect(() => normalizeWpTypiaArgv(['mcp', 'sync', '--output-dir'])).toThrow(
       /`--output-dir` requires a value\./,
     );
+    expect(
+      normalizeWpTypiaArgv(['mcp', 'sync', '--output-dir=.bunli/custom-mcp']),
+    ).toEqual(['mcp', 'sync', '--output-dir=.bunli/custom-mcp']);
+    expect(
+      normalizeWpTypiaArgv(['mcp', 'sync', '--output-dir', '.bunli/custom']),
+    ).toEqual(['mcp', 'sync', '--output-dir', '.bunli/custom']);
     expect(() => normalizeWpTypiaArgv(['temlates', 'list'])).toThrow(
       /only accepts a single project directory.*check the command spelling.*`list`/s,
     );
