@@ -13,6 +13,11 @@ import {
 	HOOKED_BLOCK_ANCHOR_PATTERN,
 	HOOKED_BLOCK_POSITION_SET,
 } from "./hooked-blocks.js";
+import {
+	hasExecutablePattern,
+	hasUncommentedPattern,
+	maskTypeScriptCommentsAndLiterals,
+} from "./ts-source-masking.js";
 
 import type { DoctorCheck } from "./cli-doctor.js";
 import type { WorkspaceInventory } from "./workspace-inventory.js";
@@ -73,96 +78,6 @@ type WorkspaceBlockIframeMetadata = Record<string, unknown> & {
 interface WorkspaceBlockEditorSource {
 	relativePath: string;
 	source: string;
-}
-
-function maskSourceSegment(segment: string): string {
-	return segment.replace(/[^\n\r]/gu, " ");
-}
-
-function maskTypeScriptComments(source: string): string {
-	return source
-		.replace(/\/\*[\s\S]*?\*\//gu, maskSourceSegment)
-		.replace(/\/\/[^\n\r]*/gu, maskSourceSegment);
-}
-
-// Preserve offsets while hiding non-executable text from hook checks.
-function maskTypeScriptCommentsAndLiterals(source: string): string {
-	let maskedSource = "";
-	let index = 0;
-
-	while (index < source.length) {
-		const current = source[index];
-		const next = source[index + 1];
-
-		if (current === "/" && next === "/") {
-			const start = index;
-			index += 2;
-
-			while (
-				index < source.length &&
-				source[index] !== "\n" &&
-				source[index] !== "\r"
-			) {
-				index += 1;
-			}
-
-			maskedSource += maskSourceSegment(source.slice(start, index));
-			continue;
-		}
-
-		if (current === "/" && next === "*") {
-			const start = index;
-			index += 2;
-
-			while (
-				index < source.length &&
-				!(source[index] === "*" && source[index + 1] === "/")
-			) {
-				index += 1;
-			}
-
-			index = Math.min(index + 2, source.length);
-			maskedSource += maskSourceSegment(source.slice(start, index));
-			continue;
-		}
-
-		if (current === "'" || current === '"' || current === "`") {
-			const start = index;
-			const quote = current;
-			index += 1;
-
-			while (index < source.length) {
-				const char = source[index];
-
-				if (char === "\\") {
-					index += 2;
-					continue;
-				}
-
-				index += 1;
-
-				if (char === quote) {
-					break;
-				}
-			}
-
-			maskedSource += maskSourceSegment(source.slice(start, index));
-			continue;
-		}
-
-		maskedSource += current;
-		index += 1;
-	}
-
-	return maskedSource;
-}
-
-function hasUncommentedPattern(source: string, pattern: RegExp): boolean {
-	return pattern.test(maskTypeScriptComments(source));
-}
-
-function hasExecutablePattern(source: string, pattern: RegExp): boolean {
-	return pattern.test(maskTypeScriptCommentsAndLiterals(source));
 }
 
 function normalizePathSeparators(relativePath: string): string {
