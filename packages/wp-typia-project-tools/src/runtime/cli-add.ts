@@ -12,6 +12,7 @@ export {
 	ADD_KIND_IDS,
 	EDITOR_PLUGIN_SLOT_IDS,
 	formatAddHelpText,
+	isAddBlockTemplateId,
 } from "./cli-add-shared.js";
 export type {
 	AddBlockTemplateId,

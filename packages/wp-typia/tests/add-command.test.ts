@@ -21,6 +21,38 @@ describe('wp-typia add command bridge', () => {
     fs.rmSync(tempRoot, { force: true, recursive: true });
   });
 
+  async function expectInvalidAddBlockTemplate(options: {
+    interactive: boolean;
+    prompt?: ReadlinePrompt;
+  }) {
+    let error: unknown;
+
+    try {
+      await executeAddCommand({
+        cwd: tempRoot,
+        emitOutput: false,
+        flags: {
+          template: 'unknown',
+        },
+        interactive: options.interactive,
+        kind: 'block',
+        name: 'promo-card',
+        ...(options.prompt ? { prompt: options.prompt } : {}),
+      });
+    } catch (caughtError) {
+      error = caughtError;
+    }
+
+    expect(error).toBeInstanceOf(Error);
+    expect((error as { code?: string }).code).toBe('unknown-template');
+    expect((error as Error).message).toContain(
+      'Unknown add-block template "unknown". Expected one of: basic, interactivity, persistence, compound.',
+    );
+    expect((error as Error).message).toContain(
+      'Run `wp-typia templates list` to inspect available templates.',
+    );
+  }
+
   test('defaults add block to the basic template in non-interactive runs', async () => {
     const projectDir = path.join(tempRoot, 'demo-add-basic-default');
 
@@ -150,6 +182,32 @@ describe('wp-typia add command bridge', () => {
     );
     expect(generatedSave).toContain('data-wp-on--click={clickActionDirective}');
   }, 15_000);
+
+  test('rejects invalid block template ids before workspace mutation', async () => {
+    await expectInvalidAddBlockTemplate({
+      interactive: false,
+    });
+  });
+
+  test('interactive add block rejects invalid explicit templates before prompting', async () => {
+    const selectedPrompts: string[] = [];
+    const prompt: ReadlinePrompt = {
+      close() {},
+      async select(message: string) {
+        selectedPrompts.push(message);
+        throw new Error('select() should not be called for invalid templates');
+      },
+      async text() {
+        throw new Error('text() should not be called for invalid templates');
+      },
+    };
+
+    await expectInvalidAddBlockTemplate({
+      interactive: true,
+      prompt,
+    });
+    expect(selectedPrompts).toEqual([]);
+  });
 
   test('passes binding-source target flags through the add bridge', async () => {
     const projectDir = path.join(tempRoot, 'demo-add-binding-target');
