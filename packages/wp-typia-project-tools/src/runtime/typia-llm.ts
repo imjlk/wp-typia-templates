@@ -12,6 +12,9 @@ import {
   normalizeEndpointAuthDefinition,
   type EndpointAuthIntent,
   type EndpointWordPressAuthDefinition,
+  type JsonSchemaObject,
+  type OpenApiDocument,
+  type OpenApiOperation,
 } from './schema-core.js';
 
 /**
@@ -168,6 +171,20 @@ export interface ProjectedTypiaLlmStructuredOutputArtifact {
 }
 
 /**
+ * Configures optional OpenAPI-backed constraint restoration for projected
+ * `typia.llm` function artifacts.
+ */
+export interface ProjectTypiaLlmOpenApiProjectionOptions {
+  /** Canonical endpoint-aware OpenAPI document for the projected contracts. */
+  openApiDocument: OpenApiDocument;
+  /** Optional override for resolving one function schema to an operation id. */
+  resolveOperationId?: (
+    functionSchema: TypiaLlmFunctionLike,
+    functionArtifact: ProjectedTypiaLlmFunctionArtifact,
+  ) => string;
+}
+
+/**
  * Configures projection of a compiled `typia.llm.application(...)` result into
  * the JSON-friendly adapter artifact.
  */
@@ -176,11 +193,26 @@ export interface ProjectTypiaLlmApplicationArtifactOptions {
   application: TypiaLlmApplicationLike;
   /** Source metadata for the generated JSON artifact. */
   generatedFrom: ProjectedTypiaLlmApplicationArtifact['generatedFrom'];
+  /** Optional OpenAPI projection that restores canonical schema constraints. */
+  openApiProjection?: ProjectTypiaLlmOpenApiProjectionOptions;
   /** Optional hook for adapter-specific function schema normalization. */
   transformFunction?: (
     functionArtifact: ProjectedTypiaLlmFunctionArtifact,
     functionSchema: TypiaLlmFunctionLike,
   ) => ProjectedTypiaLlmFunctionArtifact;
+}
+
+/**
+ * Configures direct OpenAPI-backed constraint restoration for one projected
+ * function artifact.
+ */
+export interface ApplyOpenApiConstraintsToTypiaLlmFunctionArtifactOptions {
+  /** Projected function artifact to enrich with canonical constraints. */
+  functionArtifact: ProjectedTypiaLlmFunctionArtifact;
+  /** Canonical endpoint-aware OpenAPI document. */
+  openApiDocument: OpenApiDocument;
+  /** Operation id that owns the request/response contract for this function. */
+  operationId: string;
 }
 
 /**
@@ -279,8 +311,222 @@ const TYPESCRIPT_RESERVED_WORDS = new Set([
   'yield',
 ]);
 
+const JSON_SCHEMA_CONSTRAINT_KEYS = [
+  'additionalProperties',
+  'const',
+  'default',
+  'enum',
+  'exclusiveMaximum',
+  'exclusiveMinimum',
+  'format',
+  'maxItems',
+  'maxLength',
+  'maximum',
+  'minItems',
+  'minLength',
+  'minimum',
+  'multipleOf',
+  'pattern',
+  'type',
+] as const;
+
 function cloneJsonValueIfDefined<T>(value: T | undefined): T | undefined {
   return value === undefined ? undefined : cloneJsonValue(value);
+}
+
+function isJsonSchemaObject(value: unknown): value is JsonSchemaObject {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function resolveOpenApiSchemaObject(
+  document: OpenApiDocument,
+  schema: unknown,
+): JsonSchemaObject {
+  if (!isJsonSchemaObject(schema)) {
+    return {};
+  }
+
+  const reference = schema.$ref;
+  if (typeof reference !== 'string') {
+    return schema;
+  }
+
+  const match = reference.match(/^#\/components\/schemas\/(.+)$/u);
+  if (!match) {
+    throw new Error(`Unsupported OpenAPI schema reference "${reference}".`);
+  }
+
+  const componentName = match[1];
+  if (!componentName) {
+    throw new Error(`Unsupported OpenAPI schema reference "${reference}".`);
+  }
+
+  const resolved = document.components.schemas[componentName];
+  if (!resolved) {
+    throw new Error(
+      `Unable to resolve OpenAPI schema reference "${reference}".`,
+    );
+  }
+
+  return resolved;
+}
+
+function mergeJsonSchemaConstraintProperties(
+  target: JsonSchemaObject,
+  source: JsonSchemaObject,
+): JsonSchemaObject {
+  const merged = target;
+
+  for (const key of JSON_SCHEMA_CONSTRAINT_KEYS) {
+    if (source[key] !== undefined) {
+      merged[key] = cloneJsonValue(source[key]);
+    }
+  }
+
+  if (Array.isArray(source.required)) {
+    merged.required = source.required.filter(
+      (value): value is string => typeof value === 'string',
+    );
+  }
+
+  if (Array.isArray(source.items)) {
+    merged.items = cloneJsonValue(source.items) as JsonSchemaObject[];
+  } else if (isJsonSchemaObject(source.items)) {
+    const nextItems = isJsonSchemaObject(merged.items) ? merged.items : {};
+    merged.items = mergeJsonSchemaConstraintProperties(nextItems, source.items);
+  }
+
+  if (isJsonSchemaObject(source.properties)) {
+    const targetProperties = isJsonSchemaObject(merged.properties)
+      ? merged.properties
+      : {};
+
+    for (const [propertyName, propertySchema] of Object.entries(
+      source.properties,
+    )) {
+      if (!isJsonSchemaObject(propertySchema)) {
+        continue;
+      }
+
+      const nextProperty = isJsonSchemaObject(targetProperties[propertyName])
+        ? (targetProperties[propertyName] as JsonSchemaObject)
+        : {};
+      targetProperties[propertyName] = mergeJsonSchemaConstraintProperties(
+        nextProperty,
+        propertySchema,
+      );
+    }
+
+    merged.properties = targetProperties;
+  }
+
+  return merged;
+}
+
+function findOpenApiOperationById(
+  document: OpenApiDocument,
+  operationId: string,
+): OpenApiOperation | null {
+  for (const pathItem of Object.values(document.paths)) {
+    if (!isJsonSchemaObject(pathItem)) {
+      continue;
+    }
+
+    for (const method of ['delete', 'get', 'patch', 'post', 'put'] as const) {
+      const operation = pathItem[method];
+      if (!isJsonSchemaObject(operation)) {
+        continue;
+      }
+
+      if (operation.operationId === operationId) {
+        return operation as OpenApiOperation;
+      }
+    }
+  }
+
+  return null;
+}
+
+function resolveOpenApiRequestBodySchema(
+  operation: OpenApiOperation,
+  document: OpenApiDocument,
+): JsonSchemaObject | null {
+  const schema = operation.requestBody?.content?.['application/json']?.schema;
+  if (!isJsonSchemaObject(schema)) {
+    return null;
+  }
+
+  return resolveOpenApiSchemaObject(document, schema);
+}
+
+function resolveOpenApiSuccessResponseSchema(
+  operation: OpenApiOperation,
+  document: OpenApiDocument,
+): JsonSchemaObject | null {
+  for (const [statusCode, response] of Object.entries(operation.responses)) {
+    if (!/^2\d\d$/u.test(statusCode) || !isJsonSchemaObject(response)) {
+      continue;
+    }
+
+    const schema = response.content?.['application/json']?.schema;
+    if (!isJsonSchemaObject(schema)) {
+      continue;
+    }
+
+    return resolveOpenApiSchemaObject(document, schema);
+  }
+
+  return null;
+}
+
+function getOrCreateObjectProperty(
+  target: JsonSchemaObject,
+  propertyName: string,
+): JsonSchemaObject {
+  const targetProperties = isJsonSchemaObject(target.properties)
+    ? target.properties
+    : {};
+  const nextProperty = isJsonSchemaObject(targetProperties[propertyName])
+    ? (targetProperties[propertyName] as JsonSchemaObject)
+    : {};
+
+  targetProperties[propertyName] = nextProperty;
+  target.properties = targetProperties;
+  return nextProperty;
+}
+
+function applyOpenApiQueryParameterConstraints(
+  target: JsonSchemaObject,
+  operation: OpenApiOperation,
+  document: OpenApiDocument,
+): void {
+  for (const parameter of operation.parameters ?? []) {
+    if (
+      !isJsonSchemaObject(parameter) ||
+      parameter.in !== 'query' ||
+      typeof parameter.name !== 'string'
+    ) {
+      continue;
+    }
+
+    const propertyTarget = getOrCreateObjectProperty(target, parameter.name);
+    mergeJsonSchemaConstraintProperties(
+      propertyTarget,
+      resolveOpenApiSchemaObject(document, parameter.schema),
+    );
+
+    if (parameter.required === true) {
+      const required = new Set(
+        Array.isArray(target.required)
+          ? target.required.filter(
+              (value): value is string => typeof value === 'string',
+            )
+          : [],
+      );
+      required.add(parameter.name);
+      target.required = [...required];
+    }
+  }
 }
 
 interface EndpointInputTypeDescriptor {
@@ -666,6 +912,85 @@ function cloneProjectedTypiaLlmFunctionArtifact(
 }
 
 /**
+ * Restores canonical request and response constraints from an endpoint-aware
+ * OpenAPI document onto one projected `typia.llm` function artifact.
+ *
+ * Query-only inputs merge into the root parameter object. Mixed body/query
+ * inputs merge into the generated `body` and `query` properties.
+ *
+ * @param options Projected artifact plus the canonical OpenAPI document.
+ * @returns A cloned artifact enriched with OpenAPI-backed constraints when available.
+ */
+export function applyOpenApiConstraintsToTypiaLlmFunctionArtifact({
+  functionArtifact,
+  openApiDocument,
+  operationId,
+}: ApplyOpenApiConstraintsToTypiaLlmFunctionArtifactOptions): ProjectedTypiaLlmFunctionArtifact {
+  const constrainedArtifact =
+    cloneProjectedTypiaLlmFunctionArtifact(functionArtifact);
+  const operation = findOpenApiOperationById(openApiDocument, operationId);
+  if (!operation) {
+    return constrainedArtifact;
+  }
+
+  const hasQueryParameters = (operation.parameters ?? []).some(
+    (parameter) =>
+      isJsonSchemaObject(parameter) &&
+      parameter.in === 'query' &&
+      typeof parameter.name === 'string',
+  );
+  const requestBodySchema = resolveOpenApiRequestBodySchema(
+    operation,
+    openApiDocument,
+  );
+
+  if (requestBodySchema) {
+    if (hasQueryParameters) {
+      mergeJsonSchemaConstraintProperties(
+        getOrCreateObjectProperty(
+          constrainedArtifact.parameters as unknown as JsonSchemaObject,
+          'body',
+        ),
+        requestBodySchema,
+      );
+    } else {
+      mergeJsonSchemaConstraintProperties(
+        constrainedArtifact.parameters as unknown as JsonSchemaObject,
+        requestBodySchema,
+      );
+    }
+  }
+
+  if (hasQueryParameters) {
+    applyOpenApiQueryParameterConstraints(
+      requestBodySchema
+        ? getOrCreateObjectProperty(
+            constrainedArtifact.parameters as unknown as JsonSchemaObject,
+            'query',
+          )
+        : (constrainedArtifact.parameters as unknown as JsonSchemaObject),
+      operation,
+      openApiDocument,
+    );
+  }
+
+  if (constrainedArtifact.output) {
+    const responseSchema = resolveOpenApiSuccessResponseSchema(
+      operation,
+      openApiDocument,
+    );
+    if (responseSchema) {
+      mergeJsonSchemaConstraintProperties(
+        constrainedArtifact.output as unknown as JsonSchemaObject,
+        responseSchema,
+      );
+    }
+  }
+
+  return constrainedArtifact;
+}
+
+/**
  * Projects a compiled `typia.llm.application(...)` result into a JSON-friendly
  * downstream adapter artifact.
  *
@@ -675,15 +1000,27 @@ function cloneProjectedTypiaLlmFunctionArtifact(
 export function projectTypiaLlmApplicationArtifact({
   application,
   generatedFrom,
+  openApiProjection,
   transformFunction,
 }: ProjectTypiaLlmApplicationArtifactOptions): ProjectedTypiaLlmApplicationArtifact {
   return {
     functions: application.functions.map((functionSchema) => {
       const functionArtifact =
         projectTypiaLlmApplicationFunction(functionSchema);
-      const transformedArtifact = transformFunction
-        ? transformFunction(functionArtifact, functionSchema)
+      const openApiAlignedArtifact = openApiProjection
+        ? applyOpenApiConstraintsToTypiaLlmFunctionArtifact({
+            functionArtifact,
+            openApiDocument: openApiProjection.openApiDocument,
+            operationId:
+              openApiProjection.resolveOperationId?.(
+                functionSchema,
+                functionArtifact,
+              ) ?? functionSchema.name,
+          })
         : functionArtifact;
+      const transformedArtifact = transformFunction
+        ? transformFunction(openApiAlignedArtifact, functionSchema)
+        : openApiAlignedArtifact;
 
       return cloneProjectedTypiaLlmFunctionArtifact(transformedArtifact);
     }),
