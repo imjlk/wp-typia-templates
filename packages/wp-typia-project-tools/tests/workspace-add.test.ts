@@ -4172,23 +4172,13 @@ test("rest resource workflow rejects invalid namespace and methods and preserves
   ).toBe(originalPhpSource);
 }, 20_000);
 
-test("canonical CLI can add a server-only AI feature to an official workspace template", async () => {
+test("workspace add smoke keeps AI feature scaffolds in the broad canonical suite", async () => {
   const targetDir = path.join(tempRoot, "demo-workspace-add-ai-feature");
 
-  await scaffoldProject({
-    projectDir: targetDir,
-    templateId: workspaceTemplatePackageManifest.name,
-    packageManager: "npm",
-    noInstall: true,
-    answers: {
-      author: "Test Runner",
-      description: "Demo workspace add ai feature",
-      namespace: "demo-space",
-      phpPrefix: "demo_space",
-      slug: "demo-workspace-add-ai-feature",
-      textDomain: "demo-space",
-      title: "Demo Workspace Add AI Feature",
-    },
+  await scaffoldOfficialWorkspace(targetDir, {
+    description: "Demo workspace add ai feature",
+    slug: "demo-workspace-add-ai-feature",
+    title: "Demo Workspace Add AI Feature",
   });
 
   linkWorkspaceNodeModules(targetDir);
@@ -4207,160 +4197,6 @@ test("canonical CLI can add a server-only AI feature to an official workspace te
       cwd: targetDir,
     }
   );
-
-  const blockConfigSource = fs.readFileSync(
-    path.join(targetDir, "scripts", "block-config.ts"),
-    "utf8"
-  );
-  const bootstrapSource = fs.readFileSync(
-    path.join(targetDir, "demo-workspace-add-ai-feature.php"),
-    "utf8"
-  );
-  const packageJson = JSON.parse(
-    fs.readFileSync(path.join(targetDir, "package.json"), "utf8")
-  ) as {
-    devDependencies?: Record<string, string>;
-    scripts?: Record<string, string>;
-  };
-  const syncProjectSource = fs.readFileSync(
-    path.join(targetDir, "scripts", "sync-project.ts"),
-    "utf8"
-  );
-  const syncRestSource = fs.readFileSync(
-    path.join(targetDir, "scripts", "sync-rest-contracts.ts"),
-    "utf8"
-  );
-  const syncAiSource = fs.readFileSync(
-    path.join(targetDir, "scripts", "sync-ai-features.ts"),
-    "utf8"
-  );
-  const typesSource = fs.readFileSync(
-    path.join(targetDir, "src", "ai-features", "brief-suggestions", "api-types.ts"),
-    "utf8"
-  );
-  const validatorsSource = fs.readFileSync(
-    path.join(
-      targetDir,
-      "src",
-      "ai-features",
-      "brief-suggestions",
-      "api-validators.ts"
-    ),
-    "utf8"
-  );
-  const apiSource = fs.readFileSync(
-    path.join(targetDir, "src", "ai-features", "brief-suggestions", "api.ts"),
-    "utf8"
-  );
-  const dataSource = fs.readFileSync(
-    path.join(targetDir, "src", "ai-features", "brief-suggestions", "data.ts"),
-    "utf8"
-  );
-  const phpSource = fs.readFileSync(
-    path.join(targetDir, "inc", "ai-features", "brief-suggestions.php"),
-    "utf8"
-  );
-
-  expect(blockConfigSource).toContain('slug: "brief-suggestions"');
-  expect(blockConfigSource).toContain('namespace: "demo-space/v1"');
-  expect(blockConfigSource).toContain(
-    'aiSchemaFile: "src/ai-features/brief-suggestions/ai-schemas/feature-result.ai.schema.json"'
-  );
-  expect(blockConfigSource).toContain(
-    'apiFile: "src/ai-features/brief-suggestions/api.ts"'
-  );
-  expect(blockConfigSource).toContain(
-    'phpFile: "inc/ai-features/brief-suggestions.php"'
-  );
-  expect(blockConfigSource).toContain('"mode": "optional"');
-  expect(blockConfigSource).toContain('"optionalFeatureIds": [');
-  expect(blockConfigSource).toContain('"wordpress-ai-client"');
-  expect(blockConfigSource).toContain("WordPress AI Client");
-  expect(blockConfigSource).toContain(
-    "WordPress AI Client: wordpress-core-feature WordPress AI Client"
-  );
-  expect(blockConfigSource).toContain("defineEndpointManifest");
-  expect(bootstrapSource).toContain("Requires at least: 6.7");
-  expect(bootstrapSource).toContain("Tested up to:      6.9");
-  expect(bootstrapSource).toContain("function demo_space_register_ai_features()");
-  expect(bootstrapSource).toContain("inc/ai-features/*.php");
-  expect(packageJson.scripts?.["sync-ai"]).toBe("tsx scripts/sync-ai-features.ts");
-  expect(packageJson.devDependencies?.["@wp-typia/project-tools"]).toBeDefined();
-  expect(syncProjectSource).toContain("const syncAiScriptPath");
-  expect(syncProjectSource).toContain("runSyncScript( syncAiScriptPath, options );");
-  expect(syncRestSource).toContain("AI_FEATURES");
-  expect(syncRestSource).toContain("isWorkspaceAiFeature");
-  expect(syncRestSource).toContain("const aiFeatures = AI_FEATURES.filter");
-  expect(syncAiSource).toContain("@wp-typia/project-tools/ai-artifacts");
-  expect(syncAiSource).toContain("projectWordPressAiSchema");
-  expect(typesSource).toContain(
-    "export interface BriefSuggestionsAiFeatureRequest"
-  );
-  expect(typesSource).toContain(
-    "export interface BriefSuggestionsAiFeatureResponse"
-  );
-  expect(typesSource).toContain("providerType: 'client' | 'cloud' | 'server'");
-  expect(validatorsSource).toContain("featureRequest");
-  expect(validatorsSource).toContain("featureResponse");
-  expect(apiSource).toContain("aiFeatureRunEndpoint");
-  expect(apiSource).toContain("aiFeatureSupportMetadata");
-  expect(apiSource).toContain("getAiFeatureSupportHintLines");
-  expect(apiSource).toContain("isAiFeatureSupportUnavailableError");
-  expect(apiSource).toContain("resolveAiFeatureUnavailableMessage");
-  expect(apiSource).toContain("missing-wordpress-ai-client");
-  expect(apiSource).toContain("request-time-support-probe");
-  expect(apiSource).toContain("endpointMethod: 'POST'");
-  expect(apiSource).toContain("resolveRestNonce");
-  expect(dataSource).toContain("useRunBriefSuggestionsAiFeatureMutation");
-  expect(dataSource).toContain("aiFeatureSupportMetadata");
-  expect(dataSource).toContain("getAiFeatureSupportHintLines");
-  expect(dataSource).toContain("isAiFeatureSupportUnavailableError");
-  expect(dataSource).toContain("resolveAiFeatureUnavailableMessage");
-  expect(phpSource).toContain("wp_ai_client_prompt");
-  expect(phpSource).toContain("static $is_supported = null;");
-  expect(phpSource).toContain("is_supported_for_text_generation");
-  expect(phpSource).toContain("generate_text_result");
-  expect(phpSource).toContain("using_model_preference");
-  expect(phpSource).toContain("is_wp_error( $permission )");
-  expect(phpSource).toContain("admin_notices");
-  expect(phpSource).toContain("sprintf(");
-  expect(phpSource).toContain("The %s AI feature is optional");
-  expect(phpSource).toContain("optional and remains disabled");
-  expect(phpSource).toContain(
-    "Customization hooks for the Brief Suggestions AI feature:"
-  );
-  expect(phpSource).toContain(
-    "'demo_space_brief_suggestions_ai_feature_permission'"
-  );
-  expect(phpSource).toContain(
-    "'demo_space_brief_suggestions_ai_feature_prompt_payload'"
-  );
-  expect(phpSource).toContain("'demo_space_brief_suggestions_ai_feature_prompt'");
-  expect(phpSource).toContain(
-    "'demo_space_brief_suggestions_ai_feature_prompt_options'"
-  );
-  expect(phpSource).toContain(
-    "'demo_space_brief_suggestions_ai_feature_admin_notice_message'"
-  );
-  expect(phpSource).toContain(
-    "'demo_space_brief_suggestions_ai_feature_unavailable_message'"
-  );
-  expect(phpSource).toContain(
-    "'demo_space_brief_suggestions_ai_feature_telemetry'"
-  );
-  expect(phpSource).toContain("`temperature` and `modelPreference` keys");
-  const adminNoticeSource = phpSource.slice(
-    phpSource.indexOf("function demo_space_brief_suggestions_ai_feature_admin_notice")
-  );
-  expect(
-    adminNoticeSource.indexOf("! current_user_can( 'manage_options' )")
-  ).toBeLessThan(
-    adminNoticeSource.indexOf(
-      "demo_space_brief_suggestions_is_ai_feature_supported()"
-    )
-  );
-  expect(phpSource).toContain("register_rest_route");
-  expect(phpSource).toContain("'demo-space/v1'");
 
   expect(
     fs.existsSync(
@@ -4408,50 +4244,16 @@ test("canonical CLI can add a server-only AI feature to an official workspace te
       )
     )
   ).toBe(true);
-
-  const doctorOutput = runCli("node", [entryPath, "doctor", "--format", "json"], {
-    cwd: targetDir,
-  });
-  const doctorChecks = parseJsonObjectFromOutput<{
-    checks: Array<{ detail: string; label: string; status: string }>;
-  }>(doctorOutput);
-  expect(
-    doctorChecks.checks.find((check) => check.label === "AI feature bootstrap")
-      ?.status
-  ).toBe("pass");
-  expect(
-    doctorChecks.checks.find(
-      (check) => check.label === "AI feature config brief-suggestions"
-    )?.status
-  ).toBe("pass");
-  expect(
-    doctorChecks.checks.find(
-      (check) => check.label === "AI feature brief-suggestions"
-    )?.status
-  ).toBe("pass");
-
-  runCli("npm", ["run", "sync-rest", "--", "--check"], { cwd: targetDir });
-  runCli("npm", ["run", "sync-ai", "--", "--check"], { cwd: targetDir });
-  typecheckGeneratedProject(targetDir);
 }, 30_000);
 
-test("canonical CLI can add a typed workflow ability to an official workspace template", async () => {
+test("workspace add smoke keeps workflow ability scaffolds in the broad canonical suite", async () => {
   const targetDir = path.join(tempRoot, "demo-workspace-add-ability");
+  const workspaceSlug = "demo-workspace-add-ability";
 
-  await scaffoldProject({
-    projectDir: targetDir,
-    templateId: workspaceTemplatePackageManifest.name,
-    packageManager: "npm",
-    noInstall: true,
-    answers: {
-      author: "Test Runner",
-      description: "Demo workspace add ability",
-      namespace: "demo-space",
-      phpPrefix: "demo_space",
-      slug: "demo-workspace-add-ability",
-      textDomain: "demo-space",
-      title: "Demo Workspace Add Ability",
-    },
+  await scaffoldOfficialWorkspace(targetDir, {
+    description: "Demo workspace add ability",
+    slug: workspaceSlug,
+    title: "Demo Workspace Add Ability",
   });
 
   linkWorkspaceNodeModules(targetDir);
@@ -4474,7 +4276,7 @@ test("canonical CLI can add a typed workflow ability to an official workspace te
 
   const bootstrapPath = path.join(
     targetDir,
-    "demo-workspace-add-ability.php"
+    `${workspaceSlug}.php`
   );
   fs.writeFileSync(
     bootstrapPath,
@@ -4501,118 +4303,8 @@ function demo_space_enqueue_workflow_abilities() {
     path.join(targetDir, "scripts", "block-config.ts"),
     "utf8"
   );
-  const bootstrapSource = fs.readFileSync(
-    path.join(targetDir, "demo-workspace-add-ability.php"),
-    "utf8"
-  );
-  const packageJson = JSON.parse(
-    fs.readFileSync(path.join(targetDir, "package.json"), "utf8")
-  ) as {
-    dependencies?: Record<string, string>;
-    scripts?: Record<string, string>;
-  };
-  const syncProjectSource = fs.readFileSync(
-    path.join(targetDir, "scripts", "sync-project.ts"),
-    "utf8"
-  );
-  const syncAbilitiesSource = fs.readFileSync(
-    path.join(targetDir, "scripts", "sync-abilities.ts"),
-    "utf8"
-  );
-  const buildWorkspaceSource = fs.readFileSync(
-    path.join(targetDir, "scripts", "build-workspace.mjs"),
-    "utf8"
-  );
-  const webpackSource = fs.readFileSync(
-    path.join(targetDir, "webpack.config.js"),
-    "utf8"
-  );
-  const abilitiesIndexSource = fs.readFileSync(
-    path.join(targetDir, "src", "abilities", "index.ts"),
-    "utf8"
-  );
-  const typesSource = fs.readFileSync(
-    path.join(targetDir, "src", "abilities", "review-workflow", "types.ts"),
-    "utf8"
-  );
-  const dataSource = fs.readFileSync(
-    path.join(targetDir, "src", "abilities", "review-workflow", "data.ts"),
-    "utf8"
-  );
-  const abilityConfig = JSON.parse(
-    fs.readFileSync(
-      path.join(
-        targetDir,
-        "src",
-        "abilities",
-        "review-workflow",
-        "ability.config.json"
-      ),
-      "utf8"
-    )
-  ) as {
-    abilityId?: string;
-    category?: { slug?: string };
-  };
-  const phpSource = fs.readFileSync(
-    path.join(targetDir, "inc", "abilities", "review-workflow.php"),
-    "utf8"
-  );
 
   expect(blockConfigSource).toContain('slug: "review-workflow"');
-  expect(blockConfigSource).toContain(
-    'configFile: "src/abilities/review-workflow/ability.config.json"'
-  );
-  expect(blockConfigSource).toContain(
-    'inputTypeName: "ReviewWorkflowAbilityInput"'
-  );
-  expect(blockConfigSource).toContain(
-    'outputTypeName: "ReviewWorkflowAbilityOutput"'
-  );
-  expect(blockConfigSource).toContain('"mode": "required"');
-  expect(blockConfigSource).toContain("WordPress Abilities API");
-  expect(blockConfigSource).toContain("@wordpress/core-abilities");
-  expect(bootstrapSource).toContain("Requires at least: 7.0");
-  expect(bootstrapSource).toContain("Tested up to:      7.0");
-  expect(bootstrapSource).toContain("inc/abilities/*.php");
-  expect(bootstrapSource).toContain("build/abilities/index.js");
-  expect(bootstrapSource).toContain("wp_enqueue_script_module");
-  expect(bootstrapSource).toContain("@wordpress/core-abilities");
-  expect(bootstrapSource).toContain("@wordpress/abilities");
-  expect(bootstrapSource).not.toContain("Legacy ability enqueue marker");
-  expect(
-    bootstrapSource.match(/function demo_space_enqueue_workflow_abilities/g)
-      ?.length
-  ).toBe(1);
-  expect(bootstrapSource).toContain("plugins_loaded");
-  expect(bootstrapSource).toContain("admin_enqueue_scripts");
-  expect(packageJson.dependencies?.["@wordpress/abilities"]).toBe("^0.10.0");
-  expect(packageJson.dependencies?.["@wordpress/core-abilities"]).toBe("^0.9.0");
-  expect(packageJson.scripts?.["sync-abilities"]).toBe(
-    "tsx scripts/sync-abilities.ts"
-  );
-  expect(syncProjectSource).toContain("const syncAbilitiesScriptPath");
-  expect(syncProjectSource).toContain(
-    "runSyncScript( syncAbilitiesScriptPath, options );"
-  );
-  expect(syncAbilitiesSource).toContain("ABILITIES");
-  expect(syncAbilitiesSource).toContain("syncTypeSchemas");
-  expect(buildWorkspaceSource).toContain("'src/abilities/index.ts'");
-  expect(webpackSource).toContain("'abilities/index'");
-  expect(abilitiesIndexSource).toContain("./review-workflow/client");
-  expect(typesSource).toContain("export interface ReviewWorkflowAbilityInput");
-  expect(typesSource).toContain("export interface ReviewWorkflowAbilityOutput");
-  expect(dataSource).toContain("from '@wordpress/abilities'");
-  expect(dataSource).toContain("@wordpress/core-abilities");
-  expect(dataSource).toContain("waitForReviewWorkflowAbilityRegistration");
-  expect(dataSource).toContain("getRegisteredAbility");
-  expect(dataSource).not.toContain("globalThis");
-  expect(abilityConfig.abilityId).toBe("demo-space/review-workflow");
-  expect(abilityConfig.category?.slug).toBe("demo-space-workflows");
-  expect(phpSource).toContain("wp_register_ability_category");
-  expect(phpSource).toContain("wp_register_ability(");
-  expect(phpSource).toContain("input.schema.json");
-  expect(phpSource).toContain("output.schema.json");
 
   expect(
     fs.existsSync(
@@ -4636,33 +4328,6 @@ function demo_space_enqueue_workflow_abilities() {
       )
     )
   ).toBe(true);
-
-  const doctorOutput = runCli("node", [entryPath, "doctor", "--format", "json"], {
-    cwd: targetDir,
-  });
-  const doctorChecks = parseJsonObjectFromOutput<{
-    checks: Array<{ detail: string; label: string; status: string }>;
-  }>(doctorOutput);
-  expect(
-    doctorChecks.checks.find((check) => check.label === "Ability bootstrap")
-      ?.status
-  ).toBe("pass");
-  expect(
-    doctorChecks.checks.find((check) => check.label === "Abilities index")
-      ?.status
-  ).toBe("pass");
-  expect(
-    doctorChecks.checks.find(
-      (check) => check.label === "Ability config review-workflow"
-    )?.status
-  ).toBe("pass");
-  expect(
-    doctorChecks.checks.find((check) => check.label === "Ability review-workflow")
-      ?.status
-  ).toBe("pass");
-
-  runCli("npm", ["run", "sync-abilities", "--", "--check"], { cwd: targetDir });
-  typecheckGeneratedProject(targetDir);
 }, 30_000);
 
 test("canonical CLI can add an editor plugin to an official workspace template", async () => {
