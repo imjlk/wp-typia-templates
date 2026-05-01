@@ -310,6 +310,62 @@ describe("@wp-typia/project-tools cli-add-workspace ability", () => {
 		typecheckGeneratedProject(targetDir);
 	}, 30_000);
 
+	test("ability add preserves custom shared build and webpack entries", async () => {
+		const targetDir = path.join(tempRoot, "demo-workspace-add-ability-custom-entries");
+		const workspaceSlug = "demo-workspace-add-ability-custom-entries";
+
+		await scaffoldAbilityWorkspace(
+			targetDir,
+			workspaceSlug,
+			"Demo Workspace Add Ability Custom Entries",
+			"Demo workspace add ability custom entries",
+		);
+		seedLegacyAbilityWorkspace(targetDir, workspaceSlug);
+
+		const buildWorkspacePath = path.join(targetDir, "scripts", "build-workspace.mjs");
+		const webpackConfigPath = path.join(targetDir, "webpack.config.js");
+		const initialBuildWorkspaceSource = fs.readFileSync(buildWorkspacePath, "utf8");
+		const initialWebpackSource = fs.readFileSync(webpackConfigPath, "utf8");
+		const customBuildEntry = "\t\t'src/custom-tools/index.ts',\n";
+		const customWebpackTuple = [
+			"\t\t[",
+			"\t\t\t'custom-tools/index',",
+			"\t\t\t[ 'src/custom-tools/index.ts', 'src/custom-tools/index.js' ],",
+			"\t\t],",
+			"",
+		].join("\n");
+		const seededBuildWorkspaceSource = initialBuildWorkspaceSource.replace(
+			/('src\/editor-plugins\/index\.js',\n)/u,
+			`$1${customBuildEntry}`,
+		);
+		const seededWebpackSource = initialWebpackSource.replace(
+			/(\t\t\[\n\t\t\t'editor-plugins\/index',\n\t\t\t\[ 'src\/editor-plugins\/index\.ts', 'src\/editor-plugins\/index\.js' \],\n\t\t\],\n)/u,
+			`$1${customWebpackTuple}`,
+		);
+
+		expect(seededBuildWorkspaceSource).not.toBe(initialBuildWorkspaceSource);
+		expect(seededWebpackSource).not.toBe(initialWebpackSource);
+
+		fs.writeFileSync(buildWorkspacePath, seededBuildWorkspaceSource, "utf8");
+		fs.writeFileSync(webpackConfigPath, seededWebpackSource, "utf8");
+
+		runCli("node", [entryPath, "add", "ability", "review-workflow"], {
+			cwd: targetDir,
+		});
+
+		const buildWorkspaceSource = fs.readFileSync(buildWorkspacePath, "utf8");
+		const webpackSource = fs.readFileSync(webpackConfigPath, "utf8");
+
+		expect(buildWorkspaceSource).toContain("'src/custom-tools/index.ts'");
+		expect(buildWorkspaceSource).toContain("'src/abilities/index.ts'");
+		expect(webpackSource).toContain("'custom-tools/index'");
+		expect(webpackSource).toContain("'abilities/index'");
+		expect(
+			buildWorkspaceSource.match(/'src\/abilities\/index\.(?:ts|js)'/g)?.length,
+		).toBe(2);
+		expect(webpackSource.match(/'abilities\/index'/g)?.length).toBe(1);
+	}, 20_000);
+
 	test("ability duplicate failures preserve generated workspace files", async () => {
 		const targetDir = path.join(tempRoot, "demo-workspace-add-ability-rollback");
 		const workspaceSlug = "demo-workspace-add-ability-rollback";
