@@ -338,9 +338,46 @@ function isJsonSchemaObject(value: unknown): value is JsonSchemaObject {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
+function decodeJsonPointerSegment(segment: string): string {
+  return segment.replace(/~1/g, '/').replace(/~0/g, '~');
+}
+
+function resolveOpenApiReferenceTarget(
+  document: OpenApiDocument,
+  reference: string,
+): unknown {
+  if (!reference.startsWith('#/')) {
+    throw new Error(`Unsupported OpenAPI schema reference "${reference}".`);
+  }
+
+  let current: unknown = document;
+  for (const rawSegment of reference.slice(2).split('/')) {
+    const segment = decodeJsonPointerSegment(rawSegment);
+    if (Array.isArray(current)) {
+      const index = Number.parseInt(segment, 10);
+      current = Number.isInteger(index) ? current[index] : undefined;
+      continue;
+    }
+    if (!isJsonSchemaObject(current)) {
+      current = undefined;
+      break;
+    }
+    current = current[segment];
+  }
+
+  if (!isJsonSchemaObject(current)) {
+    throw new Error(
+      `Unable to resolve OpenAPI schema reference "${reference}".`,
+    );
+  }
+
+  return current;
+}
+
 function resolveOpenApiSchemaObject(
   document: OpenApiDocument,
   schema: unknown,
+  seenReferences: ReadonlySet<string> = new Set(),
 ): JsonSchemaObject {
   if (!isJsonSchemaObject(schema)) {
     return {};
@@ -351,58 +388,55 @@ function resolveOpenApiSchemaObject(
     return schema;
   }
 
-  const match = reference.match(/^#\/components\/schemas\/(.+)$/u);
-  if (!match) {
-    throw new Error(`Unsupported OpenAPI schema reference "${reference}".`);
+  if (seenReferences.has(reference)) {
+    throw new Error(`Detected recursive OpenAPI schema reference "${reference}".`);
   }
 
-  const componentName = match[1];
-  if (!componentName) {
-    throw new Error(`Unsupported OpenAPI schema reference "${reference}".`);
-  }
-
-  const resolved = document.components.schemas[componentName];
-  if (!resolved) {
-    throw new Error(
-      `Unable to resolve OpenAPI schema reference "${reference}".`,
-    );
-  }
-
-  return resolved;
+  return resolveOpenApiSchemaObject(
+    document,
+    resolveOpenApiReferenceTarget(document, reference),
+    new Set([...seenReferences, reference]),
+  );
 }
 
 function mergeJsonSchemaConstraintProperties(
+  document: OpenApiDocument,
   target: JsonSchemaObject,
   source: JsonSchemaObject,
 ): JsonSchemaObject {
+  const resolvedSource = resolveOpenApiSchemaObject(document, source);
   const merged = target;
 
   for (const key of JSON_SCHEMA_CONSTRAINT_KEYS) {
-    if (source[key] !== undefined) {
-      merged[key] = cloneJsonValue(source[key]);
+    if (resolvedSource[key] !== undefined) {
+      merged[key] = cloneJsonValue(resolvedSource[key]);
     }
   }
 
-  if (Array.isArray(source.required)) {
-    merged.required = source.required.filter(
+  if (Array.isArray(resolvedSource.required)) {
+    merged.required = resolvedSource.required.filter(
       (value): value is string => typeof value === 'string',
     );
   }
 
-  if (Array.isArray(source.items)) {
-    merged.items = cloneJsonValue(source.items) as JsonSchemaObject[];
-  } else if (isJsonSchemaObject(source.items)) {
+  if (Array.isArray(resolvedSource.items)) {
+    merged.items = cloneJsonValue(resolvedSource.items) as JsonSchemaObject[];
+  } else if (isJsonSchemaObject(resolvedSource.items)) {
     const nextItems = isJsonSchemaObject(merged.items) ? merged.items : {};
-    merged.items = mergeJsonSchemaConstraintProperties(nextItems, source.items);
+    merged.items = mergeJsonSchemaConstraintProperties(
+      document,
+      nextItems,
+      resolvedSource.items,
+    );
   }
 
-  if (isJsonSchemaObject(source.properties)) {
+  if (isJsonSchemaObject(resolvedSource.properties)) {
     const targetProperties = isJsonSchemaObject(merged.properties)
       ? merged.properties
       : {};
 
     for (const [propertyName, propertySchema] of Object.entries(
-      source.properties,
+      resolvedSource.properties,
     )) {
       if (!isJsonSchemaObject(propertySchema)) {
         continue;
@@ -412,6 +446,7 @@ function mergeJsonSchemaConstraintProperties(
         ? (targetProperties[propertyName] as JsonSchemaObject)
         : {};
       targetProperties[propertyName] = mergeJsonSchemaConstraintProperties(
+        document,
         nextProperty,
         propertySchema,
       );
@@ -433,8 +468,11 @@ function findOpenApiOperationById(
     }
 
     for (const method of ['delete', 'get', 'patch', 'post', 'put'] as const) {
-      const operation = pathItem[method];
-      if (!isJsonSchemaObject(operation)) {
+      const operation = resolveOpenApiSchemaObject(document, pathItem[method]);
+      if (
+        !isJsonSchemaObject(operation) ||
+        typeof operation.operationId !== 'string'
+      ) {
         continue;
       }
 
@@ -451,7 +489,15 @@ function resolveOpenApiRequestBodySchema(
   operation: OpenApiOperation,
   document: OpenApiDocument,
 ): JsonSchemaObject | null {
-  const schema = operation.requestBody?.content?.['application/json']?.schema;
+  const requestBody = resolveOpenApiSchemaObject(document, operation.requestBody);
+  const content = isJsonSchemaObject(requestBody.content)
+    ? requestBody.content
+    : null;
+  const jsonMediaType =
+    content && isJsonSchemaObject(content['application/json'])
+      ? content['application/json']
+      : null;
+  const schema = jsonMediaType?.schema;
   if (!isJsonSchemaObject(schema)) {
     return null;
   }
@@ -464,11 +510,22 @@ function resolveOpenApiSuccessResponseSchema(
   document: OpenApiDocument,
 ): JsonSchemaObject | null {
   for (const [statusCode, response] of Object.entries(operation.responses)) {
-    if (!/^2\d\d$/u.test(statusCode) || !isJsonSchemaObject(response)) {
+    const resolvedResponse = resolveOpenApiSchemaObject(document, response);
+    if (
+      !/^2(?:\d\d|XX)$/u.test(statusCode) ||
+      !isJsonSchemaObject(resolvedResponse)
+    ) {
       continue;
     }
 
-    const schema = response.content?.['application/json']?.schema;
+    const content = isJsonSchemaObject(resolvedResponse.content)
+      ? resolvedResponse.content
+      : null;
+    const jsonMediaType =
+      content && isJsonSchemaObject(content['application/json'])
+        ? content['application/json']
+        : null;
+    const schema = jsonMediaType?.schema;
     if (!isJsonSchemaObject(schema)) {
       continue;
     }
@@ -501,21 +558,26 @@ function applyOpenApiQueryParameterConstraints(
   document: OpenApiDocument,
 ): void {
   for (const parameter of operation.parameters ?? []) {
+    const resolvedParameter = resolveOpenApiSchemaObject(document, parameter);
     if (
-      !isJsonSchemaObject(parameter) ||
-      parameter.in !== 'query' ||
-      typeof parameter.name !== 'string'
+      !isJsonSchemaObject(resolvedParameter) ||
+      resolvedParameter.in !== 'query' ||
+      typeof resolvedParameter.name !== 'string'
     ) {
       continue;
     }
 
-    const propertyTarget = getOrCreateObjectProperty(target, parameter.name);
+    const propertyTarget = getOrCreateObjectProperty(
+      target,
+      resolvedParameter.name,
+    );
     mergeJsonSchemaConstraintProperties(
+      document,
       propertyTarget,
-      resolveOpenApiSchemaObject(document, parameter.schema),
+      resolveOpenApiSchemaObject(document, resolvedParameter.schema),
     );
 
-    if (parameter.required === true) {
+    if (resolvedParameter.required === true) {
       const required = new Set(
         Array.isArray(target.required)
           ? target.required.filter(
@@ -523,7 +585,7 @@ function applyOpenApiQueryParameterConstraints(
             )
           : [],
       );
-      required.add(parameter.name);
+      required.add(resolvedParameter.name);
       target.required = [...required];
     }
   }
@@ -934,10 +996,17 @@ export function applyOpenApiConstraintsToTypiaLlmFunctionArtifact({
   }
 
   const hasQueryParameters = (operation.parameters ?? []).some(
-    (parameter) =>
-      isJsonSchemaObject(parameter) &&
-      parameter.in === 'query' &&
-      typeof parameter.name === 'string',
+    (parameter) => {
+      const resolvedParameter = resolveOpenApiSchemaObject(
+        openApiDocument,
+        parameter,
+      );
+      return (
+        isJsonSchemaObject(resolvedParameter) &&
+        resolvedParameter.in === 'query' &&
+        typeof resolvedParameter.name === 'string'
+      );
+    },
   );
   const requestBodySchema = resolveOpenApiRequestBodySchema(
     operation,
@@ -947,6 +1016,7 @@ export function applyOpenApiConstraintsToTypiaLlmFunctionArtifact({
   if (requestBodySchema) {
     if (hasQueryParameters) {
       mergeJsonSchemaConstraintProperties(
+        openApiDocument,
         getOrCreateObjectProperty(
           constrainedArtifact.parameters as unknown as JsonSchemaObject,
           'body',
@@ -955,6 +1025,7 @@ export function applyOpenApiConstraintsToTypiaLlmFunctionArtifact({
       );
     } else {
       mergeJsonSchemaConstraintProperties(
+        openApiDocument,
         constrainedArtifact.parameters as unknown as JsonSchemaObject,
         requestBodySchema,
       );
@@ -981,6 +1052,7 @@ export function applyOpenApiConstraintsToTypiaLlmFunctionArtifact({
     );
     if (responseSchema) {
       mergeJsonSchemaConstraintProperties(
+        openApiDocument,
         constrainedArtifact.output as unknown as JsonSchemaObject,
         responseSchema,
       );

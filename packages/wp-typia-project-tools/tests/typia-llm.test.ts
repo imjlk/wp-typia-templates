@@ -194,6 +194,114 @@ const COUNTER_OPENAPI = {
   },
 } as const satisfies OpenApiDocument;
 
+const NESTED_REFERENCE_OPENAPI = {
+  components: {
+    parameters: {
+      NestedPostId: {
+        in: 'query',
+        name: 'postId',
+        required: true,
+        schema: {
+          maximum: 4294967295,
+          minimum: 0,
+          multipleOf: 1,
+          type: 'integer',
+        },
+      },
+    },
+    requestBodies: {
+      NestedCounterBody: {
+        content: {
+          'application/json': {
+            schema: {
+              $ref: '#/components/schemas/NestedCounterBodySchema',
+            },
+          },
+        },
+        required: true,
+      },
+    },
+    responses: {
+      NestedCounterResponse: {
+        content: {
+          'application/json': {
+            schema: {
+              $ref: '#/components/schemas/NestedCounterResponseSchema',
+            },
+          },
+        },
+        description: 'Nested counter response.',
+      },
+    },
+    schemas: {
+      NestedCounterBodySchema: {
+        $schema: 'https://json-schema.org/draft/2020-12/schema',
+        additionalProperties: false,
+        properties: {
+          payload: {
+            properties: {
+              delta: {
+                maximum: 9,
+                minimum: 1,
+                multipleOf: 1,
+                type: 'integer',
+              },
+            },
+            required: ['delta'],
+            type: 'object',
+          },
+        },
+        required: ['payload'],
+        title: 'NestedCounterBodySchema',
+        type: 'object',
+      },
+      NestedCounterResponseSchema: {
+        $schema: 'https://json-schema.org/draft/2020-12/schema',
+        additionalProperties: false,
+        properties: {
+          count: {
+            maximum: 4294967295,
+            minimum: 0,
+            multipleOf: 1,
+            type: 'integer',
+          },
+        },
+        required: ['count'],
+        title: 'NestedCounterResponseSchema',
+        type: 'object',
+      },
+    },
+  },
+  info: {
+    title: 'Nested Counter API',
+    version: '1.0.0',
+  },
+  openapi: '3.1.0',
+  paths: {
+    '/demo/v1/counter/nested': {
+      post: {
+        operationId: 'syncNestedCounter',
+        parameters: [
+          {
+            $ref: '#/components/parameters/NestedPostId',
+          },
+        ],
+        requestBody: {
+          $ref: '#/components/requestBodies/NestedCounterBody',
+        },
+        responses: {
+          '2XX': {
+            $ref: '#/components/responses/NestedCounterResponse',
+          },
+        },
+        summary: 'Synchronize the nested counter.',
+        tags: ['Counter'],
+        'x-typia-authIntent': 'authenticated',
+      },
+    },
+  },
+} as const as unknown as OpenApiDocument;
+
 const EMPTY_LLM_PARAMETERS: ILlmSchema.IParameters = {
   $defs: {},
   additionalProperties: false,
@@ -656,6 +764,107 @@ describe('typia.llm adapter emitter', () => {
         },
       },
       required: ['body', 'query'],
+    });
+  });
+
+  test('resolves nested OpenAPI component references and wildcard 2XX responses', () => {
+    const constrainedArtifact = applyOpenApiConstraintsToTypiaLlmFunctionArtifact(
+      {
+        functionArtifact: {
+          description: 'Synchronize the nested counter.',
+          name: 'syncNestedCounter',
+          output: {
+            $defs: {},
+            additionalProperties: false,
+            properties: {
+              count: {
+                type: 'number',
+              },
+            },
+            required: ['count'],
+            type: 'object',
+          },
+          parameters: {
+            $defs: {},
+            additionalProperties: false,
+            properties: {
+              body: {
+                additionalProperties: false,
+                properties: {
+                  payload: {
+                    properties: {
+                      delta: {
+                        type: 'number',
+                      },
+                    },
+                    required: ['delta'],
+                    type: 'object',
+                  },
+                },
+                required: ['payload'],
+                type: 'object',
+              },
+              query: {
+                additionalProperties: false,
+                properties: {
+                  postId: {
+                    type: 'number',
+                  },
+                },
+                required: [],
+                type: 'object',
+              },
+            },
+            required: ['body', 'query'],
+            type: 'object',
+          },
+        },
+        openApiDocument: NESTED_REFERENCE_OPENAPI,
+        operationId: 'syncNestedCounter',
+      },
+    );
+
+    expect(constrainedArtifact.parameters).toMatchObject({
+      properties: {
+        body: {
+          properties: {
+            payload: {
+              properties: {
+                delta: {
+                  maximum: 9,
+                  minimum: 1,
+                  multipleOf: 1,
+                  type: 'integer',
+                },
+              },
+              required: ['delta'],
+            },
+          },
+          required: ['payload'],
+        },
+        query: {
+          properties: {
+            postId: {
+              maximum: 4294967295,
+              minimum: 0,
+              multipleOf: 1,
+              type: 'integer',
+            },
+          },
+          required: ['postId'],
+        },
+      },
+    });
+    expect(constrainedArtifact.output).toMatchObject({
+      properties: {
+        count: {
+          maximum: 4294967295,
+          minimum: 0,
+          multipleOf: 1,
+          type: 'integer',
+        },
+      },
+      required: ['count'],
     });
   });
 
