@@ -1115,9 +1115,9 @@ function normalizeInterfaceFieldBlock(
 		interfacePattern,
 		(match, start: string, body: string, end: string) => {
 			const fieldPattern = new RegExp(
-				`^[ \\t]*${escapeRegex(
+				`(^([ \\t]*)${escapeRegex(
 					fieldName,
-				)}\\??:\\s*\\{[\\s\\S]*?^[ \\t]*\\};\\r?\\n?`,
+				)}\\??:\\s*\\{[ \\t]*\\r?\\n)([\\s\\S]*?)(^\\2\\};\\r?\\n?)`,
 				"mu",
 			);
 			const fieldMatch = fieldPattern.exec(body);
