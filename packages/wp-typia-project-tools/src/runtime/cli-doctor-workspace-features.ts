@@ -613,6 +613,13 @@ function checkWorkspaceAdminViewPhp(
 	);
 }
 
+/**
+ * Collect workspace doctor checks for REST resources, abilities, AI features, editor plugins, and admin views.
+ *
+ * @param workspace Resolved workspace metadata and filesystem paths.
+ * @param inventory Parsed workspace inventory from `scripts/block-config.ts`.
+ * @returns Ordered `DoctorCheck[]` rows for extracted workspace feature diagnostics.
+ */
 export function getWorkspaceFeatureDoctorChecks(
 	workspace: WorkspaceProject,
 	inventory: WorkspaceInventory,

@@ -318,7 +318,12 @@ function isGlobalDomAccessCandidate(
 		return false;
 	}
 
-	return identifier === "document" || identifier === "window";
+	return (
+		identifier === "document" ||
+		identifier === "window" ||
+		identifier === "parent" ||
+		identifier === "top"
+	);
 }
 
 function findWorkspaceBlockGlobalDomAccesses(
@@ -703,6 +708,13 @@ function checkBlockTransformConfig(
 	);
 }
 
+/**
+ * Collect block-, variation-, transform-, and pattern-related workspace doctor checks.
+ *
+ * @param workspace Resolved workspace metadata and filesystem paths.
+ * @param inventory Parsed workspace inventory from `scripts/block-config.ts`.
+ * @returns Ordered `DoctorCheck[]` rows for extracted block diagnostics.
+ */
 export function getWorkspaceBlockDoctorChecks(
 	workspace: WorkspaceProject,
 	inventory: WorkspaceInventory,

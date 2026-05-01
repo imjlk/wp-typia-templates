@@ -143,7 +143,11 @@ function checkWorkspaceBindingTarget(
 				`${bindingSource.serverFile} must register ${supportedAttributesFilter}`,
 			);
 		}
-		if (!new RegExp(`'${escapeRegex(bindingSource.attribute)}'`, "u").test(serverSource)) {
+		if (
+			!new RegExp(`(['"])${escapeRegex(bindingSource.attribute)}\\1`, "u").test(
+				serverSource,
+			)
+		) {
 			issues.push(
 				`${bindingSource.serverFile} must expose attribute "${bindingSource.attribute}"`,
 			);
@@ -193,6 +197,13 @@ function checkWorkspaceBindingTarget(
 	);
 }
 
+/**
+ * Collect workspace doctor checks for extracted binding-source diagnostics.
+ *
+ * @param workspace Resolved workspace metadata and filesystem paths.
+ * @param inventory Parsed workspace inventory from `scripts/block-config.ts`.
+ * @returns Ordered `DoctorCheck[]` rows for binding bootstrap, index, and target checks.
+ */
 export function getWorkspaceBindingDoctorChecks(
 	workspace: WorkspaceProject,
 	inventory: WorkspaceInventory,

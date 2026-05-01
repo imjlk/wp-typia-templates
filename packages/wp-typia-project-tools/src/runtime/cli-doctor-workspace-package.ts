@@ -10,6 +10,13 @@ import { WORKSPACE_TEMPLATE_PACKAGE } from "./workspace-project.js";
 import type { DoctorCheck } from "./cli-doctor.js";
 import type { WorkspacePackageJson, WorkspaceProject } from "./workspace-project.js";
 
+/**
+ * Validate the package metadata that makes a project an official workspace.
+ *
+ * @param workspace Resolved workspace metadata and filesystem paths.
+ * @param packageJson Parsed workspace package manifest.
+ * @returns A `DoctorCheck` describing whether package metadata matches the workspace contract.
+ */
 export function getWorkspacePackageMetadataCheck(
 	workspace: WorkspaceProject,
 	packageJson: WorkspacePackageJson,
@@ -52,6 +59,13 @@ export function getWorkspacePackageMetadataCheck(
 	);
 }
 
+/**
+ * Report whether a workspace configured for migrations exposes the expected doctor inputs.
+ *
+ * @param workspace Resolved workspace metadata and filesystem paths.
+ * @param packageJson Parsed workspace package manifest.
+ * @returns A migration hint row when the workspace uses migrations, otherwise `null`.
+ */
 export function getMigrationWorkspaceHintCheck(
 	workspace: WorkspaceProject,
 	packageJson: WorkspacePackageJson,
