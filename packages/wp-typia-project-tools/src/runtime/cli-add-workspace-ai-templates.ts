@@ -1,6 +1,9 @@
 import { quotePhpString } from "./php-utils.js";
 import { toTitleCase } from "./string-case.js";
 
+/**
+ * Build the generated PHP controller and hook surface for a workspace AI feature.
+ */
 export function buildAiFeaturePhpSource(
 	aiFeatureSlug: string,
 	namespace: string,

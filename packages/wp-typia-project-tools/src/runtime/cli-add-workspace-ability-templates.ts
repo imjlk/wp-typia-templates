@@ -18,6 +18,9 @@ function toAbilityCategorySlug(workspaceNamespace: string): string {
 	return `${normalizedNamespace || "workspace"}-workflows`;
 }
 
+/**
+ * Build the `ABILITIES` inventory entry for a generated workflow ability.
+ */
 export function buildAbilityConfigEntry(
 	abilitySlug: string,
 	compatibilityPolicy: ScaffoldCompatibilityPolicy,
@@ -43,6 +46,9 @@ export function buildAbilityConfigEntry(
 	].join("\n");
 }
 
+/**
+ * Build the JSON config document that powers server-side ability registration.
+ */
 export function buildAbilityConfigSource(
 	abilitySlug: string,
 	workspaceNamespace: string,
@@ -76,6 +82,9 @@ export function buildAbilityConfigSource(
 	)}\n`;
 }
 
+/**
+ * Build the starter TypeScript input and output contracts for an ability.
+ */
 export function buildAbilityTypesSource(abilitySlug: string): string {
 	const pascalCase = toPascalCase(abilitySlug);
 
@@ -93,6 +102,9 @@ export interface ${pascalCase}AbilityOutput {
 `;
 }
 
+/**
+ * Build the typed client helper module that wraps the WordPress Abilities API.
+ */
 export function buildAbilityDataSource(abilitySlug: string): string {
 	const pascalCase = toPascalCase(abilitySlug);
 	const abilityConstBase = abilitySlug
@@ -195,6 +207,9 @@ export async function run${pascalCase}Ability(
 `;
 }
 
+/**
+ * Build the re-export shim for the generated ability client helpers.
+ */
 export function buildAbilityClientSource(abilitySlug: string): string {
 	const pascalCase = toPascalCase(abilitySlug);
 
@@ -208,6 +223,9 @@ export * from './data';
 `;
 }
 
+/**
+ * Build the schema sync script that keeps generated ability JSON artifacts current.
+ */
 export function buildAbilitySyncScriptSource(): string {
 	return `/* eslint-disable no-console */
 import { syncTypeSchemas } from '@wp-typia/block-runtime/metadata-core';
@@ -319,6 +337,9 @@ main().catch( ( error ) => {
 `;
 }
 
+/**
+ * Build the PHP ability registration module for a generated workflow ability.
+ */
 export function buildAbilityPhpSource(
 	abilitySlug: string,
 	workspace: WorkspaceProject,
@@ -499,6 +520,9 @@ add_action( 'wp_abilities_api_init', '${abilityRegisterFunctionName}' );
 `;
 }
 
+/**
+ * Build the generated abilities index section managed by `wp-typia add ability`.
+ */
 export function buildAbilityRegistrySource(abilitySlugs: string[]): string {
 	const exportLines = abilitySlugs
 		.map((abilitySlug) => `export * from './${abilitySlug}/client';`)

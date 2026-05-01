@@ -150,6 +150,16 @@ describe('package version cache invalidation', () => {
       ),
       'utf8',
     );
+    const abilityScaffoldSource = fs.readFileSync(
+      path.join(
+        import.meta.dir,
+        '..',
+        'src',
+        'runtime',
+        'cli-add-workspace-ability-scaffold.ts',
+      ),
+      'utf8',
+    );
     const adminViewRuntimeSource = fs.readFileSync(
       path.join(
         import.meta.dir,
@@ -177,10 +187,10 @@ describe('package version cache invalidation', () => {
     expect(DEFAULT_WORDPRESS_DATA_VERSION).toBe('^9.28.0');
     expect(DEFAULT_WORDPRESS_DATAVIEWS_VERSION).toBe('^14.1.0');
     expect(DEFAULT_WP_TYPIA_DATAVIEWS_VERSION).toBe('^0.1.0');
-    expect(abilityRuntimeSource).not.toContain(
+    expect(abilityScaffoldSource).not.toContain(
       'const WP_ABILITIES_PACKAGE_VERSION',
     );
-    expect(abilityRuntimeSource).not.toContain(
+    expect(abilityScaffoldSource).not.toContain(
       'const WP_CORE_ABILITIES_PACKAGE_VERSION',
     );
     expect(adminViewScaffoldSource).not.toContain(
@@ -195,7 +205,8 @@ describe('package version cache invalidation', () => {
     expect(adminViewScaffoldSource).not.toContain(
       'const DEFAULT_WORDPRESS_DATA_VERSION',
     );
-    expect(abilityRuntimeSource).toContain('from "./package-versions.js"');
+    expect(abilityRuntimeSource).not.toContain('from "./package-versions.js"');
+    expect(abilityScaffoldSource).toContain('from "./package-versions.js"');
     expect(adminViewScaffoldSource).toContain("from './package-versions.js'");
     expect(adminViewScaffoldSource).toContain(
       'resolveManagedPackageVersionRange',

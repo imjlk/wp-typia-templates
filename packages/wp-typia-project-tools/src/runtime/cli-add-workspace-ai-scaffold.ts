@@ -34,10 +34,17 @@ import {
 import type { ScaffoldCompatibilityPolicy } from "./scaffold-compatibility.js";
 import type { WorkspaceProject } from "./workspace-project.js";
 
+/**
+ * Inputs required to scaffold a generated AI feature into a workspace.
+ */
 export interface ScaffoldAiFeatureWorkspaceOptions {
+	/** Kebab-case feature slug used for file paths and route ids. */
 	aiFeatureSlug: string;
+	/** Compatibility metadata applied to the generated workspace bootstrap. */
 	compatibilityPolicy: ScaffoldCompatibilityPolicy;
+	/** WordPress REST namespace used for generated feature routes. */
 	namespace: string;
+	/** Resolved workspace metadata and filesystem paths for the target project. */
 	workspace: WorkspaceProject;
 }
 

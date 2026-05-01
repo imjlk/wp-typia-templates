@@ -370,8 +370,8 @@ async function ensureAbilityBuildScriptAnchors(
 		const match = nextSource.match(sharedEntriesPattern);
 		if (
 			!match ||
-			!match[2].includes("src/bindings/index.ts") ||
-			!match[2].includes("src/editor-plugins/index.ts")
+			!/['"]src\/bindings\/index\.(?:ts|js)['"]/u.test(match[2]) ||
+			!/['"]src\/editor-plugins\/index\.(?:tsx|ts|js)['"]/u.test(match[2])
 		) {
 			throw new Error(
 				[
@@ -382,17 +382,26 @@ async function ensureAbilityBuildScriptAnchors(
 			);
 		}
 
-		nextSource = nextSource.replace(
-			sharedEntriesPattern,
-			`$1
-\t\t'src/bindings/index.ts',
-\t\t'src/bindings/index.js',
-\t\t'src/editor-plugins/index.ts',
-\t\t'src/editor-plugins/index.js',
-\t\t'src/abilities/index.ts',
-\t\t'src/abilities/index.js',
-\t$3`,
-		);
+		nextSource = nextSource.replace(sharedEntriesPattern, (fullMatch, sharedEntries) => {
+			const missingAbilityEntries = [
+				"'src/abilities/index.ts'",
+				"'src/abilities/index.js'",
+			].filter((entry) => !sharedEntries.includes(entry));
+			if (missingAbilityEntries.length === 0) {
+				return fullMatch;
+			}
+
+			const itemIndent = sharedEntries.match(/\n([ \t]*)['"]/u)?.[1] ?? "\t\t";
+			const trimmedEntries = sharedEntries.replace(/\s*$/u, "");
+			const trailingWhitespace = sharedEntries.slice(trimmedEntries.length);
+			const separator = trimmedEntries.trimEnd().endsWith(",") ? "" : ",";
+			const nextEntries =
+				`${trimmedEntries}${separator}` +
+				missingAbilityEntries.map((entry) => `\n${itemIndent}${entry},`).join("") +
+				trailingWhitespace;
+
+			return fullMatch.replace(sharedEntries, nextEntries);
+		});
 
 		return nextSource;
 	});
@@ -451,23 +460,27 @@ async function ensureAbilityWebpackAnchors(
 			);
 		}
 
-		return source.replace(
-			sharedEntriesPattern,
-			`for ( const [ entryName, candidates ] of [
-\t\t[
-\t\t\t'bindings/index',
-\t\t\t[ 'src/bindings/index.ts', 'src/bindings/index.js' ],
-\t\t],
-\t\t[
-\t\t\t'editor-plugins/index',
-\t\t\t[ 'src/editor-plugins/index.ts', 'src/editor-plugins/index.js' ],
-\t\t],
-\t\t[
-\t\t\t'abilities/index',
-\t\t\t[ 'src/abilities/index.ts', 'src/abilities/index.js' ],
-\t\t],
-\t] ) {`,
-		);
+		return source.replace(sharedEntriesPattern, (fullMatch, sharedEntries) => {
+			if (/['"]abilities\/index['"]/u.test(sharedEntries)) {
+				return fullMatch;
+			}
+
+			const tupleIndent = sharedEntries.match(/\n([ \t]*)\[/u)?.[1] ?? "\t\t";
+			const nestedIndent = `${tupleIndent}\t`;
+			const trimmedEntries = sharedEntries.replace(/\s*$/u, "");
+			const trailingWhitespace = sharedEntries.slice(trimmedEntries.length);
+			const separator = trimmedEntries.trimEnd().endsWith(",") ? "" : ",";
+			const abilityTuple = [
+				`${tupleIndent}[`,
+				`${nestedIndent}'abilities/index',`,
+				`${nestedIndent}[ 'src/abilities/index.ts', 'src/abilities/index.js' ],`,
+				`${tupleIndent}],`,
+			].join("\n");
+			const nextEntries =
+				`${trimmedEntries}${separator}\n${abilityTuple}` + trailingWhitespace;
+
+			return fullMatch.replace(sharedEntries, nextEntries);
+		});
 	});
 }
 
