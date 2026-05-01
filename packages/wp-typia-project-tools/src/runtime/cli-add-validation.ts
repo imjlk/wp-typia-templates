@@ -17,8 +17,20 @@ import {
 } from "./cli-add-types.js";
 
 const WORKSPACE_GENERATED_SLUG_PATTERN = /^[a-z][a-z0-9-]*$/;
+/**
+ * Namespace format accepted by plugin-level REST resources.
+ */
 export const REST_RESOURCE_NAMESPACE_PATTERN = /^[a-z][a-z0-9-]*(?:\/[a-z0-9-]+)+$/u;
 
+/**
+ * Validate a normalized workspace-generated slug.
+ *
+ * @param label Human-readable field label used in error messages.
+ * @param slug Normalized slug value to validate.
+ * @param usage CLI usage hint shown when the slug is empty.
+ * @returns The validated slug.
+ * @throws {Error} When the slug is empty or contains unsupported characters.
+ */
 export function assertValidGeneratedSlug(label: string, slug: string, usage: string): string {
 	if (!slug) {
 		throw new Error(`${label} is required. Use \`${usage}\`.`);
@@ -32,6 +44,13 @@ export function assertValidGeneratedSlug(label: string, slug: string, usage: str
 	return slug;
 }
 
+/**
+ * Validate a REST resource namespace.
+ *
+ * @param namespace Namespace candidate such as `vendor/v1`.
+ * @returns The trimmed namespace.
+ * @throws {Error} When the namespace is empty or not lowercase slash-separated.
+ */
 export function assertValidRestResourceNamespace(namespace: string): string {
 	const trimmed = namespace.trim();
 	if (!trimmed) {
@@ -48,6 +67,14 @@ export function assertValidRestResourceNamespace(namespace: string): string {
 	return trimmed;
 }
 
+/**
+ * Resolve the effective REST resource namespace for a workspace.
+ *
+ * @param workspaceNamespace Default workspace namespace prefix.
+ * @param namespace Optional explicit namespace from CLI input.
+ * @returns A validated namespace, defaulting to `<workspaceNamespace>/v1`.
+ * @throws {Error} When the resolved namespace is invalid.
+ */
 export function resolveRestResourceNamespace(
 	workspaceNamespace: string,
 	namespace?: string,
@@ -55,6 +82,13 @@ export function resolveRestResourceNamespace(
 	return assertValidRestResourceNamespace(namespace ?? `${workspaceNamespace}/v1`);
 }
 
+/**
+ * Parse and validate REST resource method ids from a comma-separated list.
+ *
+ * @param methods Optional comma-separated method list. Defaults to list, read, and create.
+ * @returns Deduplicated canonical REST resource method ids.
+ * @throws {Error} When any method is unsupported or the list is empty.
+ */
 export function assertValidRestResourceMethods(
 	methods?: string,
 ): RestResourceMethodId[] {
@@ -75,13 +109,20 @@ export function assertValidRestResourceMethods(
 
 	if (normalizedMethods.length === 0) {
 		throw new Error(
-			"REST resource methods must include at least one of: list, read, create, update, delete.",
+			`REST resource methods must include at least one of: ${REST_RESOURCE_METHOD_IDS.join(", ")}.`,
 		);
 	}
 
 	return normalizedMethods as RestResourceMethodId[];
 }
 
+/**
+ * Validate a hooked block insertion position.
+ *
+ * @param position Position candidate from CLI input.
+ * @returns The canonical hooked block position id.
+ * @throws {Error} When the position is not supported.
+ */
 export function assertValidHookedBlockPosition(position: string): HookedBlockPositionId {
 	if ((HOOKED_BLOCK_POSITION_IDS as readonly string[]).includes(position)) {
 		return position as HookedBlockPositionId;
@@ -92,18 +133,44 @@ export function assertValidHookedBlockPosition(position: string): HookedBlockPos
 	);
 }
 
+/**
+ * Build a PHP-safe workspace identifier prefix for a generated artifact.
+ *
+ * @param workspacePhpPrefix Workspace PHP prefix from project metadata.
+ * @param slug Generated artifact slug to append.
+ * @returns Snake-case PHP prefix for generated identifiers.
+ */
 export function buildWorkspacePhpPrefix(workspacePhpPrefix: string, slug: string): string {
 	return toSnakeCase(`${workspacePhpPrefix}_${slug}`);
 }
 
+/**
+ * Check whether a value is a supported built-in add block template id.
+ *
+ * @param value Candidate template id from CLI input.
+ * @returns True when the value is an `AddBlockTemplateId`.
+ */
 export function isAddBlockTemplateId(value: string): value is AddBlockTemplateId {
 	return (ADD_BLOCK_TEMPLATE_IDS as readonly string[]).includes(value);
 }
 
+/**
+ * Quote a value for safe insertion into generated TypeScript source.
+ *
+ * @param value Raw string value.
+ * @returns JSON-escaped TypeScript string literal.
+ */
 export function quoteTsString(value: string): string {
 	return JSON.stringify(value);
 }
 
+/**
+ * Validate a full block name used as a hooked block anchor.
+ *
+ * @param anchorBlockName Anchor block name from CLI input.
+ * @returns The trimmed full block name.
+ * @throws {Error} When the anchor is empty or not `namespace/slug`.
+ */
 export function assertValidHookAnchor(anchorBlockName: string): string {
 	const trimmed = anchorBlockName.trim();
 	if (!trimmed) {

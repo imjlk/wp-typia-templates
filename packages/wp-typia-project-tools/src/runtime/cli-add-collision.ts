@@ -156,6 +156,16 @@ export function assertBlockTransformDoesNotExist(
 	});
 }
 
+/**
+ * Ensure a pattern scaffold does not already exist on disk or in inventory.
+ *
+ * Delegates filesystem and inventory checks to `assertScaffoldDoesNotExist`.
+ *
+ * @param projectDir Absolute workspace root used to resolve scaffold paths.
+ * @param patternSlug Normalized pattern slug that would be created.
+ * @param inventory Current workspace inventory used for duplicate detection.
+ * @throws {Error} When the pattern file or inventory entry already exists.
+ */
 export function assertPatternDoesNotExist(
 	projectDir: string,
 	patternSlug: string,
@@ -177,6 +187,16 @@ export function assertPatternDoesNotExist(
 	});
 }
 
+/**
+ * Ensure a binding source scaffold does not already exist on disk or in inventory.
+ *
+ * Delegates filesystem and inventory checks to `assertScaffoldDoesNotExist`.
+ *
+ * @param projectDir Absolute workspace root used to resolve scaffold paths.
+ * @param bindingSourceSlug Normalized binding source slug that would be created.
+ * @param inventory Current workspace inventory used for duplicate detection.
+ * @throws {Error} When the binding directory or inventory entry already exists.
+ */
 export function assertBindingSourceDoesNotExist(
 	projectDir: string,
 	bindingSourceSlug: string,
@@ -198,6 +218,16 @@ export function assertBindingSourceDoesNotExist(
 	});
 }
 
+/**
+ * Ensure a REST resource scaffold does not already exist on disk or in inventory.
+ *
+ * Delegates filesystem and inventory checks to `assertScaffoldDoesNotExist`.
+ *
+ * @param projectDir Absolute workspace root used to resolve scaffold paths.
+ * @param restResourceSlug Normalized REST resource slug that would be created.
+ * @param inventory Current workspace inventory used for duplicate detection.
+ * @throws {Error} When REST resource files or inventory entry already exist.
+ */
 export function assertRestResourceDoesNotExist(
 	projectDir: string,
 	restResourceSlug: string,
@@ -294,6 +324,16 @@ export function assertAbilityDoesNotExist(
 	});
 }
 
+/**
+ * Ensure an AI feature scaffold does not already exist on disk or in inventory.
+ *
+ * Delegates filesystem and inventory checks to `assertScaffoldDoesNotExist`.
+ *
+ * @param projectDir Absolute workspace root used to resolve scaffold paths.
+ * @param aiFeatureSlug Normalized AI feature slug that would be created.
+ * @param inventory Current workspace inventory used for duplicate detection.
+ * @throws {Error} When AI feature files or inventory entry already exist.
+ */
 export function assertAiFeatureDoesNotExist(
 	projectDir: string,
 	aiFeatureSlug: string,

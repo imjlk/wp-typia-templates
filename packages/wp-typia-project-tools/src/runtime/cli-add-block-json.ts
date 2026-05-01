@@ -6,6 +6,14 @@ import type {
 	WorkspaceInventory,
 } from "./workspace-inventory.js";
 
+/**
+ * Resolve an existing workspace block inventory entry by slug.
+ *
+ * @param inventory Parsed workspace inventory that owns available blocks.
+ * @param blockSlug Workspace block slug to locate.
+ * @returns The matching workspace block inventory entry.
+ * @throws {Error} When the block slug is not present in the inventory.
+ */
 export function resolveWorkspaceBlock(
 	inventory: WorkspaceInventory,
 	blockSlug: string,
@@ -19,6 +27,14 @@ export function resolveWorkspaceBlock(
 	return block;
 }
 
+/**
+ * Read and validate a workspace block's `block.json` metadata from disk.
+ *
+ * @param projectDir Absolute workspace root directory.
+ * @param blockSlug Workspace block slug whose metadata should be read.
+ * @returns Parsed block metadata and the absolute `block.json` path.
+ * @throws {Error} When the file is missing or cannot be parsed as scaffold metadata.
+ */
 export function readWorkspaceBlockJson(
 	projectDir: string,
 	blockSlug: string,
@@ -52,6 +68,14 @@ export function readWorkspaceBlockJson(
 	};
 }
 
+/**
+ * Return a mutable `blockHooks` object for a parsed block metadata document.
+ *
+ * @param blockJson Parsed block metadata object that may be mutated.
+ * @param blockJsonRelativePath Relative path used in validation error messages.
+ * @returns The existing or newly created mutable `blockHooks` map.
+ * @throws {Error} When `blockHooks` exists but is not an object.
+ */
 export function getMutableBlockHooks(
 	blockJson: Record<string, unknown>,
 	blockJsonRelativePath: string,

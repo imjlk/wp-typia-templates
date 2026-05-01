@@ -1,4 +1,3 @@
-import fs from "node:fs";
 import { promises as fsp } from "node:fs";
 import path from "node:path";
 
@@ -9,6 +8,12 @@ import type {
 	WorkspaceProject,
 } from "./workspace-project.js";
 
+/**
+ * Resolve the primary PHP bootstrap file for an official workspace.
+ *
+ * @param workspace Workspace metadata that provides `packageName` and `projectDir`.
+ * @returns Absolute path to `<packageBase>.php` in the workspace root.
+ */
 export function getWorkspaceBootstrapPath(workspace: WorkspaceProject): string {
 	const workspaceBaseName = workspace.packageName.split("/").pop() ?? workspace.packageName;
 	return path.join(workspace.projectDir, `${workspaceBaseName}.php`);
@@ -32,11 +37,14 @@ export async function patchFile(
  * Read a file when it exists and otherwise return `null`.
  */
 export async function readOptionalFile(filePath: string): Promise<string | null> {
-	if (!fs.existsSync(filePath)) {
-		return null;
+	try {
+		return await fsp.readFile(filePath, "utf8");
+	} catch (error) {
+		if (isFileNotFoundError(error)) {
+			return null;
+		}
+		throw error;
 	}
-
-	return fsp.readFile(filePath, "utf8");
 }
 
 /**
@@ -80,4 +88,13 @@ export async function rollbackWorkspaceMutation(snapshot: WorkspaceMutationSnaps
 	for (const { filePath, source } of snapshot.fileSources) {
 		await restoreOptionalFile(filePath, source);
 	}
+}
+
+function isFileNotFoundError(error: unknown): boolean {
+	return (
+		typeof error === "object" &&
+		error !== null &&
+		"code" in error &&
+		(error as { code?: unknown }).code === "ENOENT"
+	);
 }

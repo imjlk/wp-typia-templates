@@ -4,6 +4,7 @@ import {
 import {
 	ADD_BLOCK_TEMPLATE_IDS,
 	EDITOR_PLUGIN_SLOT_IDS,
+	REST_RESOURCE_METHOD_IDS,
 } from "./cli-add-types.js";
 import {
 	WORKSPACE_TEMPLATE_PACKAGE,
@@ -21,7 +22,7 @@ export function formatAddHelpText(): string {
   wp-typia add transform <name> --from <namespace/block> --to <block-slug|namespace/block-slug> [--dry-run]
   wp-typia add pattern <name> [--dry-run]
   wp-typia add binding-source <name> [--block <block-slug|namespace/block-slug> --attribute <attribute>] [--dry-run]
-  wp-typia add rest-resource <name> [--namespace <vendor/v1>] [--methods <list,read,create,update,delete>] [--dry-run]
+  wp-typia add rest-resource <name> [--namespace <vendor/v1>] [--methods <${REST_RESOURCE_METHOD_IDS.join(",")}>] [--dry-run]
   wp-typia add ability <name> [--dry-run]
   wp-typia add ai-feature <name> [--namespace <vendor/v1>] [--dry-run]
   wp-typia add hooked-block <block-slug> --anchor <anchor-block-name> --position <${HOOKED_BLOCK_POSITION_IDS.join("|")}> [--dry-run]

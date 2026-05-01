@@ -5,6 +5,7 @@ import path from 'node:path';
 
 import {
   assertScaffoldDoesNotExist,
+  readOptionalFile,
 } from '../src/runtime/cli-add-shared.js';
 
 const runtimeRoot = path.join(import.meta.dir, '..', 'src', 'runtime');
@@ -55,6 +56,7 @@ test('focused add runtime modules own their helper categories', () => {
   expect(collisionSource).toContain('export function assertScaffoldDoesNotExist');
   expect(collisionSource).toContain('export function assertEditorPluginDoesNotExist');
   expect(helpSource).toContain('export function formatAddHelpText');
+  expect(helpSource).toContain('REST_RESOURCE_METHOD_IDS.join(",")');
 });
 
 test('shared add collision helper allows missing filesystem paths and inventory entries', () => {
@@ -111,4 +113,12 @@ test('shared add collision helper preserves inventory collision messages', () =>
   ).toThrow(
     'A pattern inventory entry already exists for hero. Choose a different name.',
   );
+});
+
+test('shared optional file reader returns null for missing paths and reads existing files', async () => {
+  const filePath = path.join(tempRoot, 'optional-file.txt');
+
+  await expect(readOptionalFile(filePath)).resolves.toBeNull();
+  fs.writeFileSync(filePath, 'hello\n', 'utf8');
+  await expect(readOptionalFile(filePath)).resolves.toBe('hello\n');
 });

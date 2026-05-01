@@ -15,6 +15,9 @@ export const ADD_KIND_IDS = [
 	"hooked-block",
 	"editor-plugin",
 ] as const;
+/**
+ * Union of supported top-level `wp-typia add` kind ids.
+ */
 export type AddKindId = (typeof ADD_KIND_IDS)[number];
 
 /**
@@ -28,14 +31,23 @@ export const REST_RESOURCE_METHOD_IDS = [
 	"update",
 	"delete",
 ] as const;
+/**
+ * Union of supported plugin-level REST resource method ids.
+ */
 export type RestResourceMethodId = (typeof REST_RESOURCE_METHOD_IDS)[number];
 
 /**
- * Supported editor-plugin shell surfaces accepted by
+ * Canonical editor-plugin shell surface ids accepted by
  * `wp-typia add editor-plugin --slot`.
  */
 export const EDITOR_PLUGIN_SLOT_IDS = ["sidebar", "document-setting-panel"] as const;
+/**
+ * Union of canonical editor-plugin shell surface ids.
+ */
 export type EditorPluginSlotId = (typeof EDITOR_PLUGIN_SLOT_IDS)[number];
+/**
+ * Legacy and canonical editor-plugin slot aliases keyed by user-facing input.
+ */
 export const EDITOR_PLUGIN_SLOT_ALIASES = {
 	PluginDocumentSettingPanel: "document-setting-panel",
 	PluginSidebar: "sidebar",
@@ -43,6 +55,12 @@ export const EDITOR_PLUGIN_SLOT_ALIASES = {
 	sidebar: "sidebar",
 } as const satisfies Record<string, EditorPluginSlotId>;
 
+/**
+ * Resolve a user-provided editor-plugin slot alias to its canonical id.
+ *
+ * @param slot Raw slot value from CLI input.
+ * @returns The canonical slot id, or `undefined` when unsupported.
+ */
 export function resolveEditorPluginSlotAlias(
 	slot: string,
 ): EditorPluginSlotId | undefined {
@@ -67,8 +85,18 @@ export const ADD_BLOCK_TEMPLATE_IDS = [
 	"persistence",
 	"compound",
 ] as const;
+/**
+ * Union of supported built-in block template ids.
+ */
 export type AddBlockTemplateId = (typeof ADD_BLOCK_TEMPLATE_IDS)[number];
 
+/**
+ * Options for `wp-typia add variation`.
+ *
+ * @property blockName Existing workspace block slug that owns the variation.
+ * @property cwd Working directory used to resolve the nearest official workspace.
+ * @property variationName Human-entered variation name normalized into a slug.
+ */
 export interface RunAddVariationCommandOptions {
 	blockName: string;
 	cwd?: string;
@@ -109,11 +137,25 @@ export interface RunAddBlockTransformCommandOptions {
 	transformName: string;
 }
 
+/**
+ * Options for `wp-typia add pattern`.
+ *
+ * @property cwd Working directory used to resolve the nearest official workspace.
+ * @property patternName Human-entered pattern name normalized into a slug.
+ */
 export interface RunAddPatternCommandOptions {
 	cwd?: string;
 	patternName: string;
 }
 
+/**
+ * Options for `wp-typia add binding-source`.
+ *
+ * @property attributeName Optional block attribute to bind when `blockName` is provided.
+ * @property blockName Optional existing workspace block slug or full block name.
+ * @property bindingSourceName Human-entered binding source name normalized into a slug.
+ * @property cwd Working directory used to resolve the nearest official workspace.
+ */
 export interface RunAddBindingSourceCommandOptions {
 	attributeName?: string;
 	blockName?: string;
@@ -121,6 +163,14 @@ export interface RunAddBindingSourceCommandOptions {
 	cwd?: string;
 }
 
+/**
+ * Options for `wp-typia add rest-resource`.
+ *
+ * @property cwd Working directory used to resolve the nearest official workspace.
+ * @property methods Optional comma-separated REST method list.
+ * @property namespace Optional REST namespace, defaulting to the workspace namespace.
+ * @property restResourceName Human-entered resource name normalized into a slug.
+ */
 export interface RunAddRestResourceCommandOptions {
 	cwd?: string;
 	methods?: string;
@@ -159,12 +209,27 @@ export interface RunAddAbilityCommandOptions {
 	cwd?: string;
 }
 
+/**
+ * Options for `wp-typia add ai-feature`.
+ *
+ * @property aiFeatureName Human-entered AI feature name normalized into a slug.
+ * @property cwd Working directory used to resolve the nearest official workspace.
+ * @property namespace Optional REST namespace, defaulting to the workspace namespace.
+ */
 export interface RunAddAiFeatureCommandOptions {
 	aiFeatureName: string;
 	cwd?: string;
 	namespace?: string;
 }
 
+/**
+ * Options for `wp-typia add hooked-block`.
+ *
+ * @property anchorBlockName Full `namespace/block` anchor block name.
+ * @property blockName Existing workspace block slug that receives metadata.
+ * @property cwd Working directory used to resolve the nearest official workspace.
+ * @property position Hook position accepted by WordPress block hooks.
+ */
 export interface RunAddHookedBlockCommandOptions {
 	anchorBlockName: string;
 	blockName: string;
@@ -187,6 +252,20 @@ export interface RunAddEditorPluginCommandOptions {
 	slot?: string;
 }
 
+/**
+ * Options for `wp-typia add block`.
+ *
+ * @property alternateRenderTargets Optional comma-separated alternate render targets.
+ * @property blockName Human-entered block name normalized into a slug.
+ * @property cwd Working directory used to resolve the nearest official workspace.
+ * @property dataStorageMode Optional persistence storage mode.
+ * @property externalLayerId Optional external layer id to apply.
+ * @property externalLayerSource Optional local, GitHub, or npm external layer source.
+ * @property innerBlocksPreset Optional compound block inner blocks preset.
+ * @property persistencePolicy Optional persistence access policy.
+ * @property selectExternalLayerId Optional selector for interactive external layer choice.
+ * @property templateId Optional built-in block template id.
+ */
 export interface RunAddBlockCommandOptions {
 	alternateRenderTargets?: string;
 	blockName: string;
@@ -206,6 +285,9 @@ export interface RunAddBlockCommandOptions {
 	templateId?: string;
 }
 
+/**
+ * Captured workspace mutation state used to roll back partial add operations.
+ */
 export interface WorkspaceMutationSnapshot {
 	/** Snapshots of file contents taken before the mutation starts. */
 	fileSources: Array<{
