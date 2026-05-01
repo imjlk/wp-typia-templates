@@ -1,5 +1,13 @@
 # @wp-typia/project-tools
 
+## 0.22.2 — 2026-05-01
+
+### Patch changes
+
+- [f77d10f](https://github.com/imjlk/wp-typia/commit/f77d10f443493724f116a6db9f6bfc51e052671f) Expose generated AI feature support metadata to client and editor helpers, including compatibility feature ids, runtime gates, support-hint exports, and unavailable-error helpers for graceful UI degradation. — Thanks @imjlk!
+- [31be7b9](https://github.com/imjlk/wp-typia/commit/31be7b9aac44bd8f39bff85bd5d45b40f133b083) Added WordPress-native customization seams to scaffolded `add ai-feature` PHP so plugin authors can override capability checks, prompt payload/text, prompt options, unavailable messages, and schema-compatible telemetry without editing generated files. — Thanks @imjlk!
+- [9ae7955](https://github.com/imjlk/wp-typia/commit/9ae79554b180c1c7cc82ba8f981097b406807c1e) Promoted reusable OpenAPI-backed constraint restoration for `typia.llm` adapter artifacts into `@wp-typia/project-tools`, including mixed body/query input coverage and regression tests that keep the example adapter path aligned with the supported helper surface. — Thanks @imjlk!
+
 ## 0.22.1 — 2026-04-30
 
 ### Patch changes
