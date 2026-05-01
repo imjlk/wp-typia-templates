@@ -5,6 +5,15 @@ import {
 import type * as CliAddRuntime from '@wp-typia/project-tools/cli-add';
 import type { ReadlinePrompt } from '@wp-typia/project-tools/cli-prompt';
 import { ADD_KIND_IDS, type AddKindId } from './add-kind-ids';
+import {
+  readOptionalPairedStrictStringFlags,
+  readOptionalStrictStringFlag,
+  requireStrictStringFlag,
+} from './cli-string-flags';
+import {
+  toExternalLayerPromptOptions,
+  type ExternalLayerSelectOption,
+} from './external-layer-prompt-options';
 
 export { ADD_KIND_IDS } from './add-kind-ids';
 export type { AddKindId } from './add-kind-ids';
@@ -13,11 +22,6 @@ type PrintLine = (line: string) => void;
 type AddRuntime = typeof CliAddRuntime;
 type AddKindExecutionResultBase = {
   projectDir: string;
-};
-type ExternalLayerSelectOption = {
-  description?: string;
-  extends: string[];
-  id: string;
 };
 
 export type AddFieldName =
@@ -193,57 +197,6 @@ const NAME_NAMESPACE_VISIBLE_FIELDS = [
   'namespace',
 ] as const satisfies ReadonlyArray<AddFieldName>;
 
-function readOptionalStringFlag(
-  flags: Record<string, unknown>,
-  name: string,
-): string | undefined {
-  const value = flags[name];
-  if (value === undefined || value === null) {
-    return undefined;
-  }
-  if (typeof value !== 'string' || value.trim().length === 0) {
-    throw createCliDiagnosticCodeError(
-      CLI_DIAGNOSTIC_CODES.MISSING_ARGUMENT,
-      `\`--${name}\` requires a value.`,
-    );
-  }
-  return value;
-}
-
-function requireStringFlag(
-  flags: Record<string, unknown>,
-  name: string,
-  message: string,
-): string {
-  const value = readOptionalStringFlag(flags, name);
-  if (!value) {
-    throw createCliDiagnosticCodeError(
-      CLI_DIAGNOSTIC_CODES.MISSING_ARGUMENT,
-      message,
-    );
-  }
-
-  return value;
-}
-
-function readOptionalPairedStringFlags(
-  flags: Record<string, unknown>,
-  leftName: string,
-  rightName: string,
-  message: string,
-): readonly [string | undefined, string | undefined] {
-  const leftValue = readOptionalStringFlag(flags, leftName);
-  const rightValue = readOptionalStringFlag(flags, rightName);
-  if (Boolean(leftValue) !== Boolean(rightValue)) {
-    throw createCliDiagnosticCodeError(
-      CLI_DIAGNOSTIC_CODES.MISSING_ARGUMENT,
-      message,
-    );
-  }
-
-  return [leftValue, rightValue] as const;
-}
-
 function requireAddKindName(
   context: AddKindExecutionContext,
   message: string,
@@ -256,29 +209,6 @@ function requireAddKindName(
   }
 
   return context.name;
-}
-
-function formatExternalLayerSelectHint(
-  option: ExternalLayerSelectOption,
-): string | undefined {
-  const details = [
-    option.description,
-    option.extends.length > 0
-      ? `extends ${option.extends.join(', ')}`
-      : undefined,
-  ].filter(
-    (value): value is string => typeof value === 'string' && value.length > 0,
-  );
-
-  return details.length > 0 ? details.join(' · ') : undefined;
-}
-
-function toExternalLayerPromptOptions(options: ExternalLayerSelectOption[]) {
-  return options.map((option) => ({
-    hint: formatExternalLayerSelectHint(option),
-    label: option.id,
-    value: option.id,
-  }));
 }
 
 function defineAddKindRegistryEntry<TResult extends AddKindExecutionResultBase>(
@@ -334,7 +264,7 @@ export const ADD_KIND_REGISTRY = {
         context,
         '`wp-typia add admin-view` requires <name>. Usage: wp-typia add admin-view <name> [--source <rest-resource:slug|core-data:kind/name>].',
       );
-      const source = readOptionalStringFlag(context.flags, 'source');
+      const source = readOptionalStrictStringFlag(context.flags, 'source');
 
       return createNamedExecutionPlan(context, {
         execute: ({ cwd, name }) =>
@@ -385,7 +315,7 @@ export const ADD_KIND_REGISTRY = {
         context,
         '`wp-typia add binding-source` requires <name>. Usage: wp-typia add binding-source <name> [--block <block-slug|namespace/block-slug> --attribute <attribute>].',
       );
-      const [blockName, attributeName] = readOptionalPairedStringFlags(
+      const [blockName, attributeName] = readOptionalPairedStrictStringFlags(
         context.flags,
         'block',
         'attribute',
@@ -439,11 +369,11 @@ export const ADD_KIND_REGISTRY = {
         context,
         '`wp-typia add block` requires <name>. Usage: wp-typia add block <name> [--template <basic|interactivity|persistence|compound>]',
       );
-      const externalLayerId = readOptionalStringFlag(
+      const externalLayerId = readOptionalStrictStringFlag(
         context.flags,
         'external-layer-id',
       );
-      const externalLayerSource = readOptionalStringFlag(
+      const externalLayerSource = readOptionalStrictStringFlag(
         context.flags,
         'external-layer-source',
       );
@@ -454,23 +384,23 @@ export const ADD_KIND_REGISTRY = {
       const selectPrompt = shouldPromptForLayerSelection
         ? await context.getOrCreatePrompt()
         : undefined;
-      const alternateRenderTargets = readOptionalStringFlag(
+      const alternateRenderTargets = readOptionalStrictStringFlag(
         context.flags,
         'alternate-render-targets',
       );
-      const dataStorageMode = readOptionalStringFlag(
+      const dataStorageMode = readOptionalStrictStringFlag(
         context.flags,
         'data-storage',
       );
-      const innerBlocksPreset = readOptionalStringFlag(
+      const innerBlocksPreset = readOptionalStrictStringFlag(
         context.flags,
         'inner-blocks-preset',
       );
-      const persistencePolicy = readOptionalStringFlag(
+      const persistencePolicy = readOptionalStrictStringFlag(
         context.flags,
         'persistence-policy',
       );
-      let resolvedTemplateId = readOptionalStringFlag(
+      let resolvedTemplateId = readOptionalStrictStringFlag(
         context.flags,
         'template',
       ) as CliAddRuntime.AddBlockTemplateId | undefined;
@@ -594,7 +524,7 @@ export const ADD_KIND_REGISTRY = {
         context,
         '`wp-typia add editor-plugin` requires <name>. Usage: wp-typia add editor-plugin <name> [--slot <sidebar|document-setting-panel>].',
       );
-      const slot = readOptionalStringFlag(context.flags, 'slot');
+      const slot = readOptionalStrictStringFlag(context.flags, 'slot');
 
       return createNamedExecutionPlan(context, {
         execute: ({ cwd, name }) =>
@@ -639,12 +569,12 @@ export const ADD_KIND_REGISTRY = {
         context,
         '`wp-typia add hooked-block` requires <block-slug>. Usage: wp-typia add hooked-block <block-slug> --anchor <anchor-block-name> --position <before|after|firstChild|lastChild>.',
       );
-      const anchorBlockName = requireStringFlag(
+      const anchorBlockName = requireStrictStringFlag(
         context.flags,
         'anchor',
         '`wp-typia add hooked-block` requires --anchor <anchor-block-name>.',
       );
-      const position = requireStringFlag(
+      const position = requireStrictStringFlag(
         context.flags,
         'position',
         '`wp-typia add hooked-block` requires --position <before|after|firstChild|lastChild>.',
@@ -727,7 +657,7 @@ export const ADD_KIND_REGISTRY = {
         context,
         '`wp-typia add style` requires <name>. Usage: wp-typia add style <name> --block <block-slug>.',
       );
-      const blockSlug = requireStringFlag(
+      const blockSlug = requireStrictStringFlag(
         context.flags,
         'block',
         '`wp-typia add style` requires --block <block-slug>.',
@@ -775,12 +705,12 @@ export const ADD_KIND_REGISTRY = {
         context,
         '`wp-typia add transform` requires <name>. Usage: wp-typia add transform <name> --from <namespace/block> --to <block-slug|namespace/block-slug>.',
       );
-      const fromBlockName = requireStringFlag(
+      const fromBlockName = requireStrictStringFlag(
         context.flags,
         'from',
         '`wp-typia add transform` requires --from <namespace/block>.',
       );
-      const toBlockName = requireStringFlag(
+      const toBlockName = requireStrictStringFlag(
         context.flags,
         'to',
         '`wp-typia add transform` requires --to <block-slug|namespace/block-slug>.',
@@ -832,8 +762,8 @@ export const ADD_KIND_REGISTRY = {
         context,
         '`wp-typia add rest-resource` requires <name>. Usage: wp-typia add rest-resource <name> [--namespace <vendor/v1>] [--methods <list,read,create>].',
       );
-      const methods = readOptionalStringFlag(context.flags, 'methods');
-      const namespace = readOptionalStringFlag(context.flags, 'namespace');
+      const methods = readOptionalStrictStringFlag(context.flags, 'methods');
+      const namespace = readOptionalStrictStringFlag(context.flags, 'namespace');
 
       return createNamedExecutionPlan(context, {
         execute: ({ cwd, name }) =>
@@ -879,7 +809,7 @@ export const ADD_KIND_REGISTRY = {
         context,
         '`wp-typia add ai-feature` requires <name>. Usage: wp-typia add ai-feature <name> [--namespace <vendor/v1>].',
       );
-      const namespace = readOptionalStringFlag(context.flags, 'namespace');
+      const namespace = readOptionalStrictStringFlag(context.flags, 'namespace');
 
       return createNamedExecutionPlan(context, {
         execute: ({ cwd, name }) =>
@@ -925,7 +855,7 @@ export const ADD_KIND_REGISTRY = {
         context,
         '`wp-typia add variation` requires <name>. Usage: wp-typia add variation <name> --block <block-slug>',
       );
-      const blockSlug = requireStringFlag(
+      const blockSlug = requireStrictStringFlag(
         context.flags,
         'block',
         '`wp-typia add variation` requires --block <block-slug>.',

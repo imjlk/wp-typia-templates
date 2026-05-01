@@ -29,6 +29,7 @@ import {
   toExternalLayerPromptOptions,
 } from './runtime-bridge-output';
 import { isInteractiveTerminal } from './runtime-capabilities';
+import { readOptionalLooseStringFlag } from './cli-string-flags';
 export {
   buildCreateCompletionPayload,
   buildCreateDryRunPayload,
@@ -126,24 +127,6 @@ function shouldWrapCliCommandError(options: {
   }
 
   return true;
-}
-
-function readOptionalLooseStringFlag(
-  flags: Record<string, unknown>,
-  name: string,
-): string | undefined {
-  const value = flags[name];
-  if (value === undefined || value === null) {
-    return undefined;
-  }
-  if (typeof value !== 'string') {
-    throw createCliDiagnosticCodeError(
-      CLI_DIAGNOSTIC_CODES.MISSING_ARGUMENT,
-      `\`--${name}\` requires a value.`,
-    );
-  }
-  const trimmed = value.trim();
-  return trimmed.length > 0 ? trimmed : undefined;
 }
 
 function pushFlag(argv: string[], name: string, value: unknown): void {

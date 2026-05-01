@@ -13,6 +13,10 @@ import {
   type OutputMarkerOptions,
   stripLeadingOutputMarker,
 } from './output-markers';
+import {
+  toExternalLayerPromptOptions,
+  type ExternalLayerSelectOption,
+} from './external-layer-prompt-options';
 
 type PrintLine = (line: string) => void;
 type PackageManagerId = 'bun' | 'npm' | 'pnpm' | 'yarn';
@@ -101,12 +105,6 @@ export type SerializableCompletionPayload = {
   summaryLines?: string[];
   title: string;
   warningLines?: string[];
-};
-
-type ExternalLayerSelectOption = {
-  description?: string;
-  extends: string[];
-  id: string;
 };
 
 /**
@@ -695,33 +693,10 @@ export function printBlock(lines: string[], printLine: PrintLine): void {
   }
 }
 
-function formatExternalLayerSelectHint(
-  option: ExternalLayerSelectOption,
-): string | undefined {
-  const details = [
-    option.description,
-    option.extends.length > 0
-      ? `extends ${option.extends.join(', ')}`
-      : undefined,
-  ].filter(
-    (value): value is string => typeof value === 'string' && value.length > 0,
-  );
-
-  return details.length > 0 ? details.join(' · ') : undefined;
-}
-
 /**
  * Converts external layer options into prompt-compatible select items.
  *
  * @param options External layer options returned by the block generator.
  * @returns Prompt select options with labels and hints.
  */
-export function toExternalLayerPromptOptions(
-  options: ExternalLayerSelectOption[],
-) {
-  return options.map((option) => ({
-    hint: formatExternalLayerSelectHint(option),
-    label: option.id,
-    value: option.id,
-  }));
-}
+export { toExternalLayerPromptOptions } from './external-layer-prompt-options';

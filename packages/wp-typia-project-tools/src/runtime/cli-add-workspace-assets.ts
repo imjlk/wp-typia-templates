@@ -41,6 +41,7 @@ import {
 	type WorkspaceMutationSnapshot,
 	snapshotWorkspaceFiles,
 } from "./cli-add-shared.js";
+import { normalizeOptionalCliString } from "./cli-validation.js";
 
 const PATTERN_BOOTSTRAP_CATEGORY = "register_block_pattern_category";
 const BINDING_SOURCE_SERVER_GLOB = "/src/bindings/*/server.php";
@@ -320,9 +321,10 @@ function resolveBindingTarget(
 	options: Pick<RunAddBindingSourceCommandOptions, "attributeName" | "blockName">,
 	namespace: string,
 ): BindingTarget | undefined {
-	const hasBlock = options.blockName !== undefined && options.blockName.trim().length > 0;
-	const hasAttribute =
-		options.attributeName !== undefined && options.attributeName.trim().length > 0;
+	const blockName = normalizeOptionalCliString(options.blockName);
+	const attributeName = normalizeOptionalCliString(options.attributeName);
+	const hasBlock = blockName !== undefined;
+	const hasAttribute = attributeName !== undefined;
 	if (!hasBlock && !hasAttribute) {
 		return undefined;
 	}
@@ -333,8 +335,8 @@ function resolveBindingTarget(
 	}
 
 	return {
-		attributeName: assertValidBindingAttributeName(options.attributeName ?? ""),
-		blockSlug: resolveBindingTargetBlockSlug(options.blockName ?? "", namespace),
+		attributeName: assertValidBindingAttributeName(attributeName ?? ""),
+		blockSlug: resolveBindingTargetBlockSlug(blockName ?? "", namespace),
 	};
 }
 
