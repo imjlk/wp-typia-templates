@@ -50,6 +50,8 @@ if ( ! defined( 'ABSPATH' ) ) {
  * - ${quotePhpString(adminNoticeMessageFilterHook)} filters the wp-admin notice shown when AI support is unavailable.
  * - ${quotePhpString(unavailableMessageFilterHook)} filters REST-facing unavailable messages by reason code.
  * - ${quotePhpString(telemetryFilterHook)} filters the response telemetry array before schema validation. Return a schema-compatible array.
+ *
+ * Compatibility note: this server-only endpoint avoids WordPress script-module enqueue APIs so older sites can load the generated feature file safely.
  */
 
 if ( ! function_exists( '${loadSchemaFunctionName}' ) ) {

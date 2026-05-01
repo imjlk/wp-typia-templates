@@ -236,6 +236,10 @@ describe("@wp-typia/project-tools cli-add-workspace ai-feature", () => {
 		expect(phpSource).toContain("generate_text_result");
 		expect(phpSource).toContain("using_model_preference");
 		expect(phpSource).toContain("is_wp_error( $permission )");
+		expect(phpSource).toContain(
+			"this server-only endpoint avoids WordPress script-module enqueue APIs",
+		);
+		expect(phpSource).not.toContain("wp_enqueue_script_module(");
 		expect(phpSource).toContain("admin_notices");
 		expect(phpSource).toContain("sprintf(");
 		expect(phpSource).toContain("The %s AI feature is optional");
