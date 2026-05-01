@@ -7,6 +7,7 @@ import {
 	inferPackageManagerId,
 	parsePackageManagerField,
 } from "../src/runtime/package-managers.js";
+import { detectPackageManagerId } from "../src/runtime/migration-utils.js";
 
 const tempRoot = fs.mkdtempSync(
 	path.join(os.tmpdir(), "wp-typia-package-managers-"),
@@ -116,5 +117,19 @@ describe("package manager inference", () => {
 		const projectDir = writeProjectFixture({ name: "fallback-npm" });
 
 		expect(inferPackageManagerId(projectDir)).toBe("npm");
+	});
+
+	test("keeps migration helper fallback aligned with shared inference", () => {
+		const npmProjectDir = writeProjectFixture({
+			files: ["package-lock.json"],
+			name: "migration-npm-lock",
+		});
+		const pnpProjectDir = writeProjectFixture({
+			files: [".pnp.cjs"],
+			name: "migration-yarn-pnp",
+		});
+
+		expect(detectPackageManagerId(npmProjectDir)).toBe("npm");
+		expect(detectPackageManagerId(pnpProjectDir)).toBe("yarn");
 	});
 });

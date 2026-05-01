@@ -4,6 +4,7 @@ import { execSync } from 'node:child_process';
 
 import {
   formatRunScript,
+  inferPackageManagerId,
   parsePackageManagerField,
   type PackageManagerId,
 } from './package-managers.js';
@@ -203,7 +204,10 @@ export function detectPackageManagerId(
   const packageJson = readJson<{ packageManager?: string }>(
     path.join(projectDir, 'package.json'),
   );
-  return parsePackageManagerField(packageJson.packageManager) ?? 'bun';
+  return (
+    parsePackageManagerField(packageJson.packageManager) ??
+    inferPackageManagerId(projectDir)
+  );
 }
 
 export function getLocalTsxBinary(projectDir: string): string {
