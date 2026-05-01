@@ -836,6 +836,13 @@ describe('@wp-typia/project-tools scaffold core', () => {
       expect(generatedEdit).toContain(
         "data-wp-on--click={isPreviewing ? demoInteractivityStore.directive.action('handleClick') : undefined}",
       );
+      expect(generatedInteractivityStore).toContain(
+        "type InteractivityCallable =\n  | ((...args: unknown[]) => unknown)\n  | ReturnType<typeof import('@wordpress/interactivity').withSyncEvent>;",
+      );
+      expect(generatedInteractivityStore).toContain(
+        'type InteractivityActionHandler = InteractivityCallable;',
+      );
+      expect(generatedInteractivityStore).not.toContain('CallableFunction');
       expect(generatedValidators).toContain('from "./validator-toolkit"');
       expect(generatedBlockMetadata).toContain(
         'defineScaffoldBlockMetadata(rawMetadata)',

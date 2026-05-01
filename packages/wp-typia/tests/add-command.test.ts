@@ -82,7 +82,10 @@ describe('wp-typia add command bridge', () => {
     );
     expect(fs.existsSync(path.join(blockDir, 'interactivity.ts'))).toBe(true);
     expect(generatedInteractivityStore).toContain(
-      'type InteractivityCallable = CallableFunction;',
+      "type InteractivityCallable =\n  | ((...args: unknown[]) => unknown)\n  | ReturnType<typeof import('@wordpress/interactivity').withSyncEvent>;",
+    );
+    expect(generatedInteractivityStore).toContain(
+      'type InteractivityActionHandler = InteractivityCallable;',
     );
     expect(generatedInteractivityStore).not.toContain(
       'type InteractivityCallable = Function;',
@@ -90,6 +93,7 @@ describe('wp-typia add command bridge', () => {
     expect(generatedInteractivityStore).not.toContain(
       'type InteractivityActionHandler = Function;',
     );
+    expect(generatedInteractivityStore).not.toContain('CallableFunction');
     expect(generatedInteractivityStore).toContain(
       'action<Key extends InteractivityMethodKey<Actions>>',
     );

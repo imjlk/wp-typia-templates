@@ -431,7 +431,9 @@ type InteractivityActionShape = object;
 type InteractivityCallbackShape = object;
 type InteractivityContextShape = object;
 type InteractivityStateShape = object;
-type InteractivityCallable = CallableFunction;
+type InteractivityCallable =
+  | ((...args: unknown[]) => unknown)
+  | ReturnType<typeof import('@wordpress/interactivity').withSyncEvent>;
 type InteractivityKey<T extends object> = Extract<keyof T, string>;
 type InteractivityMethodKey<T extends object> = {
   [Key in InteractivityKey<T>]: T[Key] extends InteractivityCallable ? Key : never;
@@ -534,7 +536,7 @@ export function defineInteractivityStore<
   };
 }
 
-type InteractivityActionHandler = CallableFunction;
+type InteractivityActionHandler = InteractivityCallable;
 
 export interface {{pascalCase}}StoreActions {
   handleClick: InteractivityActionHandler;
