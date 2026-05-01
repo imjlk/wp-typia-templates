@@ -667,12 +667,16 @@ export async function runNodeCli(argv = process.argv.slice(2)): Promise<void> {
   };
   const [command, subcommand] = positionals;
   const helpRequested =
-    cliArgv.length === 0 ||
-    hasFlagBeforeTerminator(cliArgv, '--help') ||
-    command === 'help';
+    hasFlagBeforeTerminator(cliArgv, '--help') || command === 'help';
   const helpTarget = command === 'help' ? subcommand : command;
   const versionRequested =
     hasFlagBeforeTerminator(cliArgv, '--version') || command === 'version';
+
+  if (cliArgv.length === 0) {
+    renderGeneralHelp();
+    process.exitCode = 1;
+    return;
+  }
 
   if (helpRequested) {
     if (helpTarget) {
