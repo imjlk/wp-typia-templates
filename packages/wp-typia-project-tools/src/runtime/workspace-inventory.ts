@@ -383,6 +383,122 @@ export const EDITOR_PLUGINS: WorkspaceEditorPluginConfig[] = [
 ];
 `;
 
+type InventorySectionDescriptor = {
+	/** Optional exported interface that backs the inventory section entries. */
+	interface?: {
+		name: string;
+		section: string;
+	};
+	/** Optional exported const array that stores the inventory section entries. */
+	value?: {
+		name: string;
+		section: string;
+	};
+};
+
+const INVENTORY_SECTIONS: readonly InventorySectionDescriptor[] = [
+	{
+		interface: {
+			name: "WorkspaceVariationConfig",
+			section: VARIATIONS_INTERFACE_SECTION,
+		},
+		value: {
+			name: "VARIATIONS",
+			section: VARIATIONS_CONST_SECTION,
+		},
+	},
+	{
+		interface: {
+			name: "WorkspaceBlockStyleConfig",
+			section: BLOCK_STYLES_INTERFACE_SECTION,
+		},
+		value: {
+			name: "BLOCK_STYLES",
+			section: BLOCK_STYLES_CONST_SECTION,
+		},
+	},
+	{
+		interface: {
+			name: "WorkspaceBlockTransformConfig",
+			section: BLOCK_TRANSFORMS_INTERFACE_SECTION,
+		},
+		value: {
+			name: "BLOCK_TRANSFORMS",
+			section: BLOCK_TRANSFORMS_CONST_SECTION,
+		},
+	},
+	{
+		interface: {
+			name: "WorkspacePatternConfig",
+			section: PATTERNS_INTERFACE_SECTION,
+		},
+		value: {
+			name: "PATTERNS",
+			section: PATTERNS_CONST_SECTION,
+		},
+	},
+	{
+		interface: {
+			name: "WorkspaceBindingSourceConfig",
+			section: BINDING_SOURCES_INTERFACE_SECTION,
+		},
+		value: {
+			name: "BINDING_SOURCES",
+			section: BINDING_SOURCES_CONST_SECTION,
+		},
+	},
+	{
+		interface: {
+			name: "WorkspaceRestResourceConfig",
+			section: REST_RESOURCES_INTERFACE_SECTION,
+		},
+		value: {
+			name: "REST_RESOURCES",
+			section: REST_RESOURCES_CONST_SECTION,
+		},
+	},
+	{
+		interface: {
+			name: "WorkspaceAbilityConfig",
+			section: ABILITIES_INTERFACE_SECTION,
+		},
+		value: {
+			name: "ABILITIES",
+			section: ABILITIES_CONST_SECTION,
+		},
+	},
+	{
+		interface: {
+			name: "WorkspaceAiFeatureConfig",
+			section: AI_FEATURES_INTERFACE_SECTION,
+		},
+		value: {
+			name: "AI_FEATURES",
+			section: AI_FEATURES_CONST_SECTION,
+		},
+	},
+	{
+		interface: {
+			name: "WorkspaceAdminViewConfig",
+			section: ADMIN_VIEWS_INTERFACE_SECTION,
+		},
+		value: {
+			name: "ADMIN_VIEWS",
+			section: ADMIN_VIEWS_CONST_SECTION,
+		},
+	},
+	{
+		interface: {
+			name: "WorkspaceEditorPluginConfig",
+			section: EDITOR_PLUGINS_INTERFACE_SECTION,
+		},
+		value: {
+			name: "EDITOR_PLUGINS",
+			section: EDITOR_PLUGINS_CONST_SECTION,
+		},
+	},
+];
+
 function getPropertyNameText(name: ts.PropertyName): string | null {
 	if (ts.isIdentifier(name) || ts.isStringLiteral(name)) {
 		return name.text;
@@ -972,70 +1088,32 @@ export function getWorkspaceBlockSelectOptions(projectDir: string): Array<{
 function ensureWorkspaceInventorySections(source: string): string {
 	let nextSource = source.trimEnd();
 
-	if (!/export\s+interface\s+WorkspaceVariationConfig\b/u.test(nextSource)) {
-		nextSource += VARIATIONS_INTERFACE_SECTION;
-	}
-	if (!/export\s+const\s+VARIATIONS\b/u.test(nextSource)) {
-		nextSource += VARIATIONS_CONST_SECTION;
-	}
-	if (!/export\s+interface\s+WorkspaceBlockStyleConfig\b/u.test(nextSource)) {
-		nextSource += BLOCK_STYLES_INTERFACE_SECTION;
-	}
-	if (!/export\s+const\s+BLOCK_STYLES\b/u.test(nextSource)) {
-		nextSource += BLOCK_STYLES_CONST_SECTION;
-	}
-	if (!/export\s+interface\s+WorkspaceBlockTransformConfig\b/u.test(nextSource)) {
-		nextSource += BLOCK_TRANSFORMS_INTERFACE_SECTION;
-	}
-	if (!/export\s+const\s+BLOCK_TRANSFORMS\b/u.test(nextSource)) {
-		nextSource += BLOCK_TRANSFORMS_CONST_SECTION;
-	}
-
-	if (!/export\s+interface\s+WorkspacePatternConfig\b/u.test(nextSource)) {
-		nextSource += PATTERNS_INTERFACE_SECTION;
-	}
-	if (!/export\s+const\s+PATTERNS\b/u.test(nextSource)) {
-		nextSource += PATTERNS_CONST_SECTION;
-	}
-
-	if (!/export\s+interface\s+WorkspaceBindingSourceConfig\b/u.test(nextSource)) {
-		nextSource += BINDING_SOURCES_INTERFACE_SECTION;
-	}
-	if (!/export\s+const\s+BINDING_SOURCES\b/u.test(nextSource)) {
-		nextSource += BINDING_SOURCES_CONST_SECTION;
-	}
-	if (!/export\s+interface\s+WorkspaceRestResourceConfig\b/u.test(nextSource)) {
-		nextSource += REST_RESOURCES_INTERFACE_SECTION;
-	}
-	if (!/export\s+const\s+REST_RESOURCES\b/u.test(nextSource)) {
-		nextSource += REST_RESOURCES_CONST_SECTION;
-	}
-	if (!/export\s+interface\s+WorkspaceAbilityConfig\b/u.test(nextSource)) {
-		nextSource += ABILITIES_INTERFACE_SECTION;
-	}
-	if (!/export\s+const\s+ABILITIES\b/u.test(nextSource)) {
-		nextSource += ABILITIES_CONST_SECTION;
-	}
-	if (!/export\s+interface\s+WorkspaceAiFeatureConfig\b/u.test(nextSource)) {
-		nextSource += AI_FEATURES_INTERFACE_SECTION;
-	}
-	if (!/export\s+const\s+AI_FEATURES\b/u.test(nextSource)) {
-		nextSource += AI_FEATURES_CONST_SECTION;
-	}
-	if (!/export\s+interface\s+WorkspaceAdminViewConfig\b/u.test(nextSource)) {
-		nextSource += ADMIN_VIEWS_INTERFACE_SECTION;
-	}
-	if (!/export\s+const\s+ADMIN_VIEWS\b/u.test(nextSource)) {
-		nextSource += ADMIN_VIEWS_CONST_SECTION;
-	}
-	if (!/export\s+interface\s+WorkspaceEditorPluginConfig\b/u.test(nextSource)) {
-		nextSource += EDITOR_PLUGINS_INTERFACE_SECTION;
-	}
-	if (!/export\s+const\s+EDITOR_PLUGINS\b/u.test(nextSource)) {
-		nextSource += EDITOR_PLUGINS_CONST_SECTION;
+	for (const section of INVENTORY_SECTIONS) {
+		if (
+			section.interface &&
+			!hasExportedInterface(nextSource, section.interface.name)
+		) {
+			nextSource += section.interface.section;
+		}
+		if (section.value && !hasExportedConst(nextSource, section.value.name)) {
+			nextSource += section.value.section;
+		}
 	}
 
 	return `${nextSource}\n`;
+}
+
+function hasExportedInterface(source: string, interfaceName: string): boolean {
+	return new RegExp(
+		`export\\s+interface\\s+${escapeRegex(interfaceName)}\\b`,
+		"u",
+	).test(source);
+}
+
+function hasExportedConst(source: string, constName: string): boolean {
+	return new RegExp(`export\\s+const\\s+${escapeRegex(constName)}\\b`, "u").test(
+		source,
+	);
 }
 
 function appendEntriesAtMarker(source: string, marker: string, entries: string[]): string {
