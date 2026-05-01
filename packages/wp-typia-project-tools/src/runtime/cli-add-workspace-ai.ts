@@ -55,18 +55,40 @@ function buildAiFeaturePhpSource(
 	const normalizeSchemaFunctionName = `${phpPrefix}_${aiFeaturePhpId}_sanitize_ai_feature_schema`;
 	const validatePayloadFunctionName = `${phpPrefix}_${aiFeaturePhpId}_validate_ai_feature_payload`;
 	const canManageFunctionName = `${phpPrefix}_${aiFeaturePhpId}_can_manage_ai_feature`;
+	const normalizePromptPayloadFunctionName = `${phpPrefix}_${aiFeaturePhpId}_normalize_ai_feature_prompt_payload`;
 	const buildPromptFunctionName = `${phpPrefix}_${aiFeaturePhpId}_build_ai_feature_prompt`;
+	const resolvePromptOptionsFunctionName = `${phpPrefix}_${aiFeaturePhpId}_resolve_ai_feature_prompt_options`;
 	const normalizeProviderTypeFunctionName = `${phpPrefix}_${aiFeaturePhpId}_normalize_provider_type`;
 	const buildTelemetryFunctionName = `${phpPrefix}_${aiFeaturePhpId}_build_ai_feature_telemetry`;
+	const resolveUnavailableMessageFunctionName = `${phpPrefix}_${aiFeaturePhpId}_resolve_ai_feature_unavailable_message`;
 	const isSupportedFunctionName = `${phpPrefix}_${aiFeaturePhpId}_is_ai_feature_supported`;
 	const adminNoticeFunctionName = `${phpPrefix}_${aiFeaturePhpId}_ai_feature_admin_notice`;
 	const handlerFunctionName = `${phpPrefix}_${aiFeaturePhpId}_handle_run_ai_feature`;
 	const registerRoutesFunctionName = `${phpPrefix}_${aiFeaturePhpId}_register_ai_feature_routes`;
+	const permissionFilterHook = `${phpPrefix}_${aiFeaturePhpId}_ai_feature_permission`;
+	const promptPayloadFilterHook = `${phpPrefix}_${aiFeaturePhpId}_ai_feature_prompt_payload`;
+	const promptFilterHook = `${phpPrefix}_${aiFeaturePhpId}_ai_feature_prompt`;
+	const promptOptionsFilterHook = `${phpPrefix}_${aiFeaturePhpId}_ai_feature_prompt_options`;
+	const adminNoticeMessageFilterHook = `${phpPrefix}_${aiFeaturePhpId}_ai_feature_admin_notice_message`;
+	const unavailableMessageFilterHook = `${phpPrefix}_${aiFeaturePhpId}_ai_feature_unavailable_message`;
+	const telemetryFilterHook = `${phpPrefix}_${aiFeaturePhpId}_ai_feature_telemetry`;
 
 	return `<?php
 if ( ! defined( 'ABSPATH' ) ) {
 \treturn;
 }
+
+/*
+ * Customization hooks for the ${aiFeatureTitle} AI feature:
+ *
+ * - ${quotePhpString(permissionFilterHook)} filters the default current_user_can( 'edit_posts' ) capability check.
+ * - ${quotePhpString(promptPayloadFilterHook)} filters the validated request payload array before prompt serialization.
+ * - ${quotePhpString(promptFilterHook)} filters the final prompt string after payload normalization.
+ * - ${quotePhpString(promptOptionsFilterHook)} filters prompt options with \`temperature\` and \`modelPreference\` keys.
+ * - ${quotePhpString(adminNoticeMessageFilterHook)} filters the wp-admin notice shown when AI support is unavailable.
+ * - ${quotePhpString(unavailableMessageFilterHook)} filters REST-facing unavailable messages by reason code.
+ * - ${quotePhpString(telemetryFilterHook)} filters the response telemetry array before schema validation. Return a schema-compatible array.
+ */
 
 if ( ! function_exists( '${loadSchemaFunctionName}' ) ) {
 \tfunction ${loadSchemaFunctionName}( $schema_name ) {
@@ -134,17 +156,111 @@ if ( ! function_exists( '${validatePayloadFunctionName}' ) ) {
 }
 
 if ( ! function_exists( '${canManageFunctionName}' ) ) {
-\tfunction ${canManageFunctionName}() {
-\t\treturn current_user_can( 'edit_posts' );
+\tfunction ${canManageFunctionName}( WP_REST_Request $request = null ) {
+\t\t$permission = apply_filters(
+\t\t\t${quotePhpString(permissionFilterHook)},
+\t\t\tcurrent_user_can( 'edit_posts' ),
+\t\t\t$request
+\t\t);
+\t\tif ( is_wp_error( $permission ) ) {
+\t\t\treturn $permission;
+\t\t}
+\t\treturn (bool) $permission;
+\t}
+}
+
+if ( ! function_exists( '${normalizePromptPayloadFunctionName}' ) ) {
+\tfunction ${normalizePromptPayloadFunctionName}( array $payload ) {
+\t\t$normalized_payload = apply_filters(
+\t\t\t${quotePhpString(promptPayloadFilterHook)},
+\t\t\t$payload
+\t\t);
+\t\treturn is_array( $normalized_payload ) ? $normalized_payload : $payload;
 \t}
 }
 
 if ( ! function_exists( '${buildPromptFunctionName}' ) ) {
 \tfunction ${buildPromptFunctionName}( array $payload ) {
-\t\treturn sprintf(
+\t\t$normalized_payload = ${normalizePromptPayloadFunctionName}( $payload );
+\t\t$prompt = sprintf(
 \t\t\t'You are helping with the %1$s AI workflow. Read the JSON request payload and return JSON that matches the provided schema. Request payload: %2$s',
 \t\t\t${quotePhpString(aiFeatureTitle)},
-\t\t\twp_json_encode( $payload )
+\t\t\twp_json_encode( $normalized_payload )
+\t\t);
+\t\t$filtered_prompt = apply_filters(
+\t\t\t${quotePhpString(promptFilterHook)},
+\t\t\t$prompt,
+\t\t\t$normalized_payload,
+\t\t\t$payload
+\t\t);
+\t\treturn is_string( $filtered_prompt ) && '' !== $filtered_prompt ? $filtered_prompt : $prompt;
+\t}
+}
+
+if ( ! function_exists( '${resolvePromptOptionsFunctionName}' ) ) {
+\tfunction ${resolvePromptOptionsFunctionName}( array $payload = array() ) {
+\t\t$options = apply_filters(
+\t\t\t${quotePhpString(promptOptionsFilterHook)},
+\t\t\tarray(
+\t\t\t\t'modelPreference' => array(),
+\t\t\t\t'temperature'     => 0.2,
+\t\t\t),
+\t\t\t$payload
+\t\t);
+\t\tif ( ! is_array( $options ) ) {
+\t\t\t$options = array();
+\t\t}
+
+\t\t$temperature = 0.2;
+\t\tif ( array_key_exists( 'temperature', $options ) ) {
+\t\t\tif ( null === $options['temperature'] ) {
+\t\t\t\t$temperature = null;
+\t\t\t} elseif ( is_numeric( $options['temperature'] ) ) {
+\t\t\t\t$temperature = (float) $options['temperature'];
+\t\t\t}
+\t\t}
+
+\t\t$model_preferences = array();
+\t\tif ( isset( $options['modelPreference'] ) ) {
+\t\t\t$raw_model_preferences = $options['modelPreference'];
+\t\t\tif ( is_string( $raw_model_preferences ) && '' !== $raw_model_preferences ) {
+\t\t\t\t$model_preferences = array( $raw_model_preferences );
+\t\t\t} elseif ( is_array( $raw_model_preferences ) ) {
+\t\t\t\t$model_preferences = array_values(
+\t\t\t\t\tarray_filter(
+\t\t\t\t\t\tarray_map(
+\t\t\t\t\t\t\tstatic function ( $candidate ) {
+\t\t\t\t\t\t\t\tif ( is_string( $candidate ) && '' !== $candidate ) {
+\t\t\t\t\t\t\t\t\treturn $candidate;
+\t\t\t\t\t\t\t\t}
+\t\t\t\t\t\t\t\tif ( ! is_array( $candidate ) ) {
+\t\t\t\t\t\t\t\t\treturn null;
+\t\t\t\t\t\t\t\t}
+
+\t\t\t\t\t\t\t\t$normalized = array_values(
+\t\t\t\t\t\t\t\t\tarray_filter(
+\t\t\t\t\t\t\t\t\t\t$candidate,
+\t\t\t\t\t\t\t\t\t\tstatic function ( $value ) {
+\t\t\t\t\t\t\t\t\t\t\treturn is_string( $value ) && '' !== $value;
+\t\t\t\t\t\t\t\t\t\t}
+\t\t\t\t\t\t\t\t\t)
+\t\t\t\t\t\t\t\t);
+
+\t\t\t\t\t\t\t\treturn count( $normalized ) > 0 ? $normalized : null;
+\t\t\t\t\t\t\t},
+\t\t\t\t\t\t\t$raw_model_preferences
+\t\t\t\t\t\t),
+\t\t\t\t\t\tstatic function ( $candidate ) {
+\t\t\t\t\t\t\treturn null !== $candidate;
+\t\t\t\t\t\t}
+\t\t\t\t\t)
+\t\t\t\t);
+\t\t\t}
+\t\t}
+
+\t\treturn array(
+\t\t\t'modelPreference' => $model_preferences,
+\t\t\t'temperature'     => $temperature,
 \t\t);
 \t}
 }
@@ -160,7 +276,7 @@ if ( ! function_exists( '${normalizeProviderTypeFunctionName}' ) ) {
 }
 
 if ( ! function_exists( '${buildTelemetryFunctionName}' ) ) {
-\tfunction ${buildTelemetryFunctionName}( $result ) {
+\tfunction ${buildTelemetryFunctionName}( $result, array $payload = array(), array $normalized_result = array() ) {
 \t\tif (
 \t\t\t! is_object( $result ) ||
 \t\t\t! method_exists( $result, 'getId' ) ||
@@ -220,47 +336,95 @@ if ( ! function_exists( '${buildTelemetryFunctionName}' ) ) {
 \t\t\t}
 \t\t}
 
-\t\treturn $telemetry;
+\t\t$filtered_telemetry = apply_filters(
+\t\t\t${quotePhpString(telemetryFilterHook)},
+\t\t\t$telemetry,
+\t\t\t$result,
+\t\t\t$payload,
+\t\t\t$normalized_result
+\t\t);
+\t\treturn is_array( $filtered_telemetry ) ? $filtered_telemetry : $telemetry;
+\t}
+}
+
+if ( ! function_exists( '${resolveUnavailableMessageFunctionName}' ) ) {
+\tfunction ${resolveUnavailableMessageFunctionName}( $message, $reason, array $context = array() ) {
+\t\t$filtered_message = apply_filters(
+\t\t\t${quotePhpString(unavailableMessageFilterHook)},
+\t\t\t$message,
+\t\t\t$reason,
+\t\t\t$context
+\t\t);
+\t\treturn is_string( $filtered_message ) && '' !== $filtered_message ? $filtered_message : $message;
 \t}
 }
 
 if ( ! function_exists( '${isSupportedFunctionName}' ) ) {
-\tfunction ${isSupportedFunctionName}() {
+\tfunction ${isSupportedFunctionName}( array $payload = array(), $cache_result = true ) {
 \t\tstatic $is_supported = null;
-\t\tif ( null !== $is_supported ) {
+\t\t$use_cache = $cache_result && count( $payload ) === 0;
+\t\tif ( $use_cache && null !== $is_supported ) {
 \t\t\treturn $is_supported;
 \t\t}
 
 \t\tif ( ! function_exists( 'wp_ai_client_prompt' ) ) {
-\t\t\t$is_supported = false;
-\t\t\treturn $is_supported;
+\t\t\tif ( $use_cache ) {
+\t\t\t\t$is_supported = false;
+\t\t\t}
+\t\t\treturn false;
 \t\t}
 
 \t\t$schema = ${loadAiSchemaFunctionName}();
 \t\tif ( ! is_array( $schema ) ) {
-\t\t\t$is_supported = false;
-\t\t\treturn $is_supported;
+\t\t\tif ( $use_cache ) {
+\t\t\t\t$is_supported = false;
+\t\t\t}
+\t\t\treturn false;
 \t\t}
 
 \t\t$prompt = wp_ai_client_prompt( 'AI feature support probe.' );
 \t\tif ( ! is_object( $prompt ) || ! method_exists( $prompt, 'as_json_response' ) ) {
-\t\t\t$is_supported = false;
-\t\t\treturn $is_supported;
+\t\t\tif ( $use_cache ) {
+\t\t\t\t$is_supported = false;
+\t\t\t}
+\t\t\treturn false;
+\t\t}
+\t\t$prompt_options = ${resolvePromptOptionsFunctionName}( $payload );
+\t\tif (
+\t\t\tarray_key_exists( 'temperature', $prompt_options ) &&
+\t\t\tnull !== $prompt_options['temperature'] &&
+\t\t\tmethod_exists( $prompt, 'using_temperature' )
+\t\t) {
+\t\t\t$prompt = $prompt->using_temperature( $prompt_options['temperature'] );
+\t\t}
+\t\tif (
+\t\t\t! empty( $prompt_options['modelPreference'] ) &&
+\t\t\tmethod_exists( $prompt, 'using_model_preference' )
+\t\t) {
+\t\t\t$prompt = $prompt->using_model_preference( ...$prompt_options['modelPreference'] );
 \t\t}
 
 \t\t$structured_prompt = $prompt->as_json_response( $schema );
 \t\tif ( ! is_object( $structured_prompt ) ) {
-\t\t\t$is_supported = false;
-\t\t\treturn $is_supported;
+\t\t\tif ( $use_cache ) {
+\t\t\t\t$is_supported = false;
+\t\t\t}
+\t\t\treturn false;
 \t\t}
 
 \t\tif ( method_exists( $structured_prompt, 'is_supported_for_text_generation' ) ) {
-\t\t\t$is_supported = (bool) $structured_prompt->is_supported_for_text_generation();
-\t\t\treturn $is_supported;
+\t\t\t$supported = (bool) $structured_prompt->is_supported_for_text_generation();
+\t\t\tif ( $use_cache ) {
+\t\t\t\t$is_supported = $supported;
+\t\t\t}
+\t\t\treturn $supported;
 \t\t}
 
-\t\t$is_supported = method_exists( $structured_prompt, 'generate_text_result' );
-\t\treturn $is_supported;
+\t\t$supported = method_exists( $structured_prompt, 'generate_text_result' );
+\t\tif ( $use_cache ) {
+\t\t\t$is_supported = $supported;
+\t\t}
+\t\treturn $supported;
 \t}
 }
 
@@ -275,6 +439,18 @@ if ( ! function_exists( '${adminNoticeFunctionName}' ) ) {
 \t\t\t__( 'The %s AI feature is optional and remains disabled until the WordPress AI Client is available with structured text generation support for the generated schema.', ${quotePhpString(textDomain)} ),
 \t\t\t${quotePhpString(aiFeatureTitle)}
 \t\t);
+\t\t$filtered_message = apply_filters(
+\t\t\t${quotePhpString(adminNoticeMessageFilterHook)},
+\t\t\t$message,
+\t\t\tarray(
+\t\t\t\t'featureSlug'  => ${quotePhpString(aiFeatureSlug)},
+\t\t\t\t'featureTitle' => ${quotePhpString(aiFeatureTitle)},
+\t\t\t\t'namespace'    => ${quotePhpString(namespace)},
+\t\t\t)
+\t\t);
+\t\tif ( is_string( $filtered_message ) && '' !== $filtered_message ) {
+\t\t\t$message = $filtered_message;
+\t\t}
 \t\tprintf( '<div class="notice notice-warning"><p>%s</p></div>', esc_html( $message ) );
 \t}
 }
@@ -286,10 +462,16 @@ if ( ! function_exists( '${handlerFunctionName}' ) ) {
 \t\t\treturn $payload;
 \t\t}
 
-\t\tif ( ! ${isSupportedFunctionName}() ) {
+\t\tif ( ! ${isSupportedFunctionName}( $payload, false ) ) {
 \t\t\treturn new WP_Error(
 \t\t\t\t'ai_client_unavailable',
-\t\t\t\t'The WordPress AI Client is unavailable or does not support this feature endpoint.',
+\t\t\t\t${resolveUnavailableMessageFunctionName}(
+\t\t\t\t\t'The WordPress AI Client is unavailable or does not support this feature endpoint.',
+\t\t\t\t\t'support_probe_failed',
+\t\t\t\t\tarray(
+\t\t\t\t\t\t'featureSlug' => ${quotePhpString(aiFeatureSlug)},
+\t\t\t\t\t)
+\t\t\t\t),
 \t\t\t\tarray( 'status' => 501 )
 \t\t\t);
 \t\t}
@@ -303,22 +485,45 @@ if ( ! function_exists( '${handlerFunctionName}' ) ) {
 \t\t\t);
 \t\t}
 
+\t\t$prompt_options = ${resolvePromptOptionsFunctionName}( $payload );
 \t\t$prompt = wp_ai_client_prompt( ${buildPromptFunctionName}( $payload ) );
 \t\tif ( ! is_object( $prompt ) ) {
 \t\t\treturn new WP_Error(
 \t\t\t\t'ai_client_unavailable',
-\t\t\t\t'The WordPress AI Client prompt builder is unavailable on this site.',
+\t\t\t\t${resolveUnavailableMessageFunctionName}(
+\t\t\t\t\t'The WordPress AI Client prompt builder is unavailable on this site.',
+\t\t\t\t\t'prompt_builder_missing',
+\t\t\t\t\tarray(
+\t\t\t\t\t\t'featureSlug' => ${quotePhpString(aiFeatureSlug)},
+\t\t\t\t\t)
+\t\t\t\t),
 \t\t\t\tarray( 'status' => 501 )
 \t\t\t);
 \t\t}
 
-\t\tif ( method_exists( $prompt, 'using_temperature' ) ) {
-\t\t\t$prompt = $prompt->using_temperature( 0.2 );
+\t\tif (
+\t\t\tarray_key_exists( 'temperature', $prompt_options ) &&
+\t\t\tnull !== $prompt_options['temperature'] &&
+\t\t\tmethod_exists( $prompt, 'using_temperature' )
+\t\t) {
+\t\t\t$prompt = $prompt->using_temperature( $prompt_options['temperature'] );
+\t\t}
+\t\tif (
+\t\t\t! empty( $prompt_options['modelPreference'] ) &&
+\t\t\tmethod_exists( $prompt, 'using_model_preference' )
+\t\t) {
+\t\t\t$prompt = $prompt->using_model_preference( ...$prompt_options['modelPreference'] );
 \t\t}
 \t\tif ( ! method_exists( $prompt, 'as_json_response' ) ) {
 \t\t\treturn new WP_Error(
 \t\t\t\t'ai_client_unavailable',
-\t\t\t\t'The current WordPress AI Client does not expose as_json_response().',
+\t\t\t\t${resolveUnavailableMessageFunctionName}(
+\t\t\t\t\t'The current WordPress AI Client does not expose as_json_response().',
+\t\t\t\t\t'as_json_response_missing',
+\t\t\t\t\tarray(
+\t\t\t\t\t\t'featureSlug' => ${quotePhpString(aiFeatureSlug)},
+\t\t\t\t\t)
+\t\t\t\t),
 \t\t\t\tarray( 'status' => 501 )
 \t\t\t);
 \t\t}
@@ -327,7 +532,13 @@ if ( ! function_exists( '${handlerFunctionName}' ) ) {
 \t\tif ( ! is_object( $structured_prompt ) ) {
 \t\t\treturn new WP_Error(
 \t\t\t\t'ai_client_unavailable',
-\t\t\t\t'The current WordPress AI Client could not prepare a structured-output prompt.',
+\t\t\t\t${resolveUnavailableMessageFunctionName}(
+\t\t\t\t\t'The current WordPress AI Client could not prepare a structured-output prompt.',
+\t\t\t\t\t'structured_prompt_missing',
+\t\t\t\t\tarray(
+\t\t\t\t\t\t'featureSlug' => ${quotePhpString(aiFeatureSlug)},
+\t\t\t\t\t)
+\t\t\t\t),
 \t\t\t\tarray( 'status' => 501 )
 \t\t\t);
 \t\t}
@@ -338,14 +549,26 @@ if ( ! function_exists( '${handlerFunctionName}' ) ) {
 \t\t) {
 \t\t\treturn new WP_Error(
 \t\t\t\t'ai_client_unavailable',
-\t\t\t\t'The current WordPress AI Client provider or model does not support this structured-output feature.',
+\t\t\t\t${resolveUnavailableMessageFunctionName}(
+\t\t\t\t\t'The current WordPress AI Client provider or model does not support this structured-output feature.',
+\t\t\t\t\t'text_generation_unsupported',
+\t\t\t\t\tarray(
+\t\t\t\t\t\t'featureSlug' => ${quotePhpString(aiFeatureSlug)},
+\t\t\t\t\t)
+\t\t\t\t),
 \t\t\t\tarray( 'status' => 501 )
 \t\t\t);
 \t\t}
 \t\tif ( ! method_exists( $structured_prompt, 'generate_text_result' ) ) {
 \t\t\treturn new WP_Error(
 \t\t\t\t'ai_client_unavailable',
-\t\t\t\t'The current WordPress AI Client does not expose generate_text_result() after as_json_response().',
+\t\t\t\t${resolveUnavailableMessageFunctionName}(
+\t\t\t\t\t'The current WordPress AI Client does not expose generate_text_result() after as_json_response().',
+\t\t\t\t\t'generate_text_result_missing',
+\t\t\t\t\tarray(
+\t\t\t\t\t\t'featureSlug' => ${quotePhpString(aiFeatureSlug)},
+\t\t\t\t\t)
+\t\t\t\t),
 \t\t\t\tarray( 'status' => 501 )
 \t\t\t);
 \t\t}
@@ -380,7 +603,7 @@ if ( ! function_exists( '${handlerFunctionName}' ) ) {
 \t\t\t);
 \t\t}
 
-\t\t$telemetry = ${buildTelemetryFunctionName}( $result );
+\t\t$telemetry = ${buildTelemetryFunctionName}( $result, $payload, $normalized_result );
 \t\tif ( is_wp_error( $telemetry ) ) {
 \t\t\treturn $telemetry;
 \t\t}
