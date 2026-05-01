@@ -20,6 +20,21 @@ const DEFAULT_PHP_SNIPPET_INSERTION_ANCHORS = [
 ] as const;
 
 /**
+ * Error thrown when the mutation and its rollback both fail.
+ */
+export class WorkspaceMutationRollbackError extends Error {
+	readonly mutationError: unknown;
+	readonly rollbackError: unknown;
+
+	constructor(mutationError: unknown, rollbackError: unknown) {
+		super("Workspace mutation failed and rollback also failed.");
+		this.name = "WorkspaceMutationRollbackError";
+		this.mutationError = mutationError;
+		this.rollbackError = rollbackError;
+	}
+}
+
+/**
  * Execute a workspace add mutation with rollback on any failure.
  */
 export async function executeWorkspaceMutationPlan<TResult>({
@@ -37,7 +52,11 @@ export async function executeWorkspaceMutationPlan<TResult>({
 	try {
 		return await run();
 	} catch (error) {
-		await rollbackWorkspaceMutation(mutationSnapshot);
+		try {
+			await rollbackWorkspaceMutation(mutationSnapshot);
+		} catch (rollbackError) {
+			throw new WorkspaceMutationRollbackError(error, rollbackError);
+		}
 		throw error;
 	}
 }

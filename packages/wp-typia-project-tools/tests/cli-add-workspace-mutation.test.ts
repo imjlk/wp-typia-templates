@@ -8,6 +8,7 @@ import {
 	appendPhpSnippetBeforeClosingTag,
 	executeWorkspaceMutationPlan,
 	insertPhpSnippetBeforeWorkspaceAnchors,
+	WorkspaceMutationRollbackError,
 } from "../src/runtime/cli-add-workspace-mutation.js";
 
 const tempRoot = fs.mkdtempSync(
@@ -68,6 +69,37 @@ describe("workspace add mutation executor", () => {
 		expect(await fsp.readFile(existingPath, "utf8")).toBe("before");
 		expect(fs.existsSync(generatedFilePath)).toBe(false);
 		expect(fs.existsSync(targetDir)).toBe(false);
+	});
+
+	test("preserves mutation and rollback failures together", async () => {
+		const projectDir = path.join(tempRoot, "rollback-failure");
+		const nestedDir = path.join(projectDir, "nested");
+		const existingPath = path.join(nestedDir, "existing.txt");
+		await fsp.mkdir(nestedDir, { recursive: true });
+		await fsp.writeFile(existingPath, "before", "utf8");
+
+		let caughtError: unknown;
+		try {
+			await executeWorkspaceMutationPlan({
+				filePaths: [existingPath],
+				run: async () => {
+					await fsp.rm(nestedDir, { force: true, recursive: true });
+					await fsp.writeFile(nestedDir, "not a directory", "utf8");
+					throw new Error("mutation failed");
+				},
+			});
+		} catch (error) {
+			caughtError = error;
+		}
+
+		expect(caughtError).toBeInstanceOf(WorkspaceMutationRollbackError);
+		const rollbackError = caughtError as WorkspaceMutationRollbackError;
+		expect(rollbackError.message).toBe(
+			"Workspace mutation failed and rollback also failed.",
+		);
+		expect(rollbackError.mutationError).toBeInstanceOf(Error);
+		expect((rollbackError.mutationError as Error).message).toBe("mutation failed");
+		expect(rollbackError.rollbackError).toBeInstanceOf(Error);
 	});
 });
 
