@@ -279,7 +279,7 @@ export const aiFeatureSupportMetadata = {
 \t\t\t\t'Support is verified when the feature runs, so editor and admin UIs should degrade gracefully when the site rejects the request.',
 \t\t},
 \t],
-} as const satisfies ${pascalCase}AiFeatureSupportMetadata;
+} satisfies ${pascalCase}AiFeatureSupportMetadata;
 
 export function getAiFeatureSupportHintLines() {
 \treturn aiFeatureSupportMetadata.unavailableReasons.map(
