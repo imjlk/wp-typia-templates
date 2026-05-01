@@ -4308,6 +4308,7 @@ test("canonical CLI can add a server-only AI feature to an official workspace te
   expect(phpSource).toContain("is_supported_for_text_generation");
   expect(phpSource).toContain("generate_text_result");
   expect(phpSource).toContain("using_model_preference");
+  expect(phpSource).toContain("is_wp_error( $permission )");
   expect(phpSource).toContain("admin_notices");
   expect(phpSource).toContain("sprintf(");
   expect(phpSource).toContain("The %s AI feature is optional");

@@ -157,11 +157,15 @@ if ( ! function_exists( '${validatePayloadFunctionName}' ) ) {
 
 if ( ! function_exists( '${canManageFunctionName}' ) ) {
 \tfunction ${canManageFunctionName}( WP_REST_Request $request = null ) {
-\t\treturn (bool) apply_filters(
+\t\t$permission = apply_filters(
 \t\t\t${quotePhpString(permissionFilterHook)},
 \t\t\tcurrent_user_can( 'edit_posts' ),
 \t\t\t$request
 \t\t);
+\t\tif ( is_wp_error( $permission ) ) {
+\t\t\treturn $permission;
+\t\t}
+\t\treturn (bool) $permission;
 \t}
 }
 
@@ -356,29 +360,36 @@ if ( ! function_exists( '${resolveUnavailableMessageFunctionName}' ) ) {
 }
 
 if ( ! function_exists( '${isSupportedFunctionName}' ) ) {
-\tfunction ${isSupportedFunctionName}() {
+\tfunction ${isSupportedFunctionName}( array $payload = array(), $cache_result = true ) {
 \t\tstatic $is_supported = null;
-\t\tif ( null !== $is_supported ) {
+\t\t$use_cache = $cache_result && count( $payload ) === 0;
+\t\tif ( $use_cache && null !== $is_supported ) {
 \t\t\treturn $is_supported;
 \t\t}
 
 \t\tif ( ! function_exists( 'wp_ai_client_prompt' ) ) {
-\t\t\t$is_supported = false;
-\t\t\treturn $is_supported;
+\t\t\tif ( $use_cache ) {
+\t\t\t\t$is_supported = false;
+\t\t\t}
+\t\t\treturn false;
 \t\t}
 
 \t\t$schema = ${loadAiSchemaFunctionName}();
 \t\tif ( ! is_array( $schema ) ) {
-\t\t\t$is_supported = false;
-\t\t\treturn $is_supported;
+\t\t\tif ( $use_cache ) {
+\t\t\t\t$is_supported = false;
+\t\t\t}
+\t\t\treturn false;
 \t\t}
 
 \t\t$prompt = wp_ai_client_prompt( 'AI feature support probe.' );
 \t\tif ( ! is_object( $prompt ) || ! method_exists( $prompt, 'as_json_response' ) ) {
-\t\t\t$is_supported = false;
-\t\t\treturn $is_supported;
+\t\t\tif ( $use_cache ) {
+\t\t\t\t$is_supported = false;
+\t\t\t}
+\t\t\treturn false;
 \t\t}
-\t\t$prompt_options = ${resolvePromptOptionsFunctionName}();
+\t\t$prompt_options = ${resolvePromptOptionsFunctionName}( $payload );
 \t\tif (
 \t\t\tarray_key_exists( 'temperature', $prompt_options ) &&
 \t\t\tnull !== $prompt_options['temperature'] &&
@@ -395,17 +406,25 @@ if ( ! function_exists( '${isSupportedFunctionName}' ) ) {
 
 \t\t$structured_prompt = $prompt->as_json_response( $schema );
 \t\tif ( ! is_object( $structured_prompt ) ) {
-\t\t\t$is_supported = false;
-\t\t\treturn $is_supported;
+\t\t\tif ( $use_cache ) {
+\t\t\t\t$is_supported = false;
+\t\t\t}
+\t\t\treturn false;
 \t\t}
 
 \t\tif ( method_exists( $structured_prompt, 'is_supported_for_text_generation' ) ) {
-\t\t\t$is_supported = (bool) $structured_prompt->is_supported_for_text_generation();
-\t\t\treturn $is_supported;
+\t\t\t$supported = (bool) $structured_prompt->is_supported_for_text_generation();
+\t\t\tif ( $use_cache ) {
+\t\t\t\t$is_supported = $supported;
+\t\t\t}
+\t\t\treturn $supported;
 \t\t}
 
-\t\t$is_supported = method_exists( $structured_prompt, 'generate_text_result' );
-\t\treturn $is_supported;
+\t\t$supported = method_exists( $structured_prompt, 'generate_text_result' );
+\t\tif ( $use_cache ) {
+\t\t\t$is_supported = $supported;
+\t\t}
+\t\treturn $supported;
 \t}
 }
 
@@ -443,7 +462,7 @@ if ( ! function_exists( '${handlerFunctionName}' ) ) {
 \t\t\treturn $payload;
 \t\t}
 
-\t\tif ( ! ${isSupportedFunctionName}() ) {
+\t\tif ( ! ${isSupportedFunctionName}( $payload, false ) ) {
 \t\t\treturn new WP_Error(
 \t\t\t\t'ai_client_unavailable',
 \t\t\t\t${resolveUnavailableMessageFunctionName}(
