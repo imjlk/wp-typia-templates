@@ -2,6 +2,7 @@ import { quoteTsString } from "./cli-add-shared.js";
 import { buildAiFeatureEndpointManifest } from "./ai-feature-artifacts.js";
 import {
 	OPTIONAL_WORDPRESS_AI_CLIENT_COMPATIBILITY,
+	createScaffoldCompatibilityConfig,
 	renderScaffoldCompatibilityConfig,
 	resolveScaffoldCompatibilityPolicy,
 } from "./scaffold-compatibility.js";
@@ -105,6 +106,45 @@ export interface ${pascalCase}AiFeatureResponse {
 \tresult: ${pascalCase}AiFeatureResult;
 \ttelemetry: ${pascalCase}AiFeatureTelemetry;
 }
+
+export type ${pascalCase}AiFeatureSupportProbeMode = 'request-time';
+
+export type ${pascalCase}AiFeatureUnavailableErrorCode =
+\t'ai_client_unavailable';
+
+export type ${pascalCase}AiFeatureUnavailableReasonCode =
+\t| 'missing-wordpress-ai-client'
+\t| 'request-time-support-probe';
+
+export interface ${pascalCase}AiFeatureSupportReason {
+\tcode: ${pascalCase}AiFeatureUnavailableReasonCode;
+\tlabel: string & tags.MinLength< 1 > & tags.MaxLength< 160 >;
+\tmessage: string & tags.MinLength< 1 > & tags.MaxLength< 4000 >;
+}
+
+export interface ${pascalCase}AiFeatureSupportMetadata {
+\tfeatureLabel: string & tags.MinLength< 1 > & tags.MaxLength< 160 >;
+\tfeatureSlug: string & tags.MinLength< 1 > & tags.MaxLength< 160 >;
+\tcompatibility: {
+\t\thardMinimums: {
+\t\t\tphp?: string;
+\t\t\twordpress?: string;
+\t\t};
+\t\tmode: 'baseline' | 'optional' | 'required';
+\t\toptionalFeatureIds: string[];
+\t\toptionalFeatures: string[];
+\t\trequiredFeatureIds: string[];
+\t\trequiredFeatures: string[];
+\t\truntimeGates: string[];
+\t};
+\tsupportProbe: {
+\t\tendpointMethod: 'POST';
+\t\tendpointPath: string & tags.MinLength< 1 > & tags.MaxLength< 200 >;
+\t\tmode: ${pascalCase}AiFeatureSupportProbeMode;
+\t\tunavailableErrorCode: ${pascalCase}AiFeatureUnavailableErrorCode;
+\t};
+\tunavailableReasons: ${pascalCase}AiFeatureSupportReason[];
+}
 `;
 }
 
@@ -151,6 +191,12 @@ export const apiValidators = {
  */
 export function buildAiFeatureApiSource(aiFeatureSlug: string): string {
 	const pascalCase = toPascalCase(aiFeatureSlug);
+	const compatibility = createScaffoldCompatibilityConfig(
+		resolveScaffoldCompatibilityPolicy(
+			OPTIONAL_WORDPRESS_AI_CLIENT_COMPATIBILITY,
+		),
+	);
+	const title = toTitleCase(aiFeatureSlug);
 
 	return `import {
 \tcallEndpoint,
@@ -159,6 +205,7 @@ export function buildAiFeatureApiSource(aiFeatureSlug: string): string {
 
 import type {
 \t${pascalCase}AiFeatureRequest,
+\t${pascalCase}AiFeatureSupportMetadata,
 } from './api-types';
 import {
 \trun${pascalCase}AiFeatureEndpoint,
@@ -185,6 +232,14 @@ function resolveRestNonce( fallback?: string ): string | undefined {
 \t\t: undefined;
 }
 
+function isPlainObject( value: unknown ): value is Record< string, unknown > {
+\treturn (
+\t\t!! value &&
+\t\ttypeof value === 'object' &&
+\t\t! Array.isArray( value )
+\t);
+}
+
 export const aiFeatureRunEndpoint = {
 \t...run${pascalCase}AiFeatureEndpoint,
 \tbuildRequestOptions: () => {
@@ -199,6 +254,63 @@ export const aiFeatureRunEndpoint = {
 \t\t};
 \t},
 };
+
+export const aiFeatureSupportMetadata = {
+\tcompatibility: ${JSON.stringify(compatibility, null, "\t")},
+\tfeatureLabel: ${quoteTsString(title)},
+\tfeatureSlug: ${quoteTsString(aiFeatureSlug)},
+\tsupportProbe: {
+\t\tendpointMethod: 'POST',
+\t\tendpointPath: aiFeatureRunEndpoint.path,
+\t\tmode: 'request-time',
+\t\tunavailableErrorCode: 'ai_client_unavailable',
+\t},
+\tunavailableReasons: [
+\t\t{
+\t\t\tcode: 'missing-wordpress-ai-client',
+\t\t\tlabel: 'WordPress AI Client unavailable',
+\t\t\tmessage:
+\t\t\t\t'This AI feature stays disabled until the WordPress AI Client is available on the site.',
+\t\t},
+\t\t{
+\t\t\tcode: 'request-time-support-probe',
+\t\t\tlabel: 'Support is checked at request time',
+\t\t\tmessage:
+\t\t\t\t'Support is verified when the feature runs, so editor and admin UIs should degrade gracefully when the site rejects the request.',
+\t\t},
+\t],
+} satisfies ${pascalCase}AiFeatureSupportMetadata;
+
+export function getAiFeatureSupportHintLines() {
+\treturn aiFeatureSupportMetadata.unavailableReasons.map(
+\t\t( reason ) => reason.message
+\t);
+}
+
+export function isAiFeatureSupportUnavailableError( error: unknown ) {
+\tif ( ! isPlainObject( error ) ) {
+\t\treturn false;
+\t}
+
+\tconst data = isPlainObject( error.data ) ? error.data : undefined;
+\treturn (
+\t\terror.code === aiFeatureSupportMetadata.supportProbe.unavailableErrorCode ||
+\t\tdata?.status === 501
+\t);
+}
+
+export function resolveAiFeatureUnavailableMessage( error: unknown ) {
+\tif (
+\t\tisPlainObject( error ) &&
+\t\ttypeof error.message === 'string' &&
+\t\terror.message.length > 0
+\t) {
+\t\treturn error.message;
+\t}
+
+\treturn aiFeatureSupportMetadata.unavailableReasons[ 0 ]?.message ??
+\t\t'This AI feature is currently unavailable.';
+}
 
 export function runAiFeature( request: ${pascalCase}AiFeatureRequest ) {
 \treturn callEndpoint( aiFeatureRunEndpoint, request );
@@ -223,6 +335,10 @@ import type {
 } from './api-types';
 import {
 \taiFeatureRunEndpoint,
+\taiFeatureSupportMetadata,
+\tgetAiFeatureSupportHintLines,
+\tisAiFeatureSupportUnavailableError,
+\tresolveAiFeatureUnavailableMessage,
 } from './api';
 
 export type UseRun${pascalCase}AiFeatureMutationOptions =
@@ -237,6 +353,13 @@ export function useRun${pascalCase}AiFeatureMutation(
 ) {
 \treturn useEndpointMutation( aiFeatureRunEndpoint, options );
 }
+
+export {
+\taiFeatureSupportMetadata,
+\tgetAiFeatureSupportHintLines,
+\tisAiFeatureSupportUnavailableError,
+\tresolveAiFeatureUnavailableMessage,
+};
 `;
 }
 

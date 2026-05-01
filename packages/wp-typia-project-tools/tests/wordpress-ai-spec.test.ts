@@ -356,7 +356,9 @@ describe('WordPress AI AbilitySpec foundation', () => {
     expect(optionalPolicy.pluginHeader).toEqual(DEFAULT_SCAFFOLD_COMPATIBILITY);
     expect(createScaffoldCompatibilityConfig(optionalPolicy)).toMatchObject({
       mode: 'optional',
+      optionalFeatureIds: ['wordpress-ai-client'],
       optionalFeatures: ['WordPress AI Client'],
+      requiredFeatureIds: [],
       requiredFeatures: [],
       runtimeGates: [
         'WordPress AI Client: wordpress-core-feature WordPress AI Client',
@@ -376,7 +378,12 @@ describe('WordPress AI AbilitySpec foundation', () => {
         wordpress: '7.0',
       },
       mode: 'required',
+      optionalFeatureIds: [],
       optionalFeatures: [],
+      requiredFeatureIds: [
+        'wordpress-server-abilities',
+        'wordpress-core-abilities',
+      ],
       requiredFeatures: [
         'WordPress Abilities API',
         '@wordpress/core-abilities',

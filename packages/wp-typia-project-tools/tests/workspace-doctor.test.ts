@@ -623,6 +623,55 @@ export interface WorkspaceAbilityConfig {
       wordpress?: string;
     };
     mode: 'baseline' | 'optional' | 'required';
+    optionalFeatureIds: string[];
+    optionalFeatures: string[];
+    requiredFeatureIds: string[];
+    requiredFeatures: string[];
+    runtimeGates: string[];
+  };
+  configFile: string;
+  slug: string;
+}
+
+export interface WorkspaceAiFeatureConfig {
+  aiSchemaFile: string;
+  clientFile: string;
+  compatibility?: {
+    hardMinimums: {
+      php?: string;
+      wordpress?: string;
+    };
+    mode: 'baseline' | 'optional' | 'required';
+    optionalFeatureIds: string[];
+    optionalFeatures: string[];
+    requiredFeatureIds: string[];
+    requiredFeatures: string[];
+    runtimeGates: string[];
+  };
+  dataFile: string;
+  slug: string;
+}
+`);
+
+  expect(repairedSource.match(/^[ \t]*compatibility\??:/gmu)?.length).toBe(2);
+  expect(
+    repairedSource.match(/\boptionalFeatureIds:\s*string\[\];/gu)?.length
+  ).toBe(2);
+  expect(
+    repairedSource.match(/\brequiredFeatureIds:\s*string\[\];/gu)?.length
+  ).toBe(2);
+});
+
+test("workspace inventory repair replaces legacy spaced compatibility blocks without truncating nested fields", () => {
+  const repairedSource = updateWorkspaceInventorySource(`
+export interface WorkspaceAbilityConfig {
+  clientFile: string;
+  compatibility: {
+    hardMinimums: {
+      php?: string;
+      wordpress?: string;
+    };
+    mode: 'baseline' | 'optional' | 'required';
     optionalFeatures: string[];
     requiredFeatures: string[];
     runtimeGates: string[];
@@ -650,6 +699,14 @@ export interface WorkspaceAiFeatureConfig {
 `);
 
   expect(repairedSource.match(/^[ \t]*compatibility\??:/gmu)?.length).toBe(2);
+  expect(
+    repairedSource.match(/\boptionalFeatureIds:\s*string\[\];/gu)?.length
+  ).toBe(2);
+  expect(
+    repairedSource.match(/\brequiredFeatureIds:\s*string\[\];/gu)?.length
+  ).toBe(2);
+  expect(repairedSource).toContain("\t};\n  configFile: string;");
+  expect(repairedSource).toContain("\t};\n  dataFile: string;");
 });
 
 test("doctor passes on a healthy multi-block workspace", async () => {

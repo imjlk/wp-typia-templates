@@ -37,7 +37,9 @@ export interface ScaffoldCompatibilityPolicy {
 export interface ScaffoldCompatibilityConfig {
   hardMinimums: AiFeatureCompatibilityFloor;
   mode: 'baseline' | 'optional' | 'required';
+  optionalFeatureIds: string[];
   optionalFeatures: string[];
+  requiredFeatureIds: string[];
   requiredFeatures: string[];
   runtimeGates: string[];
 }
@@ -165,8 +167,14 @@ export function createScaffoldCompatibilityConfig(
   return {
     hardMinimums: capabilityPlan.hardMinimums,
     mode: getPolicyMode(capabilityPlan),
+    optionalFeatureIds: capabilityPlan.optionalFeatures.map(
+      (feature) => feature.id,
+    ),
     optionalFeatures: capabilityPlan.optionalFeatures.map(
       (feature) => feature.label,
+    ),
+    requiredFeatureIds: capabilityPlan.requiredFeatures.map(
+      (feature) => feature.id,
     ),
     requiredFeatures: capabilityPlan.requiredFeatures.map(
       (feature) => feature.label,
