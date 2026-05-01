@@ -21,10 +21,8 @@ import { appendWorkspaceInventoryEntries } from "./workspace-inventory.js";
 import {
 	getWorkspaceBootstrapPath,
 	patchFile,
-	rollbackWorkspaceMutation,
-	snapshotWorkspaceFiles,
-	type WorkspaceMutationSnapshot,
 } from "./cli-add-shared.js";
+import { executeWorkspaceMutationPlan } from "./cli-add-workspace-mutation.js";
 import { updatePluginHeaderCompatibility } from "./scaffold-compatibility.js";
 import { toPascalCase, toTitleCase } from "./string-case.js";
 import {
@@ -81,88 +79,83 @@ export async function scaffoldAiFeatureWorkspace({
 		"ai-features",
 		`${aiFeatureSlug}.php`,
 	);
-	const mutationSnapshot: WorkspaceMutationSnapshot = {
-		fileSources: await snapshotWorkspaceFiles([
+	return executeWorkspaceMutationPlan({
+		filePaths: [
 			blockConfigPath,
 			bootstrapPath,
 			packageJsonPath,
 			syncAiScriptPath,
 			syncProjectScriptPath,
 			syncRestScriptPath,
-		]),
-		snapshotDirs: [],
+		],
 		targetPaths: [aiFeatureDir, phpFilePath, syncAiScriptPath],
-	};
+		run: async () => {
+			await fsp.mkdir(aiFeatureDir, { recursive: true });
+			await fsp.mkdir(path.dirname(phpFilePath), { recursive: true });
+			await ensureAiFeatureBootstrapAnchors(workspace);
+			await patchFile(bootstrapPath, (source) =>
+				updatePluginHeaderCompatibility(source, compatibilityPolicy),
+			);
+			const packageScriptChanges = await ensureAiFeaturePackageScripts(workspace);
+			await ensureAiFeatureSyncProjectAnchors(workspace);
+			await ensureAiFeatureSyncRestAnchors(workspace);
+			await fsp.writeFile(
+				syncAiScriptPath,
+				buildAiFeatureSyncScriptSource(),
+				"utf8",
+			);
+			await fsp.writeFile(typesFilePath, buildAiFeatureTypesSource(aiFeatureSlug), "utf8");
+			await fsp.writeFile(
+				validatorsFilePath,
+				buildAiFeatureValidatorsSource(aiFeatureSlug),
+				"utf8",
+			);
+			await fsp.writeFile(apiFilePath, buildAiFeatureApiSource(aiFeatureSlug), "utf8");
+			await fsp.writeFile(dataFilePath, buildAiFeatureDataSource(aiFeatureSlug), "utf8");
+			await fsp.writeFile(
+				phpFilePath,
+				buildAiFeaturePhpSource(
+					aiFeatureSlug,
+					namespace,
+					workspace.workspace.phpPrefix,
+					workspace.workspace.textDomain,
+				),
+				"utf8",
+			);
 
-	try {
-		await fsp.mkdir(aiFeatureDir, { recursive: true });
-		await fsp.mkdir(path.dirname(phpFilePath), { recursive: true });
-		await ensureAiFeatureBootstrapAnchors(workspace);
-		await patchFile(bootstrapPath, (source) =>
-			updatePluginHeaderCompatibility(source, compatibilityPolicy),
-		);
-		const packageScriptChanges = await ensureAiFeaturePackageScripts(workspace);
-		await ensureAiFeatureSyncProjectAnchors(workspace);
-		await ensureAiFeatureSyncRestAnchors(workspace);
-		await fsp.writeFile(
-			syncAiScriptPath,
-			buildAiFeatureSyncScriptSource(),
-			"utf8",
-		);
-		await fsp.writeFile(typesFilePath, buildAiFeatureTypesSource(aiFeatureSlug), "utf8");
-		await fsp.writeFile(
-			validatorsFilePath,
-			buildAiFeatureValidatorsSource(aiFeatureSlug),
-			"utf8",
-		);
-		await fsp.writeFile(apiFilePath, buildAiFeatureApiSource(aiFeatureSlug), "utf8");
-		await fsp.writeFile(dataFilePath, buildAiFeatureDataSource(aiFeatureSlug), "utf8");
-		await fsp.writeFile(
-			phpFilePath,
-			buildAiFeaturePhpSource(
-				aiFeatureSlug,
-				namespace,
-				workspace.workspace.phpPrefix,
-				workspace.workspace.textDomain,
-			),
-			"utf8",
-		);
+			const pascalCase = toPascalCase(aiFeatureSlug);
+			await syncAiFeatureRestArtifacts({
+				clientFile: `src/ai-features/${aiFeatureSlug}/api-client.ts`,
+				outputDir: path.join("src", "ai-features", aiFeatureSlug),
+				projectDir: workspace.projectDir,
+				typesFile: `src/ai-features/${aiFeatureSlug}/api-types.ts`,
+				validatorsFile: `src/ai-features/${aiFeatureSlug}/api-validators.ts`,
+				variables: {
+					namespace,
+					pascalCase,
+					slugKebabCase: aiFeatureSlug,
+					title: toTitleCase(aiFeatureSlug),
+				},
+			});
+			await syncAiFeatureSchemaArtifact({
+				aiSchemaFile: `src/ai-features/${aiFeatureSlug}/ai-schemas/feature-result.ai.schema.json`,
+				outputDir: path.join("src", "ai-features", aiFeatureSlug),
+				projectDir: workspace.projectDir,
+			});
+			await appendWorkspaceInventoryEntries(workspace.projectDir, {
+				aiFeatureEntries: [
+					buildAiFeatureConfigEntry(aiFeatureSlug, namespace),
+				],
+				transformSource: ensureBlockConfigCanAddRestManifests,
+			});
 
-		const pascalCase = toPascalCase(aiFeatureSlug);
-		await syncAiFeatureRestArtifacts({
-			clientFile: `src/ai-features/${aiFeatureSlug}/api-client.ts`,
-			outputDir: path.join("src", "ai-features", aiFeatureSlug),
-			projectDir: workspace.projectDir,
-			typesFile: `src/ai-features/${aiFeatureSlug}/api-types.ts`,
-			validatorsFile: `src/ai-features/${aiFeatureSlug}/api-validators.ts`,
-			variables: {
-				namespace,
-				pascalCase,
-				slugKebabCase: aiFeatureSlug,
-				title: toTitleCase(aiFeatureSlug),
-			},
-		});
-		await syncAiFeatureSchemaArtifact({
-			aiSchemaFile: `src/ai-features/${aiFeatureSlug}/ai-schemas/feature-result.ai.schema.json`,
-			outputDir: path.join("src", "ai-features", aiFeatureSlug),
-			projectDir: workspace.projectDir,
-		});
-		await appendWorkspaceInventoryEntries(workspace.projectDir, {
-			aiFeatureEntries: [
-				buildAiFeatureConfigEntry(aiFeatureSlug, namespace),
-			],
-			transformSource: ensureBlockConfigCanAddRestManifests,
-		});
-
-		return {
-			warnings: packageScriptChanges.addedProjectToolsDependency
-				? [
-						"Added `@wp-typia/project-tools` to devDependencies for `sync-ai`. If this workspace was already installed, rerun your package manager install command before the first `wp-typia sync ai`.",
-					]
-				: [],
-		};
-	} catch (error) {
-		await rollbackWorkspaceMutation(mutationSnapshot);
-		throw error;
-	}
+			return {
+				warnings: packageScriptChanges.addedProjectToolsDependency
+					? [
+							"Added `@wp-typia/project-tools` to devDependencies for `sync-ai`. If this workspace was already installed, rerun your package manager install command before the first `wp-typia sync ai`.",
+						]
+					: [],
+			};
+		},
+	});
 }
