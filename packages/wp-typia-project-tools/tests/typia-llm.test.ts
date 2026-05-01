@@ -302,6 +302,71 @@ const NESTED_REFERENCE_OPENAPI = {
   },
 } as const as unknown as OpenApiDocument;
 
+const RECURSIVE_REFERENCE_OPENAPI = {
+  components: {
+    requestBodies: {
+      RecursiveNodeBody: {
+        content: {
+          'application/json': {
+            schema: {
+              $ref: '#/components/schemas/RecursiveNode',
+            },
+          },
+        },
+        required: true,
+      },
+    },
+    schemas: {
+      RecursiveNode: {
+        $schema: 'https://json-schema.org/draft/2020-12/schema',
+        additionalProperties: false,
+        properties: {
+          child: {
+            $ref: '#/components/schemas/RecursiveNode',
+          },
+          label: {
+            minLength: 1,
+            type: 'string',
+          },
+        },
+        required: ['label'],
+        title: 'RecursiveNode',
+        type: 'object',
+      },
+    },
+  },
+  info: {
+    title: 'Recursive Node API',
+    version: '1.0.0',
+  },
+  openapi: '3.1.0',
+  paths: {
+    '/demo/v1/tree': {
+      post: {
+        operationId: 'syncRecursiveNode',
+        requestBody: {
+          $ref: '#/components/requestBodies/RecursiveNodeBody',
+        },
+        responses: {
+          '200': {
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/RecursiveNode',
+                },
+              },
+            },
+            description: 'Recursive node response.',
+          },
+        },
+        summary: 'Synchronize the recursive node.',
+        tags: ['Tree'],
+        'x-typia-authIntent': 'authenticated',
+      },
+    },
+  },
+} as const as unknown as OpenApiDocument;
+
 const EMPTY_LLM_PARAMETERS: ILlmSchema.IParameters = {
   $defs: {},
   additionalProperties: false,
@@ -865,6 +930,48 @@ describe('typia.llm adapter emitter', () => {
         },
       },
       required: ['count'],
+    });
+  });
+
+  test('preserves non-recursive constraints without failing on recursive schema references', () => {
+    const constrainedArtifact = applyOpenApiConstraintsToTypiaLlmFunctionArtifact(
+      {
+        functionArtifact: {
+          description: 'Synchronize the recursive node.',
+          name: 'syncRecursiveNode',
+          parameters: {
+            $defs: {},
+            additionalProperties: false,
+            properties: {
+              label: {
+                type: 'string',
+              },
+            },
+            required: ['label'],
+            type: 'object',
+          },
+        },
+        openApiDocument: RECURSIVE_REFERENCE_OPENAPI,
+        operationId: 'syncRecursiveNode',
+      },
+    );
+
+    expect(constrainedArtifact.parameters).toMatchObject({
+      properties: {
+        child: {
+          properties: {
+            label: {
+              minLength: 1,
+              type: 'string',
+            },
+          },
+        },
+        label: {
+          minLength: 1,
+          type: 'string',
+        },
+      },
+      required: ['label'],
     });
   });
 

@@ -389,7 +389,7 @@ function resolveOpenApiSchemaObject(
   }
 
   if (seenReferences.has(reference)) {
-    throw new Error(`Detected recursive OpenAPI schema reference "${reference}".`);
+    return schema;
   }
 
   return resolveOpenApiSchemaObject(
@@ -399,12 +399,33 @@ function resolveOpenApiSchemaObject(
   );
 }
 
+function collectOpenApiSeenReferences(
+  schema: JsonSchemaObject,
+  seenReferences: ReadonlySet<string>,
+): ReadonlySet<string> {
+  const reference = schema.$ref;
+  if (typeof reference !== 'string' || seenReferences.has(reference)) {
+    return seenReferences;
+  }
+
+  return new Set([...seenReferences, reference]);
+}
+
 function mergeJsonSchemaConstraintProperties(
   document: OpenApiDocument,
   target: JsonSchemaObject,
   source: JsonSchemaObject,
+  seenReferences: ReadonlySet<string> = new Set(),
 ): JsonSchemaObject {
-  const resolvedSource = resolveOpenApiSchemaObject(document, source);
+  const nextSeenReferences = collectOpenApiSeenReferences(
+    source,
+    seenReferences,
+  );
+  const resolvedSource = resolveOpenApiSchemaObject(
+    document,
+    source,
+    seenReferences,
+  );
   const merged = target;
 
   for (const key of JSON_SCHEMA_CONSTRAINT_KEYS) {
@@ -427,6 +448,7 @@ function mergeJsonSchemaConstraintProperties(
       document,
       nextItems,
       resolvedSource.items,
+      nextSeenReferences,
     );
   }
 
@@ -449,6 +471,7 @@ function mergeJsonSchemaConstraintProperties(
         document,
         nextProperty,
         propertySchema,
+        nextSeenReferences,
       );
     }
 
