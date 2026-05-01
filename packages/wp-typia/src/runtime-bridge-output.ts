@@ -18,8 +18,7 @@ import {
   toExternalLayerPromptOptions,
   type ExternalLayerSelectOption,
 } from './external-layer-prompt-options';
-
-type PrintLine = (line: string) => void;
+import type { PrintLine } from './print-line';
 
 export type CreateProgressPayload = {
   detail: string;

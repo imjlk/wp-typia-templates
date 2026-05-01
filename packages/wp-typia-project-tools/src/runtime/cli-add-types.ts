@@ -1,0 +1,303 @@
+/**
+ * Supported top-level `wp-typia add` kinds exposed by the canonical CLI.
+ */
+export const ADD_KIND_IDS = [
+	"admin-view",
+	"block",
+	"variation",
+	"style",
+	"transform",
+	"pattern",
+	"binding-source",
+	"rest-resource",
+	"ability",
+	"ai-feature",
+	"hooked-block",
+	"editor-plugin",
+] as const;
+/**
+ * Union of supported top-level `wp-typia add` kind ids.
+ */
+export type AddKindId = (typeof ADD_KIND_IDS)[number];
+
+/**
+ * Supported plugin-level REST resource methods accepted by
+ * `wp-typia add rest-resource --methods`.
+ */
+export const REST_RESOURCE_METHOD_IDS = [
+	"list",
+	"read",
+	"create",
+	"update",
+	"delete",
+] as const;
+/**
+ * Union of supported plugin-level REST resource method ids.
+ */
+export type RestResourceMethodId = (typeof REST_RESOURCE_METHOD_IDS)[number];
+
+/**
+ * Canonical editor-plugin shell surface ids accepted by
+ * `wp-typia add editor-plugin --slot`.
+ */
+export const EDITOR_PLUGIN_SLOT_IDS = ["sidebar", "document-setting-panel"] as const;
+/**
+ * Union of canonical editor-plugin shell surface ids.
+ */
+export type EditorPluginSlotId = (typeof EDITOR_PLUGIN_SLOT_IDS)[number];
+/**
+ * Legacy and canonical editor-plugin slot aliases keyed by user-facing input.
+ */
+export const EDITOR_PLUGIN_SLOT_ALIASES = {
+	PluginDocumentSettingPanel: "document-setting-panel",
+	PluginSidebar: "sidebar",
+	"document-setting-panel": "document-setting-panel",
+	sidebar: "sidebar",
+} as const satisfies Record<string, EditorPluginSlotId>;
+
+/**
+ * Resolve a user-provided editor-plugin slot alias to its canonical id.
+ *
+ * @param slot Raw slot value from CLI input.
+ * @returns The canonical slot id, or `undefined` when unsupported.
+ */
+export function resolveEditorPluginSlotAlias(
+	slot: string,
+): EditorPluginSlotId | undefined {
+	const trimmed = slot.trim();
+	if (
+		!Object.prototype.hasOwnProperty.call(EDITOR_PLUGIN_SLOT_ALIASES, trimmed)
+	) {
+		return undefined;
+	}
+
+	return EDITOR_PLUGIN_SLOT_ALIASES[
+		trimmed as keyof typeof EDITOR_PLUGIN_SLOT_ALIASES
+	];
+}
+
+/**
+ * Supported built-in block families accepted by `wp-typia add block --template`.
+ */
+export const ADD_BLOCK_TEMPLATE_IDS = [
+	"basic",
+	"interactivity",
+	"persistence",
+	"compound",
+] as const;
+/**
+ * Union of supported built-in block template ids.
+ */
+export type AddBlockTemplateId = (typeof ADD_BLOCK_TEMPLATE_IDS)[number];
+
+/**
+ * Options for `wp-typia add variation`.
+ *
+ * @property blockName Existing workspace block slug that owns the variation.
+ * @property cwd Working directory used to resolve the nearest official workspace.
+ * @property variationName Human-entered variation name normalized into a slug.
+ */
+export interface RunAddVariationCommandOptions {
+	blockName: string;
+	cwd?: string;
+	variationName: string;
+}
+
+/**
+ * Options for `wp-typia add style`.
+ *
+ * @property blockName Existing workspace block slug that owns the style.
+ * @property cwd Working directory used to resolve the nearest official workspace.
+ * Defaults to `process.cwd()`.
+ * @property styleName Human-entered style name that will be normalized into the
+ * generated style slug.
+ */
+export interface RunAddBlockStyleCommandOptions {
+	blockName: string;
+	cwd?: string;
+	styleName: string;
+}
+
+/**
+ * Options for `wp-typia add transform`.
+ *
+ * @property cwd Working directory used to resolve the nearest official workspace.
+ * Defaults to `process.cwd()`.
+ * @property fromBlockName Full `namespace/block` source block name accepted by
+ * WordPress block transform definitions.
+ * @property toBlockName Existing workspace block slug or full block name that
+ * owns the generated transform.
+ * @property transformName Human-entered transform name that will be normalized
+ * into the generated transform slug.
+ */
+export interface RunAddBlockTransformCommandOptions {
+	cwd?: string;
+	fromBlockName: string;
+	toBlockName: string;
+	transformName: string;
+}
+
+/**
+ * Options for `wp-typia add pattern`.
+ *
+ * @property cwd Working directory used to resolve the nearest official workspace.
+ * @property patternName Human-entered pattern name normalized into a slug.
+ */
+export interface RunAddPatternCommandOptions {
+	cwd?: string;
+	patternName: string;
+}
+
+/**
+ * Options for `wp-typia add binding-source`.
+ *
+ * @property attributeName Optional block attribute to bind when `blockName` is provided.
+ * @property blockName Optional existing workspace block slug or full block name.
+ * @property bindingSourceName Human-entered binding source name normalized into a slug.
+ * @property cwd Working directory used to resolve the nearest official workspace.
+ */
+export interface RunAddBindingSourceCommandOptions {
+	attributeName?: string;
+	blockName?: string;
+	bindingSourceName: string;
+	cwd?: string;
+}
+
+/**
+ * Options for `wp-typia add rest-resource`.
+ *
+ * @property cwd Working directory used to resolve the nearest official workspace.
+ * @property methods Optional comma-separated REST method list.
+ * @property namespace Optional REST namespace, defaulting to the workspace namespace.
+ * @property restResourceName Human-entered resource name normalized into a slug.
+ */
+export interface RunAddRestResourceCommandOptions {
+	cwd?: string;
+	methods?: string;
+	namespace?: string;
+	restResourceName: string;
+}
+
+/**
+ * Options for `wp-typia add admin-view`.
+ *
+ * @property adminViewName Human-entered admin screen name that will be
+ * normalized into the generated slug.
+ * @property cwd Working directory used to resolve the nearest official workspace.
+ * Defaults to `process.cwd()`.
+ * @property source Optional data source locator. `rest-resource:<slug>` wires
+ * the generated screen to an existing list-capable REST resource.
+ * `core-data:<kind>/<name>` binds the screen to a supported WordPress-owned
+ * entity collection such as `core-data:postType/post`.
+ */
+export interface RunAddAdminViewCommandOptions {
+	adminViewName: string;
+	cwd?: string;
+	source?: string;
+}
+
+/**
+ * Options for `wp-typia add ability`.
+ *
+ * @property cwd Working directory used to resolve the nearest official workspace.
+ * Defaults to `process.cwd()`.
+ * @property abilityName Human-entered workflow ability name that will be
+ * normalized into the generated slug.
+ */
+export interface RunAddAbilityCommandOptions {
+	abilityName: string;
+	cwd?: string;
+}
+
+/**
+ * Options for `wp-typia add ai-feature`.
+ *
+ * @property aiFeatureName Human-entered AI feature name normalized into a slug.
+ * @property cwd Working directory used to resolve the nearest official workspace.
+ * @property namespace Optional REST namespace, defaulting to the workspace namespace.
+ */
+export interface RunAddAiFeatureCommandOptions {
+	aiFeatureName: string;
+	cwd?: string;
+	namespace?: string;
+}
+
+/**
+ * Options for `wp-typia add hooked-block`.
+ *
+ * @property anchorBlockName Full `namespace/block` anchor block name.
+ * @property blockName Existing workspace block slug that receives metadata.
+ * @property cwd Working directory used to resolve the nearest official workspace.
+ * @property position Hook position accepted by WordPress block hooks.
+ */
+export interface RunAddHookedBlockCommandOptions {
+	anchorBlockName: string;
+	blockName: string;
+	cwd?: string;
+	position: string;
+}
+
+/**
+ * Options for `wp-typia add editor-plugin`.
+ *
+ * @property cwd Working directory used to resolve the nearest official workspace.
+ * Defaults to `process.cwd()`.
+ * @property editorPluginName Human-entered editor plugin name that will be
+ * normalized into the generated slug.
+ * @property slot Optional editor shell slot. Defaults to `sidebar`.
+ */
+export interface RunAddEditorPluginCommandOptions {
+	cwd?: string;
+	editorPluginName: string;
+	slot?: string;
+}
+
+/**
+ * Options for `wp-typia add block`.
+ *
+ * @property alternateRenderTargets Optional comma-separated alternate render targets.
+ * @property blockName Human-entered block name normalized into a slug.
+ * @property cwd Working directory used to resolve the nearest official workspace.
+ * @property dataStorageMode Optional persistence storage mode.
+ * @property externalLayerId Optional external layer id to apply.
+ * @property externalLayerSource Optional local, GitHub, or npm external layer source.
+ * @property innerBlocksPreset Optional compound block inner blocks preset.
+ * @property persistencePolicy Optional persistence access policy.
+ * @property selectExternalLayerId Optional selector for interactive external layer choice.
+ * @property templateId Optional built-in block template id.
+ */
+export interface RunAddBlockCommandOptions {
+	alternateRenderTargets?: string;
+	blockName: string;
+	cwd?: string;
+	dataStorageMode?: string;
+	externalLayerId?: string;
+	externalLayerSource?: string;
+	innerBlocksPreset?: string;
+	persistencePolicy?: string;
+	selectExternalLayerId?: (
+		options: Array<{
+			description?: string;
+			extends: string[];
+			id: string;
+		}>,
+	) => Promise<string>;
+	templateId?: string;
+}
+
+/**
+ * Captured workspace mutation state used to roll back partial add operations.
+ */
+export interface WorkspaceMutationSnapshot {
+	/** Snapshots of file contents taken before the mutation starts. */
+	fileSources: Array<{
+		/** Absolute file path recorded for rollback. */
+		filePath: string;
+		/** Previous file contents, or `null` when the file did not exist. */
+		source: string | null;
+	}>;
+	/** Snapshot directories created while seeding migration history. */
+	snapshotDirs: string[];
+	/** Files or directories created by the mutation that should be removed on rollback. */
+	targetPaths: string[];
+}

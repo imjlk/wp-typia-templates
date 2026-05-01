@@ -3,7 +3,7 @@
  *
  * The canonical CLI surface stays stable here while the implementation lives
  * in focused internal modules:
- * - `cli-add-shared` for shared validation/help/rollback helpers
+ * - `cli-add-shared` as a compatibility barrel around focused add helpers
  * - `cli-add-block` for built-in block scaffolding
  * - `cli-add-workspace` for workspace mutation commands
  */
