@@ -189,4 +189,36 @@ describe("DataForm helpers", () => {
       ],
     });
   });
+
+  test("keeps group-only fields while filtering read-only children during normalization", () => {
+    const views = defineDataViews<Product>({
+      defaultView: { type: "table" },
+      fields: {
+        id: { readOnly: true, schema: { type: "integer" } },
+        sku: { schema: { type: "string" } },
+        title: { schema: { type: "string" } },
+      },
+    });
+    const form = views.toFormConfig({
+      fields: [
+        {
+          children: ["id", "sku", "title"] as unknown as DataFormField<Product>[],
+          id: "identity" as never,
+          label: "Identity",
+        } as unknown as DataFormField<Product>,
+      ],
+    });
+
+    expect(form.fields).toHaveLength(1);
+    expect(form.fields[0]?.id as unknown as string).toBe("identity");
+    expect(form.fields[0]?.label).toBe("Identity");
+    expect(form.fields[0]?.children?.map((field) => field.id)).toEqual([
+      "sku",
+      "title",
+    ]);
+    expect(form.fields[0]?.children?.map((field) => field.label)).toEqual([
+      "Sku",
+      "Title",
+    ]);
+  });
 });

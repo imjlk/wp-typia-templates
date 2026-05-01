@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { defineDataViews } from "../src/index.js";
+import { defineDataViews, type DataViewsView } from "../src/index.js";
 
 interface Product {
   readonly createdAt: string;
@@ -29,6 +29,38 @@ const sampleProduct: Product = {
 };
 
 describe("defineDataViews", () => {
+  test("supports empty and minimal field definitions", () => {
+    const emptyViews = defineDataViews<Product>({
+      defaultView: { type: "table" },
+      fields: {},
+    });
+    const minimalViews = defineDataViews<Product>({
+      defaultView: { type: "table" },
+      fields: {
+        title: {},
+      },
+    });
+
+    expect(emptyViews.fields).toEqual([]);
+    expect(emptyViews.defaultView).toEqual({
+      fields: [],
+      type: "table",
+    });
+    expect(emptyViews.createConfig({ data: [] }).fields).toEqual([]);
+    expect(emptyViews.getItemId).toBeUndefined();
+    expect(minimalViews.fieldMap.title).toMatchObject({
+      id: "title",
+      label: "Title",
+    });
+    expect(minimalViews.fieldMap.title?.description).toBeUndefined();
+    expect(minimalViews.fieldMap.title?.elements).toBeUndefined();
+    expect(minimalViews.fieldMap.title?.type).toBeUndefined();
+    expect(minimalViews.defaultView).toEqual({
+      fields: ["title"],
+      type: "table",
+    });
+  });
+
   test("normalizes primitive schema metadata into DataViews field types", () => {
     const views = defineDataViews<Product>({
       defaultView: { type: "table" },
@@ -75,6 +107,30 @@ describe("defineDataViews", () => {
       { label: "Draft", value: "draft" },
       { label: "Published", value: "publish" },
     ]);
+  });
+
+  test("normalizes schema-only fields with const elements and schema descriptions", () => {
+    const views = defineDataViews<Product>({
+      defaultView: { type: "table" },
+      fields: {
+        status: {
+          schema: {
+            const: "draft",
+            description: "Single supported status",
+            type: "string",
+          },
+        },
+      },
+    });
+
+    expect(views.fieldMap.status).toMatchObject({
+      description: "Single supported status",
+      elements: [{ label: "Draft", value: "draft" }],
+      id: "status",
+      label: "Status",
+      type: "text",
+    });
+    expect(views.fieldMap.status?.isValid).toEqual({ elements: true });
   });
 
   test("normalizes date-like and URL metadata while preserving field options", () => {
@@ -171,6 +227,61 @@ describe("defineDataViews", () => {
 
     expect(config.getItemId?.(sampleProduct)).toBe("product:1");
     expect(config.getItemLevel?.(sampleProduct)).toBe(2);
+  });
+
+  test("merges schema validation hints with explicit field validation overrides", () => {
+    const customValidation = () => null;
+    const views = defineDataViews<Product>({
+      defaultView: { type: "table" },
+      fields: {
+        title: {
+          isValid: {
+            custom: customValidation,
+            maxLength: 80,
+            minLength: 20,
+            required: false,
+          },
+          schema: {
+            maxLength: 120,
+            minLength: 10,
+            required: true,
+            type: "string",
+          },
+        },
+      },
+    });
+
+    expect(views.fieldMap.title?.isValid).toEqual({
+      custom: customValidation,
+      maxLength: 80,
+      minLength: 20,
+      required: false,
+    });
+  });
+
+  test("normalizes only declared default views and trusts runtime override views as-is", () => {
+    const views = defineDataViews<Product>({
+      defaultView: {
+        sort: { direction: "desc", field: "views" },
+        type: "table",
+      },
+      fields: {
+        title: { schema: { type: "string" } },
+        views: { schema: { type: "integer" } },
+      },
+      titleField: "title",
+    });
+    const runtimeViewOverride = { type: "grid" } as DataViewsView<Product>;
+
+    expect(views.defaultView).toEqual({
+      fields: ["title", "views"],
+      sort: { direction: "desc", field: "views" },
+      titleField: "title",
+      type: "table",
+    });
+    expect(views.createConfig({ data: [sampleProduct], view: runtimeViewOverride }).view).toBe(
+      runtimeViewOverride,
+    );
   });
 
   test("guards unsafe idField values when runtime input bypasses the type contract", () => {
