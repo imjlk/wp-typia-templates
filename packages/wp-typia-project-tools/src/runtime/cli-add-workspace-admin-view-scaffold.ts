@@ -31,10 +31,12 @@ import {
 import {
   getWorkspaceBootstrapPath,
   patchFile,
-  rollbackWorkspaceMutation,
-  snapshotWorkspaceFiles,
-  type WorkspaceMutationSnapshot,
 } from './cli-add-shared.js';
+import {
+  appendPhpSnippetBeforeClosingTag,
+  executeWorkspaceMutationPlan,
+  insertPhpSnippetBeforeWorkspaceAnchors,
+} from './cli-add-workspace-mutation.js';
 import {
   DEFAULT_WORDPRESS_CORE_DATA_VERSION,
   DEFAULT_WORDPRESS_DATA_VERSION,
@@ -141,34 +143,8 @@ function ${loadFunctionName}() {
 \t}
 }
 `;
-    const insertionAnchors = [
-      /add_action\(\s*["']init["']\s*,\s*["'][^"']+_load_textdomain["']\s*\);\s*\n/u,
-      /\?>\s*$/u,
-    ];
-    const insertPhpSnippet = (snippet: string): void => {
-      for (const anchor of insertionAnchors) {
-        const candidate = nextSource.replace(
-          anchor,
-          (match) => `${snippet}\n${match}`,
-        );
-        if (candidate !== nextSource) {
-          nextSource = candidate;
-          return;
-        }
-      }
-      nextSource = `${nextSource.trimEnd()}\n${snippet}\n`;
-    };
-    const appendPhpSnippet = (snippet: string): void => {
-      const closingTagPattern = /\?>\s*$/u;
-      if (closingTagPattern.test(nextSource)) {
-        nextSource = nextSource.replace(closingTagPattern, `${snippet}\n?>`);
-        return;
-      }
-      nextSource = `${nextSource.trimEnd()}\n${snippet}\n`;
-    };
-
     if (!hasPhpFunctionDefinition(nextSource, loadFunctionName)) {
-      insertPhpSnippet(loadFunction);
+      nextSource = insertPhpSnippetBeforeWorkspaceAnchors(nextSource, loadFunction);
     } else {
       const functionRange = findPhpFunctionRange(nextSource, loadFunctionName);
       const functionSource = functionRange
@@ -190,7 +166,7 @@ function ${loadFunctionName}() {
     }
 
     if (!loadHookPattern.test(nextSource)) {
-      appendPhpSnippet(loadHook);
+      nextSource = appendPhpSnippetBeforeClosingTag(nextSource, loadHook);
     }
 
     return nextSource;
@@ -385,86 +361,81 @@ export async function scaffoldAdminViewWorkspace(options: {
     'admin-views',
     `${adminViewSlug}.php`,
   );
-  const mutationSnapshot: WorkspaceMutationSnapshot = {
-    fileSources: await snapshotWorkspaceFiles([
+  await executeWorkspaceMutationPlan({
+    filePaths: [
       adminViewsIndexPath,
       blockConfigPath,
       bootstrapPath,
       buildScriptPath,
       packageJsonPath,
       webpackConfigPath,
-    ]),
-    snapshotDirs: [],
+    ],
     targetPaths: [adminViewDir, adminViewPhpPath],
-  };
-
-  try {
-    await fsp.mkdir(adminViewDir, { recursive: true });
-    await fsp.mkdir(path.dirname(adminViewPhpPath), { recursive: true });
-    await ensureAdminViewPackageDependencies(workspace, parsedSource);
-    await ensureAdminViewBootstrapAnchors(workspace);
-    await ensureAdminViewBuildScriptAnchors(workspace);
-    await ensureAdminViewWebpackAnchors(workspace);
-    await fsp.writeFile(
-      path.join(adminViewDir, 'types.ts'),
-      buildAdminViewTypesSource(adminViewSlug, restResource, coreDataSource),
-      'utf8',
-    );
-    await fsp.writeFile(
-      path.join(adminViewDir, 'config.ts'),
-      buildAdminViewConfigSource(
-        adminViewSlug,
-        workspace.workspace.textDomain,
-        parsedSource,
-        restResource,
-      ),
-      'utf8',
-    );
-    await fsp.writeFile(
-      path.join(adminViewDir, 'data.ts'),
-      coreDataSource
-        ? buildCoreDataAdminViewDataSource(adminViewSlug, coreDataSource)
-        : restResource
-          ? buildRestAdminViewDataSource(adminViewSlug, restResource)
-          : buildDefaultAdminViewDataSource(adminViewSlug),
-      'utf8',
-    );
-    await fsp.writeFile(
-      path.join(adminViewDir, 'Screen.tsx'),
-      coreDataSource
-        ? buildCoreDataAdminViewScreenSource(
-            adminViewSlug,
-            workspace.workspace.textDomain,
-          )
-        : buildAdminViewScreenSource(
-            adminViewSlug,
-            workspace.workspace.textDomain,
-          ),
-      'utf8',
-    );
-    await fsp.writeFile(
-      path.join(adminViewDir, 'index.tsx'),
-      buildAdminViewEntrySource(adminViewSlug),
-      'utf8',
-    );
-    await fsp.writeFile(
-      path.join(adminViewDir, 'style.scss'),
-      buildAdminViewStyleSource(),
-      'utf8',
-    );
-    await fsp.writeFile(
-      adminViewPhpPath,
-      buildAdminViewPhpSource(adminViewSlug, workspace),
-      'utf8',
-    );
-    await writeAdminViewRegistry(workspace.projectDir, adminViewSlug);
-    await appendWorkspaceInventoryEntries(workspace.projectDir, {
-      adminViewEntries: [
-        buildAdminViewConfigEntry(adminViewSlug, parsedSource),
-      ],
-    });
-  } catch (error) {
-    await rollbackWorkspaceMutation(mutationSnapshot);
-    throw error;
-  }
+    run: async () => {
+      await fsp.mkdir(adminViewDir, { recursive: true });
+      await fsp.mkdir(path.dirname(adminViewPhpPath), { recursive: true });
+      await ensureAdminViewPackageDependencies(workspace, parsedSource);
+      await ensureAdminViewBootstrapAnchors(workspace);
+      await ensureAdminViewBuildScriptAnchors(workspace);
+      await ensureAdminViewWebpackAnchors(workspace);
+      await fsp.writeFile(
+        path.join(adminViewDir, 'types.ts'),
+        buildAdminViewTypesSource(adminViewSlug, restResource, coreDataSource),
+        'utf8',
+      );
+      await fsp.writeFile(
+        path.join(adminViewDir, 'config.ts'),
+        buildAdminViewConfigSource(
+          adminViewSlug,
+          workspace.workspace.textDomain,
+          parsedSource,
+          restResource,
+        ),
+        'utf8',
+      );
+      await fsp.writeFile(
+        path.join(adminViewDir, 'data.ts'),
+        coreDataSource
+          ? buildCoreDataAdminViewDataSource(adminViewSlug, coreDataSource)
+          : restResource
+            ? buildRestAdminViewDataSource(adminViewSlug, restResource)
+            : buildDefaultAdminViewDataSource(adminViewSlug),
+        'utf8',
+      );
+      await fsp.writeFile(
+        path.join(adminViewDir, 'Screen.tsx'),
+        coreDataSource
+          ? buildCoreDataAdminViewScreenSource(
+              adminViewSlug,
+              workspace.workspace.textDomain,
+            )
+          : buildAdminViewScreenSource(
+              adminViewSlug,
+              workspace.workspace.textDomain,
+            ),
+        'utf8',
+      );
+      await fsp.writeFile(
+        path.join(adminViewDir, 'index.tsx'),
+        buildAdminViewEntrySource(adminViewSlug),
+        'utf8',
+      );
+      await fsp.writeFile(
+        path.join(adminViewDir, 'style.scss'),
+        buildAdminViewStyleSource(),
+        'utf8',
+      );
+      await fsp.writeFile(
+        adminViewPhpPath,
+        buildAdminViewPhpSource(adminViewSlug, workspace),
+        'utf8',
+      );
+      await writeAdminViewRegistry(workspace.projectDir, adminViewSlug);
+      await appendWorkspaceInventoryEntries(workspace.projectDir, {
+        adminViewEntries: [
+          buildAdminViewConfigEntry(adminViewSlug, parsedSource),
+        ],
+      });
+    },
+  });
 }

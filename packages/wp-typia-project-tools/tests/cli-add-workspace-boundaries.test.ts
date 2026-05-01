@@ -37,6 +37,14 @@ test('cli-add-workspace delegates asset, rest-resource, ai-feature, and admin-vi
     path.join(runtimeRoot, 'cli-add-workspace-ai-source-emitters.ts'),
     'utf8',
   );
+  const aiScaffoldSource = fs.readFileSync(
+    path.join(runtimeRoot, 'cli-add-workspace-ai-scaffold.ts'),
+    'utf8',
+  );
+  const abilityScaffoldSource = fs.readFileSync(
+    path.join(runtimeRoot, 'cli-add-workspace-ability-scaffold.ts'),
+    'utf8',
+  );
   const adminViewSource = fs.readFileSync(
     path.join(runtimeRoot, 'cli-add-workspace-admin-view.ts'),
     'utf8',
@@ -149,15 +157,17 @@ test('cli-add-workspace delegates asset, rest-resource, ai-feature, and admin-vi
   expect(restAnchorsSource).toContain(
     'async function ensureRestResourceSyncScriptAnchors(',
   );
-  expect(aiSource).toContain('from "./cli-add-workspace-ai-anchors.js"');
-  expect(aiSource).toContain(
+  expect(aiScaffoldSource).toContain('from "./cli-add-workspace-ai-anchors.js"');
+  expect(aiScaffoldSource).toContain(
     'from "./cli-add-workspace-ai-source-emitters.js"',
   );
-  expect(aiSource).not.toContain('function buildAiFeatureTypesSource(');
-  expect(aiSource).not.toContain(
+  expect(aiScaffoldSource).not.toContain('function buildAiFeatureTypesSource(');
+  expect(aiScaffoldSource).not.toContain(
     'async function ensureAiFeatureBootstrapAnchors(',
   );
-  expect(aiSource).toContain('function buildAiFeaturePhpSource(');
+  expect(aiScaffoldSource).toContain(
+    'from "./cli-add-workspace-ai-templates.js"',
+  );
   expect(aiSource).toContain('export async function runAddAiFeatureCommand(');
   expect(aiSourceEmittersSource).toContain(
     'function buildAiFeatureTypesSource(',
@@ -210,4 +220,13 @@ test('cli-add-workspace delegates asset, rest-resource, ai-feature, and admin-vi
   expect(adminViewTemplatesSource).not.toContain(
     'export async function runAddAdminViewCommand(',
   );
+  for (const scaffoldSource of [
+    abilityScaffoldSource,
+    adminViewScaffoldSource,
+    aiScaffoldSource,
+  ]) {
+    expect(scaffoldSource).toContain('executeWorkspaceMutationPlan');
+    expect(scaffoldSource).not.toContain('rollbackWorkspaceMutation');
+    expect(scaffoldSource).not.toContain('snapshotWorkspaceFiles');
+  }
 });

@@ -32,10 +32,12 @@ import {
 import {
 	getWorkspaceBootstrapPath,
 	patchFile,
-	rollbackWorkspaceMutation,
-	snapshotWorkspaceFiles,
-	type WorkspaceMutationSnapshot,
 } from "./cli-add-shared.js";
+import {
+	appendPhpSnippetBeforeClosingTag,
+	executeWorkspaceMutationPlan,
+	insertPhpSnippetBeforeWorkspaceAnchors,
+} from "./cli-add-workspace-mutation.js";
 import {
 	updatePluginHeaderCompatibility,
 } from "./scaffold-compatibility.js";
@@ -194,34 +196,14 @@ function ${enqueueFunctionName}() {
 \t);
 }
 `;
-		const insertionAnchors = [
-			/add_action\(\s*["']init["']\s*,\s*["'][^"']+_load_textdomain["']\s*\);\s*\n/u,
-			/\?>\s*$/u,
-		];
-		const insertPhpSnippet = (snippet: string): void => {
-			for (const anchor of insertionAnchors) {
-				const candidate = nextSource.replace(anchor, (match) => `${snippet}\n${match}`);
-				if (candidate !== nextSource) {
-					nextSource = candidate;
-					return;
-				}
-			}
-			nextSource = `${nextSource.trimEnd()}\n${snippet}\n`;
-		};
-		const appendPhpSnippet = (snippet: string): void => {
-			const closingTagPattern = /\?>\s*$/u;
-			if (closingTagPattern.test(nextSource)) {
-				nextSource = nextSource.replace(closingTagPattern, `${snippet}\n?>`);
-				return;
-			}
-			nextSource = `${nextSource.trimEnd()}\n${snippet}\n`;
-		};
-
 		if (!hasPhpFunctionDefinition(nextSource, loadFunctionName)) {
-			insertPhpSnippet(loadFunction);
+			nextSource = insertPhpSnippetBeforeWorkspaceAnchors(nextSource, loadFunction);
 		}
 		if (!hasPhpFunctionDefinition(nextSource, enqueueFunctionName)) {
-			insertPhpSnippet(enqueueFunction);
+			nextSource = insertPhpSnippetBeforeWorkspaceAnchors(
+				nextSource,
+				enqueueFunction,
+			);
 		} else if (
 			!findPhpFunctionRange(nextSource, enqueueFunctionName)?.source.includes(
 				"wp_enqueue_script_module",
@@ -237,13 +219,13 @@ function ${enqueueFunctionName}() {
 		}
 
 		if (!nextSource.includes(loadHook)) {
-			appendPhpSnippet(loadHook);
+			nextSource = appendPhpSnippetBeforeClosingTag(nextSource, loadHook);
 		}
 		if (!nextSource.includes(adminEnqueueHook)) {
-			appendPhpSnippet(adminEnqueueHook);
+			nextSource = appendPhpSnippetBeforeClosingTag(nextSource, adminEnqueueHook);
 		}
 		if (!nextSource.includes(editorEnqueueHook)) {
-			appendPhpSnippet(editorEnqueueHook);
+			nextSource = appendPhpSnippetBeforeClosingTag(nextSource, editorEnqueueHook);
 		}
 
 		return nextSource;
@@ -519,8 +501,8 @@ export async function scaffoldAbilityWorkspace({
 		"abilities",
 		`${abilitySlug}.php`,
 	);
-	const mutationSnapshot: WorkspaceMutationSnapshot = {
-		fileSources: await snapshotWorkspaceFiles([
+	await executeWorkspaceMutationPlan({
+		filePaths: [
 			blockConfigPath,
 			bootstrapPath,
 			buildScriptPath,
@@ -529,58 +511,53 @@ export async function scaffoldAbilityWorkspace({
 			syncProjectScriptPath,
 			webpackConfigPath,
 			abilitiesIndexPath,
-		]),
-		snapshotDirs: [],
+		],
 		targetPaths: [abilityDir, phpFilePath, syncAbilitiesScriptPath],
-	};
+		run: async () => {
+			await fsp.mkdir(abilityDir, { recursive: true });
+			await fsp.mkdir(path.dirname(phpFilePath), { recursive: true });
+			await ensureAbilityBootstrapAnchors(workspace);
+			await patchFile(bootstrapPath, (source) =>
+				updatePluginHeaderCompatibility(source, compatibilityPolicy),
+			);
+			await ensureAbilityPackageScripts(workspace);
+			await ensureAbilitySyncProjectAnchors(workspace);
+			await ensureAbilityBuildScriptAnchors(workspace);
+			await ensureAbilityWebpackAnchors(workspace);
+			await fsp.writeFile(syncAbilitiesScriptPath, buildAbilitySyncScriptSource(), "utf8");
+			await fsp.writeFile(
+				configFilePath,
+				buildAbilityConfigSource(abilitySlug, workspace.workspace.namespace),
+				"utf8",
+			);
+			await fsp.writeFile(typesFilePath, buildAbilityTypesSource(abilitySlug), "utf8");
+			await fsp.writeFile(dataFilePath, buildAbilityDataSource(abilitySlug), "utf8");
+			await fsp.writeFile(clientFilePath, buildAbilityClientSource(abilitySlug), "utf8");
+			await fsp.writeFile(
+				phpFilePath,
+				buildAbilityPhpSource(abilitySlug, workspace),
+				"utf8",
+			);
 
-	try {
-		await fsp.mkdir(abilityDir, { recursive: true });
-		await fsp.mkdir(path.dirname(phpFilePath), { recursive: true });
-		await ensureAbilityBootstrapAnchors(workspace);
-		await patchFile(bootstrapPath, (source) =>
-			updatePluginHeaderCompatibility(source, compatibilityPolicy),
-		);
-		await ensureAbilityPackageScripts(workspace);
-		await ensureAbilitySyncProjectAnchors(workspace);
-		await ensureAbilityBuildScriptAnchors(workspace);
-		await ensureAbilityWebpackAnchors(workspace);
-		await fsp.writeFile(syncAbilitiesScriptPath, buildAbilitySyncScriptSource(), "utf8");
-		await fsp.writeFile(
-			configFilePath,
-			buildAbilityConfigSource(abilitySlug, workspace.workspace.namespace),
-			"utf8",
-		);
-		await fsp.writeFile(typesFilePath, buildAbilityTypesSource(abilitySlug), "utf8");
-		await fsp.writeFile(dataFilePath, buildAbilityDataSource(abilitySlug), "utf8");
-		await fsp.writeFile(clientFilePath, buildAbilityClientSource(abilitySlug), "utf8");
-		await fsp.writeFile(
-			phpFilePath,
-			buildAbilityPhpSource(abilitySlug, workspace),
-			"utf8",
-		);
-
-		const pascalCase = toPascalCase(abilitySlug);
-		await syncTypeSchemas({
-			jsonSchemaFile: `src/abilities/${abilitySlug}/input.schema.json`,
-			projectRoot: workspace.projectDir,
-			sourceTypeName: `${pascalCase}AbilityInput`,
-			typesFile: `src/abilities/${abilitySlug}/types.ts`,
-		});
-		await syncTypeSchemas({
-			jsonSchemaFile: `src/abilities/${abilitySlug}/output.schema.json`,
-			projectRoot: workspace.projectDir,
-			sourceTypeName: `${pascalCase}AbilityOutput`,
-			typesFile: `src/abilities/${abilitySlug}/types.ts`,
-		});
-		await writeAbilityRegistry(workspace.projectDir, abilitySlug);
-		await appendWorkspaceInventoryEntries(workspace.projectDir, {
-			abilityEntries: [
-				buildAbilityConfigEntry(abilitySlug, compatibilityPolicy),
-			],
-		});
-	} catch (error) {
-		await rollbackWorkspaceMutation(mutationSnapshot);
-		throw error;
-	}
+			const pascalCase = toPascalCase(abilitySlug);
+			await syncTypeSchemas({
+				jsonSchemaFile: `src/abilities/${abilitySlug}/input.schema.json`,
+				projectRoot: workspace.projectDir,
+				sourceTypeName: `${pascalCase}AbilityInput`,
+				typesFile: `src/abilities/${abilitySlug}/types.ts`,
+			});
+			await syncTypeSchemas({
+				jsonSchemaFile: `src/abilities/${abilitySlug}/output.schema.json`,
+				projectRoot: workspace.projectDir,
+				sourceTypeName: `${pascalCase}AbilityOutput`,
+				typesFile: `src/abilities/${abilitySlug}/types.ts`,
+			});
+			await writeAbilityRegistry(workspace.projectDir, abilitySlug);
+			await appendWorkspaceInventoryEntries(workspace.projectDir, {
+				abilityEntries: [
+					buildAbilityConfigEntry(abilitySlug, compatibilityPolicy),
+				],
+			});
+		},
+	});
 }
