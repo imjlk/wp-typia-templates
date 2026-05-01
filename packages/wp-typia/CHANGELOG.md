@@ -1,5 +1,14 @@
 # wp-typia
 
+## 0.22.2 — 2026-05-01
+
+### Patch changes
+
+- [f77d10f](https://github.com/imjlk/wp-typia/commit/f77d10f443493724f116a6db9f6bfc51e052671f) Keep the exact `@wp-typia/project-tools` release lane aligned with the patch planned for generated AI feature support metadata helpers. — Thanks @imjlk!
+- [9ae7955](https://github.com/imjlk/wp-typia/commit/9ae79554b180c1c7cc82ba8f981097b406807c1e) Keep the exact `@wp-typia/project-tools` release lane aligned with the patch planned for the OpenAPI-backed `typia.llm` constraint restoration helpers. — Thanks @imjlk!
+- [31be7b9](https://github.com/imjlk/wp-typia/commit/31be7b9aac44bd8f39bff85bd5d45b40f133b083) Keep the exact `@wp-typia/project-tools` release lane aligned with the patch planned for scaffolded AI feature customization hooks. — Thanks @imjlk!
+- Updated dependencies: project-tools (npm)@0.22.2
+
 ## 0.22.1 — 2026-04-30
 
 ### Patch changes
