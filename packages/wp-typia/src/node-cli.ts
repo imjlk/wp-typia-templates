@@ -22,6 +22,7 @@ import {
   TEMPLATES_OPTION_METADATA,
 } from './command-option-metadata';
 import { prefersStructuredCliArgv } from './cli-diagnostic-output';
+import { validateCliOutputFormatArgv } from './cli-output-format';
 import {
   getTemplateById,
   listTemplates,
@@ -659,6 +660,7 @@ export async function runNodeCli(argv = process.argv.slice(2)): Promise<void> {
   const normalizedArgv = normalizeWpTypiaArgv(argv);
   const { argv: argvWithoutConfigOverride, configOverridePath } =
     extractWpTypiaConfigOverride(normalizedArgv);
+  validateCliOutputFormatArgv(argvWithoutConfigOverride);
   const { argv: cliArgv, flags } = parseGlobalFlags(argvWithoutConfigOverride);
   const { flags: commandFlags, positionals } = parseArgv(cliArgv);
   const rawMergedFlags: Record<string, unknown> = {

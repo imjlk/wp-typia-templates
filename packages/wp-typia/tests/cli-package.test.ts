@@ -1846,6 +1846,28 @@ describe('wp-typia package', () => {
     expect(parsed.error?.code).toBe('invalid-command');
   });
 
+  test('rejects invalid output formats before Node fallback command execution', () => {
+    const cases = [
+      ['create', 'demo-format', '--dry-run', '--format', 'jso'],
+      ['add', 'block', 'promo-card', '--dry-run', '--format', 'jso'],
+      ['init', '--format', 'jso'],
+      ['doctor', '--format', 'jso'],
+      ['templates', 'list', '--format', 'jso'],
+      ['sync', '--format', 'jso'],
+    ];
+
+    for (const args of cases) {
+      const result = runCapturedCommand(process.execPath, [entryPath, ...args], {
+        env: withoutLocalBunEnv(),
+      });
+
+      expect(result.status).toBe(1);
+      expect(result.stdout).toBe('');
+      expect(result.stderr).toContain('Invalid --format value "jso".');
+      expect(result.stderr).toContain('Supported values: json, toon.');
+    }
+  });
+
   test('preserves command metadata for invalid templates subcommands in Node fallback JSON mode', async () => {
     await expect(
       runNodeCli(['templates', 'unknown', '--format', 'json']),
@@ -2124,6 +2146,28 @@ describe('wp-typia package', () => {
       expect(parsed.error?.code).toBe('outside-project-root');
     } finally {
       fs.rmSync(tempRoot, { force: true, recursive: true });
+    }
+  });
+
+  test('rejects invalid output formats before Bun runtime command execution', () => {
+    const cases = [
+      ['create', 'demo-format', '--dry-run', '--format', 'jso'],
+      ['add', 'block', 'promo-card', '--dry-run', '--format', 'jso'],
+      ['init', '--format', 'jso'],
+      ['doctor', '--format', 'jso'],
+      ['templates', 'list', '--format', 'jso'],
+      ['sync', '--format', 'jso'],
+    ];
+
+    for (const args of cases) {
+      const result = runCapturedCommand('bun', [fullRuntimeEntrypoint, ...args], {
+        env: withoutAIAgentEnv(),
+      });
+
+      expect(result.status).toBe(1);
+      expect(result.stdout).toBe('');
+      expect(result.stderr).toContain('Invalid --format value "jso".');
+      expect(result.stderr).toContain('Supported values: json, toon.');
     }
   });
 

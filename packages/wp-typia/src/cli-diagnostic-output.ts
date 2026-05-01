@@ -4,6 +4,7 @@ import {
   type CliDiagnosticCode,
 } from '@wp-typia/project-tools/cli-diagnostics';
 import { COMMAND_ROUTING_METADATA } from './command-option-metadata';
+import { isSupportedCliOutputFormat } from './cli-output-format';
 import { findFirstPositional } from '../bin/argv-walker.js';
 
 type CliStructuredOutputArgs = {
@@ -64,7 +65,9 @@ export function prefersStructuredCliOutput(
   args: CliStructuredOutputArgs,
 ): boolean {
   return (
-    (args.formatExplicit && args.format !== 'toon') ||
+    (args.formatExplicit &&
+      args.format === 'json' &&
+      isSupportedCliOutputFormat(args.format)) ||
     Boolean(args.agent) ||
     Boolean(args.context?.store?.isAIAgent)
   );
