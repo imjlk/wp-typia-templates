@@ -587,7 +587,7 @@ const EXPECTED_CODE_ARTIFACT_HASH_SUMMARIES: Record<
     'src/editor.scss': '7da532bf2acdc7c1',
     'src/hooks.ts': '3c1b432bd711ee70',
     'src/index.tsx': '09971fea0bb30b8f',
-    'src/interactivity-store.ts': 'be4a237b99d622ce',
+    'src/interactivity-store.ts': 'c29d6e1f3da5ef8e',
     'src/interactivity.ts': '02607a60ca356d79',
     'src/manifest-defaults-document.ts': '16818959f3d5a7d6',
     'src/manifest-document.ts': 'b8fffee2c728488e',
