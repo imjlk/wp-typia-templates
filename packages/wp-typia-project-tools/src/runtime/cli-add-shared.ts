@@ -502,34 +502,122 @@ export function getMutableBlockHooks(
 	return blockHooks as Record<string, string>;
 }
 
+type ScaffoldFilesystemCollision = {
+	label: string;
+	relativePath: string;
+};
+
+type ScaffoldInventoryCollision<TEntry> = {
+	entries: readonly TEntry[];
+	exists: (entry: TEntry) => boolean;
+	message: string;
+};
+
+export function assertScaffoldDoesNotExist<TEntry>(options: {
+	projectDir: string;
+	filesystemCollisions: readonly ScaffoldFilesystemCollision[];
+	inventoryCollision?: ScaffoldInventoryCollision<TEntry>;
+}): void {
+	for (const collision of options.filesystemCollisions) {
+		const targetPath = path.join(options.projectDir, collision.relativePath);
+		if (fs.existsSync(targetPath)) {
+			throw new Error(
+				`${collision.label} already exists at ${path.relative(options.projectDir, targetPath)}. Choose a different name.`,
+			);
+		}
+	}
+
+	if (
+		options.inventoryCollision &&
+		options.inventoryCollision.entries.some(options.inventoryCollision.exists)
+	) {
+		throw new Error(options.inventoryCollision.message);
+	}
+}
+
 export function assertVariationDoesNotExist(
 	projectDir: string,
 	blockSlug: string,
 	variationSlug: string,
 	inventory: WorkspaceInventory,
 ): void {
-	const variationPath = path.join(
+	assertScaffoldDoesNotExist({
+		filesystemCollisions: [
+			{
+				label: "A variation",
+				relativePath: path.join(
+					"src",
+					"blocks",
+					blockSlug,
+					"variations",
+					`${variationSlug}.ts`,
+				),
+			},
+		],
+		inventoryCollision: {
+			entries: inventory.variations,
+			exists: (entry) => entry.block === blockSlug && entry.slug === variationSlug,
+			message: `A variation inventory entry already exists for ${blockSlug}/${variationSlug}. Choose a different name.`,
+		},
 		projectDir,
-		"src",
-		"blocks",
-		blockSlug,
-		"variations",
-		`${variationSlug}.ts`,
-	);
-	if (fs.existsSync(variationPath)) {
-		throw new Error(
-			`A variation already exists at ${path.relative(projectDir, variationPath)}. Choose a different name.`,
-		);
-	}
-	if (
-		inventory.variations.some(
-			(entry) => entry.block === blockSlug && entry.slug === variationSlug,
-		)
-	) {
-		throw new Error(
-			`A variation inventory entry already exists for ${blockSlug}/${variationSlug}. Choose a different name.`,
-		);
-	}
+	});
+}
+
+export function assertBlockStyleDoesNotExist(
+	projectDir: string,
+	blockSlug: string,
+	styleSlug: string,
+	inventory: WorkspaceInventory,
+): void {
+	assertScaffoldDoesNotExist({
+		filesystemCollisions: [
+			{
+				label: "A block style",
+				relativePath: path.join(
+					"src",
+					"blocks",
+					blockSlug,
+					"styles",
+					`${styleSlug}.ts`,
+				),
+			},
+		],
+		inventoryCollision: {
+			entries: inventory.blockStyles,
+			exists: (entry) => entry.block === blockSlug && entry.slug === styleSlug,
+			message: `A block style inventory entry already exists for ${blockSlug}/${styleSlug}. Choose a different name.`,
+		},
+		projectDir,
+	});
+}
+
+export function assertBlockTransformDoesNotExist(
+	projectDir: string,
+	blockSlug: string,
+	transformSlug: string,
+	inventory: WorkspaceInventory,
+): void {
+	assertScaffoldDoesNotExist({
+		filesystemCollisions: [
+			{
+				label: "A block transform",
+				relativePath: path.join(
+					"src",
+					"blocks",
+					blockSlug,
+					"transforms",
+					`${transformSlug}.ts`,
+				),
+			},
+		],
+		inventoryCollision: {
+			entries: inventory.blockTransforms,
+			exists: (entry) =>
+				entry.block === blockSlug && entry.slug === transformSlug,
+			message: `A block transform inventory entry already exists for ${blockSlug}/${transformSlug}. Choose a different name.`,
+		},
+		projectDir,
+	});
 }
 
 export function assertPatternDoesNotExist(
@@ -537,17 +625,20 @@ export function assertPatternDoesNotExist(
 	patternSlug: string,
 	inventory: WorkspaceInventory,
 ): void {
-	const patternPath = path.join(projectDir, "src", "patterns", `${patternSlug}.php`);
-	if (fs.existsSync(patternPath)) {
-		throw new Error(
-			`A pattern already exists at ${path.relative(projectDir, patternPath)}. Choose a different name.`,
-		);
-	}
-	if (inventory.patterns.some((entry) => entry.slug === patternSlug)) {
-		throw new Error(
-			`A pattern inventory entry already exists for ${patternSlug}. Choose a different name.`,
-		);
-	}
+	assertScaffoldDoesNotExist({
+		filesystemCollisions: [
+			{
+				label: "A pattern",
+				relativePath: path.join("src", "patterns", `${patternSlug}.php`),
+			},
+		],
+		inventoryCollision: {
+			entries: inventory.patterns,
+			exists: (entry) => entry.slug === patternSlug,
+			message: `A pattern inventory entry already exists for ${patternSlug}. Choose a different name.`,
+		},
+		projectDir,
+	});
 }
 
 export function assertBindingSourceDoesNotExist(
@@ -555,17 +646,20 @@ export function assertBindingSourceDoesNotExist(
 	bindingSourceSlug: string,
 	inventory: WorkspaceInventory,
 ): void {
-	const bindingSourceDir = path.join(projectDir, "src", "bindings", bindingSourceSlug);
-	if (fs.existsSync(bindingSourceDir)) {
-		throw new Error(
-			`A binding source already exists at ${path.relative(projectDir, bindingSourceDir)}. Choose a different name.`,
-		);
-	}
-	if (inventory.bindingSources.some((entry) => entry.slug === bindingSourceSlug)) {
-		throw new Error(
-			`A binding source inventory entry already exists for ${bindingSourceSlug}. Choose a different name.`,
-		);
-	}
+	assertScaffoldDoesNotExist({
+		filesystemCollisions: [
+			{
+				label: "A binding source",
+				relativePath: path.join("src", "bindings", bindingSourceSlug),
+			},
+		],
+		inventoryCollision: {
+			entries: inventory.bindingSources,
+			exists: (entry) => entry.slug === bindingSourceSlug,
+			message: `A binding source inventory entry already exists for ${bindingSourceSlug}. Choose a different name.`,
+		},
+		projectDir,
+	});
 }
 
 export function assertRestResourceDoesNotExist(
@@ -573,23 +667,24 @@ export function assertRestResourceDoesNotExist(
 	restResourceSlug: string,
 	inventory: WorkspaceInventory,
 ): void {
-	const restResourceDir = path.join(projectDir, "src", "rest", restResourceSlug);
-	const restResourcePhpPath = path.join(projectDir, "inc", "rest", `${restResourceSlug}.php`);
-	if (fs.existsSync(restResourceDir)) {
-		throw new Error(
-			`A REST resource already exists at ${path.relative(projectDir, restResourceDir)}. Choose a different name.`,
-		);
-	}
-	if (fs.existsSync(restResourcePhpPath)) {
-		throw new Error(
-			`A REST resource bootstrap already exists at ${path.relative(projectDir, restResourcePhpPath)}. Choose a different name.`,
-		);
-	}
-	if (inventory.restResources.some((entry) => entry.slug === restResourceSlug)) {
-		throw new Error(
-			`A REST resource inventory entry already exists for ${restResourceSlug}. Choose a different name.`,
-		);
-	}
+	assertScaffoldDoesNotExist({
+		filesystemCollisions: [
+			{
+				label: "A REST resource",
+				relativePath: path.join("src", "rest", restResourceSlug),
+			},
+			{
+				label: "A REST resource bootstrap",
+				relativePath: path.join("inc", "rest", `${restResourceSlug}.php`),
+			},
+		],
+		inventoryCollision: {
+			entries: inventory.restResources,
+			exists: (entry) => entry.slug === restResourceSlug,
+			message: `A REST resource inventory entry already exists for ${restResourceSlug}. Choose a different name.`,
+		},
+		projectDir,
+	});
 }
 
 /**
@@ -606,23 +701,24 @@ export function assertAdminViewDoesNotExist(
 	adminViewSlug: string,
 	inventory: WorkspaceInventory,
 ): void {
-	const adminViewDir = path.join(projectDir, "src", "admin-views", adminViewSlug);
-	const adminViewPhpPath = path.join(projectDir, "inc", "admin-views", `${adminViewSlug}.php`);
-	if (fs.existsSync(adminViewDir)) {
-		throw new Error(
-			`An admin view already exists at ${path.relative(projectDir, adminViewDir)}. Choose a different name.`,
-		);
-	}
-	if (fs.existsSync(adminViewPhpPath)) {
-		throw new Error(
-			`An admin view bootstrap already exists at ${path.relative(projectDir, adminViewPhpPath)}. Choose a different name.`,
-		);
-	}
-	if (inventory.adminViews.some((entry) => entry.slug === adminViewSlug)) {
-		throw new Error(
-			`An admin view inventory entry already exists for ${adminViewSlug}. Choose a different name.`,
-		);
-	}
+	assertScaffoldDoesNotExist({
+		filesystemCollisions: [
+			{
+				label: "An admin view",
+				relativePath: path.join("src", "admin-views", adminViewSlug),
+			},
+			{
+				label: "An admin view bootstrap",
+				relativePath: path.join("inc", "admin-views", `${adminViewSlug}.php`),
+			},
+		],
+		inventoryCollision: {
+			entries: inventory.adminViews,
+			exists: (entry) => entry.slug === adminViewSlug,
+			message: `An admin view inventory entry already exists for ${adminViewSlug}. Choose a different name.`,
+		},
+		projectDir,
+	});
 }
 
 /**
@@ -642,23 +738,24 @@ export function assertAbilityDoesNotExist(
 	abilitySlug: string,
 	inventory: WorkspaceInventory,
 ): void {
-	const abilityDir = path.join(projectDir, "src", "abilities", abilitySlug);
-	const abilityPhpPath = path.join(projectDir, "inc", "abilities", `${abilitySlug}.php`);
-	if (fs.existsSync(abilityDir)) {
-		throw new Error(
-			`An ability scaffold already exists at ${path.relative(projectDir, abilityDir)}. Choose a different name.`,
-		);
-	}
-	if (fs.existsSync(abilityPhpPath)) {
-		throw new Error(
-			`An ability bootstrap already exists at ${path.relative(projectDir, abilityPhpPath)}. Choose a different name.`,
-		);
-	}
-	if (inventory.abilities.some((entry) => entry.slug === abilitySlug)) {
-		throw new Error(
-			`An ability inventory entry already exists for ${abilitySlug}. Choose a different name.`,
-		);
-	}
+	assertScaffoldDoesNotExist({
+		filesystemCollisions: [
+			{
+				label: "An ability scaffold",
+				relativePath: path.join("src", "abilities", abilitySlug),
+			},
+			{
+				label: "An ability bootstrap",
+				relativePath: path.join("inc", "abilities", `${abilitySlug}.php`),
+			},
+		],
+		inventoryCollision: {
+			entries: inventory.abilities,
+			exists: (entry) => entry.slug === abilitySlug,
+			message: `An ability inventory entry already exists for ${abilitySlug}. Choose a different name.`,
+		},
+		projectDir,
+	});
 }
 
 export function assertAiFeatureDoesNotExist(
@@ -666,28 +763,24 @@ export function assertAiFeatureDoesNotExist(
 	aiFeatureSlug: string,
 	inventory: WorkspaceInventory,
 ): void {
-	const aiFeatureDir = path.join(projectDir, "src", "ai-features", aiFeatureSlug);
-	const aiFeaturePhpPath = path.join(
+	assertScaffoldDoesNotExist({
+		filesystemCollisions: [
+			{
+				label: "An AI feature",
+				relativePath: path.join("src", "ai-features", aiFeatureSlug),
+			},
+			{
+				label: "An AI feature bootstrap",
+				relativePath: path.join("inc", "ai-features", `${aiFeatureSlug}.php`),
+			},
+		],
+		inventoryCollision: {
+			entries: inventory.aiFeatures,
+			exists: (entry) => entry.slug === aiFeatureSlug,
+			message: `An AI feature inventory entry already exists for ${aiFeatureSlug}. Choose a different name.`,
+		},
 		projectDir,
-		"inc",
-		"ai-features",
-		`${aiFeatureSlug}.php`,
-	);
-	if (fs.existsSync(aiFeatureDir)) {
-		throw new Error(
-			`An AI feature already exists at ${path.relative(projectDir, aiFeatureDir)}. Choose a different name.`,
-		);
-	}
-	if (fs.existsSync(aiFeaturePhpPath)) {
-		throw new Error(
-			`An AI feature bootstrap already exists at ${path.relative(projectDir, aiFeaturePhpPath)}. Choose a different name.`,
-		);
-	}
-	if (inventory.aiFeatures.some((entry) => entry.slug === aiFeatureSlug)) {
-		throw new Error(
-			`An AI feature inventory entry already exists for ${aiFeatureSlug}. Choose a different name.`,
-		);
-	}
+	});
 }
 
 /**
@@ -699,18 +792,25 @@ export function assertAiFeatureDoesNotExist(
  * @param inventory Parsed workspace inventory.
  * @throws {Error} When the directory or inventory entry already exists.
  */
-export function assertEditorPluginDoesNotExist(projectDir: string, editorPluginSlug: string, inventory: WorkspaceInventory): void {
-	const editorPluginDir = path.join(projectDir, "src", "editor-plugins", editorPluginSlug);
-	if (fs.existsSync(editorPluginDir)) {
-		throw new Error(
-			`An editor plugin already exists at ${path.relative(projectDir, editorPluginDir)}. Choose a different name.`,
-		);
-	}
-	if (inventory.editorPlugins.some((entry) => entry.slug === editorPluginSlug)) {
-		throw new Error(
-			`An editor plugin inventory entry already exists for ${editorPluginSlug}. Choose a different name.`,
-		);
-	}
+export function assertEditorPluginDoesNotExist(
+	projectDir: string,
+	editorPluginSlug: string,
+	inventory: WorkspaceInventory,
+): void {
+	assertScaffoldDoesNotExist({
+		filesystemCollisions: [
+			{
+				label: "An editor plugin",
+				relativePath: path.join("src", "editor-plugins", editorPluginSlug),
+			},
+		],
+		inventoryCollision: {
+			entries: inventory.editorPlugins,
+			exists: (entry) => entry.slug === editorPluginSlug,
+			message: `An editor plugin inventory entry already exists for ${editorPluginSlug}. Choose a different name.`,
+		},
+		projectDir,
+	});
 }
 
 /**

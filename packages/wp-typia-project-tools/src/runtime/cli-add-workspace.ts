@@ -7,6 +7,8 @@ import { resolveWorkspaceProject } from "./workspace-project.js";
 import { appendWorkspaceInventoryEntries, readWorkspaceInventory } from "./workspace-inventory.js";
 import { toKebabCase, toSnakeCase, toTitleCase } from "./string-case.js";
 import {
+	assertBlockStyleDoesNotExist,
+	assertBlockTransformDoesNotExist,
 	assertValidGeneratedSlug,
 	assertValidHookAnchor,
 	assertValidHookedBlockPosition,
@@ -690,66 +692,6 @@ async function writeBlockTransformRegistry(
 		buildBlockTransformIndexSource(nextTransformSlugs),
 		"utf8",
 	);
-}
-
-function assertBlockStyleDoesNotExist(
-	projectDir: string,
-	blockSlug: string,
-	styleSlug: string,
-	inventory: ReturnType<typeof readWorkspaceInventory>,
-): void {
-	const stylePath = path.join(
-		projectDir,
-		"src",
-		"blocks",
-		blockSlug,
-		"styles",
-		`${styleSlug}.ts`,
-	);
-	if (fs.existsSync(stylePath)) {
-		throw new Error(
-			`A block style already exists at ${path.relative(projectDir, stylePath)}. Choose a different name.`,
-		);
-	}
-	if (
-		inventory.blockStyles.some(
-			(entry) => entry.block === blockSlug && entry.slug === styleSlug,
-		)
-	) {
-		throw new Error(
-			`A block style inventory entry already exists for ${blockSlug}/${styleSlug}. Choose a different name.`,
-		);
-	}
-}
-
-function assertBlockTransformDoesNotExist(
-	projectDir: string,
-	blockSlug: string,
-	transformSlug: string,
-	inventory: ReturnType<typeof readWorkspaceInventory>,
-): void {
-	const transformPath = path.join(
-		projectDir,
-		"src",
-		"blocks",
-		blockSlug,
-		"transforms",
-		`${transformSlug}.ts`,
-	);
-	if (fs.existsSync(transformPath)) {
-		throw new Error(
-			`A block transform already exists at ${path.relative(projectDir, transformPath)}. Choose a different name.`,
-		);
-	}
-	if (
-		inventory.blockTransforms.some(
-			(entry) => entry.block === blockSlug && entry.slug === transformSlug,
-		)
-	) {
-		throw new Error(
-			`A block transform inventory entry already exists for ${blockSlug}/${transformSlug}. Choose a different name.`,
-		);
-	}
 }
 
 function assertFullBlockName(blockName: string, flagName: string): string {
