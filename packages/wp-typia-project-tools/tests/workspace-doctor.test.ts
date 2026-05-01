@@ -623,7 +623,9 @@ export interface WorkspaceAbilityConfig {
       wordpress?: string;
     };
     mode: 'baseline' | 'optional' | 'required';
+    optionalFeatureIds: string[];
     optionalFeatures: string[];
+    requiredFeatureIds: string[];
     requiredFeatures: string[];
     runtimeGates: string[];
   };
@@ -640,7 +642,9 @@ export interface WorkspaceAiFeatureConfig {
       wordpress?: string;
     };
     mode: 'baseline' | 'optional' | 'required';
+    optionalFeatureIds: string[];
     optionalFeatures: string[];
+    requiredFeatureIds: string[];
     requiredFeatures: string[];
     runtimeGates: string[];
   };
@@ -650,6 +654,8 @@ export interface WorkspaceAiFeatureConfig {
 `);
 
   expect(repairedSource.match(/^[ \t]*compatibility\??:/gmu)?.length).toBe(2);
+  expect(repairedSource).toContain("optionalFeatureIds: string[];");
+  expect(repairedSource).toContain("requiredFeatureIds: string[];");
 });
 
 test("doctor passes on a healthy multi-block workspace", async () => {

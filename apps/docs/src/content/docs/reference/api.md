@@ -773,7 +773,9 @@ sync, server-side Abilities API registration, and a lightweight admin/editor
 client helper that expects the WordPress abilities client to be available.
 AI features are generated under `src/ai-features/*/` plus `inc/ai-features/*.php`
 and scaffold a server-owned REST endpoint, AI-safe response schema projection,
-typed endpoint client wrapper, and WordPress AI Client feature-detection seam.
+typed endpoint client wrapper, WordPress AI Client feature-detection seam, and
+generated support metadata helpers that expose runtime gates, feature ids, and
+unavailable-message helpers to admin/editor UI code.
 Hooked blocks patch `src/blocks/<block>/block.json` with `blockHooks` metadata
 so the target block is inserted relative to the chosen anchor block.
 

@@ -293,7 +293,9 @@ const WORKSPACE_COMPATIBILITY_CONFIG_FIELD = `\tcompatibility?: {
 \t\t\twordpress?: string;
 \t\t};
 \t\tmode: 'baseline' | 'optional' | 'required';
+\t\toptionalFeatureIds: string[];
 \t\toptionalFeatures: string[];
+\t\trequiredFeatureIds: string[];
 \t\trequiredFeatures: string[];
 \t\truntimeGates: string[];
 \t};
@@ -1095,6 +1097,57 @@ function ensureInterfaceField(
 	);
 }
 
+function normalizeInterfaceFieldBlock(
+	source: string,
+	interfaceName: string,
+	fieldName: string,
+	fieldSource: string,
+	requiredFragments: string[],
+): string {
+	const interfacePattern = new RegExp(
+		`(export\\s+interface\\s+${escapeRegex(
+			interfaceName,
+		)}\\s*\\{\\r?\\n)([\\s\\S]*?)(\\r?\\n\\})`,
+		"u",
+	);
+
+	return source.replace(
+		interfacePattern,
+		(match, start: string, body: string, end: string) => {
+			const fieldPattern = new RegExp(
+				`^[ \\t]*${escapeRegex(
+					fieldName,
+				)}\\??:\\s*\\{[\\s\\S]*?^[ \\t]*\\};\\r?\\n?`,
+				"mu",
+			);
+			const fieldMatch = fieldPattern.exec(body);
+			if (!fieldMatch) {
+				return match;
+			}
+
+			const existingFieldSource = fieldMatch[0];
+			if (
+				requiredFragments.every((fragment) =>
+					existingFieldSource.includes(fragment),
+				)
+			) {
+				return match;
+			}
+
+			const lineEnding = start.endsWith("\r\n") ? "\r\n" : "\n";
+			const formattedFieldSource = `${fieldSource
+				.replace(/\r?\n$/u, "")
+				.split("\n")
+				.join(lineEnding)}${lineEnding}`;
+
+			return `${start}${body.slice(
+				0,
+				fieldMatch.index,
+			)}${formattedFieldSource}${body.slice(fieldMatch.index + existingFieldSource.length)}${end}`;
+		},
+	);
+}
+
 /**
  * Update `scripts/block-config.ts` source text with additional inventory entries.
  *
@@ -1198,11 +1251,25 @@ export function updateWorkspaceInventorySource(
 		"compatibility",
 		WORKSPACE_COMPATIBILITY_CONFIG_FIELD,
 	);
+	nextSource = normalizeInterfaceFieldBlock(
+		nextSource,
+		"WorkspaceAbilityConfig",
+		"compatibility",
+		WORKSPACE_COMPATIBILITY_CONFIG_FIELD,
+		["optionalFeatureIds: string[];", "requiredFeatureIds: string[];"],
+	);
 	nextSource = ensureInterfaceField(
 		nextSource,
 		"WorkspaceAiFeatureConfig",
 		"compatibility",
 		WORKSPACE_COMPATIBILITY_CONFIG_FIELD,
+	);
+	nextSource = normalizeInterfaceFieldBlock(
+		nextSource,
+		"WorkspaceAiFeatureConfig",
+		"compatibility",
+		WORKSPACE_COMPATIBILITY_CONFIG_FIELD,
+		["optionalFeatureIds: string[];", "requiredFeatureIds: string[];"],
 	);
 	nextSource = appendEntriesAtMarker(
 		nextSource,

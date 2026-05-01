@@ -4273,6 +4273,8 @@ test("canonical CLI can add a server-only AI feature to an official workspace te
     'phpFile: "inc/ai-features/brief-suggestions.php"'
   );
   expect(blockConfigSource).toContain('"mode": "optional"');
+  expect(blockConfigSource).toContain('"optionalFeatureIds": [');
+  expect(blockConfigSource).toContain('"wordpress-ai-client"');
   expect(blockConfigSource).toContain("WordPress AI Client");
   expect(blockConfigSource).toContain(
     "WordPress AI Client: wordpress-core-feature WordPress AI Client"
@@ -4301,8 +4303,19 @@ test("canonical CLI can add a server-only AI feature to an official workspace te
   expect(validatorsSource).toContain("featureRequest");
   expect(validatorsSource).toContain("featureResponse");
   expect(apiSource).toContain("aiFeatureRunEndpoint");
+  expect(apiSource).toContain("aiFeatureSupportMetadata");
+  expect(apiSource).toContain("getAiFeatureSupportHintLines");
+  expect(apiSource).toContain("isAiFeatureSupportUnavailableError");
+  expect(apiSource).toContain("resolveAiFeatureUnavailableMessage");
+  expect(apiSource).toContain("missing-wordpress-ai-client");
+  expect(apiSource).toContain("request-time-support-probe");
+  expect(apiSource).toContain("endpointMethod: 'POST'");
   expect(apiSource).toContain("resolveRestNonce");
   expect(dataSource).toContain("useRunBriefSuggestionsAiFeatureMutation");
+  expect(dataSource).toContain("aiFeatureSupportMetadata");
+  expect(dataSource).toContain("getAiFeatureSupportHintLines");
+  expect(dataSource).toContain("isAiFeatureSupportUnavailableError");
+  expect(dataSource).toContain("resolveAiFeatureUnavailableMessage");
   expect(phpSource).toContain("wp_ai_client_prompt");
   expect(phpSource).toContain("static $is_supported = null;");
   expect(phpSource).toContain("is_supported_for_text_generation");
