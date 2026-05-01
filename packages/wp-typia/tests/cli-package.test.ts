@@ -895,6 +895,40 @@ describe('wp-typia package', () => {
     expect(result.stderr).toContain('GitHub release assets');
   });
 
+  test('normalizes --help <bun-only-command> into command help when Bun is available', () => {
+    const result = runCapturedCommand(process.execPath, [entryPath, '--help', 'mcp']);
+    const parsed = JSON.parse(result.stdout.trim()) as {
+      data?: { path?: string[]; text?: string; type?: string };
+      ok?: boolean;
+    };
+
+    expect(result.status).toBe(0);
+    expect(result.stderr).toBe('');
+    expect(parsed.ok).toBe(true);
+    expect(parsed.data?.type).toBe('help');
+    expect(parsed.data?.path).toEqual(['mcp']);
+    expect(parsed.data?.text).toContain('Usage: wp-typia mcp [options]');
+  });
+
+  test('keeps --help <bun-only-command> on clear Bun guidance when Bun is unavailable', () => {
+    const result = runCapturedCommand(
+      process.execPath,
+      [entryPath, '--help', 'mcp'],
+      {
+        env: withoutLocalBunEnv(),
+      },
+    );
+
+    expect(result.status).toBe(1);
+    expect(result.stdout).toBe('');
+    expect(result.stderr).toContain('requires Bun');
+    expect(result.stderr).not.toContain('BunliValidationError');
+    expect(result.stderr).toContain(
+      'Install Bun locally, run with bunx, or set BUN_BIN',
+    );
+    expect(result.stderr).toContain('standalone wp-typia binary');
+  });
+
   test('keeps value-taking options from being mistaken for Bun-only commands', () => {
     const targetDir = path.join(
       os.tmpdir(),

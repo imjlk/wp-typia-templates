@@ -38,6 +38,20 @@ const sourceCliEntrypoint = path.join(packageRoot, 'src', 'cli.ts');
 const standaloneGuidance =
   'Prefer not to install Bun? Use the standalone wp-typia binary from the GitHub release assets.';
 
+function normalizeTopLevelHelpArgv(argv) {
+  const [firstArg, secondArg, ...rest] = argv;
+  if (
+    (firstArg === '--help' || firstArg === '-h') &&
+    typeof secondArg === 'string' &&
+    secondArg.length > 0 &&
+    !secondArg.startsWith('-')
+  ) {
+    return [secondArg, firstArg, ...rest];
+  }
+
+  return argv;
+}
+
 function isWorkingBunBinary() {
   const bunCheck = spawnSync(bunBinary, ['--version'], {
     env: process.env,
@@ -75,7 +89,7 @@ function ensureBuiltRuntime() {
   return fs.existsSync(cliEntrypoint) && fs.existsSync(nodeCliEntrypoint);
 }
 
-const argv = process.argv.slice(2);
+const argv = normalizeTopLevelHelpArgv(process.argv.slice(2));
 const { command } = getRuntimeRoutingInvocation(argv, {
   longValueOptions: longValueOptionSet,
   reservedCommands: reservedCommandSet,
