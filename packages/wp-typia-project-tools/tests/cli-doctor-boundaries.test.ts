@@ -14,6 +14,22 @@ test("cli-doctor keeps environment and workspace checks in dedicated modules", (
 		resolve(sourceRoot, "cli-doctor-workspace.ts"),
 		"utf8",
 	);
+	const workspaceBlocksSource = readFileSync(
+		resolve(sourceRoot, "cli-doctor-workspace-blocks.ts"),
+		"utf8",
+	);
+	const workspaceBindingsSource = readFileSync(
+		resolve(sourceRoot, "cli-doctor-workspace-bindings.ts"),
+		"utf8",
+	);
+	const workspaceFeaturesSource = readFileSync(
+		resolve(sourceRoot, "cli-doctor-workspace-features.ts"),
+		"utf8",
+	);
+	const workspacePackageSource = readFileSync(
+		resolve(sourceRoot, "cli-doctor-workspace-package.ts"),
+		"utf8",
+	);
 
 	expect(cliDoctorSource).toContain('from "./cli-doctor-environment.js"');
 	expect(cliDoctorSource).toContain('from "./cli-doctor-workspace.js"');
@@ -22,5 +38,15 @@ test("cli-doctor keeps environment and workspace checks in dedicated modules", (
 	expect(cliDoctorSource).not.toContain("function checkWorkspaceBindingBootstrap(");
 	expect(environmentSource).toContain("export async function getEnvironmentDoctorChecks(");
 	expect(workspaceSource).toContain("export function getWorkspaceDoctorChecks(");
-	expect(workspaceSource).toContain("function checkWorkspaceBlockMetadata(");
+	expect(workspaceSource).toContain('from "./cli-doctor-workspace-bindings.js"');
+	expect(workspaceSource).toContain('from "./cli-doctor-workspace-blocks.js"');
+	expect(workspaceSource).toContain('from "./cli-doctor-workspace-features.js"');
+	expect(workspaceSource).toContain('from "./cli-doctor-workspace-package.js"');
+	expect(workspaceSource).not.toContain("function checkWorkspaceBlockMetadata(");
+	expect(workspaceSource).not.toContain("function checkWorkspaceBindingBootstrap(");
+	expect(workspaceSource).not.toContain("function checkWorkspaceAbilityBootstrap(");
+	expect(workspaceBlocksSource).toContain("export function getWorkspaceBlockDoctorChecks(");
+	expect(workspaceBindingsSource).toContain("export function getWorkspaceBindingDoctorChecks(");
+	expect(workspaceFeaturesSource).toContain("export function getWorkspaceFeatureDoctorChecks(");
+	expect(workspacePackageSource).toContain("export function getWorkspacePackageMetadataCheck(");
 });
