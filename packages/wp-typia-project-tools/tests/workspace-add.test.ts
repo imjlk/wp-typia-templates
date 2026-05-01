@@ -4307,10 +4307,34 @@ test("canonical CLI can add a server-only AI feature to an official workspace te
   expect(phpSource).toContain("static $is_supported = null;");
   expect(phpSource).toContain("is_supported_for_text_generation");
   expect(phpSource).toContain("generate_text_result");
+  expect(phpSource).toContain("using_model_preference");
   expect(phpSource).toContain("admin_notices");
   expect(phpSource).toContain("sprintf(");
   expect(phpSource).toContain("The %s AI feature is optional");
   expect(phpSource).toContain("optional and remains disabled");
+  expect(phpSource).toContain(
+    "Customization hooks for the Brief Suggestions AI feature:"
+  );
+  expect(phpSource).toContain(
+    "'demo_space_brief_suggestions_ai_feature_permission'"
+  );
+  expect(phpSource).toContain(
+    "'demo_space_brief_suggestions_ai_feature_prompt_payload'"
+  );
+  expect(phpSource).toContain("'demo_space_brief_suggestions_ai_feature_prompt'");
+  expect(phpSource).toContain(
+    "'demo_space_brief_suggestions_ai_feature_prompt_options'"
+  );
+  expect(phpSource).toContain(
+    "'demo_space_brief_suggestions_ai_feature_admin_notice_message'"
+  );
+  expect(phpSource).toContain(
+    "'demo_space_brief_suggestions_ai_feature_unavailable_message'"
+  );
+  expect(phpSource).toContain(
+    "'demo_space_brief_suggestions_ai_feature_telemetry'"
+  );
+  expect(phpSource).toContain("`temperature` and `modelPreference` keys");
   const adminNoticeSource = phpSource.slice(
     phpSource.indexOf("function demo_space_brief_suggestions_ai_feature_admin_notice")
   );
