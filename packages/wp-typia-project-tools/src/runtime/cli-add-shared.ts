@@ -513,6 +513,12 @@ type ScaffoldInventoryCollision<TEntry> = {
 	message: string;
 };
 
+/**
+ * Ensure scaffold targets do not already exist on disk or in workspace inventory.
+ *
+ * @param options Collision checks to run before writing scaffold files.
+ * @throws {Error} When a filesystem path or inventory entry already exists.
+ */
 export function assertScaffoldDoesNotExist<TEntry>(options: {
 	projectDir: string;
 	filesystemCollisions: readonly ScaffoldFilesystemCollision[];
@@ -535,6 +541,15 @@ export function assertScaffoldDoesNotExist<TEntry>(options: {
 	}
 }
 
+/**
+ * Ensure a block variation scaffold does not already exist.
+ *
+ * @param projectDir Absolute workspace root used to resolve scaffold paths.
+ * @param blockSlug Existing workspace block slug that owns the variation.
+ * @param variationSlug Normalized variation slug that would be created.
+ * @param inventory Current workspace inventory used for duplicate detection.
+ * @throws {Error} When the variation file or inventory entry already exists.
+ */
 export function assertVariationDoesNotExist(
 	projectDir: string,
 	blockSlug: string,
@@ -563,6 +578,15 @@ export function assertVariationDoesNotExist(
 	});
 }
 
+/**
+ * Ensure a block style scaffold does not already exist.
+ *
+ * @param projectDir Absolute workspace root used to resolve scaffold paths.
+ * @param blockSlug Existing workspace block slug that owns the style.
+ * @param styleSlug Normalized style slug that would be created.
+ * @param inventory Current workspace inventory used for duplicate detection.
+ * @throws {Error} When the style file or inventory entry already exists.
+ */
 export function assertBlockStyleDoesNotExist(
 	projectDir: string,
 	blockSlug: string,
@@ -591,6 +615,15 @@ export function assertBlockStyleDoesNotExist(
 	});
 }
 
+/**
+ * Ensure a block transform scaffold does not already exist.
+ *
+ * @param projectDir Absolute workspace root used to resolve scaffold paths.
+ * @param blockSlug Existing workspace block slug that owns the transform.
+ * @param transformSlug Normalized transform slug that would be created.
+ * @param inventory Current workspace inventory used for duplicate detection.
+ * @throws {Error} When the transform file or inventory entry already exists.
+ */
 export function assertBlockTransformDoesNotExist(
 	projectDir: string,
 	blockSlug: string,
