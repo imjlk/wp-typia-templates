@@ -14,8 +14,8 @@ async function captureNodeCli(argv: string[]): Promise<{
   let error: unknown;
 
   process.exitCode = 0;
-  console.log = (line = '') => {
-    lines.push(String(line));
+  console.log = (...args: unknown[]) => {
+    lines.push(args.map(String).join(' '));
   };
 
   try {
