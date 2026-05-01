@@ -97,6 +97,32 @@ Enum and const schemas also opt into DataForm element validation. These hints do
 not replace typia/schema runtime validation; keep runtime validation as the
 source of truth for persistence and REST writes.
 
+## Normalization boundaries
+
+`defineDataViews<T>()` performs a small amount of runtime normalization for the
+wp-typia facade:
+
+- field labels and descriptions fall back from the field id and schema metadata;
+- schema metadata can infer DataViews field `type`, enum/const `elements`, and
+  `field.isValid` UI hints;
+- omitted `defaultView.fields` fall back to the normalized field ids, and
+  `titleField` is copied into the normalized default view when declared;
+- `toFormConfig()` / `createDataFormConfig()` fill labels and descriptions from
+  normalized DataViews fields while filtering read-only fields unless
+  `includeReadOnly: true` is requested;
+- `toDataViewsQueryArgs()` emits only the mapped pagination, search, sort, and
+  filter params that the caller explicitly enables.
+
+Other guarantees remain intentionally type-level only:
+
+- TypeScript ensures field ids, sort fields, filter fields, and query adapter
+  option names line up when you stay inside the public types.
+- Runtime helpers do not try to repair arbitrary `view` overrides passed through
+  `createConfig({ view })` or `toDataViewsQueryArgs(view, ...)`; if you cast
+  around the types, the runtime trusts the provided object shape.
+- Query adapters merge mapper results exactly as returned. When multiple mapper
+  calls write the same query key, the last returned value wins.
+
 Map DataViews state into REST or custom data-provider args explicitly:
 
 ```ts

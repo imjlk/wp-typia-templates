@@ -113,6 +113,41 @@ describe("DataViews query adapters", () => {
     });
   });
 
+  test("keeps missing view data and later filter mappings as runtime no-ops or overrides", () => {
+    const query = toDataViewsQueryArgs<
+      Product,
+      { readonly status?: Product["status"]; readonly title?: string }
+    >(
+      {
+        filters: [
+          { field: "status", operator: "is", value: "draft" },
+          { field: "status", operator: "is", value: "publish" },
+          { field: "title", operator: "is", value: "Typed block patterns" },
+        ],
+        type: "table",
+      },
+      {
+        mapFilter: (filter) => {
+          if (filter.field === "status" && filter.operator === "is") {
+            return { status: filter.value as Product["status"] };
+          }
+
+          return filter.field === "title"
+            ? { title: filter.value as string }
+            : null;
+        },
+        pageParam: false,
+        perPageParam: false,
+        searchParam: false,
+      },
+    );
+
+    expect(query).toEqual({
+      status: "publish",
+      title: "Typed block patterns",
+    });
+  });
+
   test("treats orderByParam false as static sort map suppression", () => {
     const query = toDataViewsQueryArgs<Product, WordPressProductQuery>(productView, {
       mapSort: {
@@ -182,6 +217,19 @@ describe("DataViews query adapters", () => {
       pageNo: 2,
       q: "typed blocks",
     });
+  });
+
+  test("returns an empty query when the view has no mapped runtime state", () => {
+    expect(
+      toDataViewsQueryArgs<Product, CompactProductQuery>(
+        { type: "table" },
+        {
+          pageParam: false,
+          perPageParam: false,
+          searchParam: false,
+        },
+      ),
+    ).toEqual({});
   });
 
   test("exposes toQueryArgs from defineDataViews with normalized fields context", () => {
