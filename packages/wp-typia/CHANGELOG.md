@@ -1,5 +1,28 @@
 # wp-typia
 
+## 0.22.3 — 2026-05-01
+
+### Patch changes
+
+- [59e7c6d](https://github.com/imjlk/wp-typia/commit/59e7c6dfdda035f10b1bcd092b20f690c98aa319) Replace generated interactivity `CallableFunction` aliases with explicit
+  callable signatures so scaffolded stores stay lint-friendly without weakening
+  the typed directive and action helpers. — Thanks @imjlk!
+- [34f9ec9](https://github.com/imjlk/wp-typia/commit/34f9ec9b86005ad77ab8d72b83f9643724c2368f) Return a non-zero exit code when `wp-typia` is invoked without a command while
+  still printing the Node fallback help output, and keep explicit help/version
+  requests successful. — Thanks @imjlk!
+- [feb835a](https://github.com/imjlk/wp-typia/commit/feb835a4532ce110d99303203b6f702db3a42a54) Consolidate residual add-command helper duplication by sharing strict versus
+  loose CLI string flag readers, external-layer prompt hints, and scaffold
+  collision checks while preserving existing diagnostics and add workflow
+  behavior. — Thanks @imjlk!
+- [73af96c](https://github.com/imjlk/wp-typia/commit/73af96cb78b9229789e49648832f4d904f915785) Refactor the workspace doctor into focused package, block, binding, and feature modules while preserving the existing `wp-typia doctor` output and adding direct coverage for the extracted binding diagnostics. — Thanks @imjlk!
+- [61e4d76](https://github.com/imjlk/wp-typia/commit/61e4d762fd1d882b2ef26c9655d43b2865e535de) Modularize the workspace `add ability` and `add ai-feature` scaffolds into
+  thin entry points plus focused template and workspace-mutation helpers while
+  keeping representative generated output and integration behavior stable. — Thanks @imjlk!
+- [9ef4b67](https://github.com/imjlk/wp-typia/commit/9ef4b67c20671d735fbf82e464ce0d05d45ed39b) Normalize `wp-typia --help <bun-only-command>` so it no longer falls into
+  low-level Bunli validation errors and instead matches the existing command-help
+  or Bun-runtime guidance flow. — Thanks @imjlk!
+- Updated dependencies: project-tools (npm)@0.22.3
+
 ## 0.22.2 — 2026-05-01
 
 ### Patch changes
