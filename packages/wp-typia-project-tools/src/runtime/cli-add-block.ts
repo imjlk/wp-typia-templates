@@ -65,6 +65,7 @@ import {
 } from "./template-layers.js";
 import {
 	formatInstallCommand,
+	type PackageManagerId,
 } from "./package-managers.js";
 import { parseCompoundInnerBlocksPreset } from "./compound-inner-blocks.js";
 import {
@@ -158,7 +159,7 @@ function hasInstalledWorkspaceDependencies(projectDir: string): boolean {
 }
 
 function assertWorkspaceDependenciesInstalled(workspace: {
-	packageManager: "bun" | "npm" | "pnpm" | "yarn";
+	packageManager: PackageManagerId;
 	projectDir: string;
 }): void {
 	if (hasInstalledWorkspaceDependencies(workspace.projectDir)) {

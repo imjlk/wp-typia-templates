@@ -1,7 +1,10 @@
 import fs from "node:fs";
 import path from "node:path";
 
-import type { PackageManagerId } from "./package-managers.js";
+import {
+	parsePackageManagerField,
+	type PackageManagerId,
+} from "./package-managers.js";
 
 export const WORKSPACE_TEMPLATE_PACKAGE = "@wp-typia/create-workspace-template";
 
@@ -124,16 +127,7 @@ export function getInvalidWorkspaceProjectReason(startDir: string): string | nul
 export function parseWorkspacePackageManagerId(
 	packageManagerField: string | undefined,
 ): PackageManagerId {
-	const packageManagerId = packageManagerField?.split("@", 1)[0];
-	switch (packageManagerId) {
-		case "bun":
-		case "npm":
-		case "pnpm":
-		case "yarn":
-			return packageManagerId;
-		default:
-			return "npm";
-	}
+	return parsePackageManagerField(packageManagerField) ?? "npm";
 }
 
 /**

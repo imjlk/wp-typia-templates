@@ -1,4 +1,7 @@
-import { describe, expect, test } from 'bun:test';
+import { afterAll, describe, expect, test } from 'bun:test';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 import packageJson from '../package.json';
 
 import {
@@ -21,6 +24,30 @@ const UNICODE_MARKER_OPTIONS = {
     LANG: 'en_US.UTF-8',
   },
 } as const;
+const tempRoot = fs.mkdtempSync(
+  path.join(os.tmpdir(), 'wp-typia-completion-output-'),
+);
+
+function writeCompletionProjectFixture(options: {
+  files?: string[];
+  name: string;
+}): string {
+  const projectDir = path.join(tempRoot, options.name);
+  fs.mkdirSync(projectDir, { recursive: true });
+  fs.writeFileSync(
+    path.join(projectDir, 'package.json'),
+    `${JSON.stringify({ name: options.name }, null, 2)}\n`,
+    'utf8',
+  );
+  for (const file of options.files ?? []) {
+    fs.writeFileSync(path.join(projectDir, file), '', 'utf8');
+  }
+  return projectDir;
+}
+
+afterAll(() => {
+  fs.rmSync(tempRoot, { force: true, recursive: true });
+});
 
 describe('alternate-buffer completion output helpers', () => {
   test('create completion payload preserves reviewable next steps and optional onboarding', () => {
@@ -278,6 +305,28 @@ describe('alternate-buffer completion output helpers', () => {
     expect(payload.optionalNote).toContain(
       'inventory and generated-artifact check',
     );
+  });
+
+  test('add completion payload infers Yarn PnP doctor guidance without an explicit package manager', () => {
+    const projectDir = writeCompletionProjectFixture({
+      files: ['.pnp.loader.mjs'],
+      name: 'demo-yarn-pnp-workspace',
+    });
+    const payload = buildAddCompletionPayload(
+      {
+        kind: 'block',
+        projectDir,
+        values: {
+          blockSlugs: 'promo-card',
+          templateId: 'basic',
+        },
+      },
+      UNICODE_MARKER_OPTIONS,
+    );
+
+    expect(payload.optionalLines).toEqual([
+      `yarn dlx wp-typia@${packageJson.version} doctor`,
+    ]);
   });
 
   test('dry-run add payload preserves the richer add completion guidance', () => {

@@ -10,7 +10,9 @@ const tempRoot = fs.mkdtempSync(
 );
 
 function writeSyncFixture(options: {
+  files?: string[];
   name: string;
+  packageManager?: string | null;
   scripts: Record<string, string>;
   withInstallMarker?: boolean;
 }) {
@@ -21,7 +23,9 @@ function writeSyncFixture(options: {
     JSON.stringify(
       {
         name: options.name,
-        packageManager: 'npm@10.9.0',
+        ...(options.packageManager === null
+          ? {}
+          : { packageManager: options.packageManager ?? 'npm@10.9.0' }),
         scripts: options.scripts,
       },
       null,
@@ -33,6 +37,9 @@ function writeSyncFixture(options: {
     fs.mkdirSync(path.join(projectDir, 'node_modules'), {
       recursive: true,
     });
+  }
+  for (const file of options.files ?? []) {
+    fs.writeFileSync(path.join(projectDir, file), '', 'utf8');
   }
   return projectDir;
 }
@@ -83,6 +90,76 @@ test('dry-run sync previews commands without requiring installed dependencies', 
       scriptName: 'sync',
     },
   ]);
+});
+
+test('sync infers package manager from shared lockfile and PnP signals', async () => {
+  const cases = [
+    {
+      command: 'yarn',
+      displayCommand: 'yarn run sync --check',
+      files: ['.pnp.cjs'],
+      name: 'demo-sync-yarn-pnp',
+      packageManager: 'yarn',
+    },
+    {
+      command: 'npm',
+      displayCommand: 'npm run sync -- --check',
+      files: ['package-lock.json'],
+      name: 'demo-sync-npm-lock',
+      packageManager: 'npm',
+    },
+    {
+      command: 'npm',
+      displayCommand: 'npm run sync -- --check',
+      files: ['npm-shrinkwrap.json'],
+      name: 'demo-sync-npm-shrinkwrap',
+      packageManager: 'npm',
+    },
+    {
+      command: 'pnpm',
+      displayCommand: 'pnpm run sync --check',
+      files: ['pnpm-lock.yaml'],
+      name: 'demo-sync-pnpm-lock',
+      packageManager: 'pnpm',
+    },
+    {
+      command: 'bun',
+      displayCommand: 'bun run sync --check',
+      files: ['bun.lockb'],
+      name: 'demo-sync-bun-lock',
+      packageManager: 'bun',
+    },
+    {
+      command: 'npm',
+      displayCommand: 'npm run sync -- --check',
+      files: [],
+      name: 'demo-sync-npm-fallback',
+      packageManager: 'npm',
+    },
+  ] as const;
+
+  for (const testCase of cases) {
+    const projectDir = writeSyncFixture({
+      files: [...testCase.files],
+      name: testCase.name,
+      packageManager: null,
+      scripts: {
+        sync: 'node scripts/record.mjs sync',
+      },
+    });
+    const result = await executeSyncCommand({
+      check: true,
+      cwd: projectDir,
+      dryRun: true,
+    });
+
+    expect(result.packageManager).toBe(testCase.packageManager);
+    expect(result.plannedCommands[0]).toMatchObject({
+      command: testCase.command,
+      displayCommand: testCase.displayCommand,
+      scriptName: 'sync',
+    });
+  }
 });
 
 test('sync can capture executed script output for structured callers', async () => {

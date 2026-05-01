@@ -5,8 +5,13 @@ import {
   CLI_DIAGNOSTIC_CODES,
   createCliDiagnosticCodeError,
 } from '@wp-typia/project-tools/cli-diagnostics';
+import {
+  formatInstallCommand,
+  formatRunScript,
+  inferPackageManagerId,
+  type PackageManagerId,
+} from '@wp-typia/project-tools/package-managers';
 
-type PackageManagerId = 'bun' | 'npm' | 'pnpm' | 'yarn';
 type SyncScriptName = 'sync' | 'sync-ai' | 'sync-rest' | 'sync-types';
 type SyncScriptKey = SyncScriptName | 'sync-wordpress-ai';
 export type SyncExecutionTarget = 'ai' | 'default';
@@ -80,79 +85,11 @@ export function resolveSyncExecutionTarget(
   );
 }
 
-function formatRunScript(
-  packageManagerId: PackageManagerId,
-  scriptName: string,
-  extraArgs = '',
-) {
-  const args = extraArgs.trim();
-  if (packageManagerId === 'bun') {
-    return args ? `bun run ${scriptName} ${args}` : `bun run ${scriptName}`;
-  }
-  if (packageManagerId === 'npm') {
-    return args ? `npm run ${scriptName} -- ${args}` : `npm run ${scriptName}`;
-  }
-  if (packageManagerId === 'pnpm') {
-    return args ? `pnpm run ${scriptName} ${args}` : `pnpm run ${scriptName}`;
-  }
-  return args ? `yarn run ${scriptName} ${args}` : `yarn run ${scriptName}`;
-}
-
-function formatInstallCommand(packageManagerId: PackageManagerId): string {
-  switch (packageManagerId) {
-    case 'bun':
-      return 'bun install';
-    case 'pnpm':
-      return 'pnpm install';
-    case 'yarn':
-      return 'yarn install';
-    default:
-      return 'npm install';
-  }
-}
-
 function getSyncRootError(cwd: string): Error {
   return createCliDiagnosticCodeError(
     CLI_DIAGNOSTIC_CODES.OUTSIDE_PROJECT_ROOT,
     `No generated wp-typia project root was found at ${cwd}. Run \`wp-typia sync\` from a scaffolded project or official workspace root that already contains generated sync scripts. If you expected this directory to work, cd into the scaffold root first or rerun the scaffold before syncing.`,
   );
-}
-
-function inferSyncPackageManager(
-  cwd: string,
-  packageManagerField?: string,
-): PackageManagerId {
-  const field = String(packageManagerField ?? '');
-  if (field.startsWith('bun@')) return 'bun';
-  if (field.startsWith('npm@')) return 'npm';
-  if (field.startsWith('pnpm@')) return 'pnpm';
-  if (field.startsWith('yarn@')) return 'yarn';
-
-  if (
-    fs.existsSync(path.join(cwd, 'bun.lock')) ||
-    fs.existsSync(path.join(cwd, 'bun.lockb'))
-  ) {
-    return 'bun';
-  }
-  if (fs.existsSync(path.join(cwd, 'pnpm-lock.yaml'))) {
-    return 'pnpm';
-  }
-  if (
-    fs.existsSync(path.join(cwd, 'yarn.lock')) ||
-    fs.existsSync(path.join(cwd, '.pnp.cjs')) ||
-    fs.existsSync(path.join(cwd, '.pnp.loader.mjs')) ||
-    fs.existsSync(path.join(cwd, '.yarnrc.yml'))
-  ) {
-    return 'yarn';
-  }
-  if (
-    fs.existsSync(path.join(cwd, 'package-lock.json')) ||
-    fs.existsSync(path.join(cwd, 'npm-shrinkwrap.json'))
-  ) {
-    return 'npm';
-  }
-
-  return 'npm';
 }
 
 function resolveSyncProjectContext(cwd: string): SyncProjectContext {
@@ -205,7 +142,7 @@ function resolveSyncProjectContext(cwd: string): SyncProjectContext {
   return {
     cwd,
     packageJsonPath,
-    packageManager: inferSyncPackageManager(cwd, packageJson.packageManager),
+    packageManager: inferPackageManagerId(cwd, packageJson.packageManager),
     scripts: syncScripts,
   };
 }
