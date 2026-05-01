@@ -2,7 +2,11 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { execSync } from 'node:child_process';
 
-import { formatRunScript } from './package-managers.js';
+import {
+  formatRunScript,
+  parsePackageManagerField,
+  type PackageManagerId,
+} from './package-managers.js';
 import type {
   JsonValue,
   ManifestAttribute,
@@ -195,17 +199,11 @@ export function runProjectScriptIfPresent(
 
 export function detectPackageManagerId(
   projectDir: string,
-): 'bun' | 'npm' | 'pnpm' | 'yarn' {
+): PackageManagerId {
   const packageJson = readJson<{ packageManager?: string }>(
     path.join(projectDir, 'package.json'),
   );
-  const field = String(packageJson.packageManager ?? '');
-
-  if (field.startsWith('bun@')) return 'bun';
-  if (field.startsWith('npm@')) return 'npm';
-  if (field.startsWith('pnpm@')) return 'pnpm';
-  if (field.startsWith('yarn@')) return 'yarn';
-  return 'bun';
+  return parsePackageManagerField(packageJson.packageManager) ?? 'bun';
 }
 
 export function getLocalTsxBinary(projectDir: string): string {

@@ -1,3 +1,6 @@
+import fs from "node:fs";
+import path from "node:path";
+
 export type PackageManagerId = "bun" | "npm" | "pnpm" | "yarn";
 
 export interface PackageManagerDefinition {
@@ -39,6 +42,19 @@ const PACKAGE_MANAGER_DATA: PackageManagerDefinition[] = [
 	},
 ];
 
+const PACKAGE_MANAGER_LOCKFILE_SIGNALS = [
+	{ id: "bun", filenames: ["bun.lock", "bun.lockb"] },
+	{ id: "pnpm", filenames: ["pnpm-lock.yaml"] },
+	{
+		id: "yarn",
+		filenames: ["yarn.lock", ".pnp.cjs", ".pnp.loader.mjs", ".yarnrc.yml"],
+	},
+	{ id: "npm", filenames: ["package-lock.json", "npm-shrinkwrap.json"] },
+] as const satisfies Array<{
+	filenames: string[];
+	id: PackageManagerId;
+}>;
+
 export const PACKAGE_MANAGER_IDS = PACKAGE_MANAGER_DATA.map((manager) => manager.id) as PackageManagerId[];
 export const PACKAGE_MANAGERS = Object.freeze(
 	Object.fromEntries(
@@ -63,6 +79,74 @@ export function getPackageManager(id: string): PackageManagerDefinition {
 		);
 	}
 	return manager;
+}
+
+/**
+ * Parse a normalized package-manager id from a package.json `packageManager` field.
+ *
+ * @param packageManagerField Raw field value such as `pnpm@8.3.1`.
+ * @returns A supported package manager id, or null when the field is missing or unsupported.
+ */
+export function parsePackageManagerField(
+	packageManagerField: string | undefined,
+): PackageManagerId | null {
+	const packageManagerId = packageManagerField?.split("@", 1)[0];
+	return PACKAGE_MANAGER_IDS.includes(packageManagerId as PackageManagerId)
+		? (packageManagerId as PackageManagerId)
+		: null;
+}
+
+function readPackageManagerField(projectDir: string): string | undefined {
+	try {
+		const packageJsonPath = path.join(projectDir, "package.json");
+		if (!fs.existsSync(packageJsonPath)) {
+			return undefined;
+		}
+
+		const manifest = JSON.parse(fs.readFileSync(packageJsonPath, "utf8")) as {
+			packageManager?: unknown;
+		};
+		return typeof manifest.packageManager === "string"
+			? manifest.packageManager
+			: undefined;
+	} catch {
+		return undefined;
+	}
+}
+
+/**
+ * Infer the package manager used by a project from package.json and lockfile signals.
+ *
+ * `packageManager` fields take precedence over lockfiles, then lockfile and PnP
+ * markers are checked in Bun, pnpm, Yarn, npm order. npm remains the fallback so
+ * generated projects without explicit metadata keep the historical CLI default.
+ *
+ * @param projectDir Project root to inspect.
+ * @param packageManagerField Optional already-read package.json field.
+ * @returns The inferred package manager id.
+ */
+export function inferPackageManagerId(
+	projectDir: string,
+	packageManagerField?: string,
+): PackageManagerId {
+	const fieldPackageManager =
+		parsePackageManagerField(packageManagerField) ??
+		parsePackageManagerField(readPackageManagerField(projectDir));
+	if (fieldPackageManager) {
+		return fieldPackageManager;
+	}
+
+	for (const signal of PACKAGE_MANAGER_LOCKFILE_SIGNALS) {
+		if (
+			signal.filenames.some((filename) =>
+				fs.existsSync(path.join(projectDir, filename)),
+			)
+		) {
+			return signal.id;
+		}
+	}
+
+	return "npm";
 }
 
 export function getPackageManagerSelectOptions(): Array<{
