@@ -454,6 +454,106 @@ test("binding source workflow repairs missing bootstrap functions even when hook
   expect(repairedBootstrap).toContain("build/bindings/index.js");
 }, 15_000);
 
+test("workspace inventory repair creates every descriptor-backed section", () => {
+  const repairedSource = updateWorkspaceInventorySource(`export interface WorkspaceBlockConfig {
+\tslug: string;
+\ttypesFile: string;
+}
+
+export const BLOCKS: WorkspaceBlockConfig[] = [
+\t// wp-typia add block entries
+];
+`);
+  const expectedSections = [
+    {
+      constName: "VARIATIONS",
+      interfaceName: "WorkspaceVariationConfig",
+      marker: "\t// wp-typia add variation entries",
+    },
+    {
+      constName: "BLOCK_STYLES",
+      interfaceName: "WorkspaceBlockStyleConfig",
+      marker: "\t// wp-typia add style entries",
+    },
+    {
+      constName: "BLOCK_TRANSFORMS",
+      interfaceName: "WorkspaceBlockTransformConfig",
+      marker: "\t// wp-typia add transform entries",
+    },
+    {
+      constName: "PATTERNS",
+      interfaceName: "WorkspacePatternConfig",
+      marker: "\t// wp-typia add pattern entries",
+    },
+    {
+      constName: "BINDING_SOURCES",
+      interfaceName: "WorkspaceBindingSourceConfig",
+      marker: "\t// wp-typia add binding-source entries",
+    },
+    {
+      constName: "REST_RESOURCES",
+      interfaceName: "WorkspaceRestResourceConfig",
+      marker: "\t// wp-typia add rest-resource entries",
+    },
+    {
+      constName: "ABILITIES",
+      interfaceName: "WorkspaceAbilityConfig",
+      marker: "\t// wp-typia add ability entries",
+    },
+    {
+      constName: "AI_FEATURES",
+      interfaceName: "WorkspaceAiFeatureConfig",
+      marker: "\t// wp-typia add ai-feature entries",
+    },
+    {
+      constName: "ADMIN_VIEWS",
+      interfaceName: "WorkspaceAdminViewConfig",
+      marker: "\t// wp-typia add admin-view entries",
+    },
+    {
+      constName: "EDITOR_PLUGINS",
+      interfaceName: "WorkspaceEditorPluginConfig",
+      marker: "\t// wp-typia add editor-plugin entries",
+    },
+  ];
+
+  let previousSectionIndex = -1;
+  for (const { constName, interfaceName, marker } of expectedSections) {
+    const interfacePattern = new RegExp(
+      `export interface ${interfaceName}\\b`,
+      "gu"
+    );
+    const constPattern = new RegExp(`export const ${constName}\\b`, "gu");
+    expect(repairedSource.match(interfacePattern)?.length).toBe(1);
+    expect(repairedSource.match(constPattern)?.length).toBe(1);
+    expect(repairedSource).toContain(marker);
+
+    const sectionIndex = repairedSource.indexOf(`export interface ${interfaceName}`);
+    expect(sectionIndex).toBeGreaterThan(previousSectionIndex);
+    expect(repairedSource.indexOf(`export const ${constName}`)).toBeGreaterThan(
+      sectionIndex
+    );
+    previousSectionIndex = sectionIndex;
+  }
+});
+
+test("workspace inventory section descriptors support optional interface and const halves", () => {
+  const inventorySource = fs.readFileSync(
+    path.join(import.meta.dir, "..", "src", "runtime", "workspace-inventory.ts"),
+    "utf8"
+  );
+
+  expect(inventorySource).toContain(
+    "const INVENTORY_SECTIONS: readonly InventorySectionDescriptor[]"
+  );
+  expect(inventorySource).toContain("interface?: {");
+  expect(inventorySource).toContain("value?: {");
+  expect(inventorySource).toContain("for (const section of INVENTORY_SECTIONS)");
+  expect(inventorySource).not.toContain(
+    "if (!/export\\s+interface\\s+WorkspaceVariationConfig\\b/u.test(nextSource))"
+  );
+});
+
 test("workspace inventory repair avoids duplicating existing section constants", () => {
   const repairedSource = updateWorkspaceInventorySource(
     `export const VARIATIONS: WorkspaceVariationConfig[] = [
