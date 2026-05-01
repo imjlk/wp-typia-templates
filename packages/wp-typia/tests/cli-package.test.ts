@@ -382,6 +382,7 @@ describe('wp-typia package', () => {
   });
 
   test('routes interactive create/add/migrate invocations to the Bunli runtime when Bun and a TTY are available', () => {
+    expect(shouldRouteTestInvocationToFullRuntime([])).toBe(false);
     expect(shouldRouteTestInvocationToFullRuntime(['create'])).toBe(true);
     expect(
       shouldRouteTestInvocationToFullRuntime(['create', '--dry-run']),
@@ -815,6 +816,9 @@ describe('wp-typia package', () => {
   });
 
   test('renders general and command help without requiring a local Bun binary', () => {
+    const noCommandResult = runCapturedCommand(process.execPath, [entryPath], {
+      env: withoutLocalBunEnv(),
+    });
     const helpResult = runCapturedCommand(
       process.execPath,
       [entryPath, '--help'],
@@ -830,6 +834,12 @@ describe('wp-typia package', () => {
       },
     );
 
+    expect(noCommandResult.status).toBe(1);
+    expect(noCommandResult.stderr).toBe('');
+    expect(noCommandResult.stdout).toContain(
+      'Canonical CLI package for wp-typia scaffolding',
+    );
+    expect(noCommandResult.stdout).toContain('Runtime: Node fallback');
     expect(helpResult.status).toBe(0);
     expect(helpResult.stderr).toBe('');
     expect(helpResult.stdout).toContain(
