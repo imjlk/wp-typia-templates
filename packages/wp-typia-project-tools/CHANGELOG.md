@@ -1,5 +1,18 @@
 # @wp-typia/project-tools
 
+## 0.22.3 — 2026-05-01
+
+### Patch changes
+
+- [feb835a](https://github.com/imjlk/wp-typia/commit/feb835a4532ce110d99303203b6f702db3a42a54) Consolidate residual add-command helper duplication by sharing strict versus
+  loose CLI string flag readers, external-layer prompt hints, and scaffold
+  collision checks while preserving existing diagnostics and add workflow
+  behavior. — Thanks @imjlk!
+- [73af96c](https://github.com/imjlk/wp-typia/commit/73af96cb78b9229789e49648832f4d904f915785) Refactor the workspace doctor into focused package, block, binding, and feature modules while preserving the existing `wp-typia doctor` output and adding direct coverage for the extracted binding diagnostics. — Thanks @imjlk!
+- [61e4d76](https://github.com/imjlk/wp-typia/commit/61e4d762fd1d882b2ef26c9655d43b2865e535de) Modularize the workspace `add ability` and `add ai-feature` scaffolds into
+  thin entry points plus focused template and workspace-mutation helpers while
+  keeping representative generated output and integration behavior stable. — Thanks @imjlk!
+
 ## 0.22.2 — 2026-05-01
 
 ### Patch changes
