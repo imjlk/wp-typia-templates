@@ -14,11 +14,11 @@ import {
   toExternalLayerPromptOptions,
   type ExternalLayerSelectOption,
 } from './external-layer-prompt-options';
+import type { PrintLine } from './print-line';
 
 export { ADD_KIND_IDS } from './add-kind-ids';
 export type { AddKindId } from './add-kind-ids';
 
-type PrintLine = (line: string) => void;
 type AddRuntime = typeof CliAddRuntime;
 type AddKindExecutionResultBase = {
   projectDir: string;

@@ -30,6 +30,7 @@ import {
 } from './runtime-bridge-output';
 import { isInteractiveTerminal } from './runtime-capabilities';
 import { readOptionalLooseStringFlag } from './cli-string-flags';
+import type { PrintLine } from './print-line';
 export {
   buildCreateCompletionPayload,
   buildCreateDryRunPayload,
@@ -91,7 +92,6 @@ type MigrateExecutionInput = {
   renderLine?: (line: string) => void;
 };
 
-type PrintLine = (line: string) => void;
 type CliCommandId = 'add' | 'create' | 'doctor' | 'init' | 'migrate';
 
 const loadCliAddRuntime = () => import('@wp-typia/project-tools/cli-add');
