@@ -5,11 +5,13 @@ import path from 'node:path';
 
 import type { EndpointManifestDefinition } from '@wp-typia/block-runtime/metadata-core';
 import type { ILlmSchema } from 'typia';
+import type { OpenApiDocument } from '@wp-typia/project-tools/schema-core';
 import type {
   ProjectedTypiaLlmApplicationArtifact,
   ProjectedTypiaLlmStructuredOutputArtifact,
 } from '@wp-typia/project-tools/typia-llm';
 import {
+  applyOpenApiConstraintsToTypiaLlmFunctionArtifact,
   buildTypiaLlmEndpointMethodDescriptors,
   projectTypiaLlmApplicationArtifact,
   projectTypiaLlmStructuredOutputArtifact,
@@ -56,6 +58,314 @@ const COUNTER_MANIFEST = {
     },
   ],
 } as const satisfies EndpointManifestDefinition;
+
+const COUNTER_OPENAPI = {
+  components: {
+    schemas: {
+      CounterResponse: {
+        $schema: 'https://json-schema.org/draft/2020-12/schema',
+        additionalProperties: false,
+        properties: {
+          count: {
+            minimum: 0,
+            type: 'integer',
+          },
+        },
+        required: ['count'],
+        title: 'CounterResponse',
+        type: 'object',
+      },
+      CounterUpdateRequest: {
+        $schema: 'https://json-schema.org/draft/2020-12/schema',
+        additionalProperties: false,
+        properties: {
+          publicWriteToken: {
+            minLength: 16,
+            pattern: '^pt_[a-z0-9]+$',
+            type: 'string',
+          },
+        },
+        required: ['publicWriteToken'],
+        title: 'CounterUpdateRequest',
+        type: 'object',
+      },
+      UpdateCounterBody: {
+        $schema: 'https://json-schema.org/draft/2020-12/schema',
+        additionalProperties: false,
+        properties: {
+          publicWriteToken: {
+            minLength: 24,
+            pattern: '^body_[a-z0-9]+$',
+            type: 'string',
+          },
+        },
+        required: ['publicWriteToken'],
+        title: 'UpdateCounterBody',
+        type: 'object',
+      },
+    },
+  },
+  info: {
+    title: 'Counter API',
+    version: '1.0.0',
+  },
+  openapi: '3.1.0',
+  paths: {
+    '/demo/v1/counter': {
+      post: {
+        operationId: 'incrementCounter',
+        requestBody: {
+          content: {
+            'application/json': {
+              schema: {
+                $ref: '#/components/schemas/CounterUpdateRequest',
+              },
+            },
+          },
+          required: true,
+        },
+        responses: {
+          '200': {
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/CounterResponse',
+                },
+              },
+            },
+            description: 'Counter response.',
+          },
+        },
+        summary: 'Increment the counter.',
+        tags: ['Counter'],
+        'x-typia-authIntent': 'public-write-protected',
+      },
+    },
+    '/demo/v1/counter/update': {
+      post: {
+        operationId: 'updateCounter',
+        parameters: [
+          {
+            in: 'query',
+            name: 'page',
+            required: true,
+            schema: {
+              minimum: 1,
+              type: 'integer',
+            },
+          },
+          {
+            in: 'query',
+            name: 'search',
+            required: false,
+            schema: {
+              minLength: 2,
+              type: 'string',
+            },
+          },
+        ],
+        requestBody: {
+          content: {
+            'application/json': {
+              schema: {
+                $ref: '#/components/schemas/UpdateCounterBody',
+              },
+            },
+          },
+          required: true,
+        },
+        responses: {
+          '200': {
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/CounterResponse',
+                },
+              },
+            },
+            description: 'Updated counter response.',
+          },
+        },
+        summary: 'Update the counter.',
+        tags: ['Counter'],
+        'x-typia-authIntent': 'authenticated',
+      },
+    },
+  },
+} as const satisfies OpenApiDocument;
+
+const NESTED_REFERENCE_OPENAPI = {
+  components: {
+    parameters: {
+      NestedPostId: {
+        in: 'query',
+        name: 'postId',
+        required: true,
+        schema: {
+          maximum: 4294967295,
+          minimum: 0,
+          multipleOf: 1,
+          type: 'integer',
+        },
+      },
+    },
+    requestBodies: {
+      NestedCounterBody: {
+        content: {
+          'application/json': {
+            schema: {
+              $ref: '#/components/schemas/NestedCounterBodySchema',
+            },
+          },
+        },
+        required: true,
+      },
+    },
+    responses: {
+      NestedCounterResponse: {
+        content: {
+          'application/json': {
+            schema: {
+              $ref: '#/components/schemas/NestedCounterResponseSchema',
+            },
+          },
+        },
+        description: 'Nested counter response.',
+      },
+    },
+    schemas: {
+      NestedCounterBodySchema: {
+        $schema: 'https://json-schema.org/draft/2020-12/schema',
+        additionalProperties: false,
+        properties: {
+          payload: {
+            properties: {
+              delta: {
+                maximum: 9,
+                minimum: 1,
+                multipleOf: 1,
+                type: 'integer',
+              },
+            },
+            required: ['delta'],
+            type: 'object',
+          },
+        },
+        required: ['payload'],
+        title: 'NestedCounterBodySchema',
+        type: 'object',
+      },
+      NestedCounterResponseSchema: {
+        $schema: 'https://json-schema.org/draft/2020-12/schema',
+        additionalProperties: false,
+        properties: {
+          count: {
+            maximum: 4294967295,
+            minimum: 0,
+            multipleOf: 1,
+            type: 'integer',
+          },
+        },
+        required: ['count'],
+        title: 'NestedCounterResponseSchema',
+        type: 'object',
+      },
+    },
+  },
+  info: {
+    title: 'Nested Counter API',
+    version: '1.0.0',
+  },
+  openapi: '3.1.0',
+  paths: {
+    '/demo/v1/counter/nested': {
+      post: {
+        operationId: 'syncNestedCounter',
+        parameters: [
+          {
+            $ref: '#/components/parameters/NestedPostId',
+          },
+        ],
+        requestBody: {
+          $ref: '#/components/requestBodies/NestedCounterBody',
+        },
+        responses: {
+          '2XX': {
+            $ref: '#/components/responses/NestedCounterResponse',
+          },
+        },
+        summary: 'Synchronize the nested counter.',
+        tags: ['Counter'],
+        'x-typia-authIntent': 'authenticated',
+      },
+    },
+  },
+} as const as unknown as OpenApiDocument;
+
+const RECURSIVE_REFERENCE_OPENAPI = {
+  components: {
+    requestBodies: {
+      RecursiveNodeBody: {
+        content: {
+          'application/json': {
+            schema: {
+              $ref: '#/components/schemas/RecursiveNode',
+            },
+          },
+        },
+        required: true,
+      },
+    },
+    schemas: {
+      RecursiveNode: {
+        $schema: 'https://json-schema.org/draft/2020-12/schema',
+        additionalProperties: false,
+        properties: {
+          child: {
+            $ref: '#/components/schemas/RecursiveNode',
+          },
+          label: {
+            minLength: 1,
+            type: 'string',
+          },
+        },
+        required: ['label'],
+        title: 'RecursiveNode',
+        type: 'object',
+      },
+    },
+  },
+  info: {
+    title: 'Recursive Node API',
+    version: '1.0.0',
+  },
+  openapi: '3.1.0',
+  paths: {
+    '/demo/v1/tree': {
+      post: {
+        operationId: 'syncRecursiveNode',
+        requestBody: {
+          $ref: '#/components/requestBodies/RecursiveNodeBody',
+        },
+        responses: {
+          '200': {
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/RecursiveNode',
+                },
+              },
+            },
+            description: 'Recursive node response.',
+          },
+        },
+        summary: 'Synchronize the recursive node.',
+        tags: ['Tree'],
+        'x-typia-authIntent': 'authenticated',
+      },
+    },
+  },
+} as const as unknown as OpenApiDocument;
 
 const EMPTY_LLM_PARAMETERS: ILlmSchema.IParameters = {
   $defs: {},
@@ -383,6 +693,286 @@ describe('typia.llm adapter emitter', () => {
     });
     expect(structuredArtifact.parameters).not.toBe(structuredParameters);
     expect(structuredArtifact.generatedFrom).not.toBe(structuredGeneratedFrom);
+  });
+
+  test('restores canonical OpenAPI constraints for projected function artifacts', () => {
+    const constrainedArtifact = applyOpenApiConstraintsToTypiaLlmFunctionArtifact(
+      {
+        functionArtifact: {
+          description: 'Increment the counter.',
+          name: 'incrementCounter',
+          output: {
+            $defs: {},
+            additionalProperties: false,
+            properties: {
+              count: {
+                type: 'number',
+              },
+            },
+            required: ['count'],
+            type: 'object',
+          },
+          parameters: {
+            $defs: {},
+            additionalProperties: false,
+            properties: {
+              publicWriteToken: {
+                type: 'string',
+              },
+            },
+            required: ['publicWriteToken'],
+            type: 'object',
+          },
+          tags: ['Counter'],
+        },
+        openApiDocument: COUNTER_OPENAPI,
+        operationId: 'incrementCounter',
+      },
+    );
+
+    expect(constrainedArtifact.parameters).toMatchObject({
+      properties: {
+        publicWriteToken: {
+          minLength: 16,
+          pattern: '^pt_[a-z0-9]+$',
+          type: 'string',
+        },
+      },
+      required: ['publicWriteToken'],
+    });
+    expect(constrainedArtifact.output).toMatchObject({
+      properties: {
+        count: {
+          minimum: 0,
+          type: 'integer',
+        },
+      },
+      required: ['count'],
+    });
+  });
+
+  test('restores canonical OpenAPI constraints for mixed body/query tool inputs', () => {
+    const applicationArtifact = projectTypiaLlmApplicationArtifact({
+      application: {
+        functions: [
+          {
+            description: 'Update the counter.',
+            name: 'updateCounter',
+            parameters: {
+              $defs: {},
+              additionalProperties: false,
+              properties: {
+                body: {
+                  additionalProperties: false,
+                  properties: {
+                    publicWriteToken: {
+                      type: 'string',
+                    },
+                  },
+                  required: ['publicWriteToken'],
+                  type: 'object',
+                },
+                query: {
+                  additionalProperties: false,
+                  properties: {
+                    page: {
+                      type: 'number',
+                    },
+                    search: {
+                      type: 'string',
+                    },
+                  },
+                  required: [],
+                  type: 'object',
+                },
+              },
+              required: ['body', 'query'],
+              type: 'object',
+            },
+          },
+        ],
+      },
+      generatedFrom: {
+        baselineOpenApiPath: 'src/blocks/counter/api.openapi.json',
+        blockSlug: 'counter',
+        manifestSource: 'endpoint-manifest+typescript',
+      },
+      openApiProjection: {
+        openApiDocument: COUNTER_OPENAPI,
+      },
+    });
+
+    expect(applicationArtifact.functions[0]?.parameters).toMatchObject({
+      properties: {
+        body: {
+          properties: {
+            publicWriteToken: {
+              minLength: 24,
+              pattern: '^body_[a-z0-9]+$',
+              type: 'string',
+            },
+          },
+          required: ['publicWriteToken'],
+        },
+        query: {
+          properties: {
+            page: {
+              minimum: 1,
+              type: 'integer',
+            },
+            search: {
+              minLength: 2,
+              type: 'string',
+            },
+          },
+          required: ['page'],
+        },
+      },
+      required: ['body', 'query'],
+    });
+  });
+
+  test('resolves nested OpenAPI component references and wildcard 2XX responses', () => {
+    const constrainedArtifact = applyOpenApiConstraintsToTypiaLlmFunctionArtifact(
+      {
+        functionArtifact: {
+          description: 'Synchronize the nested counter.',
+          name: 'syncNestedCounter',
+          output: {
+            $defs: {},
+            additionalProperties: false,
+            properties: {
+              count: {
+                type: 'number',
+              },
+            },
+            required: ['count'],
+            type: 'object',
+          },
+          parameters: {
+            $defs: {},
+            additionalProperties: false,
+            properties: {
+              body: {
+                additionalProperties: false,
+                properties: {
+                  payload: {
+                    properties: {
+                      delta: {
+                        type: 'number',
+                      },
+                    },
+                    required: ['delta'],
+                    type: 'object',
+                  },
+                },
+                required: ['payload'],
+                type: 'object',
+              },
+              query: {
+                additionalProperties: false,
+                properties: {
+                  postId: {
+                    type: 'number',
+                  },
+                },
+                required: [],
+                type: 'object',
+              },
+            },
+            required: ['body', 'query'],
+            type: 'object',
+          },
+        },
+        openApiDocument: NESTED_REFERENCE_OPENAPI,
+        operationId: 'syncNestedCounter',
+      },
+    );
+
+    expect(constrainedArtifact.parameters).toMatchObject({
+      properties: {
+        body: {
+          properties: {
+            payload: {
+              properties: {
+                delta: {
+                  maximum: 9,
+                  minimum: 1,
+                  multipleOf: 1,
+                  type: 'integer',
+                },
+              },
+              required: ['delta'],
+            },
+          },
+          required: ['payload'],
+        },
+        query: {
+          properties: {
+            postId: {
+              maximum: 4294967295,
+              minimum: 0,
+              multipleOf: 1,
+              type: 'integer',
+            },
+          },
+          required: ['postId'],
+        },
+      },
+    });
+    expect(constrainedArtifact.output).toMatchObject({
+      properties: {
+        count: {
+          maximum: 4294967295,
+          minimum: 0,
+          multipleOf: 1,
+          type: 'integer',
+        },
+      },
+      required: ['count'],
+    });
+  });
+
+  test('preserves non-recursive constraints without failing on recursive schema references', () => {
+    const constrainedArtifact = applyOpenApiConstraintsToTypiaLlmFunctionArtifact(
+      {
+        functionArtifact: {
+          description: 'Synchronize the recursive node.',
+          name: 'syncRecursiveNode',
+          parameters: {
+            $defs: {},
+            additionalProperties: false,
+            properties: {
+              label: {
+                type: 'string',
+              },
+            },
+            required: ['label'],
+            type: 'object',
+          },
+        },
+        openApiDocument: RECURSIVE_REFERENCE_OPENAPI,
+        operationId: 'syncRecursiveNode',
+      },
+    );
+
+    expect(constrainedArtifact.parameters).toMatchObject({
+      properties: {
+        child: {
+          properties: {
+            label: {
+              minLength: 1,
+              type: 'string',
+            },
+          },
+        },
+        label: {
+          minLength: 1,
+          type: 'string',
+        },
+      },
+      required: ['label'],
+    });
   });
 
   test('projects mixed query/body endpoint inputs as composite tool input', () => {

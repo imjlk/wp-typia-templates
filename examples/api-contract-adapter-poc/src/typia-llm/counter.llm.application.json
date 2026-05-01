@@ -9,7 +9,9 @@
         "properties": {
           "postId": {
             "type": "integer",
-            "minimum": 0
+            "minimum": 0,
+            "maximum": 4294967295,
+            "multipleOf": 1
           },
           "resourceKey": {
             "type": "string",
@@ -18,7 +20,9 @@
           },
           "count": {
             "type": "integer",
-            "minimum": 0
+            "minimum": 0,
+            "maximum": 4294967295,
+            "multipleOf": 1
           },
           "storage": {
             "type": "string",
@@ -70,7 +74,9 @@
         "properties": {
           "postId": {
             "type": "integer",
-            "minimum": 0
+            "minimum": 0,
+            "maximum": 4294967295,
+            "multipleOf": 1
           },
           "resourceKey": {
             "type": "string",
@@ -79,7 +85,9 @@
           },
           "count": {
             "type": "integer",
-            "minimum": 0
+            "minimum": 0,
+            "maximum": 4294967295,
+            "multipleOf": 1
           },
           "storage": {
             "type": "string",

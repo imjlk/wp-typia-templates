@@ -6,15 +6,16 @@ import { createRequire } from "node:module";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { promisify } from "node:util";
 
-import type { ILlmFunction, ILlmSchema, ILlmStructuredOutput } from "typia";
+import type { ILlmFunction, ILlmStructuredOutput } from "typia";
 import { BLOCKS } from "../../persistence-examples/scripts/block-config";
 import type { EndpointManifestDefinition } from "../../../packages/wp-typia-block-runtime/src/metadata-core";
+import type { OpenApiDocument } from "@wp-typia/project-tools/schema-core";
 import {
   buildTypiaLlmEndpointMethodDescriptors,
-  projectTypiaLlmApplicationArtifact,
   projectTypiaLlmStructuredOutputArtifact,
   renderTypiaLlmModule,
   syncTypiaLlmAdapterModule,
+  projectTypiaLlmApplicationArtifact,
   type ProjectedTypiaLlmApplicationArtifact,
   type ProjectedTypiaLlmStructuredOutputArtifact,
   type TypiaLlmEndpointMethodDescriptor,
@@ -27,14 +28,6 @@ export type {
 } from "@wp-typia/project-tools/typia-llm";
 
 const execFileAsync = promisify(execFile);
-
-type JsonObject = Record<string, unknown>;
-type OpenApiDocument = {
-  components?: {
-    schemas?: Record<string, JsonObject>;
-  };
-  paths?: Record<string, JsonObject>;
-};
 
 interface SyncTypiaLlmCliOptions {
   check: boolean;
@@ -209,193 +202,6 @@ async function reconcileGeneratedArtifacts(
   }
 }
 
-function cloneJson<T>(value: T): T {
-  return JSON.parse(JSON.stringify(value)) as T;
-}
-
-function isJsonObject(value: unknown): value is JsonObject {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
-}
-
-function resolveOpenApiSchema(
-  document: OpenApiDocument,
-  schema: unknown
-): JsonObject {
-  if (!isJsonObject(schema)) {
-    return {};
-  }
-
-  const reference = schema.$ref;
-  if (typeof reference !== "string") {
-    return schema;
-  }
-
-  const match = reference.match(/^#\/components\/schemas\/(.+)$/);
-  if (!match) {
-    throw new Error(`Unsupported OpenAPI schema reference "${reference}".`);
-  }
-
-  const resolved = document.components?.schemas?.[match[1]];
-  if (!resolved) {
-    throw new Error(
-      `Unable to resolve OpenAPI schema reference "${reference}".`
-    );
-  }
-
-  return resolved;
-}
-
-function mergeOpenApiSchema(
-  target: JsonObject,
-  source: JsonObject
-): JsonObject {
-  const merged = target;
-
-  for (const key of [
-    "type",
-    "minimum",
-    "maximum",
-    "exclusiveMinimum",
-    "exclusiveMaximum",
-    "minLength",
-    "maxLength",
-    "minItems",
-    "maxItems",
-    "multipleOf",
-    "pattern",
-    "format",
-    "default",
-    "enum",
-    "const",
-    "additionalProperties",
-  ] as const) {
-    if (source[key] !== undefined) {
-      merged[key] = cloneJson(source[key]);
-    }
-  }
-
-  if (Array.isArray(source.required)) {
-    merged.required = [...source.required];
-  }
-
-  if (isJsonObject(source.items)) {
-    const nextItems = isJsonObject(merged.items) ? merged.items : {};
-    merged.items = mergeOpenApiSchema(nextItems, source.items);
-  }
-
-  if (isJsonObject(source.properties)) {
-    const targetProperties = isJsonObject(merged.properties)
-      ? merged.properties
-      : {};
-
-    for (const [propertyName, propertySchema] of Object.entries(
-      source.properties
-    )) {
-      if (!isJsonObject(propertySchema)) {
-        continue;
-      }
-
-      const nextProperty = isJsonObject(targetProperties[propertyName])
-        ? targetProperties[propertyName]
-        : {};
-      targetProperties[propertyName] = mergeOpenApiSchema(
-        nextProperty,
-        propertySchema
-      );
-    }
-
-    merged.properties = targetProperties;
-  }
-
-  return merged;
-}
-
-function findOperationById(
-  document: OpenApiDocument,
-  operationId: string
-): JsonObject | null {
-  for (const pathItem of Object.values(document.paths ?? {})) {
-    if (!isJsonObject(pathItem)) {
-      continue;
-    }
-
-    for (const method of ["delete", "get", "patch", "post", "put"] as const) {
-      const operation = pathItem[method];
-      if (!isJsonObject(operation)) {
-        continue;
-      }
-
-      if (operation.operationId === operationId) {
-        return operation;
-      }
-    }
-  }
-
-  return null;
-}
-
-function applyOpenApiConstraintsToFunctionParameters(
-  parameters: ILlmSchema.IParameters,
-  operation: JsonObject | null,
-  document: OpenApiDocument
-): ILlmSchema.IParameters {
-  const mergedParameters = cloneJson(parameters) as unknown as JsonObject;
-
-  if (!operation) {
-    return mergedParameters as unknown as ILlmSchema.IParameters;
-  }
-
-  const requestBodySchema = resolveOpenApiSchema(
-    document,
-    operation.requestBody &&
-      isJsonObject(operation.requestBody) &&
-      isJsonObject(operation.requestBody.content) &&
-      isJsonObject(operation.requestBody.content["application/json"]) &&
-      isJsonObject(operation.requestBody.content["application/json"].schema)
-      ? operation.requestBody.content["application/json"].schema
-      : null
-  );
-  mergeOpenApiSchema(mergedParameters, requestBodySchema);
-
-  for (const parameter of Array.isArray(operation.parameters)
-    ? operation.parameters
-    : []) {
-    if (
-      !isJsonObject(parameter) ||
-      parameter.in !== "query" ||
-      typeof parameter.name !== "string"
-    ) {
-      continue;
-    }
-
-    const targetProperties = isJsonObject(mergedParameters.properties)
-      ? mergedParameters.properties
-      : {};
-    const existingProperty = targetProperties[parameter.name];
-    const nextProperty: JsonObject = isJsonObject(existingProperty)
-      ? existingProperty
-      : {};
-
-    targetProperties[parameter.name] = mergeOpenApiSchema(
-      nextProperty,
-      resolveOpenApiSchema(document, parameter.schema)
-    );
-    mergedParameters.properties = targetProperties;
-
-    if (parameter.required === true) {
-      const required = new Set(
-        Array.isArray(mergedParameters.required)
-          ? mergedParameters.required
-          : []
-      );
-      required.add(parameter.name);
-      mergedParameters.required = [...required];
-    }
-  }
-
-  return mergedParameters as unknown as ILlmSchema.IParameters;
-}
-
 async function readCounterOpenApiDocument(): Promise<OpenApiDocument> {
   return JSON.parse(
     await readFile(getCounterOpenApiFile(), "utf8")
@@ -477,14 +283,9 @@ export async function buildCounterTypiaLlmArtifacts(): Promise<{
           blockSlug: COUNTER_BLOCK.slug,
           manifestSource: "endpoint-manifest+typescript",
         },
-        transformFunction: (functionArtifact, functionSchema) => ({
-          ...functionArtifact,
-          parameters: applyOpenApiConstraintsToFunctionParameters(
-            functionSchema.parameters as ILlmSchema.IParameters,
-            findOperationById(openApiDocument, functionSchema.name),
-            openApiDocument
-          ),
-        }),
+        openApiProjection: {
+          openApiDocument,
+        },
       }),
       structuredOutputArtifact: projectTypiaLlmStructuredOutputArtifact({
         generatedFrom: {
