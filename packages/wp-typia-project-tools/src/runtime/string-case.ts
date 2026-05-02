@@ -4,6 +4,7 @@ function capitalizeSegment(segment: string): string {
 
 /**
  * Normalize arbitrary text into a kebab-case identifier.
+ * Acronym runs stay grouped, with a boundary before the next capitalized word.
  *
  * @param input Raw text that may contain spaces, punctuation, or camelCase.
  * @returns A lowercase kebab-case string with collapsed separators.
@@ -11,6 +12,7 @@ function capitalizeSegment(segment: string): string {
 export function toKebabCase(input: string): string {
   return input
     .trim()
+    .replace(/([A-Z]+)([A-Z][a-z])/g, '$1-$2')
     .replace(/([a-z0-9])([A-Z])/g, '$1-$2')
     .replace(/[^A-Za-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '')
