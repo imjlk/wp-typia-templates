@@ -104,6 +104,14 @@ describe('wp-typia user config loading', () => {
           'package-manager': 'npm',
           template: 'interactivity',
         },
+        mcp: {
+          schemaSources: [
+            {
+              namespace: 'rc',
+              path: './rc.ts',
+            },
+          ],
+        },
       });
       writeJson(path.join(cwd, '.wp-typiarc.json'), {
         create: {
@@ -124,6 +132,14 @@ describe('wp-typia user config loading', () => {
           create: {
             template: 'persistence',
           },
+          mcp: {
+            schemaSources: [
+              {
+                namespace: 'package',
+                path: './package.ts',
+              },
+            ],
+          },
         },
       });
 
@@ -139,8 +155,8 @@ describe('wp-typia user config loading', () => {
         mcp: {
           schemaSources: [
             {
-              namespace: 'project',
-              path: './project.ts',
+              namespace: 'package',
+              path: './package.ts',
             },
           ],
         },
