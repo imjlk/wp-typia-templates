@@ -56,6 +56,34 @@ function isPhpHorizontalWhitespace(character: string | undefined): boolean {
 	return character === " " || character === "\t";
 }
 
+function isPhpWhitespace(character: string | undefined): boolean {
+	return typeof character === "string" && /\s/u.test(character);
+}
+
+function isPhpHeredocContinuation(character: string | undefined): boolean {
+	return (
+		character === ";" ||
+		character === "," ||
+		character === ")" ||
+		character === "]" ||
+		character === "}" ||
+		character === "." ||
+		character === "?" ||
+		character === ":" ||
+		character === "+" ||
+		character === "-" ||
+		character === "*" ||
+		character === "/" ||
+		character === "%" ||
+		character === "|" ||
+		character === "&" ||
+		character === "^" ||
+		character === "=" ||
+		character === "<" ||
+		character === ">"
+	);
+}
+
 function findPhpLineBoundary(
 	source: string,
 	index: number,
@@ -137,26 +165,168 @@ function findPhpHeredocClosingEnd(
 	}
 	cursor += delimiter.length;
 
-	if (source[cursor] === ";") {
-		cursor += 1;
-	}
-	while (isPhpHorizontalWhitespace(source[cursor])) {
-		cursor += 1;
+	if (isPhpIdentifierPart(source[cursor])) {
+		return null;
 	}
 
-	if (source[cursor] === "\r" && source[cursor + 1] === "\n") {
-		return cursor + 2;
+	let continuationCursor = cursor;
+	while (isPhpHorizontalWhitespace(source[continuationCursor])) {
+		continuationCursor += 1;
 	}
-	if (source[cursor] === "\n") {
-		return cursor + 1;
-	}
-	if (cursor >= source.length) {
-		return source.length;
+	const continuation = source[continuationCursor];
+	if (
+		continuationCursor >= source.length ||
+		continuation === "\r" ||
+		continuation === "\n" ||
+		isPhpHeredocContinuation(continuation)
+	) {
+		return cursor;
 	}
 
 	return null;
 }
 
+function matchesPhpFunctionCallAt(
+	source: string,
+	index: number,
+	functionName: string,
+): boolean {
+	if (!source.startsWith(functionName, index)) {
+		return false;
+	}
+	if (isPhpIdentifierPart(source[index - 1])) {
+		return false;
+	}
+
+	let cursor = index + functionName.length;
+	if (isPhpIdentifierPart(source[cursor])) {
+		return false;
+	}
+	while (isPhpWhitespace(source[cursor])) {
+		cursor += 1;
+	}
+
+	return source[cursor] === "(";
+}
+
+/**
+ * Detect a PHP function call outside strings, comments, heredoc, and nowdoc blocks.
+ *
+ * @param source PHP source to scan.
+ * @param functionName Literal PHP function identifier to find.
+ * @returns Whether `source` contains a code-mode call to `functionName`.
+ */
+export function hasPhpFunctionCall(source: string, functionName: string): boolean {
+	let mode: PhpFunctionScanMode = "code";
+	let heredocDelimiter = "";
+	let index = 0;
+	while (index < source.length) {
+		const character = source[index];
+
+		if (mode === "heredoc") {
+			const closingEnd = findPhpHeredocClosingEnd(
+				source,
+				index,
+				heredocDelimiter,
+			);
+			if (closingEnd !== null) {
+				mode = "code";
+				heredocDelimiter = "";
+				index = closingEnd;
+				continue;
+			}
+
+			const nextLineStart = findPhpLineBoundary(source, index).nextStart;
+			if (nextLineStart <= index) {
+				return false;
+			}
+			index = nextLineStart;
+			continue;
+		}
+
+		if (mode === "single-quoted" || mode === "double-quoted") {
+			const quote = mode === "single-quoted" ? "'" : '"';
+			if (character === "\\") {
+				index += 2;
+				continue;
+			}
+			if (character === quote) {
+				mode = "code";
+			}
+			index += 1;
+			continue;
+		}
+
+		if (mode === "line-comment") {
+			if (character === "\r" || character === "\n") {
+				mode = "code";
+			}
+			index += 1;
+			continue;
+		}
+
+		if (mode === "block-comment") {
+			if (character === "*" && source[index + 1] === "/") {
+				mode = "code";
+				index += 2;
+				continue;
+			}
+			index += 1;
+			continue;
+		}
+
+		if (character === "'") {
+			mode = "single-quoted";
+			index += 1;
+			continue;
+		}
+		if (character === '"') {
+			mode = "double-quoted";
+			index += 1;
+			continue;
+		}
+		if (character === "/" && source[index + 1] === "/") {
+			mode = "line-comment";
+			index += 2;
+			continue;
+		}
+		if (character === "#" && source[index + 1] !== "[") {
+			mode = "line-comment";
+			index += 1;
+			continue;
+		}
+		if (character === "/" && source[index + 1] === "*") {
+			mode = "block-comment";
+			index += 2;
+			continue;
+		}
+		if (character === "<") {
+			const heredocStart = parsePhpHeredocStart(source, index);
+			if (heredocStart) {
+				mode = "heredoc";
+				heredocDelimiter = heredocStart.delimiter;
+				index = heredocStart.contentStart;
+				continue;
+			}
+		}
+		if (matchesPhpFunctionCallAt(source, index, functionName)) {
+			return true;
+		}
+
+		index += 1;
+	}
+
+	return false;
+}
+
+/**
+ * Locate a PHP function body without counting braces in non-code regions.
+ *
+ * @param source PHP source to scan.
+ * @param functionName Literal PHP function identifier to locate.
+ * @param options Range options such as trailing newline inclusion.
+ * @returns The matched {@link PhpFunctionRange}, or `null` when no safe range exists.
+ */
 export function findPhpFunctionRange(
 	source: string,
 	functionName: string,

@@ -48,6 +48,7 @@ import {
 import {
 	escapeRegex,
 	findPhpFunctionRange,
+	hasPhpFunctionCall,
 	hasPhpFunctionDefinition,
 	replacePhpFunctionDefinition,
 } from "./php-utils.js";
@@ -209,7 +210,7 @@ function ${enqueueFunctionName}() {
 			const functionSource = functionRange
 				? nextSource.slice(functionRange.start, functionRange.end)
 				: "";
-			if (!functionSource.includes("wp_enqueue_script_module")) {
+			if (!hasPhpFunctionCall(functionSource, "wp_enqueue_script_module")) {
 				const replacedSource = replacePhpFunctionDefinition(
 					nextSource,
 					enqueueFunctionName,

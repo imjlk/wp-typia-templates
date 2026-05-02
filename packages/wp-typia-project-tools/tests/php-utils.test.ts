@@ -3,6 +3,7 @@ import { expect, test } from "bun:test";
 import {
 	escapeRegex,
 	findPhpFunctionRange,
+	hasPhpFunctionCall,
 	hasPhpFunctionDefinition,
 	quotePhpString,
 	replacePhpFunctionDefinition,
@@ -111,6 +112,39 @@ function keep_me() {
 	expect(range?.source).not.toContain("function keep_me()");
 });
 
+test("findPhpFunctionRange accepts heredoc expression continuations", () => {
+	const source = `<?php
+function wp_typia_demo() {
+\t$values = array(
+\t\t<<<JSON
+{
+\t"query": {"postType": "page"}
+}
+\t\tJSON,
+\t);
+\t$trimmed = trim( <<<TEXT
+{
+\t"label": "demo"
+}
+\tTEXT );
+
+\treturn array( $values, $trimmed );
+}
+
+function keep_me() {
+\treturn true;
+}
+`;
+
+	const range = findPhpFunctionRange(source, "wp_typia_demo");
+
+	expect(range).not.toBeNull();
+	expect(range?.source).toContain("JSON,");
+	expect(range?.source).toContain("TEXT );");
+	expect(range?.source).toContain("return array( $values, $trimmed );");
+	expect(range?.source).not.toContain("function keep_me()");
+});
+
 test("findPhpFunctionRange preserves PHP 8 attributes instead of treating them as comments", () => {
 	const source = `<?php
 function wp_typia_demo() {
@@ -150,6 +184,28 @@ function keep_me() {
 `;
 
 	expect(findPhpFunctionRange(source, "wp_typia_demo")).toBeNull();
+});
+
+test("hasPhpFunctionCall ignores comments, strings, heredoc, and nowdoc", () => {
+	const source = `<?php
+function wp_typia_demo() {
+\t// wp_enqueue_script_module(
+\t$single = 'wp_enqueue_script_module(';
+\t$double = "wp_enqueue_script_module(";
+\t$heredoc = <<<TEXT
+wp_enqueue_script_module(
+TEXT;
+\treturn true;
+}
+`;
+
+	expect(hasPhpFunctionCall(source, "wp_enqueue_script_module")).toBe(false);
+	expect(
+		hasPhpFunctionCall(
+			`${source}\nwp_enqueue_script_module( 'demo', 'url', array(), null );\n`,
+			"wp_enqueue_script_module",
+		),
+	).toBe(true);
 });
 
 test("replacePhpFunctionDefinition replaces only the targeted PHP function", () => {

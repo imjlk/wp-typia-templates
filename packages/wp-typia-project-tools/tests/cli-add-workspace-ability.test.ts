@@ -55,6 +55,8 @@ function seedLegacyAbilityWorkspace(targetDir: string, workspaceSlug: string) {
 
 function demo_space_enqueue_workflow_abilities() {
 \t// Legacy ability enqueue marker.
+\t// wp_enqueue_script_module( is only mentioned here, not called.
+\t$legacy_note = 'wp_enqueue_script_module(';
 \twp_enqueue_script(
 \t\t'demo-space-legacy-abilities',
 \t\tplugins_url( 'build/abilities/index.js', __FILE__ ),
