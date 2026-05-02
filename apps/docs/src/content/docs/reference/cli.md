@@ -27,6 +27,43 @@ shell `completions` require Bun 1.3.11+ or the standalone release binary.
 Status markers honor `WP_TYPIA_ASCII=1`, `WP_TYPIA_ASCII=0`, and `NO_COLOR` in
 the same way as generated project onboarding output.
 
+## Configuration Files
+
+`wp-typia` loads user config from `~/.config/wp-typia/config.json`,
+`.wp-typiarc`, `.wp-typiarc.json`, the `wp-typia` key in `package.json`, and
+then the optional `--config <path>` override. Later sources take precedence.
+
+Config objects are merged recursively, but arrays are replaced instead of
+concatenated. This keeps list-like options deterministic: the later source owns
+the full array value, and users should repeat any earlier entries they still
+want to preserve. This matters for options such as `mcp.schemaSources`.
+
+For example, this project config:
+
+```json
+{
+  "mcp": {
+    "schemaSources": [{ "namespace": "base", "path": "./base.ts" }]
+  }
+}
+```
+
+combined with this later `package.json` override:
+
+```json
+{
+  "wp-typia": {
+    "mcp": {
+      "schemaSources": [{ "namespace": "app", "path": "./app.ts" }]
+    }
+  }
+}
+```
+
+resolves to only the `app` source. To keep both entries, include both in the
+later array. Additive array merging is intentionally out of scope for the
+current config contract.
+
 ## Machine-readable diagnostics
 
 Commands that support `--format json` emit stable failure envelopes for CI, IDE,
