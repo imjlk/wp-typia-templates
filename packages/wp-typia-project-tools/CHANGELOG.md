@@ -1,5 +1,32 @@
 # @wp-typia/project-tools
 
+## 0.22.4 — 2026-05-02
+
+### Patch changes
+
+- [b060948](https://github.com/imjlk/wp-typia/commit/b060948527c05aa3f154f9fbe8e81122e4365fd0) Add opt-in TTL pruning for external template cache entries and document the cleanup controls. — Thanks @imjlk!
+- [0341072](https://github.com/imjlk/wp-typia/commit/03410725096cb1023849b8a4b0db659ce63d0bc8) Document and test that generated server-only AI feature PHP avoids WordPress
+  script-module enqueue APIs, keeping older WordPress sites from loading an
+  unguarded script-module call. Keep the CLI package in the same release lane as
+  its exact `@wp-typia/project-tools` dependency. — Thanks @imjlk!
+- [b7bf00b](https://github.com/imjlk/wp-typia/commit/b7bf00b291ee9826541b66b5956275668a427d83) Validate typia.llm artifact schema objects before applying OpenAPI-backed constraint restoration. — Thanks @imjlk!
+- [c04dcc7](https://github.com/imjlk/wp-typia/commit/c04dcc71d3ac825a47d10fce7065976958110a7f) Centralize CLI package-manager inference so completion guidance and sync flows
+  share support for packageManager fields, Bun/pnpm/Yarn/npm lockfiles, Yarn PnP
+  markers, npm shrinkwrap files, and npm fallback behavior. — Thanks @imjlk!
+- [e052c02](https://github.com/imjlk/wp-typia/commit/e052c0242be10df83cb4531c68f8c65aaf2b12a5) Split shared add runtime helpers into focused type, validation, filesystem,
+  collision, block JSON, and help modules while keeping the compatibility barrel.
+  Also deduplicate the CLI line-printer type used by add and runtime bridge flows. — Thanks @imjlk!
+- [fd911f3](https://github.com/imjlk/wp-typia/commit/fd911f3cb93814b8c3ac5a3238ef4ebd713fc469) Drive workspace inventory section creation from shared descriptors so adding
+  new generated inventory sections no longer requires duplicating interface and
+  constant insertion checks. — Thanks @imjlk!
+- [253a9b8](https://github.com/imjlk/wp-typia/commit/253a9b87514a35165aa11ed5e7f7c6dce345cf33) Centralize workspace add mutation snapshot and rollback orchestration so
+  ability, AI feature, and admin view scaffolds share the same mutation executor
+  and PHP snippet insertion helpers. — Thanks @imjlk!
+- [bb23621](https://github.com/imjlk/wp-typia/commit/bb23621265f012b6ed575a6a5d3c4c9d363c0720) Validate `wp-typia add block --template` ids through the shared add-block template runtime guard before preparing execution. — Thanks @imjlk!
+- [a3403dd](https://github.com/imjlk/wp-typia/commit/a3403ddf9946f0d5f9237693426976009b03b046) Extract shared TypeScript source masking utilities so add and doctor runtime
+  checks use the same comment, literal, and executable-pattern detection logic. — Thanks @imjlk!
+- Updated dependencies: rest (npm)@0.3.13
+
 ## 0.22.3 — 2026-05-01
 
 ### Patch changes

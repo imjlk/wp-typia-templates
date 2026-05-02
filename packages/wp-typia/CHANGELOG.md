@@ -1,5 +1,27 @@
 # wp-typia
 
+## 0.22.4 — 2026-05-02
+
+### Patch changes
+
+- [9a3efd8](https://github.com/imjlk/wp-typia/commit/9a3efd88d6c7ab5243e755afd34cfc35a7b35e8b) Add focused CLI core tests for Node fallback routing, command registry metadata,
+  configuration merging and overrides, and structured diagnostic output. — Thanks @imjlk!
+- [0341072](https://github.com/imjlk/wp-typia/commit/03410725096cb1023849b8a4b0db659ce63d0bc8) Document and test that generated server-only AI feature PHP avoids WordPress
+  script-module enqueue APIs, keeping older WordPress sites from loading an
+  unguarded script-module call. Keep the CLI package in the same release lane as
+  its exact `@wp-typia/project-tools` dependency. — Thanks @imjlk!
+- [c04dcc7](https://github.com/imjlk/wp-typia/commit/c04dcc71d3ac825a47d10fce7065976958110a7f) Centralize CLI package-manager inference so completion guidance and sync flows
+  share support for packageManager fields, Bun/pnpm/Yarn/npm lockfiles, Yarn PnP
+  markers, npm shrinkwrap files, and npm fallback behavior. — Thanks @imjlk!
+- [e052c02](https://github.com/imjlk/wp-typia/commit/e052c0242be10df83cb4531c68f8c65aaf2b12a5) Split shared add runtime helpers into focused type, validation, filesystem,
+  collision, block JSON, and help modules while keeping the compatibility barrel.
+  Also deduplicate the CLI line-printer type used by add and runtime bridge flows. — Thanks @imjlk!
+- [bb23621](https://github.com/imjlk/wp-typia/commit/bb23621265f012b6ed575a6a5d3c4c9d363c0720) Validate `wp-typia add block --template` ids through the shared add-block template runtime guard before preparing execution. — Thanks @imjlk!
+- [df3e974](https://github.com/imjlk/wp-typia/commit/df3e9747ba47c31476e45f7e66581f0b5222d4ac) Validate CLI `--format` values before command execution so typoed formats fail
+  clearly with the supported `json` and `toon` values instead of silently falling
+  back to human-readable output. — Thanks @imjlk!
+- Updated dependencies: project-tools (npm)@0.22.4
+
 ## 0.22.3 — 2026-05-01
 
 ### Patch changes
