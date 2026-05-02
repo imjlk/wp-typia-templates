@@ -7,7 +7,9 @@ import { blockTypesPackageVersion, cleanupScaffoldTempRoot, createBlockExternalF
 import { getTemplateVariables, scaffoldProject } from "../src/runtime/index.js";
 import { resolveTemplateId } from "../src/runtime/scaffold.js";
 import {
+  EXTERNAL_TEMPLATE_CACHE_TTL_DAYS_ENV,
   findReusableExternalTemplateSourceCache,
+  pruneExternalTemplateCache,
   resolveExternalTemplateSourceCache,
 } from "../src/runtime/template-source-cache.js";
 import { copyRenderedDirectory } from "../src/runtime/template-render.js";
@@ -109,6 +111,30 @@ describe("@wp-typia/project-tools template sources", () => {
     }
 
     return null;
+  }
+
+  function setCacheMarkerCreatedAt(sourceDir: string, createdAt: Date): void {
+    const markerPath = path.join(
+      path.dirname(sourceDir),
+      "wp-typia-template-cache.json"
+    );
+    const marker = JSON.parse(fs.readFileSync(markerPath, "utf8")) as Record<
+      string,
+      unknown
+    >;
+
+    fs.writeFileSync(
+      markerPath,
+      `${JSON.stringify(
+        {
+          ...marker,
+          createdAt: createdAt.toISOString(),
+        },
+        null,
+        2
+      )}\n`,
+      "utf8"
+    );
   }
 
 test("external template cache rejects unsafe namespaces before populating", async () => {
@@ -392,6 +418,201 @@ test("external template cache can find reusable entries by metadata", async () =
   } finally {
     restoreEnvValue("WP_TYPIA_EXTERNAL_TEMPLATE_CACHE", originalCache);
     restoreEnvValue("WP_TYPIA_EXTERNAL_TEMPLATE_CACHE_DIR", originalCacheDir);
+  }
+});
+
+test("external template cache TTL prunes stale entries before reuse", async () => {
+  const originalCache = process.env.WP_TYPIA_EXTERNAL_TEMPLATE_CACHE;
+  const originalCacheDir = process.env.WP_TYPIA_EXTERNAL_TEMPLATE_CACHE_DIR;
+  const originalCacheTtl = process.env[EXTERNAL_TEMPLATE_CACHE_TTL_DAYS_ENV];
+  const cacheDir = path.join(tempRoot, "ttl-reuse-cache");
+  const descriptor = {
+    keyParts: ["ttl-reuse"],
+    metadata: {
+      package: "@demo/ttl-reuse",
+      version: "1.0.0",
+    },
+    namespace: "npm",
+  };
+  let populateCount = 0;
+
+  process.env.WP_TYPIA_EXTERNAL_TEMPLATE_CACHE_DIR = cacheDir;
+  process.env[EXTERNAL_TEMPLATE_CACHE_TTL_DAYS_ENV] = "7";
+  delete process.env.WP_TYPIA_EXTERNAL_TEMPLATE_CACHE;
+
+  try {
+    const firstResolution = await resolveExternalTemplateSourceCache(
+      descriptor,
+      async (sourceDir) => {
+        populateCount += 1;
+        fs.writeFileSync(
+          path.join(sourceDir, "package.json"),
+          JSON.stringify({ refreshed: false }),
+          "utf8"
+        );
+      }
+    );
+
+    expect(firstResolution?.cacheHit).toBe(false);
+    if (!firstResolution) {
+      throw new Error("Expected a populated external template cache entry.");
+    }
+
+    setCacheMarkerCreatedAt(
+      firstResolution.sourceDir,
+      new Date(Date.now() - 10 * 24 * 60 * 60 * 1000)
+    );
+
+    const secondResolution = await resolveExternalTemplateSourceCache(
+      descriptor,
+      async (sourceDir) => {
+        populateCount += 1;
+        fs.writeFileSync(
+          path.join(sourceDir, "package.json"),
+          JSON.stringify({ refreshed: true }),
+          "utf8"
+        );
+      }
+    );
+
+    expect(secondResolution?.cacheHit).toBe(false);
+    expect(secondResolution?.sourceDir).toBe(firstResolution.sourceDir);
+    expect(populateCount).toBe(2);
+    expect(
+      fs.readFileSync(
+        path.join(firstResolution.sourceDir, "package.json"),
+        "utf8"
+      )
+    ).toContain('"refreshed":true');
+  } finally {
+    restoreEnvValue("WP_TYPIA_EXTERNAL_TEMPLATE_CACHE", originalCache);
+    restoreEnvValue("WP_TYPIA_EXTERNAL_TEMPLATE_CACHE_DIR", originalCacheDir);
+    restoreEnvValue(EXTERNAL_TEMPLATE_CACHE_TTL_DAYS_ENV, originalCacheTtl);
+  }
+});
+
+test("external template cache prune helper stays inside the configured cache root", async () => {
+  const originalCache = process.env.WP_TYPIA_EXTERNAL_TEMPLATE_CACHE;
+  const originalCacheDir = process.env.WP_TYPIA_EXTERNAL_TEMPLATE_CACHE_DIR;
+  const originalCacheTtl = process.env[EXTERNAL_TEMPLATE_CACHE_TTL_DAYS_ENV];
+  const cacheDir = path.join(tempRoot, "ttl-helper-cache");
+  const outsideDir = path.join(tempRoot, "ttl-helper-outside-target");
+  const outsideFile = path.join(outsideDir, "keep.txt");
+  const now = new Date("2026-01-10T00:00:00.000Z");
+
+  process.env.WP_TYPIA_EXTERNAL_TEMPLATE_CACHE_DIR = cacheDir;
+  delete process.env.WP_TYPIA_EXTERNAL_TEMPLATE_CACHE;
+  delete process.env[EXTERNAL_TEMPLATE_CACHE_TTL_DAYS_ENV];
+  fs.mkdirSync(outsideDir, { recursive: true });
+  fs.writeFileSync(outsideFile, "keep", "utf8");
+
+  try {
+    const staleResolution = await resolveExternalTemplateSourceCache(
+      {
+        keyParts: ["ttl-helper", "stale"],
+        metadata: { name: "stale" },
+        namespace: "npm",
+      },
+      async (sourceDir) => {
+        fs.writeFileSync(path.join(sourceDir, "package.json"), "{}", "utf8");
+      }
+    );
+    const freshResolution = await resolveExternalTemplateSourceCache(
+      {
+        keyParts: ["ttl-helper", "fresh"],
+        metadata: { name: "fresh" },
+        namespace: "npm",
+      },
+      async (sourceDir) => {
+        fs.writeFileSync(path.join(sourceDir, "package.json"), "{}", "utf8");
+      }
+    );
+
+    if (!staleResolution || !freshResolution) {
+      throw new Error("Expected populated external template cache entries.");
+    }
+
+    setCacheMarkerCreatedAt(
+      staleResolution.sourceDir,
+      new Date("2026-01-01T00:00:00.000Z")
+    );
+    setCacheMarkerCreatedAt(
+      freshResolution.sourceDir,
+      new Date("2026-01-09T00:00:00.000Z")
+    );
+
+    if (process.platform !== "win32") {
+      fs.symlinkSync(
+        outsideDir,
+        path.join(
+          path.dirname(path.dirname(staleResolution.sourceDir)),
+          "f".repeat(64)
+        ),
+        "dir"
+      );
+    }
+
+    const pruneResult = await pruneExternalTemplateCache({
+      now,
+      ttlDays: 7,
+    });
+
+    expect(pruneResult.prunedEntries).toBe(1);
+    expect(fs.existsSync(path.dirname(staleResolution.sourceDir))).toBe(false);
+    expect(fs.existsSync(path.dirname(freshResolution.sourceDir))).toBe(true);
+    expect(fs.readFileSync(outsideFile, "utf8")).toBe("keep");
+  } finally {
+    restoreEnvValue("WP_TYPIA_EXTERNAL_TEMPLATE_CACHE", originalCache);
+    restoreEnvValue("WP_TYPIA_EXTERNAL_TEMPLATE_CACHE_DIR", originalCacheDir);
+    restoreEnvValue(EXTERNAL_TEMPLATE_CACHE_TTL_DAYS_ENV, originalCacheTtl);
+  }
+});
+
+test("external template cache prune helper respects provided env TTL lookup", async () => {
+  const originalCache = process.env.WP_TYPIA_EXTERNAL_TEMPLATE_CACHE;
+  const originalCacheDir = process.env.WP_TYPIA_EXTERNAL_TEMPLATE_CACHE_DIR;
+  const originalCacheTtl = process.env[EXTERNAL_TEMPLATE_CACHE_TTL_DAYS_ENV];
+  const cacheDir = path.join(tempRoot, "ttl-explicit-env-cache");
+
+  process.env.WP_TYPIA_EXTERNAL_TEMPLATE_CACHE_DIR = cacheDir;
+  process.env[EXTERNAL_TEMPLATE_CACHE_TTL_DAYS_ENV] = "1";
+  delete process.env.WP_TYPIA_EXTERNAL_TEMPLATE_CACHE;
+
+  try {
+    const staleResolution = await resolveExternalTemplateSourceCache(
+      {
+        keyParts: ["ttl-explicit-env", "stale"],
+        metadata: { name: "stale" },
+        namespace: "npm",
+      },
+      async (sourceDir) => {
+        fs.writeFileSync(path.join(sourceDir, "package.json"), "{}", "utf8");
+      }
+    );
+
+    if (!staleResolution) {
+      throw new Error("Expected a populated external template cache entry.");
+    }
+
+    setCacheMarkerCreatedAt(
+      staleResolution.sourceDir,
+      new Date("2026-01-01T00:00:00.000Z")
+    );
+
+    const pruneResult = await pruneExternalTemplateCache({
+      env: {
+        WP_TYPIA_EXTERNAL_TEMPLATE_CACHE_DIR: cacheDir,
+      },
+      now: new Date("2026-01-10T00:00:00.000Z"),
+    });
+
+    expect(pruneResult.ttlMs).toBeNull();
+    expect(pruneResult.prunedEntries).toBe(0);
+    expect(fs.existsSync(path.dirname(staleResolution.sourceDir))).toBe(true);
+  } finally {
+    restoreEnvValue("WP_TYPIA_EXTERNAL_TEMPLATE_CACHE", originalCache);
+    restoreEnvValue("WP_TYPIA_EXTERNAL_TEMPLATE_CACHE_DIR", originalCacheDir);
+    restoreEnvValue(EXTERNAL_TEMPLATE_CACHE_TTL_DAYS_ENV, originalCacheTtl);
   }
 });
 

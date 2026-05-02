@@ -154,6 +154,14 @@ export {
 	listTemplates,
 } from "./template-registry.js";
 export {
+	EXTERNAL_TEMPLATE_CACHE_TTL_DAYS_ENV,
+	pruneExternalTemplateCache,
+} from "./template-source-cache.js";
+export type {
+	ExternalTemplateCachePruneOptions,
+	ExternalTemplateCachePruneResult,
+} from "./template-source-cache.js";
+export {
 	STALE_TEMP_ROOT_MAX_AGE_MS,
 	WP_TYPIA_TEMP_ROOT_PREFIX,
 	cleanupManagedTempRoot,
