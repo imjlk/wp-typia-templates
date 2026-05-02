@@ -233,7 +233,12 @@ resolvable remote revisions are cached under a private per-user local temp cache
 so repeated scaffolds can reuse the same unpacked source. Set
 `WP_TYPIA_EXTERNAL_TEMPLATE_CACHE=0` to force a refresh, or
 `WP_TYPIA_EXTERNAL_TEMPLATE_CACHE_DIR=/path/to/cache` to place the cache in a
-project- or CI-managed directory.
+project- or CI-managed directory. Cache pruning is disabled by default; set
+`WP_TYPIA_EXTERNAL_TEMPLATE_CACHE_TTL_DAYS=7` to remove stale completed cache
+entries older than the configured TTL during cache access, or call the exported
+`pruneExternalTemplateCache()` helper from `@wp-typia/project-tools` for an
+explicit cleanup pass. Pruning only removes guarded cache entry directories under
+the configured cache root.
 
 Remote template examples:
 

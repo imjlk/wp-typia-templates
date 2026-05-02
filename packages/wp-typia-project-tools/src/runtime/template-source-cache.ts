@@ -18,9 +18,22 @@ export const EXTERNAL_TEMPLATE_CACHE_DIR_ENV =
   'WP_TYPIA_EXTERNAL_TEMPLATE_CACHE_DIR'
 
 /**
+ * Environment variable that enables TTL-based external template cache pruning.
+ *
+ * Unset, empty, zero, negative, and non-numeric values keep pruning disabled.
+ */
+export const EXTERNAL_TEMPLATE_CACHE_TTL_DAYS_ENV =
+  'WP_TYPIA_EXTERNAL_TEMPLATE_CACHE_TTL_DAYS'
+
+/**
  * Marker file written after a cache entry is fully populated.
  */
 const CACHE_MARKER_FILE = 'wp-typia-template-cache.json'
+
+/**
+ * Milliseconds in one TTL day.
+ */
+const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000
 
 /**
  * Private directory mode used for cache roots and entries on POSIX platforms.
@@ -62,6 +75,11 @@ const URL_LIKE_METADATA_KEY = /(url|uri|registry|tarball)/iu
  * Cache namespaces must stay within one path segment under the cache root.
  */
 const SAFE_CACHE_NAMESPACE_SEGMENT = /^[A-Za-z0-9_.-]+$/u
+
+/**
+ * Cache entries are deterministic SHA-256 digest directory names.
+ */
+const SAFE_CACHE_ENTRY_SEGMENT = /^[a-f0-9]{64}$/u
 
 /**
  * Serializable metadata recorded in the cache marker for diagnostics.
@@ -122,6 +140,56 @@ export interface ExternalTemplateCacheLookupDescriptor {
 }
 
 /**
+ * Options for best-effort external template cache pruning.
+ */
+export interface ExternalTemplateCachePruneOptions {
+  /**
+   * Environment object to inspect, defaulting to `process.env`.
+   */
+  env?: NodeJS.ProcessEnv
+
+  /**
+   * Clock override for deterministic tests.
+   */
+  now?: Date | number
+
+  /**
+   * TTL override in days. When omitted, the TTL environment variable is used.
+   */
+  ttlDays?: number
+}
+
+/**
+ * Summary returned after external template cache pruning.
+ */
+export interface ExternalTemplateCachePruneResult {
+  /**
+   * Absolute cache root inspected by the pruning helper.
+   */
+  cacheRoot: string
+
+  /**
+   * Entries removed because their marker timestamp exceeded the TTL.
+   */
+  prunedEntries: number
+
+  /**
+   * Candidate cache entry directories inspected.
+   */
+  scannedEntries: number
+
+  /**
+   * Candidate directories skipped because they were malformed or unsafe.
+   */
+  skippedEntries: number
+
+  /**
+   * Resolved TTL in milliseconds, or `null` when pruning was disabled.
+   */
+  ttlMs: number | null
+}
+
+/**
  * Checks whether remote external template source caching is enabled.
  *
  * Caching is enabled by default. Set `WP_TYPIA_EXTERNAL_TEMPLATE_CACHE` to
@@ -163,6 +231,37 @@ export function getExternalTemplateCacheRoot(
     os.tmpdir(),
     `wp-typia-template-source-cache-${getCurrentUserCacheSegment()}`,
   )
+}
+
+function parseExternalTemplateCacheTtlDays(value: unknown): number | null {
+  if (typeof value !== 'string' && typeof value !== 'number') {
+    return null
+  }
+
+  const ttlDays = typeof value === 'number' ? value : Number(value.trim())
+  if (!Number.isFinite(ttlDays) || ttlDays <= 0) {
+    return null
+  }
+
+  return ttlDays
+}
+
+function resolveExternalTemplateCacheTtlMs(
+  options: Pick<ExternalTemplateCachePruneOptions, 'env' | 'ttlDays'> = {},
+): number | null {
+  const ttlDays =
+    options.ttlDays === undefined
+      ? parseExternalTemplateCacheTtlDays(
+          options.env?.[EXTERNAL_TEMPLATE_CACHE_TTL_DAYS_ENV] ??
+            process.env[EXTERNAL_TEMPLATE_CACHE_TTL_DAYS_ENV],
+        )
+      : parseExternalTemplateCacheTtlDays(options.ttlDays)
+  if (ttlDays === null) {
+    return null
+  }
+
+  const ttlMs = ttlDays * MILLISECONDS_PER_DAY
+  return Number.isFinite(ttlMs) ? ttlMs : null
 }
 
 /**
@@ -424,6 +523,156 @@ function cacheMetadataMatches(
   return Object.entries(expected).every(([key, value]) => actual[key] === value)
 }
 
+function getExternalTemplateCacheNowMs(now: Date | number | undefined): number {
+  const nowMs =
+    now instanceof Date
+      ? now.getTime()
+      : typeof now === 'number'
+        ? now
+        : Date.now()
+
+  return Number.isFinite(nowMs) ? nowMs : Date.now()
+}
+
+function isPathInsideDirectory(
+  directory: string,
+  candidatePath: string,
+): boolean {
+  const relativePath = path.relative(directory, candidatePath)
+  return (
+    relativePath.length > 0 &&
+    !relativePath.startsWith('..') &&
+    !path.isAbsolute(relativePath)
+  )
+}
+
+async function removeCacheEntryWithinRoot(
+  cacheRoot: string,
+  entryDir: string,
+): Promise<boolean> {
+  if (!isPathInsideDirectory(cacheRoot, entryDir)) {
+    return false
+  }
+
+  try {
+    await fsp.rm(entryDir, { force: true, recursive: true })
+    return true
+  } catch {
+    return false
+  }
+}
+
+/**
+ * Removes stale external template cache entries when a positive TTL is configured.
+ *
+ * The helper is best-effort: malformed cache directories are skipped, cache
+ * roots must remain private and non-symlinked, and deletes are constrained to
+ * deterministic entry directories under the configured cache root.
+ *
+ * @param options Optional TTL, clock, and environment overrides.
+ * @returns Pruning summary with counts for inspected, skipped, and removed entries.
+ */
+export async function pruneExternalTemplateCache(
+  options: ExternalTemplateCachePruneOptions = {},
+): Promise<ExternalTemplateCachePruneResult> {
+  const env = options.env ?? process.env
+  const cacheRoot = getExternalTemplateCacheRoot(env)
+  const ttlMs = resolveExternalTemplateCacheTtlMs({
+    env,
+    ttlDays: options.ttlDays,
+  })
+  const result: ExternalTemplateCachePruneResult = {
+    cacheRoot,
+    prunedEntries: 0,
+    scannedEntries: 0,
+    skippedEntries: 0,
+    ttlMs,
+  }
+
+  if (ttlMs === null || !(await isPrivateCacheDirectory(cacheRoot))) {
+    return result
+  }
+
+  let namespaceEntries: fs.Dirent[]
+  try {
+    namespaceEntries = await fsp.readdir(cacheRoot, { withFileTypes: true })
+  } catch {
+    return result
+  }
+
+  const expiresBeforeMs = getExternalTemplateCacheNowMs(options.now) - ttlMs
+  for (const namespaceEntry of namespaceEntries) {
+    if (!namespaceEntry.isDirectory()) {
+      continue
+    }
+
+    const namespaceDir = resolveCacheNamespaceDir(
+      cacheRoot,
+      namespaceEntry.name,
+    )
+    if (!namespaceDir || !(await isPrivateCacheDirectory(namespaceDir))) {
+      result.skippedEntries += 1
+      continue
+    }
+
+    let cacheEntries: fs.Dirent[]
+    try {
+      cacheEntries = await fsp.readdir(namespaceDir, { withFileTypes: true })
+    } catch {
+      result.skippedEntries += 1
+      continue
+    }
+
+    for (const cacheEntry of cacheEntries) {
+      if (!cacheEntry.isDirectory()) {
+        continue
+      }
+      if (!SAFE_CACHE_ENTRY_SEGMENT.test(cacheEntry.name)) {
+        result.skippedEntries += 1
+        continue
+      }
+
+      const entryDir = path.join(namespaceDir, cacheEntry.name)
+      result.scannedEntries += 1
+      if (!isPathInsideDirectory(cacheRoot, entryDir)) {
+        result.skippedEntries += 1
+        continue
+      }
+
+      const markerPath = path.join(entryDir, CACHE_MARKER_FILE)
+      const sourceDir = path.join(entryDir, 'source')
+      if (!(await isReusableCacheEntry(entryDir, markerPath, sourceDir))) {
+        result.skippedEntries += 1
+        continue
+      }
+
+      let markerText: string
+      try {
+        markerText = await fsp.readFile(markerPath, 'utf8')
+      } catch {
+        result.skippedEntries += 1
+        continue
+      }
+
+      const marker = parseCacheMarkerMetadata(markerText)
+      if (!marker) {
+        result.skippedEntries += 1
+        continue
+      }
+
+      if (marker.createdAtMs < expiresBeforeMs) {
+        if (await removeCacheEntryWithinRoot(cacheRoot, entryDir)) {
+          result.prunedEntries += 1
+        } else {
+          result.skippedEntries += 1
+        }
+      }
+    }
+  }
+
+  return result
+}
+
 /**
  * Finds a reusable cache entry whose marker metadata includes the expected fields.
  *
@@ -455,6 +704,7 @@ export async function findReusableExternalTemplateSourceCache(
   ) {
     return null
   }
+  await pruneExternalTemplateCache()
 
   let entries: fs.Dirent[]
   try {
@@ -535,6 +785,7 @@ export async function resolveExternalTemplateSourceCache(
   ) {
     return null
   }
+  await pruneExternalTemplateCache()
 
   if (await isReusableCacheEntry(entryDir, markerPath, sourceDir)) {
     return {
