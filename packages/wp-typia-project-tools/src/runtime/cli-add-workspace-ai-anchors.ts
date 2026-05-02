@@ -6,6 +6,10 @@ import {
 	getWorkspaceBootstrapPath,
 	patchFile,
 } from "./cli-add-shared.js";
+import {
+	appendPhpSnippetBeforeClosingTag,
+	insertPhpSnippetBeforeWorkspaceAnchors,
+} from "./cli-add-workspace-mutation.js";
 import { hasPhpFunctionDefinition } from "./php-utils.js";
 import type { WorkspaceProject } from "./workspace-project.js";
 
@@ -31,31 +35,8 @@ function ${registerFunctionName}() {
 \t}
 }
 `;
-		const insertionAnchors = [
-			/add_action\(\s*["']init["']\s*,\s*["'][^"']+_load_textdomain["']\s*\);\s*\n/u,
-			/\?>\s*$/u,
-		];
-		const insertPhpSnippet = (snippet: string): void => {
-			for (const anchor of insertionAnchors) {
-				const candidate = nextSource.replace(anchor, (match) => `${snippet}\n${match}`);
-				if (candidate !== nextSource) {
-					nextSource = candidate;
-					return;
-				}
-			}
-			nextSource = `${nextSource.trimEnd()}\n${snippet}\n`;
-		};
-		const appendPhpSnippet = (snippet: string): void => {
-			const closingTagPattern = /\?>\s*$/u;
-			if (closingTagPattern.test(nextSource)) {
-				nextSource = nextSource.replace(closingTagPattern, `${snippet}\n?>`);
-				return;
-			}
-			nextSource = `${nextSource.trimEnd()}\n${snippet}\n`;
-		};
-
 		if (!hasPhpFunctionDefinition(nextSource, registerFunctionName)) {
-			insertPhpSnippet(registerFunction);
+			nextSource = insertPhpSnippetBeforeWorkspaceAnchors(nextSource, registerFunction);
 		} else if (!nextSource.includes(AI_FEATURE_SERVER_GLOB)) {
 			throw new Error(
 				[
@@ -67,7 +48,7 @@ function ${registerFunctionName}() {
 		}
 
 		if (!nextSource.includes(registerHook)) {
-			appendPhpSnippet(registerHook);
+			nextSource = appendPhpSnippetBeforeClosingTag(nextSource, registerHook);
 		}
 
 		return nextSource;
