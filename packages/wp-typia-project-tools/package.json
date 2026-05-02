@@ -17,6 +17,11 @@
       "import": "./dist/runtime/cli-add.js",
       "default": "./dist/runtime/cli-add.js"
     },
+    "./cli-add-kind-ids": {
+      "types": "./dist/runtime/cli-add-kind-ids.d.ts",
+      "import": "./dist/runtime/cli-add-kind-ids.js",
+      "default": "./dist/runtime/cli-add-kind-ids.js"
+    },
     "./cli-diagnostics": {
       "types": "./dist/runtime/cli-diagnostics.d.ts",
       "import": "./dist/runtime/cli-diagnostics.js",

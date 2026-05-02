@@ -1,16 +1,2 @@
-export const ADD_KIND_IDS = [
-  'admin-view',
-  'block',
-  'variation',
-  'style',
-  'transform',
-  'pattern',
-  'binding-source',
-  'rest-resource',
-  'ability',
-  'ai-feature',
-  'hooked-block',
-  'editor-plugin',
-] as const;
-
-export type AddKindId = (typeof ADD_KIND_IDS)[number];
+export { ADD_KIND_IDS } from '@wp-typia/project-tools/cli-add-kind-ids';
+export type { AddKindId } from '@wp-typia/project-tools/cli-add-kind-ids';

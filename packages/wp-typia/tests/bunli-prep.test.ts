@@ -201,6 +201,9 @@ describe('wp-typia Bunli preparation', () => {
     expect(runtimeDependencyHelperSource).toContain(
       'dependencies: ["@wp-typia/api-client", "@wp-typia/block-runtime"]',
     );
+    expect(runtimeDependencyHelperSource).toContain(
+      '"@wp-typia/project-tools/cli-add-kind-ids": path.join(',
+    );
     expect(runtimeDependencyHelperSource).toContain('tsconfig.runtime.json');
     expect(runtimeDependencyHelperSource).toContain('tsconfig.build.json');
     expect(runtimeDependencyHelperSource).toContain(

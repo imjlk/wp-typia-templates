@@ -206,7 +206,7 @@ function matchesPhpFunctionCallAt(
 		return false;
 	}
 
-	let cursor = index + functionName.length;
+	const cursor = index + functionName.length;
 	if (isPhpIdentifierPart(source[cursor])) {
 		return false;
 	}

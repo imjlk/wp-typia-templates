@@ -1,0 +1,25 @@
+/**
+ * Canonical top-level `wp-typia add` kind ids shared by the CLI command
+ * registry, routing metadata generation, and project-tools runtime helpers.
+ *
+ * Keep this order stable because it drives help output and command metadata.
+ */
+export const ADD_KIND_IDS = [
+	"admin-view",
+	"block",
+	"variation",
+	"style",
+	"transform",
+	"pattern",
+	"binding-source",
+	"rest-resource",
+	"ability",
+	"ai-feature",
+	"hooked-block",
+	"editor-plugin",
+] as const;
+
+/**
+ * Union of supported top-level `wp-typia add` kind ids.
+ */
+export type AddKindId = (typeof ADD_KIND_IDS)[number];

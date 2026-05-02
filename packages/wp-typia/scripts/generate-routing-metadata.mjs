@@ -25,17 +25,35 @@ const commandRegistryModulePath = path.join(
   'command-registry.ts',
 );
 const addKindIdsModulePath = path.join(packageRoot, 'src', 'add-kind-ids.ts');
+const projectToolsAddKindIdsModulePath = path.join(
+  packageRoot,
+  '..',
+  'wp-typia-project-tools',
+  'src',
+  'runtime',
+  'cli-add-kind-ids.ts',
+);
 const checkOnly = process.argv.includes('--check');
 
 async function importTranspiledTypeScriptModule(
   modulePath,
   siblingModules = [],
+  externalModules = [],
 ) {
-  const [{ default: ts }, source, ...siblingSources] = await Promise.all([
+  const [
+    { default: ts },
+    source,
+    ...supportingSources
+  ] = await Promise.all([
     import('typescript'),
     fs.readFile(modulePath, 'utf8'),
     ...siblingModules.map((siblingPath) => fs.readFile(siblingPath, 'utf8')),
+    ...externalModules.map(({ modulePath: externalModulePath }) =>
+      fs.readFile(externalModulePath, 'utf8'),
+    ),
   ]);
+  const siblingSources = supportingSources.slice(0, siblingModules.length);
+  const externalSources = supportingSources.slice(siblingModules.length);
   const transpiled = ts.transpileModule(source, {
     compilerOptions: {
       module: ts.ModuleKind.CommonJS,
@@ -73,6 +91,45 @@ async function importTranspiledTypeScriptModule(
         'utf8',
       ),
     ),
+    ...externalModules.map(async (externalModule, index) => {
+      const parts = externalModule.specifier.split('/');
+      const packageName = externalModule.specifier.startsWith('@')
+        ? parts.slice(0, 2).join('/')
+        : parts[0];
+      const subpathParts = externalModule.specifier.startsWith('@')
+        ? parts.slice(2)
+        : parts.slice(1);
+      const packageDir = path.join(
+        tempDir,
+        'node_modules',
+        ...packageName.split('/'),
+      );
+      const moduleFile = path.join(
+        packageDir,
+        ...subpathParts.slice(0, -1),
+        `${subpathParts[subpathParts.length - 1]}.js`,
+      );
+
+      await fs.mkdir(path.dirname(moduleFile), { recursive: true });
+      await Promise.all([
+        fs.writeFile(
+          path.join(packageDir, 'package.json'),
+          JSON.stringify({ type: 'commonjs' }),
+          'utf8',
+        ),
+        fs.writeFile(
+          moduleFile,
+          ts.transpileModule(externalSources[index], {
+            compilerOptions: {
+              module: ts.ModuleKind.CommonJS,
+              target: ts.ScriptTarget.ES2020,
+            },
+            fileName: externalModule.modulePath,
+          }).outputText,
+          'utf8',
+        ),
+      ]);
+    }),
   ]);
   try {
     return require(tempFile);
@@ -150,9 +207,16 @@ const [
   },
 ] = await Promise.all([
   importTranspiledTypeScriptModule(commandOptionMetadataModulePath),
-  importTranspiledTypeScriptModule(commandRegistryModulePath, [
-    addKindIdsModulePath,
-  ]),
+  importTranspiledTypeScriptModule(
+    commandRegistryModulePath,
+    [addKindIdsModulePath],
+    [
+      {
+        modulePath: projectToolsAddKindIdsModulePath,
+        specifier: '@wp-typia/project-tools/cli-add-kind-ids',
+      },
+    ],
+  ),
 ]);
 
 const renderedFiles = renderRoutingMetadataFiles({
