@@ -8,7 +8,12 @@ import {
   prefersStructuredCliOutput,
   writeStructuredCliDiagnosticError,
 } from '../src/cli-diagnostic-output';
-import { validateCliOutputFormatArgv } from '../src/cli-output-format';
+import {
+  formatInvalidCliOutputFormatMessage,
+  isSupportedCliOutputFormat,
+  normalizeCliOutputFormatArgv,
+  validateCliOutputFormatArgv,
+} from '../src/cli-output-format';
 
 function captureStderr(callback: () => void): {
   exitCode: string | number | undefined;
@@ -44,6 +49,7 @@ describe('CLI structured diagnostic output', () => {
   test('detects explicit structured format requests before argv terminators', () => {
     expect(prefersStructuredCliArgv(['doctor', '--format', 'json'])).toBe(true);
     expect(prefersStructuredCliArgv(['doctor', '--format=json'])).toBe(true);
+    expect(prefersStructuredCliArgv(['doctor', '--format', 'text'])).toBe(false);
     expect(prefersStructuredCliArgv(['doctor', '--format', 'toon'])).toBe(false);
     expect(
       prefersStructuredCliArgv(['doctor', '--', '--format', 'json']),
@@ -62,6 +68,14 @@ describe('CLI structured diagnostic output', () => {
       prefersStructuredCliOutput({
         format: 'json',
         formatExplicit: false,
+        output: () => {},
+      }),
+    ).toBe(false);
+    expect(
+      prefersStructuredCliOutput({
+        agent: {},
+        format: 'text',
+        formatExplicit: true,
         output: () => {},
       }),
     ).toBe(false);
@@ -159,5 +173,40 @@ describe('CLI structured diagnostic output', () => {
         command: 'sync',
       });
     }
+  });
+
+  test('advertises text output while accepting the legacy toon alias', () => {
+    expect(formatInvalidCliOutputFormatMessage('jso')).toBe(
+      'Invalid --format value "jso". Supported values: json, text.',
+    );
+    expect(isSupportedCliOutputFormat('json')).toBe(true);
+    expect(isSupportedCliOutputFormat('text')).toBe(true);
+    expect(isSupportedCliOutputFormat('toon')).toBe(true);
+
+    expect(() =>
+      validateCliOutputFormatArgv(['sync', '--format', 'text']),
+    ).not.toThrow();
+    expect(() =>
+      validateCliOutputFormatArgv(['sync', '--format', 'toon']),
+    ).not.toThrow();
+    expect(() =>
+      validateCliOutputFormatArgv(['sync', '--format', 'jso']),
+    ).toThrow('Supported values: json, text.');
+  });
+
+  test('normalizes public text format to the internal runtime alias', () => {
+    expect(normalizeCliOutputFormatArgv(['doctor', '--format', 'text'])).toEqual(
+      ['doctor', '--format', 'toon'],
+    );
+    expect(normalizeCliOutputFormatArgv(['doctor', '--format=text'])).toEqual([
+      'doctor',
+      '--format=toon',
+    ]);
+    expect(
+      normalizeCliOutputFormatArgv(['doctor', '--', '--format', 'text']),
+    ).toEqual(['doctor', '--', '--format', 'text']);
+    expect(
+      normalizeCliOutputFormatArgv(['doctor', '--format', '--', '--format=text']),
+    ).toEqual(['doctor', '--format', '--', '--format=text']);
   });
 });

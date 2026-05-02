@@ -17,15 +17,19 @@ shell `completions` require Bun 1.3.11+ or the standalone release binary.
 
 ## Global flags
 
-| Flag              | Description                                                               |
-| ----------------- | ------------------------------------------------------------------------- |
-| `--help`          | Show top-level or command-specific help.                                  |
-| `--version`       | Print the installed `wp-typia` version.                                   |
-| `--config <path>` | Load a config override file for the current invocation.                   |
-| `--format json`   | Emit machine-readable output for commands that support structured output. |
+| Flag                      | Description                                                                                                        |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| `--help`                  | Show top-level or command-specific help.                                                                           |
+| `--version`               | Print the installed `wp-typia` version.                                                                            |
+| `--config <path>`         | Load a config override file for the current invocation.                                                            |
+| `--format <json \| text>` | Select command output for supported commands; `json` is machine-readable and `text` is the human-readable default. |
 
 Status markers honor `WP_TYPIA_ASCII=1`, `WP_TYPIA_ASCII=0`, and `NO_COLOR` in
 the same way as generated project onboarding output.
+
+The legacy internal value `toon` remains accepted as a compatibility alias for
+human-readable output, but help and invalid-format guidance advertise the public
+`text` spelling instead.
 
 ## Configuration Files
 

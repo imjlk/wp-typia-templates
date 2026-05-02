@@ -457,6 +457,11 @@ describe('wp-typia package', () => {
       '--help',
     ]);
     const addHelpOutput = runUtf8Command('node', [entryPath, 'add', '--help']);
+    const doctorHelpOutput = runUtf8Command('node', [
+      entryPath,
+      'doctor',
+      '--help',
+    ]);
 
     for (const commandName of WP_TYPIA_TOP_LEVEL_COMMAND_NAMES) {
       expect(helpOutput).toContain(commandName);
@@ -481,6 +486,10 @@ describe('wp-typia package', () => {
     expect(addHelpOutput).toContain('ability');
     expect(addHelpOutput).toContain('ai-feature');
     expect(addHelpOutput).toContain('editor-plugin');
+    expect(doctorHelpOutput).toContain(
+      '`json` for machine-readable doctor check output or `text` for human-readable output',
+    );
+    expect(doctorHelpOutput).not.toContain('toon');
   });
 
   test('prints structured init plans through the canonical bin', () => {
@@ -1864,7 +1873,7 @@ describe('wp-typia package', () => {
       expect(result.status).toBe(1);
       expect(result.stdout).toBe('');
       expect(result.stderr).toContain('Invalid --format value "jso".');
-      expect(result.stderr).toContain('Supported values: json, toon.');
+      expect(result.stderr).toContain('Supported values: json, text.');
     }
   });
 
@@ -2167,8 +2176,24 @@ describe('wp-typia package', () => {
       expect(result.status).toBe(1);
       expect(result.stdout).toBe('');
       expect(result.stderr).toContain('Invalid --format value "jso".');
-      expect(result.stderr).toContain('Supported values: json, toon.');
+      expect(result.stderr).toContain('Supported values: json, text.');
     }
+  });
+
+  test('accepts text as the public human-readable format in Bun runtime', () => {
+    const result = runCapturedCommand(
+      'bun',
+      [fullRuntimeEntrypoint, 'create', '--format', 'text'],
+      {
+        env: withoutAIAgentEnv(),
+      },
+    );
+
+    expect(result.status).toBe(1);
+    expect(result.stdout).toBe('');
+    expect(result.stderr).toContain('Error: wp-typia create failed');
+    expect(result.stderr).not.toContain('Invalid --format value "text".');
+    expect(result.stderr).not.toContain('Supported values:');
   });
 
   test('emits a machine-readable missing-argument error code for top-level config parsing in Bun runtime JSON mode', () => {
