@@ -19,8 +19,6 @@ const COMMON_ACRONYM_PREFIXES = [
   'WP',
 ] as const;
 
-const COMMON_ACRONYM_PREFIX_SET = new Set<string>(COMMON_ACRONYM_PREFIXES);
-
 function capitalizeSegment(segment: string): string {
   return segment.charAt(0).toUpperCase() + segment.slice(1);
 }
@@ -34,23 +32,14 @@ function splitAcronymBoundary(value: string): string {
       }
     }
 
-    const uppercaseRun = /^[A-Z]+/.exec(segment)?.[0] ?? '';
-    if (
-      uppercaseRun.length < 4 ||
-      COMMON_ACRONYM_PREFIX_SET.has(uppercaseRun)
-    ) {
-      return segment;
-    }
-
-    return `${uppercaseRun.slice(0, -1)}-${uppercaseRun.slice(-1)}${segment.slice(
-      uppercaseRun.length,
-    )}`;
+    return segment;
   });
 }
 
 /**
  * Normalize arbitrary text into a kebab-case identifier.
- * Acronym runs stay grouped, with a boundary before the next capitalized word.
+ * Common acronym runs stay grouped, with a boundary before the next
+ * capitalized word.
  * Ambiguous acronym+lowercase inputs like `URLslug` intentionally stay as one
  * word because there is no PascalCase boundary marker before the lowercase
  * suffix.

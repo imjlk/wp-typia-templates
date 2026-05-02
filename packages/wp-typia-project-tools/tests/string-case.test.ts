@@ -13,6 +13,7 @@ const WORDPRESS_SAFE_SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/u;
 test("toKebabCase keeps acronym runs together", () => {
 	expect(toKebabCase("XMLParser")).toBe("xml-parser");
 	expect(toKebabCase("getURL")).toBe("get-url");
+	expect(toKebabCase("URLSlug")).toBe("url-slug");
 	expect(toKebabCase("parseJSONValue")).toBe("parse-json-value");
 	expect(toKebabCase("HeroCTABlock")).toBe("hero-cta-block");
 });
@@ -21,6 +22,8 @@ test("toKebabCase avoids inventing boundaries in acronym-lowercase words", () =>
 	expect(toKebabCase("URLslug")).toBe("urlslug");
 	expect(toKebabCase("HTTPserver")).toBe("httpserver");
 	expect(toKebabCase("XMLparser")).toBe("xmlparser");
+	expect(toKebabCase("GUIDe")).toBe("guide");
+	expect(toKebabCase("AABBcc")).toBe("aabbcc");
 });
 
 test("toKebabCase preserves common slug normalization behavior", () => {
