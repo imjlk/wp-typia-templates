@@ -4,9 +4,23 @@ import os from 'node:os';
 import path from 'node:path';
 
 import {
+  getMutableBlockHooks,
+  readWorkspaceBlockJson,
+  resolveWorkspaceBlock,
+} from '../src/runtime/cli-add-block-json.js';
+import {
+  assertRestResourceDoesNotExist,
   assertScaffoldDoesNotExist,
-  readOptionalFile,
-} from '../src/runtime/cli-add-shared.js';
+  assertVariationDoesNotExist,
+} from '../src/runtime/cli-add-collision.js';
+import { readOptionalFile } from '../src/runtime/cli-add-filesystem.js';
+import {
+  assertValidGeneratedSlug,
+  assertValidRestResourceMethods,
+  assertValidRestResourceNamespace,
+  resolveRestResourceNamespace,
+} from '../src/runtime/cli-add-validation.js';
+import type { WorkspaceInventory } from '../src/runtime/workspace-inventory.js';
 
 const runtimeRoot = path.join(import.meta.dir, '..', 'src', 'runtime');
 const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'wp-typia-add-shared-'));
@@ -17,6 +31,37 @@ afterAll(() => {
 
 function readRuntimeSource(fileName: string): string {
   return fs.readFileSync(path.join(runtimeRoot, fileName), 'utf8');
+}
+
+function createEmptyInventory(
+  overrides: Partial<WorkspaceInventory> = {},
+): WorkspaceInventory {
+  return {
+    abilities: [],
+    adminViews: [],
+    aiFeatures: [],
+    bindingSources: [],
+    blockConfigPath: 'scripts/block-config.ts',
+    blocks: [],
+    blockStyles: [],
+    blockTransforms: [],
+    editorPlugins: [],
+    hasAbilitiesSection: false,
+    hasAdminViewsSection: false,
+    hasAiFeaturesSection: false,
+    hasBindingSourcesSection: false,
+    hasBlockStylesSection: false,
+    hasBlockTransformsSection: false,
+    hasEditorPluginsSection: false,
+    hasPatternsSection: false,
+    hasRestResourcesSection: false,
+    hasVariationsSection: false,
+    patterns: [],
+    restResources: [],
+    source: '',
+    variations: [],
+    ...overrides,
+  };
 }
 
 test('shared add runtime keeps compatibility exports around focused modules', () => {
@@ -57,6 +102,74 @@ test('focused add runtime modules own their helper categories', () => {
   expect(collisionSource).toContain('export function assertEditorPluginDoesNotExist');
   expect(helpSource).toContain('export function formatAddHelpText');
   expect(helpSource).toContain('REST_RESOURCE_METHOD_IDS.join(",")');
+});
+
+// Filesystem mutation helpers and add help rendering stay covered by their
+// existing boundary and integration tests; these unit tests focus on the pure
+// validation, collision, optional filesystem, and block-json helper seams.
+test('focused validation helpers accept generated slugs and reject malformed values', () => {
+  expect(
+    assertValidGeneratedSlug(
+      'Pattern name',
+      'hero-card',
+      'wp-typia add pattern <name>',
+    ),
+  ).toBe('hero-card');
+
+  expect(() =>
+    assertValidGeneratedSlug(
+      'Pattern name',
+      '',
+      'wp-typia add pattern <name>',
+    ),
+  ).toThrow('Pattern name is required. Use `wp-typia add pattern <name>`.');
+  expect(() =>
+    assertValidGeneratedSlug(
+      'Pattern name',
+      'HeroCard',
+      'wp-typia add pattern <name>',
+    ),
+  ).toThrow(
+    'Pattern name must start with a letter and contain only lowercase letters, numbers, and hyphens.',
+  );
+  expect(() =>
+    assertValidGeneratedSlug(
+      'Pattern name',
+      '1-hero',
+      'wp-typia add pattern <name>',
+    ),
+  ).toThrow(
+    'Pattern name must start with a letter and contain only lowercase letters, numbers, and hyphens.',
+  );
+});
+
+test('focused validation helpers normalize REST namespaces and methods', () => {
+  expect(assertValidRestResourceNamespace(' demo-space/v1 ')).toBe(
+    'demo-space/v1',
+  );
+  expect(resolveRestResourceNamespace('demo-space')).toBe('demo-space/v1');
+  expect(assertValidRestResourceMethods()).toEqual(['list', 'read', 'create']);
+  expect(assertValidRestResourceMethods('list, read, list, delete')).toEqual([
+    'list',
+    'read',
+    'delete',
+  ]);
+
+  expect(() => assertValidRestResourceNamespace('')).toThrow(
+    'REST resource namespace is required. Use `--namespace <vendor/v1>` or let the workspace default apply.',
+  );
+  expect(() => assertValidRestResourceNamespace('DemoSpace/v1')).toThrow(
+    'REST resource namespace must use lowercase slash-separated segments like `demo-space/v1`.',
+  );
+  expect(() => assertValidRestResourceNamespace('demo-space')).toThrow(
+    'REST resource namespace must use lowercase slash-separated segments like `demo-space/v1`.',
+  );
+  expect(() => assertValidRestResourceMethods('list, publish')).toThrow(
+    'REST resource methods must be a comma-separated list of: list, read, create, update, delete.',
+  );
+  expect(() => assertValidRestResourceMethods(',,')).toThrow(
+    'REST resource methods must include at least one of: list, read, create, update, delete.',
+  );
 });
 
 test('shared add collision helper allows missing filesystem paths and inventory entries', () => {
@@ -115,10 +228,139 @@ test('shared add collision helper preserves inventory collision messages', () =>
   );
 });
 
+test('focused collision helpers reject duplicate variation files and inventory entries', () => {
+  const projectDir = path.join(tempRoot, 'variation-collision');
+  const variationPath = path.join(
+    projectDir,
+    'src',
+    'blocks',
+    'counter-card',
+    'variations',
+    'hero-card.ts',
+  );
+  fs.mkdirSync(path.dirname(variationPath), { recursive: true });
+  fs.writeFileSync(variationPath, 'export {};\n', 'utf8');
+
+  expect(() =>
+    assertVariationDoesNotExist(
+      projectDir,
+      'counter-card',
+      'hero-card',
+      createEmptyInventory(),
+    ),
+  ).toThrow(
+    'A variation already exists at src/blocks/counter-card/variations/hero-card.ts. Choose a different name.',
+  );
+
+  expect(() =>
+    assertVariationDoesNotExist(
+      tempRoot,
+      'counter-card',
+      'hero-card',
+      createEmptyInventory({
+        variations: [
+          {
+            block: 'counter-card',
+            file: 'src/blocks/counter-card/variations/hero-card.ts',
+            slug: 'hero-card',
+          },
+        ],
+      }),
+    ),
+  ).toThrow(
+    'A variation inventory entry already exists for counter-card/hero-card. Choose a different name.',
+  );
+});
+
+test('focused collision helpers check every REST resource filesystem target', () => {
+  const projectDir = path.join(tempRoot, 'rest-resource-collision');
+  const bootstrapPath = path.join(projectDir, 'inc', 'rest', 'products.php');
+  fs.mkdirSync(path.dirname(bootstrapPath), { recursive: true });
+  fs.writeFileSync(bootstrapPath, '<?php\n', 'utf8');
+
+  expect(() =>
+    assertRestResourceDoesNotExist(
+      projectDir,
+      'products',
+      createEmptyInventory(),
+    ),
+  ).toThrow(
+    'A REST resource bootstrap already exists at inc/rest/products.php. Choose a different name.',
+  );
+});
+
 test('shared optional file reader returns null for missing paths and reads existing files', async () => {
   const filePath = path.join(tempRoot, 'optional-file.txt');
 
   await expect(readOptionalFile(filePath)).resolves.toBeNull();
   fs.writeFileSync(filePath, 'hello\n', 'utf8');
   await expect(readOptionalFile(filePath)).resolves.toBe('hello\n');
+});
+
+test('focused block-json helpers resolve workspace blocks and read metadata', () => {
+  const projectDir = path.join(tempRoot, 'block-json-read');
+  const blockJsonPath = path.join(
+    projectDir,
+    'src',
+    'blocks',
+    'counter-card',
+    'block.json',
+  );
+  const inventory = createEmptyInventory({
+    blocks: [
+      {
+        slug: 'counter-card',
+        typesFile: 'src/blocks/counter-card/types.ts',
+      },
+    ],
+  });
+
+  fs.mkdirSync(path.dirname(blockJsonPath), { recursive: true });
+  fs.writeFileSync(
+    blockJsonPath,
+    `${JSON.stringify({ name: 'demo/counter-card', title: 'Counter Card' })}\n`,
+    'utf8',
+  );
+
+  expect(resolveWorkspaceBlock(inventory, 'counter-card').typesFile).toBe(
+    'src/blocks/counter-card/types.ts',
+  );
+  expect(() => resolveWorkspaceBlock(inventory, 'missing-card')).toThrow(
+    'Unknown workspace block "missing-card". Choose one of: counter-card',
+  );
+
+  const { blockJson, blockJsonPath: resolvedBlockJsonPath } =
+    readWorkspaceBlockJson(projectDir, 'counter-card');
+  expect(resolvedBlockJsonPath).toBe(blockJsonPath);
+  expect(blockJson).toMatchObject({
+    name: 'demo/counter-card',
+    title: 'Counter Card',
+  });
+  expect(() => readWorkspaceBlockJson(projectDir, 'missing-card')).toThrow(
+    'Missing src/blocks/missing-card/block.json for workspace block "missing-card".',
+  );
+});
+
+test('focused block-json helpers create mutable hooks and reject malformed hook maps', () => {
+  const withoutHooks: Record<string, unknown> = {
+    name: 'demo/counter-card',
+  };
+  const hooks = getMutableBlockHooks(withoutHooks, 'src/block.json');
+  hooks['core/post-content'] = 'before';
+
+  expect(withoutHooks.blockHooks).toEqual({
+    'core/post-content': 'before',
+  });
+
+  const existingHooks: { blockHooks: Record<string, string> } = {
+    blockHooks: {
+      'core/query': 'after',
+    },
+  };
+  expect(getMutableBlockHooks(existingHooks, 'src/block.json')).toBe(
+    existingHooks.blockHooks,
+  );
+  expect(() =>
+    getMutableBlockHooks({ blockHooks: [] }, 'src/block.json'),
+  ).toThrow('src/block.json must define blockHooks as an object when present.');
 });
