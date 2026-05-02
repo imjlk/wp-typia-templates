@@ -1,5 +1,15 @@
 # wp-typia
 
+## 0.22.5 — 2026-05-02
+
+### Patch changes
+
+- [571d389](https://github.com/imjlk/wp-typia/commit/571d3892cdaf467aa6b063b2585a0be2a24c9de3) Share CLI entrypoint command resolution between output-format validation and diagnostic output. — Thanks @imjlk!
+- [60edac6](https://github.com/imjlk/wp-typia/commit/60edac6d036437285b3e4f89413bcd9c46f451f6) Advertise `--format text` for human-readable CLI output while preserving the legacy `toon` alias. — Thanks @imjlk!
+- [a94457d](https://github.com/imjlk/wp-typia/commit/a94457ded5a069ce8d247d55afc61ede7b1cab97) Expand Node fallback CLI core coverage for dispatch, format, config, and stderr handling. — Thanks @imjlk!
+- [d5269be](https://github.com/imjlk/wp-typia/commit/d5269be6a7d9a0e6b523baea3a9aac7464ec1f1d) Consolidate Node fallback command help rendering around shared command metadata. — Thanks @imjlk!
+- Updated dependencies: project-tools (npm)@0.22.5
+
 ## 0.22.4 — 2026-05-02
 
 ### Patch changes

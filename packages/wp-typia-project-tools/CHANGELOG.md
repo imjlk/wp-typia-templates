@@ -1,5 +1,14 @@
 # @wp-typia/project-tools
 
+## 0.22.5 — 2026-05-02
+
+### Patch changes
+
+- [530b3aa](https://github.com/imjlk/wp-typia/commit/530b3aa7ccbaff8db30a8a50274cda11decd0e7c) Add deterministic external template cache TTL pruning coverage. — Thanks @imjlk!
+- [474164b](https://github.com/imjlk/wp-typia/commit/474164b34f5d5074d199ccdf22fefe4c964e2650) Generalize workspace inventory parsing and validation around shared section metadata. — Thanks @imjlk!
+- [af1a74a](https://github.com/imjlk/wp-typia/commit/af1a74a03a9af2307288519d329d82edc7a69a28) Add focused unit coverage for split add helper modules. — Thanks @imjlk!
+- [8dc97c4](https://github.com/imjlk/wp-typia/commit/8dc97c45bacb7849d0ed7b55128fab5f1c5ccb5a) Route workspace add PHP bootstrap patching through shared snippet mutation helpers. — Thanks @imjlk!
+
 ## 0.22.4 — 2026-05-02
 
 ### Patch changes
