@@ -2,7 +2,6 @@
   "name": "@wp-typia/dataviews",
   "version": "0.1.0",
   "description": "Opt-in typed compatibility facade for WordPress DataViews and DataForm integrations",
-  "private": true,
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -37,6 +36,9 @@
     "url": "https://github.com/imjlk/wp-typia/issues"
   },
   "homepage": "https://github.com/imjlk/wp-typia/tree/main/packages/wp-typia-dataviews#readme",
+  "publishConfig": {
+    "access": "public"
+  },
   "engines": {
     "node": ">=20.0.0",
     "npm": ">=10.0.0",
