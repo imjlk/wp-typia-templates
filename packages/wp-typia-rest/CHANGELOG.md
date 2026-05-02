@@ -1,5 +1,11 @@
 # @wp-typia/rest
 
+## 0.3.13 — 2026-05-02
+
+### Patch changes
+
+- [bb23621](https://github.com/imjlk/wp-typia/commit/bb23621265f012b6ed575a6a5d3c4c9d363c0720) Ensure React query cache invalidation uses monotonic cache revisions so same-millisecond invalidations refetch reliably without skewing stale-time timestamps. — Thanks @imjlk!
+
 ## 0.3.12 — 2026-04-30
 
 ### Patch changes
