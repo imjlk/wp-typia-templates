@@ -314,7 +314,8 @@ export const SYNC_OPTION_METADATA = {
  */
 export const DOCTOR_OPTION_METADATA = {
   format: {
-    description: 'Use `json` for machine-readable doctor check output or `toon` for human-readable output.',
+    description:
+      'Use `json` for machine-readable doctor check output or `text` for human-readable output.',
     type: 'string',
   },
 } as const satisfies CommandOptionMetadataMap;
@@ -339,7 +340,7 @@ export const GLOBAL_OPTION_METADATA = {
     type: 'string',
   },
   format: {
-    description: 'Output format for supported commands (`json` or `toon`).',
+    description: 'Output format for supported commands (`json` or `text`).',
     type: 'string',
   },
   id: {

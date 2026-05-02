@@ -59,10 +59,11 @@ export function prefersStructuredCliArgv(argv: string[]): boolean {
 export function prefersStructuredCliOutput(
   args: CliStructuredOutputArgs,
 ): boolean {
+  if (args.formatExplicit) {
+    return args.format === 'json' && isSupportedCliOutputFormat(args.format);
+  }
+
   return (
-    (args.formatExplicit &&
-      args.format === 'json' &&
-      isSupportedCliOutputFormat(args.format)) ||
     Boolean(args.agent) ||
     Boolean(args.context?.store?.isAIAgent)
   );

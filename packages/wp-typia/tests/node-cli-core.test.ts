@@ -89,6 +89,8 @@ describe('Node fallback CLI core routing', () => {
 
   test('prints human and structured version output from the fallback runtime', async () => {
     const human = await captureNodeCli(['--version']);
+    const text = await captureNodeCli(['version', '--format', 'text']);
+    const legacyToon = await captureNodeCli(['version', '--format', 'toon']);
     const structured = await captureNodeCli(['version', '--format', 'json']);
     const parsed = JSON.parse(structured.stdout) as {
       data?: { name?: string; type?: string; version?: string };
@@ -98,6 +100,14 @@ describe('Node fallback CLI core routing', () => {
     expect(human.error).toBeUndefined();
     expect(human.exitCode).toBe(0);
     expect(human.stdout.trim()).toBe(`wp-typia ${packageJson.version}`);
+
+    expect(text.error).toBeUndefined();
+    expect(text.exitCode).toBe(0);
+    expect(text.stdout.trim()).toBe(`wp-typia ${packageJson.version}`);
+
+    expect(legacyToon.error).toBeUndefined();
+    expect(legacyToon.exitCode).toBe(0);
+    expect(legacyToon.stdout.trim()).toBe(`wp-typia ${packageJson.version}`);
 
     expect(structured.error).toBeUndefined();
     expect(structured.exitCode).toBe(0);

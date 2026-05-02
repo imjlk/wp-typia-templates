@@ -4,18 +4,67 @@ import {
 } from '@wp-typia/project-tools/cli-diagnostics';
 import { resolveEntrypointCliCommand } from './cli-command-resolution';
 
-export const SUPPORTED_CLI_OUTPUT_FORMATS = ['json', 'toon'] as const;
+export const PUBLIC_CLI_OUTPUT_FORMATS = ['json', 'text'] as const;
+
+// `toon` was the original internal spelling for human output. Keep accepting it
+// for old automation, but do not advertise it in user-facing supported lists.
+const LEGACY_CLI_OUTPUT_FORMAT_ALIASES = ['toon'] as const;
+
+export const SUPPORTED_CLI_OUTPUT_FORMATS = [
+  ...PUBLIC_CLI_OUTPUT_FORMATS,
+  ...LEGACY_CLI_OUTPUT_FORMAT_ALIASES,
+] as const;
+
+const SUPPORTED_CLI_OUTPUT_FORMAT_VALUES: readonly string[] =
+  SUPPORTED_CLI_OUTPUT_FORMATS;
 
 export type CliOutputFormat = (typeof SUPPORTED_CLI_OUTPUT_FORMATS)[number];
 
 export function formatSupportedCliOutputFormats(): string {
-  return SUPPORTED_CLI_OUTPUT_FORMATS.join(', ');
+  return PUBLIC_CLI_OUTPUT_FORMATS.join(', ');
 }
 
 export function isSupportedCliOutputFormat(
   value: string | undefined,
 ): value is CliOutputFormat {
-  return SUPPORTED_CLI_OUTPUT_FORMATS.includes(value as CliOutputFormat);
+  return (
+    typeof value === 'string' &&
+    SUPPORTED_CLI_OUTPUT_FORMAT_VALUES.includes(value)
+  );
+}
+
+export function normalizeCliOutputFormatArgv(argv: string[]): string[] {
+  let normalized: string[] | undefined;
+
+  for (let index = 0; index < argv.length; index += 1) {
+    const arg = argv[index];
+    if (!arg) {
+      continue;
+    }
+
+    if (arg === '--') {
+      break;
+    }
+
+    if (arg === '--format') {
+      const next = argv[index + 1];
+      if (next === 'text') {
+        normalized ??= [...argv];
+        normalized[index + 1] = 'toon';
+      }
+      if (next && !next.startsWith('-')) {
+        index += 1;
+      }
+      continue;
+    }
+
+    if (arg === '--format=text') {
+      normalized ??= [...argv];
+      normalized[index] = '--format=toon';
+    }
+  }
+
+  return normalized ?? argv;
 }
 
 export function formatInvalidCliOutputFormatMessage(value: string): string {
