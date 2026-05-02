@@ -13,7 +13,13 @@ import {
   type AdminViewSource,
 } from './cli-add-workspace-admin-view-types.js';
 
-// Keep the pre-write availability seam even though public npm installs are now enabled.
+/**
+ * Assert that admin-view package dependencies are available before file writes.
+ *
+ * This is a no-op while `@wp-typia/dataviews` is publicly available on npm.
+ * The exported seam is retained so future availability checks can stay
+ * centralized ahead of scaffold mutations.
+ */
 export function assertAdminViewPackageAvailability(): void {
   return;
 }
