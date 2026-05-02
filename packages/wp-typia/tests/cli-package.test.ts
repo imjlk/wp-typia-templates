@@ -351,6 +351,8 @@ describe('wp-typia package', () => {
   test('derives fallback parsing and first-party initial values from shared metadata helpers', () => {
     expect(nodeCliSource).toContain('parseCommandArgvWithMetadata');
     expect(nodeCliSource).toContain('resolveCommandOptionValues');
+    expect(nodeCliSource).toContain('normalizeCliOutputFormatArgv');
+    expect(nodeCliSource).toContain('parseGlobalFlags(outputFormatArgv)');
     expect(nodeCliSource).not.toContain('const STRING_FLAG_NAMES = new Set([');
     expect(nodeCliSource).not.toContain('const BOOLEAN_FLAG_NAMES = new Set([');
     expect(nodeCliSource).not.toContain('const SHORT_FLAG_MAP = new Map<');
