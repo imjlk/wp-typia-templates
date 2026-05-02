@@ -164,10 +164,9 @@ wp-typia add admin-view products --source rest-resource:products
 wp-typia add admin-view posts --source core-data:postType/post
 ```
 
-Current public CLI releases gate `wp-typia add admin-view` until
-`@wp-typia/dataviews` is published to npm. Until that package is publicly
-available, treat the examples below as the intended scaffold shape rather than a
-workflow that is installable from npm today.
+Public CLI installs can run `wp-typia add admin-view` now that
+`@wp-typia/dataviews` is available on npm. The examples below are installable
+from npm and keep DataViews dependencies opt-in for generated workspaces.
 
 The scaffold writes `src/admin-views/<name>/` plus
 `inc/admin-views/<name>.php`, adds `@wp-typia/dataviews` and

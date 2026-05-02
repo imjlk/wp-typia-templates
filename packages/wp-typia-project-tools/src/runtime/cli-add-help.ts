@@ -35,7 +35,7 @@ Notes:
   \`add admin-view\` scaffolds an opt-in DataViews-powered WordPress admin screen under \`src/admin-views/\`.
   Pass \`--source rest-resource:<slug>\` to reuse a list-capable REST resource.
   Pass \`--source core-data:postType/post\` or \`--source core-data:taxonomy/category\` to bind a WordPress-owned entity collection.
-  Public installs currently gate this workflow until \`@wp-typia/dataviews\` is published to npm.
+  Generated admin-view workspaces add \`@wp-typia/dataviews\` and the needed WordPress DataViews packages as opt-in dependencies.
   \`query-loop\` is a create-time scaffold family. Use \`wp-typia create <project-dir> --template query-loop\` instead of \`wp-typia add block\`.
   \`add variation\` targets an existing block slug from \`scripts/block-config.ts\`.
   \`add style\` registers a Block Styles option for an existing generated block.

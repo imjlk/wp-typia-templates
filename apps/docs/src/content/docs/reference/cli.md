@@ -225,8 +225,8 @@ attribute end to end.
 
 Admin-view scaffolds can optionally bind to a generated data source with
 `--source`. For example, `rest-resource:products` points at a matching
-`wp-typia add rest-resource products` scaffold. Published npm installs
-currently gate `admin-view` scaffolds until `@wp-typia/dataviews` is published.
+`wp-typia add rest-resource products` scaffold. Published npm installs can
+scaffold `admin-view` now that `@wp-typia/dataviews` is available on npm.
 The first core-data wave also accepts `core-data:postType/<post-type>` and
 `core-data:taxonomy/<taxonomy>` for WordPress-owned entity collections. That
 path adds direct `@wordpress/core-data` and `@wordpress/data` dependencies only
