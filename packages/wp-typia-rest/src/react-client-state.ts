@@ -91,6 +91,12 @@ function castEndpointValidationPromise<Req, Res>(
  */
 export function createEndpointDataClient(): EndpointDataClient {
   const entries = new Map<CacheKey, EndpointDataCacheEntry>();
+  let logicalClock = Date.now();
+
+  function nextTimestamp(): number {
+    logicalClock = Math.max(Date.now(), logicalClock + 1);
+    return logicalClock;
+  }
 
   function notify(cacheKey: CacheKey) {
     const entry = entries.get(cacheKey);
@@ -112,7 +118,7 @@ export function createEndpointDataClient(): EndpointDataClient {
           return;
         }
 
-        entry.invalidatedAt = Date.now();
+        entry.invalidatedAt = nextTimestamp();
         syncSnapshot(entry);
         notify(cacheKey);
         return;
@@ -124,7 +130,7 @@ export function createEndpointDataClient(): EndpointDataClient {
           continue;
         }
 
-        entry.invalidatedAt = Date.now();
+        entry.invalidatedAt = nextTimestamp();
         syncSnapshot(entry);
         notify(cacheKey);
       }
@@ -164,7 +170,7 @@ export function createEndpointDataClient(): EndpointDataClient {
 
       entry.data = resolvedNext;
       entry.error = null;
-      entry.updatedAt = Date.now();
+      entry.updatedAt = nextTimestamp();
       entry.validation = toEndpointResponseValidationResult({
         data: resolvedNext,
         errors: [],
@@ -217,12 +223,12 @@ export function createEndpointDataClient(): EndpointDataClient {
       syncSnapshot(entry);
       notify(cacheKey);
 
-      const startedAt = Date.now();
+      const startedAt = nextTimestamp();
       const promise = execute()
         .then((validation) => {
           entry.error = null;
           if (entry.invalidatedAt <= startedAt) {
-            entry.updatedAt = Date.now();
+            entry.updatedAt = nextTimestamp();
             entry.validation = validation;
             if (validation.isValid) {
               entry.data = validation.data;
@@ -234,7 +240,7 @@ export function createEndpointDataClient(): EndpointDataClient {
         .catch((error: unknown) => {
           entry.error = error;
           if (entry.invalidatedAt <= startedAt) {
-            entry.updatedAt = Date.now();
+            entry.updatedAt = nextTimestamp();
           }
           syncSnapshot(entry);
           throw error;
@@ -257,7 +263,7 @@ export function createEndpointDataClient(): EndpointDataClient {
 
       entry.data = data;
       entry.error = null;
-      entry.updatedAt = Date.now();
+      entry.updatedAt = nextTimestamp();
       entry.validation = toEndpointResponseValidationResult({
         data,
         errors: [],

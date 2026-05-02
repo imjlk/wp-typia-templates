@@ -4,6 +4,7 @@ import * as os from 'node:os';
 import * as path from 'node:path';
 
 import type { ReadlinePrompt } from '@wp-typia/project-tools/cli-prompt';
+import { CLI_DIAGNOSTIC_CODES } from '@wp-typia/project-tools/cli-diagnostics';
 import { ADD_KIND_IDS, supportsAddKindDryRun } from '../src/add-kind-registry';
 import { WP_TYPIA_COMMAND_REGISTRY } from '../src/command-registry';
 import { executeAddCommand } from '../src/runtime-bridge';
@@ -21,9 +22,12 @@ describe('wp-typia add command bridge', () => {
     fs.rmSync(tempRoot, { force: true, recursive: true });
   });
 
-  async function expectInvalidAddBlockTemplate(options: {
+  async function expectRejectedAddBlockTemplate(options: {
+    code: string;
     interactive: boolean;
+    message: string;
     prompt?: ReadlinePrompt;
+    template: string;
   }) {
     let error: unknown;
 
@@ -32,7 +36,7 @@ describe('wp-typia add command bridge', () => {
         cwd: tempRoot,
         emitOutput: false,
         flags: {
-          template: 'unknown',
+          template: options.template,
         },
         interactive: options.interactive,
         kind: 'block',
@@ -44,13 +48,8 @@ describe('wp-typia add command bridge', () => {
     }
 
     expect(error).toBeInstanceOf(Error);
-    expect((error as { code?: string }).code).toBe('unknown-template');
-    expect((error as Error).message).toContain(
-      'Unknown add-block template "unknown". Expected one of: basic, interactivity, persistence, compound.',
-    );
-    expect((error as Error).message).toContain(
-      'Run `wp-typia templates list` to inspect available templates.',
-    );
+    expect((error as { code?: string }).code).toBe(options.code);
+    expect((error as Error).message).toContain(options.message);
   }
 
   test('defaults add block to the basic template in non-interactive runs', async () => {
@@ -184,8 +183,22 @@ describe('wp-typia add command bridge', () => {
   }, 15_000);
 
   test('rejects invalid block template ids before workspace mutation', async () => {
-    await expectInvalidAddBlockTemplate({
+    await expectRejectedAddBlockTemplate({
+      code: CLI_DIAGNOSTIC_CODES.UNKNOWN_TEMPLATE,
       interactive: false,
+      message:
+        'Unknown add-block template "unknown". Expected one of: basic, interactivity, persistence, compound.',
+      template: 'unknown',
+    });
+  });
+
+  test('rejects query-loop add block templates with create-time guidance', async () => {
+    await expectRejectedAddBlockTemplate({
+      code: CLI_DIAGNOSTIC_CODES.INVALID_ARGUMENT,
+      interactive: false,
+      message:
+        '`wp-typia add block --template query-loop` is not supported. Query Loop is a create-time `core/query` variation scaffold',
+      template: 'query-loop',
     });
   });
 
@@ -202,9 +215,13 @@ describe('wp-typia add command bridge', () => {
       },
     };
 
-    await expectInvalidAddBlockTemplate({
+    await expectRejectedAddBlockTemplate({
+      code: CLI_DIAGNOSTIC_CODES.UNKNOWN_TEMPLATE,
       interactive: true,
+      message:
+        'Unknown add-block template "unknown". Expected one of: basic, interactivity, persistence, compound.',
       prompt,
+      template: 'unknown',
     });
     expect(selectedPrompts).toEqual([]);
   });
