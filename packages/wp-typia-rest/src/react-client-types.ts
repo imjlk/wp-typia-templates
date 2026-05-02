@@ -15,8 +15,10 @@ export interface EndpointDataSnapshot {
   data: unknown;
   error: unknown;
   invalidatedAt: number;
+  invalidatedRevision: number;
   isFetching: boolean;
   updatedAt: number;
+  updatedRevision: number;
   validation: AnyEndpointValidationResult | null;
 }
 
@@ -28,12 +30,14 @@ export interface EndpointDataCacheEntry {
   data: unknown;
   error: unknown;
   invalidatedAt: number;
+  invalidatedRevision: number;
   isFetching: boolean;
   listeners: Set<EndpointDataListener>;
   promise: Promise<AnyEndpointValidationResult> | null;
   refetchers: Set<QueryRefetcher>;
   snapshot: EndpointDataSnapshot;
   updatedAt: number;
+  updatedRevision: number;
   validation: AnyEndpointValidationResult | null;
 }
 

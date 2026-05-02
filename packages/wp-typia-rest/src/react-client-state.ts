@@ -18,8 +18,10 @@ const EMPTY_SNAPSHOT: EndpointDataSnapshot = {
   data: undefined,
   error: null,
   invalidatedAt: 0,
+  invalidatedRevision: 0,
   isFetching: false,
   updatedAt: 0,
+  updatedRevision: 0,
   validation: null,
 };
 
@@ -48,8 +50,10 @@ function syncSnapshot(entry: EndpointDataCacheEntry) {
     data: entry.data,
     error: entry.error,
     invalidatedAt: entry.invalidatedAt,
+    invalidatedRevision: entry.invalidatedRevision,
     isFetching: entry.isFetching,
     updatedAt: entry.updatedAt,
+    updatedRevision: entry.updatedRevision,
     validation: entry.validation,
   };
 }
@@ -62,7 +66,7 @@ function isEntryStale(
     return true;
   }
 
-  if (entry.invalidatedAt > entry.updatedAt) {
+  if (entry.invalidatedRevision > entry.updatedRevision) {
     return true;
   }
 
@@ -91,11 +95,12 @@ function castEndpointValidationPromise<Req, Res>(
  */
 export function createEndpointDataClient(): EndpointDataClient {
   const entries = new Map<CacheKey, EndpointDataCacheEntry>();
-  let logicalClock = Date.now();
+  // Revisions preserve same-millisecond ordering without skewing staleTime clocks.
+  let revision = 0;
 
-  function nextTimestamp(): number {
-    logicalClock = Math.max(Date.now(), logicalClock + 1);
-    return logicalClock;
+  function nextRevision(): number {
+    revision += 1;
+    return revision;
   }
 
   function notify(cacheKey: CacheKey) {
@@ -118,7 +123,8 @@ export function createEndpointDataClient(): EndpointDataClient {
           return;
         }
 
-        entry.invalidatedAt = nextTimestamp();
+        entry.invalidatedAt = Date.now();
+        entry.invalidatedRevision = nextRevision();
         syncSnapshot(entry);
         notify(cacheKey);
         return;
@@ -130,7 +136,8 @@ export function createEndpointDataClient(): EndpointDataClient {
           continue;
         }
 
-        entry.invalidatedAt = nextTimestamp();
+        entry.invalidatedAt = Date.now();
+        entry.invalidatedRevision = nextRevision();
         syncSnapshot(entry);
         notify(cacheKey);
       }
@@ -170,7 +177,8 @@ export function createEndpointDataClient(): EndpointDataClient {
 
       entry.data = resolvedNext;
       entry.error = null;
-      entry.updatedAt = nextTimestamp();
+      entry.updatedAt = Date.now();
+      entry.updatedRevision = nextRevision();
       entry.validation = toEndpointResponseValidationResult({
         data: resolvedNext,
         errors: [],
@@ -191,6 +199,7 @@ export function createEndpointDataClient(): EndpointDataClient {
       const entry = getOrCreateEntry(entries, cacheKey);
       entry.error = null;
       entry.updatedAt = Date.now();
+      entry.updatedRevision = nextRevision();
       entry.validation = validation;
       if (validation.isValid) {
         entry.data = validation.data;
@@ -223,12 +232,13 @@ export function createEndpointDataClient(): EndpointDataClient {
       syncSnapshot(entry);
       notify(cacheKey);
 
-      const startedAt = nextTimestamp();
+      const startedRevision = revision;
       const promise = execute()
         .then((validation) => {
           entry.error = null;
-          if (entry.invalidatedAt <= startedAt) {
-            entry.updatedAt = nextTimestamp();
+          if (entry.invalidatedRevision <= startedRevision) {
+            entry.updatedAt = Date.now();
+            entry.updatedRevision = nextRevision();
             entry.validation = validation;
             if (validation.isValid) {
               entry.data = validation.data;
@@ -239,8 +249,9 @@ export function createEndpointDataClient(): EndpointDataClient {
         })
         .catch((error: unknown) => {
           entry.error = error;
-          if (entry.invalidatedAt <= startedAt) {
-            entry.updatedAt = nextTimestamp();
+          if (entry.invalidatedRevision <= startedRevision) {
+            entry.updatedAt = Date.now();
+            entry.updatedRevision = nextRevision();
           }
           syncSnapshot(entry);
           throw error;
@@ -263,7 +274,8 @@ export function createEndpointDataClient(): EndpointDataClient {
 
       entry.data = data;
       entry.error = null;
-      entry.updatedAt = nextTimestamp();
+      entry.updatedAt = Date.now();
+      entry.updatedRevision = nextRevision();
       entry.validation = toEndpointResponseValidationResult({
         data,
         errors: [],
