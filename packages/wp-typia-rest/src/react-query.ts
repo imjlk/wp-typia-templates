@@ -184,9 +184,9 @@ export function useEndpointQuery<Req, Res, Selected = Res>(
     }
 
     const shouldFetch =
-      snapshot.updatedAt === 0
+      snapshot.updatedRevision === 0
         ? initialData === undefined
-        : snapshot.invalidatedAt > snapshot.updatedAt
+        : snapshot.invalidatedRevision > snapshot.updatedRevision
           ? true
           : snapshot.error !== null
             ? false
@@ -211,8 +211,9 @@ export function useEndpointQuery<Req, Res, Selected = Res>(
     prepared.requestValidation.isValid,
     snapshot.isFetching,
     refetch,
-    snapshot.invalidatedAt,
+    snapshot.invalidatedRevision,
     snapshot.updatedAt,
+    snapshot.updatedRevision,
     staleTime,
   ]);
 

@@ -4,6 +4,7 @@ import * as os from 'node:os';
 import * as path from 'node:path';
 
 import type { ReadlinePrompt } from '@wp-typia/project-tools/cli-prompt';
+import { CLI_DIAGNOSTIC_CODES } from '@wp-typia/project-tools/cli-diagnostics';
 import { ADD_KIND_IDS, supportsAddKindDryRun } from '../src/add-kind-registry';
 import { WP_TYPIA_COMMAND_REGISTRY } from '../src/command-registry';
 import { executeAddCommand } from '../src/runtime-bridge';
@@ -20,6 +21,36 @@ describe('wp-typia add command bridge', () => {
   afterAll(() => {
     fs.rmSync(tempRoot, { force: true, recursive: true });
   });
+
+  async function expectRejectedAddBlockTemplate(options: {
+    code: string;
+    interactive: boolean;
+    message: string;
+    prompt?: ReadlinePrompt;
+    template: string;
+  }) {
+    let error: unknown;
+
+    try {
+      await executeAddCommand({
+        cwd: tempRoot,
+        emitOutput: false,
+        flags: {
+          template: options.template,
+        },
+        interactive: options.interactive,
+        kind: 'block',
+        name: 'promo-card',
+        ...(options.prompt ? { prompt: options.prompt } : {}),
+      });
+    } catch (caughtError) {
+      error = caughtError;
+    }
+
+    expect(error).toBeInstanceOf(Error);
+    expect((error as { code?: string }).code).toBe(options.code);
+    expect((error as Error).message).toContain(options.message);
+  }
 
   test('defaults add block to the basic template in non-interactive runs', async () => {
     const projectDir = path.join(tempRoot, 'demo-add-basic-default');
@@ -150,6 +181,50 @@ describe('wp-typia add command bridge', () => {
     );
     expect(generatedSave).toContain('data-wp-on--click={clickActionDirective}');
   }, 15_000);
+
+  test('rejects invalid block template ids before workspace mutation', async () => {
+    await expectRejectedAddBlockTemplate({
+      code: CLI_DIAGNOSTIC_CODES.UNKNOWN_TEMPLATE,
+      interactive: false,
+      message:
+        'Unknown add-block template "unknown". Expected one of: basic, interactivity, persistence, compound.',
+      template: 'unknown',
+    });
+  });
+
+  test('rejects query-loop add block templates with create-time guidance', async () => {
+    await expectRejectedAddBlockTemplate({
+      code: CLI_DIAGNOSTIC_CODES.INVALID_ARGUMENT,
+      interactive: false,
+      message:
+        '`wp-typia add block --template query-loop` is not supported. Query Loop is a create-time `core/query` variation scaffold',
+      template: 'query-loop',
+    });
+  });
+
+  test('interactive add block rejects invalid explicit templates before prompting', async () => {
+    const selectedPrompts: string[] = [];
+    const prompt: ReadlinePrompt = {
+      close() {},
+      async select(message: string) {
+        selectedPrompts.push(message);
+        throw new Error('select() should not be called for invalid templates');
+      },
+      async text() {
+        throw new Error('text() should not be called for invalid templates');
+      },
+    };
+
+    await expectRejectedAddBlockTemplate({
+      code: CLI_DIAGNOSTIC_CODES.UNKNOWN_TEMPLATE,
+      interactive: true,
+      message:
+        'Unknown add-block template "unknown". Expected one of: basic, interactivity, persistence, compound.',
+      prompt,
+      template: 'unknown',
+    });
+    expect(selectedPrompts).toEqual([]);
+  });
 
   test('passes binding-source target flags through the add bridge', async () => {
     const projectDir = path.join(tempRoot, 'demo-add-binding-target');

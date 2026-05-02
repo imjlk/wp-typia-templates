@@ -243,6 +243,31 @@ export function isAddPersistenceTemplate(template?: string): boolean {
   return template === 'persistence' || template === 'compound';
 }
 
+function formatAddBlockTemplateIds(addRuntime: AddRuntime): string {
+  return addRuntime.ADD_BLOCK_TEMPLATE_IDS.join(', ');
+}
+
+function assertAddBlockTemplateId(
+  context: AddKindExecutionContext,
+  templateId: string,
+): CliAddRuntime.AddBlockTemplateId {
+  if (context.addRuntime.isAddBlockTemplateId(templateId)) {
+    return templateId;
+  }
+
+  if (templateId === 'query-loop') {
+    throw createCliDiagnosticCodeError(
+      CLI_DIAGNOSTIC_CODES.INVALID_ARGUMENT,
+      '`wp-typia add block --template query-loop` is not supported. Query Loop is a create-time `core/query` variation scaffold, so use `wp-typia create <project-dir> --template query-loop` instead.',
+    );
+  }
+
+  throw createCliDiagnosticCodeError(
+    CLI_DIAGNOSTIC_CODES.UNKNOWN_TEMPLATE,
+    `Unknown add-block template "${templateId}". Expected one of: ${formatAddBlockTemplateIds(context.addRuntime)}. Run \`wp-typia templates list\` to inspect available templates.`,
+  );
+}
+
 export const ADD_KIND_REGISTRY = {
   'admin-view': defineAddKindRegistryEntry<AddAdminViewResult>({
     completion: {
@@ -400,10 +425,13 @@ export const ADD_KIND_REGISTRY = {
         context.flags,
         'persistence-policy',
       );
-      let resolvedTemplateId = readOptionalStrictStringFlag(
+      const requestedTemplateId = readOptionalStrictStringFlag(
         context.flags,
         'template',
-      ) as CliAddRuntime.AddBlockTemplateId | undefined;
+      );
+      let resolvedTemplateId = requestedTemplateId
+        ? assertAddBlockTemplateId(context, requestedTemplateId)
+        : undefined;
       if (!resolvedTemplateId && context.isInteractiveSession) {
         const templatePrompt = await context.getOrCreatePrompt();
         resolvedTemplateId = await templatePrompt.select(
