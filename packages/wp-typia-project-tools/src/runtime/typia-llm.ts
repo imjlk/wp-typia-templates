@@ -1085,6 +1085,10 @@ export function applyOpenApiConstraintsToTypiaLlmFunctionArtifact({
   }
 
   if (constrainedArtifact.output) {
+    const outputSchema = assertJsonSchemaObject(
+      constrainedArtifact.output,
+      `typia.llm output for "${constrainedArtifact.name}"`,
+    );
     const responseSchema = resolveOpenApiSuccessResponseSchema(
       operation,
       openApiDocument,
@@ -1092,10 +1096,7 @@ export function applyOpenApiConstraintsToTypiaLlmFunctionArtifact({
     if (responseSchema) {
       mergeJsonSchemaConstraintProperties(
         openApiDocument,
-        assertJsonSchemaObject(
-          constrainedArtifact.output,
-          `typia.llm output for "${constrainedArtifact.name}"`,
-        ),
+        outputSchema,
         responseSchema,
       );
     }

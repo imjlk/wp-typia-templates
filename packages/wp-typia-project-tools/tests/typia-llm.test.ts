@@ -784,6 +784,39 @@ describe('typia.llm adapter emitter', () => {
     );
   });
 
+  test('rejects malformed typia.llm output artifacts when no OpenAPI response schema exists', () => {
+    const noResponseOpenApi = {
+      info: {
+        title: 'No-response API',
+        version: '1.0.0',
+      },
+      openapi: '3.1.0',
+      paths: {
+        '/stub': {
+          post: {
+            operationId: 'stubOp',
+            responses: {},
+            summary: 'Stub with no success response.',
+            tags: [],
+          },
+        },
+      },
+    } as const as unknown as OpenApiDocument;
+
+    expect(() =>
+      applyOpenApiConstraintsToTypiaLlmFunctionArtifact({
+        functionArtifact: {
+          description: 'Stub.',
+          name: 'stubOp',
+          output: [] as unknown as ILlmSchema.IParameters,
+          parameters: EMPTY_LLM_PARAMETERS,
+        },
+        openApiDocument: noResponseOpenApi,
+        operationId: 'stubOp',
+      }),
+    ).toThrow('typia.llm output for "stubOp" must be a JSON Schema object.');
+  });
+
   test('restores canonical OpenAPI constraints for mixed body/query tool inputs', () => {
     const applicationArtifact = projectTypiaLlmApplicationArtifact({
       application: {
