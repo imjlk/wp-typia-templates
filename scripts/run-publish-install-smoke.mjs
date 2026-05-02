@@ -81,8 +81,8 @@ function getInstalledWpTypiaCliPath(projectDir) {
 	return path.join(projectDir, "node_modules", "wp-typia", binEntry);
 }
 
-function runWpTypiaCli(projectDir, cliPath, args) {
-	return run("node", [cliPath, ...args], { cwd: projectDir });
+function runWpTypiaCli(projectDir, cliPath, args, options = {}) {
+	return run("node", [cliPath, ...args], { cwd: projectDir, ...options });
 }
 
 function materializeTarballDependencies(projectDir, tarballs) {
@@ -395,6 +395,9 @@ withTempDir("wp-typia-publish-install-smoke-", (tempRoot) => {
 		"@wp-typia/block-runtime": `^${packedManifests.get("@wp-typia/block-runtime").version}`,
 		"@wp-typia/block-types": `^${packedManifests.get("@wp-typia/block-types").version}`,
 	};
+	const adminViewExpectedRanges = {
+		"@wp-typia/dataviews": `^${packedManifests.get("@wp-typia/dataviews").version}`,
+	};
 
 	const basicDir = path.join(projectDir, "demo-basic");
 	runWpTypiaCli(projectDir, cliPath, [
@@ -419,6 +422,37 @@ withTempDir("wp-typia-publish-install-smoke-", (tempRoot) => {
 	]);
 	installGeneratedProject(basicDir, tarballs);
 	typecheckGeneratedProject(basicDir);
+
+	const adminViewDir = path.join(projectDir, "demo-admin-view");
+	runWpTypiaCli(projectDir, cliPath, [
+		"create",
+		"demo-admin-view",
+		"--template",
+		"workspace",
+		"--package-manager",
+		"npm",
+		"--namespace",
+		"smoke-space",
+		"--text-domain",
+		"smoke-space",
+		"--yes",
+		"--no-install",
+	]);
+	runWpTypiaCli(projectDir, cliPath, ["add", "admin-view", "snapshots"], {
+		cwd: adminViewDir,
+	});
+	assertScaffoldDependencyRanges(adminViewDir, adminViewExpectedRanges);
+	const adminViewPackageJson = readJson(path.join(adminViewDir, "package.json"));
+	if (typeof adminViewPackageJson.dependencies?.["@wordpress/dataviews"] !== "string") {
+		throw new Error("Generated admin-view workspace is missing @wordpress/dataviews.");
+	}
+	assertFilesExist(adminViewDir, [
+		"src/admin-views/snapshots/index.tsx",
+		"src/admin-views/snapshots/Screen.tsx",
+		"inc/admin-views/snapshots.php",
+	]);
+	installGeneratedProject(adminViewDir, tarballs);
+	typecheckGeneratedProject(adminViewDir);
 
 	const compoundDir = path.join(projectDir, "demo-compound");
 	runWpTypiaCli(projectDir, cliPath, [
@@ -451,7 +485,7 @@ withTempDir("wp-typia-publish-install-smoke-", (tempRoot) => {
 	typecheckGeneratedProject(compoundDir);
 
 	process.stdout.write(
-		`Verified published-install smoke for wp-typia ${parsed.data.version}, bundled Bunli metadata, dataviews exports, runtime wrapper exports, block-runtime metadata sync, project-tools runtime paths, and generated basic/compound scaffold installs.\n`,
+		`Verified published-install smoke for wp-typia ${parsed.data.version}, bundled Bunli metadata, dataviews exports, runtime wrapper exports, block-runtime metadata sync, project-tools runtime paths, and generated basic/admin-view/compound scaffold installs.\n`,
 	);
 });
 

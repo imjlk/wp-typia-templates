@@ -17,10 +17,6 @@ export const ADMIN_VIEWS_ASSET = 'build/admin-views/index.asset.php';
 export const ADMIN_VIEWS_STYLE = 'build/admin-views/style-index.css';
 export const ADMIN_VIEWS_STYLE_RTL = 'build/admin-views/style-index-rtl.css';
 export const ADMIN_VIEWS_PHP_GLOB = '/inc/admin-views/*.php';
-export const ADMIN_VIEW_ALLOW_UNPUBLISHED_DATAVIEWS_ENV =
-  'WP_TYPIA_ALLOW_UNPUBLISHED_DATAVIEWS';
-// Lift this gate in the same release that publishes @wp-typia/dataviews.
-export const ADMIN_VIEW_PUBLIC_INSTALLS_ENABLED = false;
 
 export interface AdminViewRestResourceSource {
   kind: typeof ADMIN_VIEW_REST_SOURCE_KIND;
