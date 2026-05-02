@@ -100,13 +100,6 @@ function replaceFixtureSource(
   return nextSource;
 }
 
-function withUnpublishedDataViewsEnv(): NodeJS.ProcessEnv {
-  return {
-    ...process.env,
-    WP_TYPIA_ALLOW_UNPUBLISHED_DATAVIEWS: "1",
-  };
-}
-
 describe("@wp-typia/project-tools workspace add", () => {
   const tempRoot = createScaffoldTempRoot("wp-typia-workspace-add-");
 
@@ -3207,8 +3200,8 @@ test("canonical CLI can add a plugin-level REST resource to an official workspac
   typecheckGeneratedProject(targetDir);
 }, 30_000);
 
-test("canonical CLI blocks admin-view scaffolds until @wp-typia/dataviews is published", async () => {
-  const targetDir = path.join(tempRoot, "demo-workspace-add-admin-view-blocked");
+test("canonical CLI can add a DataViews admin screen without an unpublished override", async () => {
+  const targetDir = path.join(tempRoot, "demo-workspace-add-admin-view-public");
 
   await scaffoldProject({
     projectDir: targetDir,
@@ -3217,34 +3210,32 @@ test("canonical CLI blocks admin-view scaffolds until @wp-typia/dataviews is pub
     noInstall: true,
     answers: {
       author: "Test Runner",
-      description: "Demo workspace add admin view blocked",
+      description: "Demo workspace add admin view public",
       namespace: "demo-space",
       phpPrefix: "demo_space",
-      slug: "demo-workspace-add-admin-view-blocked",
+      slug: "demo-workspace-add-admin-view-public",
       textDomain: "demo-space",
-      title: "Demo Workspace Add Admin View Blocked",
+      title: "Demo Workspace Add Admin View Public",
     },
   });
 
   linkWorkspaceNodeModules(targetDir);
 
-  const errorMessage = getCommandErrorMessage(() =>
-    runCli("node", [entryPath, "add", "admin-view", "snapshots"], {
-      cwd: targetDir,
-    })
-  );
+  runCli("node", [entryPath, "add", "admin-view", "snapshots"], {
+    cwd: targetDir,
+  });
   const packageJson = JSON.parse(
     fs.readFileSync(path.join(targetDir, "package.json"), "utf8")
   ) as {
+    dependencies?: Record<string, string>;
     devDependencies?: Record<string, string>;
   };
 
-  expect(errorMessage).toContain("@wp-typia/dataviews");
-  expect(errorMessage).toContain("not published to npm for public installs yet");
-  expect(packageJson.devDependencies?.["@wp-typia/dataviews"]).toBeUndefined();
+  expect(packageJson.devDependencies?.["@wp-typia/dataviews"]).toBeTruthy();
+  expect(packageJson.dependencies?.["@wordpress/dataviews"]).toBeTruthy();
   expect(
     fs.existsSync(path.join(targetDir, "src", "admin-views", "snapshots"))
-  ).toBe(false);
+  ).toBe(true);
 }, 20_000);
 
 test("canonical CLI can add a DataViews admin screen with a REST resource source", async () => {
@@ -3282,7 +3273,6 @@ test("canonical CLI can add a DataViews admin screen with a REST resource source
     ],
     {
       cwd: targetDir,
-      env: withUnpublishedDataViewsEnv(),
     }
   );
   runCli(
@@ -3297,7 +3287,6 @@ test("canonical CLI can add a DataViews admin screen with a REST resource source
     ],
     {
       cwd: targetDir,
-      env: withUnpublishedDataViewsEnv(),
     }
   );
 
@@ -3463,7 +3452,6 @@ test("canonical CLI can add a DataViews admin screen with a core-data source", a
     ],
     {
       cwd: targetDir,
-      env: withUnpublishedDataViewsEnv(),
     }
   );
 
@@ -3566,7 +3554,6 @@ test("canonical CLI can add a taxonomy core-data admin screen", async () => {
     ],
     {
       cwd: targetDir,
-      env: withUnpublishedDataViewsEnv(),
     }
   );
 
@@ -3650,7 +3637,6 @@ test("admin view core-data sources reject unsupported entity families", async ()
       ],
       {
         cwd: targetDir,
-        env: withUnpublishedDataViewsEnv(),
       }
     )
   );
@@ -3695,7 +3681,6 @@ test("admin view rest-resource sources reject extra locator segments", async () 
       ],
       {
         cwd: targetDir,
-        env: withUnpublishedDataViewsEnv(),
       }
     )
   );
@@ -3742,7 +3727,6 @@ test("admin view core-data sources reject uppercase entity names", async () => {
       ],
       {
         cwd: targetDir,
-        env: withUnpublishedDataViewsEnv(),
       }
     )
   );
@@ -3788,7 +3772,6 @@ test("admin view core-data sources accept numeric-leading entity names", async (
     ],
     {
       cwd: targetDir,
-      env: withUnpublishedDataViewsEnv(),
     }
   );
 
@@ -3857,7 +3840,6 @@ test("admin view workflow accepts formatted shared webpack entries", async () =>
 
   runCli("node", [entryPath, "add", "admin-view", "reports"], {
     cwd: targetDir,
-    env: withUnpublishedDataViewsEnv(),
   });
 
   expect(fs.readFileSync(buildScriptPath, "utf8")).toContain(

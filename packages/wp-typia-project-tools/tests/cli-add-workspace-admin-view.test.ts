@@ -1,4 +1,4 @@
-import { afterEach, expect, test } from 'bun:test';
+import { expect, test } from 'bun:test';
 
 import {
   assertAdminViewPackageAvailability,
@@ -9,23 +9,9 @@ import {
   buildAdminViewTypesSource,
 } from '../src/runtime/cli-add-workspace-admin-view-templates.js';
 import {
-  ADMIN_VIEW_ALLOW_UNPUBLISHED_DATAVIEWS_ENV,
   type AdminViewCoreDataSource,
   type AdminViewRestResource,
 } from '../src/runtime/cli-add-workspace-admin-view-types.js';
-
-const originalAdminViewGateEnv =
-  process.env[ADMIN_VIEW_ALLOW_UNPUBLISHED_DATAVIEWS_ENV];
-
-afterEach(() => {
-  if (originalAdminViewGateEnv === undefined) {
-    delete process.env[ADMIN_VIEW_ALLOW_UNPUBLISHED_DATAVIEWS_ENV];
-    return;
-  }
-
-  process.env[ADMIN_VIEW_ALLOW_UNPUBLISHED_DATAVIEWS_ENV] =
-    originalAdminViewGateEnv;
-});
 
 test('admin-view source parsing accepts supported rest-resource and core-data locators', () => {
   expect(parseAdminViewSource()).toBeUndefined();
@@ -49,13 +35,7 @@ test('admin-view source parsing rejects malformed or unsupported core-data locat
   );
 });
 
-test('admin-view package availability stays gated unless the unpublished override is enabled', () => {
-  delete process.env[ADMIN_VIEW_ALLOW_UNPUBLISHED_DATAVIEWS_ENV];
-  expect(() => assertAdminViewPackageAvailability()).toThrow(
-    '`wp-typia add admin-view` is temporarily unavailable because `@wp-typia/dataviews` is not published to npm for public installs yet.',
-  );
-
-  process.env[ADMIN_VIEW_ALLOW_UNPUBLISHED_DATAVIEWS_ENV] = '1';
+test('admin-view package availability allows public npm installs', () => {
   expect(() => assertAdminViewPackageAvailability()).not.toThrow();
 });
 

@@ -1,15 +1,9 @@
 import { assertValidGeneratedSlug } from './cli-add-shared.js';
 import {
-  CLI_DIAGNOSTIC_CODES,
-  createCliDiagnosticCodeError,
-} from './cli-diagnostics.js';
-import {
-  ADMIN_VIEW_ALLOW_UNPUBLISHED_DATAVIEWS_ENV,
   ADMIN_VIEW_CORE_DATA_ENTITY_KIND_IDS,
   ADMIN_VIEW_CORE_DATA_ENTITY_NAME_PATTERN,
   ADMIN_VIEW_CORE_DATA_ENTITY_SEGMENT_PATTERN,
   ADMIN_VIEW_CORE_DATA_SOURCE_KIND,
-  ADMIN_VIEW_PUBLIC_INSTALLS_ENABLED,
   ADMIN_VIEW_REST_SOURCE_KIND,
   ADMIN_VIEW_SOURCE_USAGE,
   isAdminViewCoreDataSource,
@@ -19,24 +13,15 @@ import {
   type AdminViewSource,
 } from './cli-add-workspace-admin-view-types.js';
 
-function isAdminViewUnpublishedDataViewsOverrideEnabled(): boolean {
-  return (
-    process.env[ADMIN_VIEW_ALLOW_UNPUBLISHED_DATAVIEWS_ENV]?.trim() === '1'
-  );
-}
-
+/**
+ * Assert that admin-view package dependencies are available before file writes.
+ *
+ * This is a no-op while `@wp-typia/dataviews` is publicly available on npm.
+ * The exported seam is retained so future availability checks can stay
+ * centralized ahead of scaffold mutations.
+ */
 export function assertAdminViewPackageAvailability(): void {
-  if (
-    isAdminViewUnpublishedDataViewsOverrideEnabled() ||
-    ADMIN_VIEW_PUBLIC_INSTALLS_ENABLED
-  ) {
-    return;
-  }
-
-  throw createCliDiagnosticCodeError(
-    CLI_DIAGNOSTIC_CODES.INVALID_ARGUMENT,
-    '`wp-typia add admin-view` is temporarily unavailable because `@wp-typia/dataviews` is not published to npm for public installs yet.',
-  );
+  return;
 }
 
 function assertValidCoreDataEntitySegment(
