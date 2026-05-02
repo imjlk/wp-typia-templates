@@ -11,6 +11,7 @@ import {
   ADD_OPTION_METADATA,
   buildCommandOptionParser,
   CREATE_OPTION_METADATA,
+  type CommandOptionMetadataMap,
   DOCTOR_OPTION_METADATA,
   extractKnownOptionValuesFromArgv,
   formatNodeFallbackOptionHelp,
@@ -79,6 +80,11 @@ type NodeFallbackDispatchContext = {
   cwd: string;
   mergedFlags: Record<string, unknown>;
   positionals: string[];
+};
+type NodeFallbackCommandHelpConfig = {
+  bodyLines?: string[];
+  heading: string;
+  optionMetadata: CommandOptionMetadataMap;
 };
 
 const NODE_FALLBACK_OPTION_PARSER = buildCommandOptionParser(
@@ -219,98 +225,65 @@ function renderGeneralHelp() {
   ]);
 }
 
-function renderTemplatesHelp() {
+/**
+ * Render one Node fallback command help screen from shared command metadata.
+ */
+function renderNodeFallbackCommandHelp(config: NodeFallbackCommandHelpConfig) {
   printBlock([
-    'wp-typia templates <list|inspect>',
+    config.heading,
     '',
     ...NODE_FALLBACK_RUNTIME_SUMMARY_LINES,
     '',
+    ...(config.bodyLines ? [...config.bodyLines, ''] : []),
     'Supported flags:',
-    ...formatNodeFallbackOptionHelp(TEMPLATES_OPTION_METADATA),
+    ...formatNodeFallbackOptionHelp(config.optionMetadata),
   ]);
 }
 
-function renderCreateHelp() {
-  printBlock([
-    `Usage: ${WP_TYPIA_CANONICAL_CREATE_USAGE}`,
-    '',
-    ...NODE_FALLBACK_RUNTIME_SUMMARY_LINES,
-    '',
-    'Supported flags:',
-    ...formatNodeFallbackOptionHelp(CREATE_OPTION_METADATA),
-  ]);
-}
+const NODE_FALLBACK_COMMAND_HELP_CONFIG = {
+  add: {
+    bodyLines: [`Supported kinds: ${formatAddKindList()}`],
+    heading: 'Usage: wp-typia add <kind> <name>',
+    optionMetadata: ADD_OPTION_METADATA,
+  },
+  create: {
+    heading: `Usage: ${WP_TYPIA_CANONICAL_CREATE_USAGE}`,
+    optionMetadata: CREATE_OPTION_METADATA,
+  },
+  doctor: {
+    bodyLines: [
+      'Runs read-only environment readiness checks. Official wp-typia workspace roots also get inventory, source-tree drift, iframe/API v3 compatibility, and shared convention checks.',
+    ],
+    heading: 'Usage: wp-typia doctor [--format json]',
+    optionMetadata: DOCTOR_OPTION_METADATA,
+  },
+  init: {
+    bodyLines: [
+      'Preview-by-default retrofit planner for existing WordPress block or plugin projects. Re-run with --apply to write package.json updates and helper scripts.',
+    ],
+    heading: 'Usage: wp-typia init [project-dir]',
+    optionMetadata: INIT_OPTION_METADATA,
+  },
+  migrate: {
+    heading: `Usage: ${WP_TYPIA_CANONICAL_MIGRATE_USAGE}`,
+    optionMetadata: MIGRATE_OPTION_METADATA,
+  },
+  sync: {
+    heading: 'Usage: wp-typia sync [ai]',
+    optionMetadata: SYNC_OPTION_METADATA,
+  },
+  templates: {
+    heading: 'wp-typia templates <list|inspect>',
+    optionMetadata: TEMPLATES_OPTION_METADATA,
+  },
+} satisfies Record<NodeFallbackExecutableCommandName, NodeFallbackCommandHelpConfig>;
 
-function renderInitHelp() {
-  printBlock([
-    'Usage: wp-typia init [project-dir]',
-    '',
-    ...NODE_FALLBACK_RUNTIME_SUMMARY_LINES,
-    '',
-    'Preview-by-default retrofit planner for existing WordPress block or plugin projects. Re-run with --apply to write package.json updates and helper scripts.',
-    '',
-    'Supported flags:',
-    ...formatNodeFallbackOptionHelp(INIT_OPTION_METADATA),
-  ]);
-}
-
-function renderAddHelp() {
-  printBlock([
-    'Usage: wp-typia add <kind> <name>',
-    '',
-    ...NODE_FALLBACK_RUNTIME_SUMMARY_LINES,
-    '',
-    `Supported kinds: ${formatAddKindList()}`,
-    '',
-    'Supported flags:',
-    ...formatNodeFallbackOptionHelp(ADD_OPTION_METADATA),
-  ]);
-}
-
-function renderMigrateHelp() {
-  printBlock([
-    `Usage: ${WP_TYPIA_CANONICAL_MIGRATE_USAGE}`,
-    '',
-    ...NODE_FALLBACK_RUNTIME_SUMMARY_LINES,
-    '',
-    'Supported flags:',
-    ...formatNodeFallbackOptionHelp(MIGRATE_OPTION_METADATA),
-  ]);
-}
-
-function renderSyncHelp() {
-  printBlock([
-    'Usage: wp-typia sync [ai]',
-    '',
-    ...NODE_FALLBACK_RUNTIME_SUMMARY_LINES,
-    '',
-    'Supported flags:',
-    ...formatNodeFallbackOptionHelp(SYNC_OPTION_METADATA),
-  ]);
-}
-
-function renderDoctorHelp() {
-  printBlock([
-    'Usage: wp-typia doctor [--format json]',
-    '',
-    ...NODE_FALLBACK_RUNTIME_SUMMARY_LINES,
-    '',
-    'Runs read-only environment readiness checks. Official wp-typia workspace roots also get inventory, source-tree drift, iframe/API v3 compatibility, and shared convention checks.',
-    '',
-    'Supported flags:',
-    ...formatNodeFallbackOptionHelp(DOCTOR_OPTION_METADATA),
-  ]);
-}
-
-const NODE_FALLBACK_HELP_RENDERERS = {
-  add: renderAddHelp,
-  create: renderCreateHelp,
-  doctor: renderDoctorHelp,
-  init: renderInitHelp,
-  migrate: renderMigrateHelp,
-  sync: renderSyncHelp,
-  templates: renderTemplatesHelp,
-} satisfies Record<NodeFallbackExecutableCommandName, () => void>;
+const NODE_FALLBACK_HELP_RENDERERS = Object.fromEntries(
+  Object.entries(NODE_FALLBACK_COMMAND_HELP_CONFIG).map(([command, config]) => [
+    command,
+    () => renderNodeFallbackCommandHelp(config),
+  ]),
+) as Record<NodeFallbackExecutableCommandName, () => void>;
 
 function renderVersion(
   options: {

@@ -992,26 +992,27 @@ describe('wp-typia package', () => {
       'buildCommandOptions(TEMPLATES_OPTION_METADATA)',
     );
     expect(nodeCliSource).toMatch(/from ['"]\.\/command-option-metadata['"]/);
+    expect(nodeCliSource).toContain('renderNodeFallbackCommandHelp(config)');
     expect(nodeCliSource).toContain(
-      'formatNodeFallbackOptionHelp(CREATE_OPTION_METADATA)',
+      'optionMetadata: CREATE_OPTION_METADATA',
     );
     expect(nodeCliSource).toContain(
-      'formatNodeFallbackOptionHelp(INIT_OPTION_METADATA)',
+      'optionMetadata: INIT_OPTION_METADATA',
     );
     expect(nodeCliSource).toContain(
-      'formatNodeFallbackOptionHelp(ADD_OPTION_METADATA)',
+      'optionMetadata: ADD_OPTION_METADATA',
     );
     expect(nodeCliSource).toContain(
-      'formatNodeFallbackOptionHelp(SYNC_OPTION_METADATA)',
+      'optionMetadata: SYNC_OPTION_METADATA',
     );
     expect(nodeCliSource).toContain(
-      'formatNodeFallbackOptionHelp(DOCTOR_OPTION_METADATA)',
+      'optionMetadata: DOCTOR_OPTION_METADATA',
     );
     expect(nodeCliSource).toContain(
-      'formatNodeFallbackOptionHelp(MIGRATE_OPTION_METADATA)',
+      'optionMetadata: MIGRATE_OPTION_METADATA',
     );
     expect(nodeCliSource).toContain(
-      'formatNodeFallbackOptionHelp(TEMPLATES_OPTION_METADATA)',
+      'optionMetadata: TEMPLATES_OPTION_METADATA',
     );
   });
 
