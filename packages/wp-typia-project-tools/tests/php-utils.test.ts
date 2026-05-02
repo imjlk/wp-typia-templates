@@ -127,8 +127,11 @@ function wp_typia_demo() {
 \t"label": "demo"
 }
 \tTEXT );
+\t$nonEmpty = <<<TEXT
+demo
+\tTEXT !== '';
 
-\treturn array( $values, $trimmed );
+\treturn array( $values, $trimmed, $nonEmpty );
 }
 
 function keep_me() {
@@ -141,7 +144,8 @@ function keep_me() {
 	expect(range).not.toBeNull();
 	expect(range?.source).toContain("JSON,");
 	expect(range?.source).toContain("TEXT );");
-	expect(range?.source).toContain("return array( $values, $trimmed );");
+	expect(range?.source).toContain("TEXT !== '';");
+	expect(range?.source).toContain("return array( $values, $trimmed, $nonEmpty );");
 	expect(range?.source).not.toContain("function keep_me()");
 });
 
@@ -203,6 +207,18 @@ TEXT;
 	expect(
 		hasPhpFunctionCall(
 			`${source}\nwp_enqueue_script_module( 'demo', 'url', array(), null );\n`,
+			"wp_enqueue_script_module",
+		),
+	).toBe(true);
+	expect(
+		hasPhpFunctionCall(
+			`${source}\nwp_enqueue_script_module/* reason */( 'demo', 'url', array(), null );\n`,
+			"wp_enqueue_script_module",
+		),
+	).toBe(true);
+	expect(
+		hasPhpFunctionCall(
+			`${source}\nwp_enqueue_script_module // reason\n( 'demo', 'url', array(), null );\n`,
 			"wp_enqueue_script_module",
 		),
 	).toBe(true);

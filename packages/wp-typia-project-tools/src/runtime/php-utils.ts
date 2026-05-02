@@ -60,30 +60,6 @@ function isPhpWhitespace(character: string | undefined): boolean {
 	return typeof character === "string" && /\s/u.test(character);
 }
 
-function isPhpHeredocContinuation(character: string | undefined): boolean {
-	return (
-		character === ";" ||
-		character === "," ||
-		character === ")" ||
-		character === "]" ||
-		character === "}" ||
-		character === "." ||
-		character === "?" ||
-		character === ":" ||
-		character === "+" ||
-		character === "-" ||
-		character === "*" ||
-		character === "/" ||
-		character === "%" ||
-		character === "|" ||
-		character === "&" ||
-		character === "^" ||
-		character === "=" ||
-		character === "<" ||
-		character === ">"
-	);
-}
-
 function findPhpLineBoundary(
 	source: string,
 	index: number,
@@ -178,12 +154,44 @@ function findPhpHeredocClosingEnd(
 		continuationCursor >= source.length ||
 		continuation === "\r" ||
 		continuation === "\n" ||
-		isPhpHeredocContinuation(continuation)
+		!isPhpIdentifierPart(continuation)
 	) {
 		return cursor;
 	}
 
 	return null;
+}
+
+function skipPhpCallTrivia(source: string, index: number): number | null {
+	let cursor = index;
+	while (cursor < source.length) {
+		while (isPhpWhitespace(source[cursor])) {
+			cursor += 1;
+		}
+
+		if (source[cursor] === "/" && source[cursor + 1] === "*") {
+			const commentEnd = source.indexOf("*/", cursor + 2);
+			if (commentEnd === -1) {
+				return null;
+			}
+			cursor = commentEnd + 2;
+			continue;
+		}
+
+		if (source[cursor] === "/" && source[cursor + 1] === "/") {
+			cursor = findPhpLineBoundary(source, cursor + 2).nextStart;
+			continue;
+		}
+
+		if (source[cursor] === "#" && source[cursor + 1] !== "[") {
+			cursor = findPhpLineBoundary(source, cursor + 1).nextStart;
+			continue;
+		}
+
+		return cursor;
+	}
+
+	return cursor;
 }
 
 function matchesPhpFunctionCallAt(
@@ -202,11 +210,9 @@ function matchesPhpFunctionCallAt(
 	if (isPhpIdentifierPart(source[cursor])) {
 		return false;
 	}
-	while (isPhpWhitespace(source[cursor])) {
-		cursor += 1;
-	}
+	const callStart = skipPhpCallTrivia(source, cursor);
 
-	return source[cursor] === "(";
+	return callStart !== null && source[callStart] === "(";
 }
 
 /**
