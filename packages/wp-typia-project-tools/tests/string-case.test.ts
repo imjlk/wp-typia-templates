@@ -18,6 +18,11 @@ test("toKebabCase keeps acronym runs together", () => {
 	expect(toKebabCase("HeroCTABlock")).toBe("hero-cta-block");
 	expect(toKebabCase("JSONAPIResponse")).toBe("json-api-response");
 	expect(toKebabCase("XMLHTTPParser")).toBe("xml-http-parser");
+
+	const repeatedIds = `${"ID".repeat(256)}Ab`;
+	expect(toKebabCase(repeatedIds)).toBe(
+		`${Array.from({ length: 256 }, () => "id").join("-")}-ab`,
+	);
 });
 
 test("toKebabCase avoids inventing boundaries in acronym-lowercase words", () => {
