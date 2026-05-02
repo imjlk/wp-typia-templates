@@ -93,6 +93,9 @@ test('focused add runtime modules own their helper categories', () => {
   expect(addKindIdsSource).toContain('export const ADD_KIND_IDS');
   expect(typesSource).toContain('export interface RunAddBlockCommandOptions');
   expect(typesSource).toContain('from "./cli-add-kind-ids.js"');
+  expect(typesSource).toContain(
+    'export type { AddKindId } from "./cli-add-kind-ids.js";',
+  );
   expect(typesSource).not.toContain('export const ADD_KIND_IDS = [');
   expect(validationSource).toContain('export function assertValidGeneratedSlug');
   expect(validationSource).toContain('export function assertValidRestResourceMethods');
