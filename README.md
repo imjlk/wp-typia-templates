@@ -322,6 +322,7 @@ If you want to see the “everything included” shape of `wp-typia`, start with
 - [`@wp-typia/block-types`](https://www.npmjs.com/package/@wp-typia/block-types)
 - [`@wp-typia/rest`](https://www.npmjs.com/package/@wp-typia/rest)
 - [`@wp-typia/api-client`](https://www.npmjs.com/package/@wp-typia/api-client)
+- [`@wp-typia/dataviews`](https://www.npmjs.com/package/@wp-typia/dataviews) as the opt-in DataViews compatibility contract for generated admin screens
 - [`@wp-typia/block-runtime`](https://www.npmjs.com/package/@wp-typia/block-runtime) as the current graduation prototype for defaults/editor/validation helpers
 
 ## Project Structure
@@ -333,6 +334,7 @@ wp-typia/
 │   ├── create-workspace-template/ # Official empty workspace template package
 │   ├── wp-typia-api-client/    # Backend-neutral generated API client runtime
 │   ├── wp-typia-block-runtime/ # Prototype block runtime facade package
+│   ├── wp-typia-dataviews/     # Opt-in DataViews compatibility contract
 │   ├── wp-typia-rest/          # Typed REST client helpers
 │   └── wp-typia-block-types/   # Shared semantic block types
 ├── examples/

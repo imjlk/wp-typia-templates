@@ -18,6 +18,8 @@ title: 'Architecture'
   Shared WordPress semantic types for generated projects.
 - `packages/wp-typia-rest`
   Shared TypeScript REST helpers for data-backed blocks.
+- `packages/wp-typia-dataviews`
+  Opt-in DataViews compatibility contracts for generated admin screens.
 
 ### 2. Reference app
 

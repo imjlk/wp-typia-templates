@@ -180,13 +180,27 @@ describe('package version cache invalidation', () => {
       ),
       'utf8',
     );
+    const dataViewsPackageJson = JSON.parse(
+      fs.readFileSync(
+        path.join(
+          import.meta.dir,
+          '..',
+          '..',
+          'wp-typia-dataviews',
+          'package.json',
+        ),
+        'utf8',
+      ),
+    ) as { version?: string };
 
     expect(DEFAULT_WORDPRESS_ABILITIES_VERSION).toBe('^0.10.0');
     expect(DEFAULT_WORDPRESS_CORE_ABILITIES_VERSION).toBe('^0.9.0');
     expect(DEFAULT_WORDPRESS_CORE_DATA_VERSION).toBe('^7.44.0');
     expect(DEFAULT_WORDPRESS_DATA_VERSION).toBe('^9.28.0');
     expect(DEFAULT_WORDPRESS_DATAVIEWS_VERSION).toBe('^14.1.0');
-    expect(DEFAULT_WP_TYPIA_DATAVIEWS_VERSION).toBe('^0.1.0');
+    expect(DEFAULT_WP_TYPIA_DATAVIEWS_VERSION).toBe(
+      `^${dataViewsPackageJson.version}`,
+    );
     expect(abilityScaffoldSource).not.toContain(
       'const WP_ABILITIES_PACKAGE_VERSION',
     );

@@ -68,6 +68,9 @@ secondary imports compared with the core package roots and primary subpaths.
   React-facing inspector helpers for manifest-driven editor controls.
 - `@wp-typia/block-runtime/json-utils`
   JSON cloning helpers used by manifest and projection utilities.
+- `@wp-typia/dataviews`
+  Opt-in generated admin screen compatibility contracts for WordPress
+  DataViews and DataForm integrations.
 - `@wp-typia/api-client/internal/runtime-primitives`
   Advanced/internal validation normalization helpers shared by transport
   adapters.

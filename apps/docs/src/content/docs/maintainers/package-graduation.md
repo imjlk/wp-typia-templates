@@ -12,6 +12,8 @@ This document records the current package-boundary recommendation.
   Programmatic project orchestration package.
 - `@wp-typia/block-runtime`
   Normative generated-project runtime helper package.
+- `@wp-typia/dataviews`
+  Opt-in DataViews compatibility contract package for generated admin screens.
 
 ## Why this split
 
@@ -49,4 +51,5 @@ Kept in `@wp-typia/block-runtime`:
 The old `@wp-typia/create` and `create-wp-typia` package shells are no longer
 kept in-repo. Current package-boundary docs should point directly at
 `wp-typia`, `@wp-typia/project-tools`, `@wp-typia/block-runtime`, and
-`@wp-typia/create-workspace-template`.
+`@wp-typia/create-workspace-template`, with `@wp-typia/dataviews` as the
+opt-in admin screen compatibility package.
