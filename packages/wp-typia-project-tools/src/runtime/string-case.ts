@@ -23,17 +23,28 @@ function capitalizeSegment(segment: string): string {
   return segment.charAt(0).toUpperCase() + segment.slice(1);
 }
 
-function splitAcronymBoundary(value: string): string {
-  return value.replace(/[A-Z]{2,}[a-z]+/g, (segment) => {
-    for (const prefix of COMMON_ACRONYM_PREFIXES) {
-      const suffix = segment.slice(prefix.length);
-      if (segment.startsWith(prefix) && /^[A-Z][a-z]/.test(suffix)) {
-        return `${prefix}-${suffix}`;
-      }
+function splitKnownAcronymSegment(segment: string): string {
+  for (const prefix of COMMON_ACRONYM_PREFIXES) {
+    if (!segment.startsWith(prefix)) {
+      continue;
     }
 
-    return segment;
-  });
+    const suffix = segment.slice(prefix.length);
+    if (/^[A-Z][a-z]/.test(suffix)) {
+      return `${prefix}-${suffix}`;
+    }
+
+    const nested = splitKnownAcronymSegment(suffix);
+    if (nested !== suffix) {
+      return `${prefix}-${nested}`;
+    }
+  }
+
+  return segment;
+}
+
+function splitAcronymBoundary(value: string): string {
+  return value.replace(/[A-Z]{2,}[a-z]+/g, splitKnownAcronymSegment);
 }
 
 /**
