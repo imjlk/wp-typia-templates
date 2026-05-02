@@ -59,6 +59,74 @@ function wp_typia_typed() : array {
 	);
 });
 
+test("findPhpFunctionRange ignores braces inside PHP string literals", () => {
+	const source = `<?php
+function wp_typia_demo() {
+\t$json = '{"key": {"nested": true}}';
+\t$template = "Hello {name}";
+\tif ( true ) {
+\t\treturn array( 'ok' => true );
+\t}
+}
+
+function keep_me() {
+\treturn true;
+}
+`;
+
+	const range = findPhpFunctionRange(source, "wp_typia_demo");
+
+	expect(range).not.toBeNull();
+	expect(range?.source).toContain(`$json = '{"key": {"nested": true}}';`);
+	expect(range?.source).toContain('$template = "Hello {name}";');
+	expect(range?.source).not.toContain("function keep_me()");
+});
+
+test("findPhpFunctionRange ignores braces inside heredoc and nowdoc content", () => {
+	const source = `<?php
+function wp_typia_demo() {
+\t$json = <<<JSON
+{
+\t"query": {"postType": "page"}
+}
+\tJSON;
+\t$raw = <<<'NOWDOC'
+{
+\t"literal": "{$notInterpolated}"
+}
+\tNOWDOC;
+\treturn array();
+}
+
+function keep_me() {
+\treturn true;
+}
+`;
+
+	const range = findPhpFunctionRange(source, "wp_typia_demo");
+
+	expect(range).not.toBeNull();
+	expect(range?.source).toContain("<<<JSON");
+	expect(range?.source).toContain("<<<'NOWDOC'");
+	expect(range?.source).not.toContain("function keep_me()");
+});
+
+test("findPhpFunctionRange returns null for unterminated heredoc content", () => {
+	const source = `<?php
+function wp_typia_demo() {
+\t$json = <<<JSON
+{
+\t"query": {"postType": "page"}
+}
+
+function keep_me() {
+\treturn true;
+}
+`;
+
+	expect(findPhpFunctionRange(source, "wp_typia_demo")).toBeNull();
+});
+
 test("replacePhpFunctionDefinition replaces only the targeted PHP function", () => {
 	const source = `<?php
 function wp_typia_demo() {
