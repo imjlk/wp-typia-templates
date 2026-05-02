@@ -3,6 +3,7 @@ import { expect, test } from "bun:test";
 import {
 	escapeRegex,
 	findPhpFunctionRange,
+	hasPhpFunctionCall,
 	hasPhpFunctionDefinition,
 	quotePhpString,
 	replacePhpFunctionDefinition,
@@ -57,6 +58,170 @@ function wp_typia_typed() : array {
 	expect(findPhpFunctionRange(source, "wp_typia_typed")?.source).toContain(
 		"function wp_typia_typed() : array",
 	);
+});
+
+test("findPhpFunctionRange ignores braces inside PHP string literals", () => {
+	const source = `<?php
+function wp_typia_demo() {
+\t$json = '{"key": {"nested": true}}';
+\t$template = "Hello {name}";
+\tif ( true ) {
+\t\treturn array( 'ok' => true );
+\t}
+}
+
+function keep_me() {
+\treturn true;
+}
+`;
+
+	const range = findPhpFunctionRange(source, "wp_typia_demo");
+
+	expect(range).not.toBeNull();
+	expect(range?.source).toContain(`$json = '{"key": {"nested": true}}';`);
+	expect(range?.source).toContain('$template = "Hello {name}";');
+	expect(range?.source).not.toContain("function keep_me()");
+});
+
+test("findPhpFunctionRange ignores braces inside heredoc and nowdoc content", () => {
+	const source = `<?php
+function wp_typia_demo() {
+\t$json = <<<JSON
+{
+\t"query": {"postType": "page"}
+}
+\tJSON;
+\t$raw = <<<'NOWDOC'
+{
+\t"literal": "{$notInterpolated}"
+}
+\tNOWDOC;
+\treturn array();
+}
+
+function keep_me() {
+\treturn true;
+}
+`;
+
+	const range = findPhpFunctionRange(source, "wp_typia_demo");
+
+	expect(range).not.toBeNull();
+	expect(range?.source).toContain("<<<JSON");
+	expect(range?.source).toContain("<<<'NOWDOC'");
+	expect(range?.source).not.toContain("function keep_me()");
+});
+
+test("findPhpFunctionRange accepts heredoc expression continuations", () => {
+	const source = `<?php
+function wp_typia_demo() {
+\t$values = array(
+\t\t<<<JSON
+{
+\t"query": {"postType": "page"}
+}
+\t\tJSON,
+\t);
+\t$trimmed = trim( <<<TEXT
+{
+\t"label": "demo"
+}
+\tTEXT );
+\t$nonEmpty = <<<TEXT
+demo
+\tTEXT !== '';
+
+\treturn array( $values, $trimmed, $nonEmpty );
+}
+
+function keep_me() {
+\treturn true;
+}
+`;
+
+	const range = findPhpFunctionRange(source, "wp_typia_demo");
+
+	expect(range).not.toBeNull();
+	expect(range?.source).toContain("JSON,");
+	expect(range?.source).toContain("TEXT );");
+	expect(range?.source).toContain("TEXT !== '';");
+	expect(range?.source).toContain("return array( $values, $trimmed, $nonEmpty );");
+	expect(range?.source).not.toContain("function keep_me()");
+});
+
+test("findPhpFunctionRange preserves PHP 8 attributes instead of treating them as comments", () => {
+	const source = `<?php
+function wp_typia_demo() {
+\t#[ExampleAttribute] class LocalThing {
+\t\tpublic function value() {
+\t\t\treturn true;
+\t\t}
+\t}
+
+\treturn array();
+}
+
+function keep_me() {
+\treturn true;
+}
+`;
+
+	const range = findPhpFunctionRange(source, "wp_typia_demo");
+
+	expect(range).not.toBeNull();
+	expect(range?.source).toContain("#[ExampleAttribute] class LocalThing");
+	expect(range?.source).toContain("return array();");
+	expect(range?.source).not.toContain("function keep_me()");
+});
+
+test("findPhpFunctionRange returns null for unterminated heredoc content", () => {
+	const source = `<?php
+function wp_typia_demo() {
+\t$json = <<<JSON
+{
+\t"query": {"postType": "page"}
+}
+
+function keep_me() {
+\treturn true;
+}
+`;
+
+	expect(findPhpFunctionRange(source, "wp_typia_demo")).toBeNull();
+});
+
+test("hasPhpFunctionCall ignores comments, strings, heredoc, and nowdoc", () => {
+	const source = `<?php
+function wp_typia_demo() {
+\t// wp_enqueue_script_module(
+\t$single = 'wp_enqueue_script_module(';
+\t$double = "wp_enqueue_script_module(";
+\t$heredoc = <<<TEXT
+wp_enqueue_script_module(
+TEXT;
+\treturn true;
+}
+`;
+
+	expect(hasPhpFunctionCall(source, "wp_enqueue_script_module")).toBe(false);
+	expect(
+		hasPhpFunctionCall(
+			`${source}\nwp_enqueue_script_module( 'demo', 'url', array(), null );\n`,
+			"wp_enqueue_script_module",
+		),
+	).toBe(true);
+	expect(
+		hasPhpFunctionCall(
+			`${source}\nwp_enqueue_script_module/* reason */( 'demo', 'url', array(), null );\n`,
+			"wp_enqueue_script_module",
+		),
+	).toBe(true);
+	expect(
+		hasPhpFunctionCall(
+			`${source}\nwp_enqueue_script_module // reason\n( 'demo', 'url', array(), null );\n`,
+			"wp_enqueue_script_module",
+		),
+	).toBe(true);
 });
 
 test("replacePhpFunctionDefinition replaces only the targeted PHP function", () => {

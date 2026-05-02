@@ -48,6 +48,7 @@ import {
 import {
 	escapeRegex,
 	findPhpFunctionRange,
+	hasPhpFunctionCall,
 	hasPhpFunctionDefinition,
 	replacePhpFunctionDefinition,
 } from "./php-utils.js";
@@ -204,18 +205,25 @@ function ${enqueueFunctionName}() {
 				nextSource,
 				enqueueFunction,
 			);
-		} else if (
-			!findPhpFunctionRange(nextSource, enqueueFunctionName)?.source.includes(
-				"wp_enqueue_script_module",
-			)
-		) {
-			nextSource =
-				replacePhpFunctionDefinition(
+		} else {
+			const functionRange = findPhpFunctionRange(nextSource, enqueueFunctionName);
+			const functionSource = functionRange
+				? nextSource.slice(functionRange.start, functionRange.end)
+				: "";
+			if (!hasPhpFunctionCall(functionSource, "wp_enqueue_script_module")) {
+				const replacedSource = replacePhpFunctionDefinition(
 					nextSource,
 					enqueueFunctionName,
 					enqueueFunction,
 					{ trimReplacementStart: true },
-				) ?? nextSource;
+				);
+				if (!replacedSource) {
+					throw new Error(
+						`Unable to repair ${path.basename(bootstrapPath)} for ${enqueueFunctionName}.`,
+					);
+				}
+				nextSource = replacedSource;
+			}
 		}
 
 		if (!nextSource.includes(loadHook)) {

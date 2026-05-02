@@ -55,6 +55,8 @@ function seedLegacyAbilityWorkspace(targetDir: string, workspaceSlug: string) {
 
 function demo_space_enqueue_workflow_abilities() {
 \t// Legacy ability enqueue marker.
+\t// wp_enqueue_script_module( is only mentioned here, not called.
+\t$legacy_note = 'wp_enqueue_script_module(';
 \twp_enqueue_script(
 \t\t'demo-space-legacy-abilities',
 \t\tplugins_url( 'build/abilities/index.js', __FILE__ ),
@@ -91,6 +93,51 @@ describe("@wp-typia/project-tools cli-add-workspace ability", () => {
 		);
 		expect(errorMessage).toContain(
 			"Ability name must start with a letter and contain only lowercase letters, numbers, and hyphens.",
+		);
+		expect(
+			fs.existsSync(path.join(targetDir, "src", "abilities", "review-workflow")),
+		).toBe(false);
+		expect(
+			fs.existsSync(
+				path.join(targetDir, "inc", "abilities", "review-workflow.php"),
+			),
+		).toBe(false);
+		expect(readWorkspaceInventory(targetDir).abilities).toHaveLength(0);
+	}, 20_000);
+
+	test("ability add rolls back when legacy bootstrap function range is unsafe", async () => {
+		const targetDir = path.join(tempRoot, "demo-workspace-add-ability-unsafe-bootstrap");
+		const workspaceSlug = "demo-workspace-add-ability-unsafe-bootstrap";
+
+		await scaffoldAbilityWorkspace(
+			targetDir,
+			workspaceSlug,
+			"Demo Workspace Add Ability Unsafe Bootstrap",
+			"Demo workspace add ability unsafe bootstrap",
+		);
+
+		const bootstrapPath = path.join(targetDir, `${workspaceSlug}.php`);
+		fs.writeFileSync(
+			bootstrapPath,
+			`${fs.readFileSync(bootstrapPath, "utf8").trimEnd()}
+
+function demo_space_enqueue_workflow_abilities() {
+\t$payload = <<<JSON
+{
+\t"brace": "{"
+}
+`,
+			"utf8",
+		);
+
+		const errorMessage = getCommandErrorMessage(() =>
+			runCli("node", [entryPath, "add", "ability", "review-workflow"], {
+				cwd: targetDir,
+			}),
+		);
+
+		expect(errorMessage).toContain(
+			`Unable to repair ${workspaceSlug}.php for demo_space_enqueue_workflow_abilities.`,
 		);
 		expect(
 			fs.existsSync(path.join(targetDir, "src", "abilities", "review-workflow")),
