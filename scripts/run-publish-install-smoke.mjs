@@ -19,6 +19,7 @@ const PACKAGE_CHAIN = [
 	["packages/wp-typia-api-client", "@wp-typia/api-client"],
 	["packages/wp-typia-rest", "@wp-typia/rest"],
 	["packages/wp-typia-block-types", "@wp-typia/block-types"],
+	["packages/wp-typia-dataviews", "@wp-typia/dataviews"],
 	["packages/wp-typia-block-runtime", "@wp-typia/block-runtime"],
 	["packages/wp-typia-project-tools", "@wp-typia/project-tools"],
 	["packages/wp-typia", "wp-typia"],
@@ -27,6 +28,7 @@ const GENERATED_PROJECT_OVERRIDE_PACKAGES = [
 	"@wp-typia/api-client",
 	"@wp-typia/rest",
 	"@wp-typia/block-types",
+	"@wp-typia/dataviews",
 	"@wp-typia/block-runtime",
 ];
 const npmCommand = getNpmCommand();
@@ -197,6 +199,7 @@ withTempDir("wp-typia-publish-install-smoke-", (tempRoot) => {
 	fs.mkdirSync(projectDir, { recursive: true });
 	writeJson(path.join(projectDir, "package.json"), {
 		dependencies: {
+			"@wp-typia/dataviews": `file:${tarballs.get("@wp-typia/dataviews")}`,
 			"wp-typia": `file:${tarballs.get("wp-typia")}`,
 		},
 		name: "wp-typia-publish-install-smoke",
@@ -275,6 +278,23 @@ withTempDir("wp-typia-publish-install-smoke-", (tempRoot) => {
 			'\tif (typeof value !== "function") {',
 			'\t\tthrow new Error(`Expected ${name} to be a function export.`);',
 			"\t}",
+			"}",
+			"",
+		].join("\n"),
+	);
+
+	runScript(
+		projectDir,
+		"node",
+		"dataviews-export-smoke.mjs",
+		[
+			'import { DATAVIEWS_FIELD_TYPES, DATAVIEWS_LAYOUT_TYPES } from "@wp-typia/dataviews";',
+			"",
+			'if (!DATAVIEWS_LAYOUT_TYPES.includes("table")) {',
+			'\tthrow new Error("Expected @wp-typia/dataviews to publish DataViews layout constants.");',
+			"}",
+			'if (!DATAVIEWS_FIELD_TYPES.includes("text")) {',
+			'\tthrow new Error("Expected @wp-typia/dataviews to publish DataViews field constants.");',
 			"}",
 			"",
 		].join("\n"),
@@ -431,7 +451,7 @@ withTempDir("wp-typia-publish-install-smoke-", (tempRoot) => {
 	typecheckGeneratedProject(compoundDir);
 
 	process.stdout.write(
-		`Verified published-install smoke for wp-typia ${parsed.data.version}, bundled Bunli metadata, runtime wrapper exports, block-runtime metadata sync, project-tools runtime paths, and generated basic/compound scaffold installs.\n`,
+		`Verified published-install smoke for wp-typia ${parsed.data.version}, bundled Bunli metadata, dataviews exports, runtime wrapper exports, block-runtime metadata sync, project-tools runtime paths, and generated basic/compound scaffold installs.\n`,
 	);
 });
 
