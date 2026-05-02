@@ -61,6 +61,10 @@ test('cli-add-workspace delegates asset, rest-resource, ai-feature, and admin-vi
     path.join(runtimeRoot, 'cli-add-workspace-admin-view-scaffold.ts'),
     'utf8',
   );
+  const mutationSource = fs.readFileSync(
+    path.join(runtimeRoot, 'cli-add-workspace-mutation.ts'),
+    'utf8',
+  );
 
   expect(addWorkspaceSource).toContain(
     'from "./cli-add-workspace-admin-view.js"',
@@ -228,5 +232,19 @@ test('cli-add-workspace delegates asset, rest-resource, ai-feature, and admin-vi
     expect(scaffoldSource).toContain('executeWorkspaceMutationPlan');
     expect(scaffoldSource).not.toContain('rollbackWorkspaceMutation');
     expect(scaffoldSource).not.toContain('snapshotWorkspaceFiles');
+  }
+  expect(mutationSource).toContain('insertPhpSnippetBeforeWorkspaceAnchors');
+  expect(mutationSource).toContain('appendPhpSnippetBeforeClosingTag');
+  for (const bootstrapAnchorSource of [
+    aiAnchorsSource,
+    restAnchorsSource,
+    assetsSource,
+  ]) {
+    expect(bootstrapAnchorSource).toContain(
+      'insertPhpSnippetBeforeWorkspaceAnchors',
+    );
+    expect(bootstrapAnchorSource).toContain('appendPhpSnippetBeforeClosingTag');
+    expect(bootstrapAnchorSource).not.toContain('const insertPhpSnippet');
+    expect(bootstrapAnchorSource).not.toContain('const appendPhpSnippet');
   }
 });

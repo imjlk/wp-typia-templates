@@ -41,6 +41,10 @@ import {
 	type WorkspaceMutationSnapshot,
 	snapshotWorkspaceFiles,
 } from "./cli-add-shared.js";
+import {
+	appendPhpSnippetBeforeClosingTag,
+	insertPhpSnippetBeforeWorkspaceAnchors,
+} from "./cli-add-workspace-mutation.js";
 import { normalizeOptionalCliString } from "./cli-validation.js";
 
 const PATTERN_BOOTSTRAP_CATEGORY = "register_block_pattern_category";
@@ -783,41 +787,30 @@ function ${bindingEditorEnqueueFunctionName}() {
 }
 `;
 
-		const insertionAnchors = [
-			/add_action\(\s*["']init["']\s*,\s*["'][^"']+_load_textdomain["']\s*\);\s*\n/u,
-			/\?>\s*$/u,
-		];
-		const insertPhpSnippet = (snippet: string): void => {
-			for (const anchor of insertionAnchors) {
-				const candidate = nextSource.replace(anchor, (match) => `${snippet}\n${match}`);
-				if (candidate !== nextSource) {
-					nextSource = candidate;
-					return;
-				}
-			}
-			nextSource = `${nextSource.trimEnd()}\n${snippet}\n`;
-		};
-		const appendPhpSnippet = (snippet: string): void => {
-			const closingTagPattern = /\?>\s*$/u;
-			if (closingTagPattern.test(nextSource)) {
-				nextSource = nextSource.replace(closingTagPattern, `${snippet}\n?>`);
-				return;
-			}
-			nextSource = `${nextSource.trimEnd()}\n${snippet}\n`;
-		};
-
 		if (!hasPhpFunctionDefinition(nextSource, bindingRegistrationFunctionName)) {
-			insertPhpSnippet(bindingRegistrationFunction);
+			nextSource = insertPhpSnippetBeforeWorkspaceAnchors(
+				nextSource,
+				bindingRegistrationFunction,
+			);
 		}
 		if (!hasPhpFunctionDefinition(nextSource, bindingEditorEnqueueFunctionName)) {
-			insertPhpSnippet(bindingEditorEnqueueFunction);
+			nextSource = insertPhpSnippetBeforeWorkspaceAnchors(
+				nextSource,
+				bindingEditorEnqueueFunction,
+			);
 		}
 
 		if (!nextSource.includes(bindingRegistrationHook)) {
-			appendPhpSnippet(bindingRegistrationHook);
+			nextSource = appendPhpSnippetBeforeClosingTag(
+				nextSource,
+				bindingRegistrationHook,
+			);
 		}
 		if (!nextSource.includes(bindingEditorEnqueueHook)) {
-			appendPhpSnippet(bindingEditorEnqueueHook);
+			nextSource = appendPhpSnippetBeforeClosingTag(
+				nextSource,
+				bindingEditorEnqueueHook,
+			);
 		}
 
 		return nextSource;
@@ -871,31 +864,8 @@ function ${enqueueFunctionName}() {
 }
 `;
 
-		const insertionAnchors = [
-			/add_action\(\s*["']init["']\s*,\s*["'][^"']+_load_textdomain["']\s*\);\s*\n/u,
-			/\?>\s*$/u,
-		];
-		const insertPhpSnippet = (snippet: string): void => {
-			for (const anchor of insertionAnchors) {
-				const candidate = nextSource.replace(anchor, (match) => `${snippet}\n${match}`);
-				if (candidate !== nextSource) {
-					nextSource = candidate;
-					return;
-				}
-			}
-			nextSource = `${nextSource.trimEnd()}\n${snippet}\n`;
-		};
-		const appendPhpSnippet = (snippet: string): void => {
-			const closingTagPattern = /\?>\s*$/u;
-			if (closingTagPattern.test(nextSource)) {
-				nextSource = nextSource.replace(closingTagPattern, `${snippet}\n?>`);
-				return;
-			}
-			nextSource = `${nextSource.trimEnd()}\n${snippet}\n`;
-		};
-
 		if (!hasPhpFunctionDefinition(nextSource, enqueueFunctionName)) {
-			insertPhpSnippet(enqueueFunction);
+			nextSource = insertPhpSnippetBeforeWorkspaceAnchors(nextSource, enqueueFunction);
 		} else {
 			const requiredReferences = [
 				EDITOR_PLUGIN_EDITOR_SCRIPT,
@@ -927,7 +897,7 @@ function ${enqueueFunctionName}() {
 		}
 
 		if (!nextSource.includes(enqueueHook)) {
-			appendPhpSnippet(enqueueHook);
+			nextSource = appendPhpSnippetBeforeClosingTag(nextSource, enqueueHook);
 		}
 
 		return nextSource;

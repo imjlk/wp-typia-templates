@@ -125,6 +125,17 @@ describe("workspace PHP snippet helpers", () => {
 		);
 	});
 
+	test("inserts snippets before closing tags when textdomain anchors are absent", () => {
+		const source = "<?php\n?>\n";
+
+		expect(
+			insertPhpSnippetBeforeWorkspaceAnchors(
+				source,
+				"function demo_register_rest_resources() {}",
+			),
+		).toBe("<?php\nfunction demo_register_rest_resources() {}\n?>\n");
+	});
+
 	test("appends snippets before closing tags", () => {
 		const source = "<?php\n?>\n";
 
