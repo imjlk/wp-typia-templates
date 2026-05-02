@@ -2,8 +2,7 @@ import {
   CLI_DIAGNOSTIC_CODES,
   createCliCommandError,
 } from '@wp-typia/project-tools/cli-diagnostics';
-import { COMMAND_ROUTING_METADATA } from './command-option-metadata';
-import { findFirstPositional } from '../bin/argv-walker.js';
+import { resolveEntrypointCliCommand } from './cli-command-resolution';
 
 export const SUPPORTED_CLI_OUTPUT_FORMATS = ['json', 'toon'] as const;
 
@@ -21,10 +20,6 @@ export function isSupportedCliOutputFormat(
 
 export function formatInvalidCliOutputFormatMessage(value: string): string {
   return `Invalid --format value "${value}". Supported values: ${formatSupportedCliOutputFormats()}.`;
-}
-
-function resolveEntrypointCliCommand(argv: string[]): string {
-  return findFirstPositional(argv, COMMAND_ROUTING_METADATA) ?? 'wp-typia';
 }
 
 function assertSupportedCliOutputFormat(

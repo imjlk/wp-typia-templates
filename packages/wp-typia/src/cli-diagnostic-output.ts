@@ -3,9 +3,8 @@ import {
   serializeCliDiagnosticError,
   type CliDiagnosticCode,
 } from '@wp-typia/project-tools/cli-diagnostics';
-import { COMMAND_ROUTING_METADATA } from './command-option-metadata';
+import { resolveEntrypointCliCommand } from './cli-command-resolution';
 import { isSupportedCliOutputFormat } from './cli-output-format';
-import { findFirstPositional } from '../bin/argv-walker.js';
 
 type CliStructuredOutputArgs = {
   agent?: unknown;
@@ -27,10 +26,6 @@ type EmitCliDiagnosticFailureOptions = {
   extraOutput?: Record<string, unknown>;
   summary?: string;
 };
-
-function resolveEntrypointCliCommand(argv: string[]): string {
-  return findFirstPositional(argv, COMMAND_ROUTING_METADATA) ?? 'wp-typia';
-}
 
 function writeStructuredCliJsonToStderr(
   payload: Record<string, unknown>,
