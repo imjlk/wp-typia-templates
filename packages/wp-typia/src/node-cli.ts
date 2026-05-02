@@ -102,7 +102,7 @@ const NODE_FALLBACK_RUNTIME_SUMMARY_LINES = [
   'Output markers: WP_TYPIA_ASCII=1 forces ASCII markers, WP_TYPIA_ASCII=0 opts back into Unicode markers, and non-empty NO_COLOR requests ASCII markers when WP_TYPIA_ASCII is unset.',
 ];
 
-const printLine: PrintLine = (line = '') => {
+const printLine: PrintLine = (line) => {
   console.log(line);
 };
 
