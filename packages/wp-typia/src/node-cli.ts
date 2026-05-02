@@ -40,6 +40,7 @@ import {
   mergeWpTypiaUserConfig,
 } from './config';
 import { extractWpTypiaConfigOverride } from './config-override';
+import type { PrintLine } from './print-line';
 import {
   executeAddCommand,
   executeCreateCommand,
@@ -101,9 +102,9 @@ const NODE_FALLBACK_RUNTIME_SUMMARY_LINES = [
   'Output markers: WP_TYPIA_ASCII=1 forces ASCII markers, WP_TYPIA_ASCII=0 opts back into Unicode markers, and non-empty NO_COLOR requests ASCII markers when WP_TYPIA_ASCII is unset.',
 ];
 
-function printLine(line = '') {
+const printLine: PrintLine = (line) => {
   console.log(line);
-}
+};
 
 function printBlock(lines: string[]) {
   for (const line of lines) {
