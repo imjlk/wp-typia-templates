@@ -17,6 +17,12 @@ test("toKebabCase keeps acronym runs together", () => {
 	expect(toKebabCase("HeroCTABlock")).toBe("hero-cta-block");
 });
 
+test("toKebabCase avoids inventing boundaries in acronym-lowercase words", () => {
+	expect(toKebabCase("URLslug")).toBe("urlslug");
+	expect(toKebabCase("HTTPserver")).toBe("httpserver");
+	expect(toKebabCase("XMLparser")).toBe("xmlparser");
+});
+
 test("toKebabCase preserves common slug normalization behavior", () => {
 	expect(toKebabCase("Demo Card")).toBe("demo-card");
 	expect(toKebabCase("demo_card")).toBe("demo-card");
