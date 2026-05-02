@@ -192,6 +192,12 @@ describe('package version cache invalidation', () => {
         'utf8',
       ),
     ) as { version?: string };
+    expect(typeof dataViewsPackageJson.version).toBe('string');
+    if (typeof dataViewsPackageJson.version !== 'string') {
+      throw new Error(
+        'packages/wp-typia-dataviews/package.json is missing a string "version".',
+      );
+    }
 
     expect(DEFAULT_WORDPRESS_ABILITIES_VERSION).toBe('^0.10.0');
     expect(DEFAULT_WORDPRESS_CORE_ABILITIES_VERSION).toBe('^0.9.0');
