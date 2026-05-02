@@ -338,6 +338,24 @@ function isJsonSchemaObject(value: unknown): value is JsonSchemaObject {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
+/**
+ * Narrow a `typia.llm` artifact field before applying JSON Schema mutations.
+ *
+ * @param value Candidate schema value emitted by `typia.llm`.
+ * @param context Human-readable artifact path for diagnostics.
+ * @returns The value narrowed to the shared JSON Schema object shape.
+ */
+export function assertJsonSchemaObject(
+  value: unknown,
+  context: string,
+): JsonSchemaObject {
+  if (isJsonSchemaObject(value)) {
+    return value;
+  }
+
+  throw new Error(`${context} must be a JSON Schema object.`);
+}
+
 function decodeJsonPointerSegment(segment: string): string {
   return segment.replace(/~1/g, '/').replace(/~0/g, '~');
 }
@@ -1035,21 +1053,22 @@ export function applyOpenApiConstraintsToTypiaLlmFunctionArtifact({
     operation,
     openApiDocument,
   );
+  const parameterSchema = assertJsonSchemaObject(
+    constrainedArtifact.parameters,
+    `typia.llm parameters for "${constrainedArtifact.name}"`,
+  );
 
   if (requestBodySchema) {
     if (hasQueryParameters) {
       mergeJsonSchemaConstraintProperties(
         openApiDocument,
-        getOrCreateObjectProperty(
-          constrainedArtifact.parameters as unknown as JsonSchemaObject,
-          'body',
-        ),
+        getOrCreateObjectProperty(parameterSchema, 'body'),
         requestBodySchema,
       );
     } else {
       mergeJsonSchemaConstraintProperties(
         openApiDocument,
-        constrainedArtifact.parameters as unknown as JsonSchemaObject,
+        parameterSchema,
         requestBodySchema,
       );
     }
@@ -1058,11 +1077,8 @@ export function applyOpenApiConstraintsToTypiaLlmFunctionArtifact({
   if (hasQueryParameters) {
     applyOpenApiQueryParameterConstraints(
       requestBodySchema
-        ? getOrCreateObjectProperty(
-            constrainedArtifact.parameters as unknown as JsonSchemaObject,
-            'query',
-          )
-        : (constrainedArtifact.parameters as unknown as JsonSchemaObject),
+        ? getOrCreateObjectProperty(parameterSchema, 'query')
+        : parameterSchema,
       operation,
       openApiDocument,
     );
@@ -1076,7 +1092,10 @@ export function applyOpenApiConstraintsToTypiaLlmFunctionArtifact({
     if (responseSchema) {
       mergeJsonSchemaConstraintProperties(
         openApiDocument,
-        constrainedArtifact.output as unknown as JsonSchemaObject,
+        assertJsonSchemaObject(
+          constrainedArtifact.output,
+          `typia.llm output for "${constrainedArtifact.name}"`,
+        ),
         responseSchema,
       );
     }
