@@ -194,6 +194,28 @@ describe('Node fallback CLI core routing', () => {
       expect(result.stdout).toContain('Template: basic');
       expect(result.stdout).toContain('No files were written');
       expect(fs.existsSync(path.join(tempRoot, 'demo-card'))).toBe(false);
+
+      const textResult = await captureNodeCli(
+        [
+          'create',
+          'text-card',
+          '--dry-run',
+          '--template',
+          'basic',
+          '--yes',
+          '--format',
+          'text',
+        ],
+        { cwd: tempRoot },
+      );
+
+      expect(textResult.error).toBeUndefined();
+      expect(textResult.exitCode).toBe(0);
+      expect(textResult.stderr).toBe('');
+      expect(textResult.stdout).toContain('Dry run for Text Card');
+      expect(textResult.stdout).toContain('Template: basic');
+      expect(textResult.stdout.trim()).not.toMatch(/^\{/u);
+      expect(fs.existsSync(path.join(tempRoot, 'text-card'))).toBe(false);
     } finally {
       removeTempRoot(tempRoot);
     }
@@ -254,6 +276,17 @@ describe('Node fallback CLI core routing', () => {
     expect(result.error).toBeInstanceOf(Error);
     expect((result.error as Error).message).toContain(
       'Invalid --format value "jso". Supported values: json, text.',
+    );
+  });
+
+  test('reports missing output format values before Node fallback dispatch', async () => {
+    const result = await captureNodeCli(['doctor', '--format']);
+
+    expect(result.stdout).toBe('');
+    expect(result.stderr).toBe('');
+    expect(result.error).toBeInstanceOf(Error);
+    expect((result.error as Error).message).toContain(
+      '`--format` requires a value.',
     );
   });
 
