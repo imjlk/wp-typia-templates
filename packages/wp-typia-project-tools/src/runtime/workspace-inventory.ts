@@ -163,6 +163,55 @@ export interface WorkspaceInventory {
 	variations: WorkspaceVariationInventoryEntry[];
 }
 
+type WorkspaceInventoryParseResult = Omit<WorkspaceInventory, "blockConfigPath">;
+
+type WorkspaceInventoryEntriesKey = {
+	[Key in keyof WorkspaceInventoryParseResult]: WorkspaceInventoryParseResult[Key] extends unknown[]
+		? Key
+		: never;
+}[keyof WorkspaceInventoryParseResult];
+
+type WorkspaceInventorySectionFlagKey = {
+	[Key in keyof WorkspaceInventoryParseResult]: WorkspaceInventoryParseResult[Key] extends boolean
+		? Key
+		: never;
+}[keyof WorkspaceInventoryParseResult];
+
+type InventoryEntryFieldValidationContext = {
+	elementIndex: number;
+	entryName: string;
+	key: string;
+};
+
+type InventoryEntryFieldDescriptor = {
+	key: string;
+	kind?: "string" | "stringArray";
+	required?: boolean;
+	validate?: (
+		value: string | string[] | undefined,
+		context: InventoryEntryFieldValidationContext,
+	) => void;
+};
+
+type InventoryEntryParserDescriptor = {
+	entryName: string;
+	fields: readonly InventoryEntryFieldDescriptor[];
+};
+
+type TypedInventoryEntryFieldDescriptor<T extends object> = Omit<
+	InventoryEntryFieldDescriptor,
+	"key"
+> & {
+	key: Extract<keyof T, string>;
+};
+
+function defineInventoryEntryParser<T extends object>(descriptor: {
+	entryName: string;
+	fields: readonly TypedInventoryEntryFieldDescriptor<T>[];
+}): InventoryEntryParserDescriptor {
+	return descriptor;
+}
+
 export const BLOCK_CONFIG_ENTRY_MARKER = "\t// wp-typia add block entries";
 export const VARIATION_CONFIG_ENTRY_MARKER = "\t// wp-typia add variation entries";
 export const BLOCK_STYLE_CONFIG_ENTRY_MARKER = "\t// wp-typia add style entries";
@@ -389,6 +438,14 @@ type InventorySectionDescriptor = {
 		name: string;
 		section: string;
 	};
+	/** Optional parser metadata for descriptor-driven inventory reads. */
+	parse?: {
+		entriesKey: WorkspaceInventoryEntriesKey;
+		entry: InventoryEntryParserDescriptor;
+		exportName?: string;
+		hasSectionKey?: WorkspaceInventorySectionFlagKey;
+		required?: boolean;
+	};
 	/** Optional exported const array that stores the inventory section entries. */
 	value?: {
 		name: string;
@@ -396,11 +453,41 @@ type InventorySectionDescriptor = {
 	};
 };
 
+const BLOCK_INVENTORY_SECTION: InventorySectionDescriptor = {
+	parse: {
+		entriesKey: "blocks",
+		entry: defineInventoryEntryParser<WorkspaceBlockInventoryEntry>({
+			entryName: "BLOCKS",
+			fields: [
+				{ key: "apiTypesFile" },
+				{ key: "attributeTypeName" },
+				{ key: "openApiFile" },
+				{ key: "slug", required: true },
+				{ key: "typesFile", required: true },
+			],
+		}),
+		exportName: "BLOCKS",
+		required: true,
+	},
+};
+
 const INVENTORY_SECTIONS: readonly InventorySectionDescriptor[] = [
 	{
 		interface: {
 			name: "WorkspaceVariationConfig",
 			section: VARIATIONS_INTERFACE_SECTION,
+		},
+		parse: {
+			entriesKey: "variations",
+			entry: defineInventoryEntryParser<WorkspaceVariationInventoryEntry>({
+				entryName: "VARIATIONS",
+				fields: [
+					{ key: "block", required: true },
+					{ key: "file", required: true },
+					{ key: "slug", required: true },
+				],
+			}),
+			hasSectionKey: "hasVariationsSection",
 		},
 		value: {
 			name: "VARIATIONS",
@@ -412,6 +499,18 @@ const INVENTORY_SECTIONS: readonly InventorySectionDescriptor[] = [
 			name: "WorkspaceBlockStyleConfig",
 			section: BLOCK_STYLES_INTERFACE_SECTION,
 		},
+		parse: {
+			entriesKey: "blockStyles",
+			entry: defineInventoryEntryParser<WorkspaceBlockStyleInventoryEntry>({
+				entryName: "BLOCK_STYLES",
+				fields: [
+					{ key: "block", required: true },
+					{ key: "file", required: true },
+					{ key: "slug", required: true },
+				],
+			}),
+			hasSectionKey: "hasBlockStylesSection",
+		},
 		value: {
 			name: "BLOCK_STYLES",
 			section: BLOCK_STYLES_CONST_SECTION,
@@ -421,6 +520,20 @@ const INVENTORY_SECTIONS: readonly InventorySectionDescriptor[] = [
 		interface: {
 			name: "WorkspaceBlockTransformConfig",
 			section: BLOCK_TRANSFORMS_INTERFACE_SECTION,
+		},
+		parse: {
+			entriesKey: "blockTransforms",
+			entry: defineInventoryEntryParser<WorkspaceBlockTransformInventoryEntry>({
+				entryName: "BLOCK_TRANSFORMS",
+				fields: [
+					{ key: "block", required: true },
+					{ key: "file", required: true },
+					{ key: "from", required: true },
+					{ key: "slug", required: true },
+					{ key: "to", required: true },
+				],
+			}),
+			hasSectionKey: "hasBlockTransformsSection",
 		},
 		value: {
 			name: "BLOCK_TRANSFORMS",
@@ -432,6 +545,17 @@ const INVENTORY_SECTIONS: readonly InventorySectionDescriptor[] = [
 			name: "WorkspacePatternConfig",
 			section: PATTERNS_INTERFACE_SECTION,
 		},
+		parse: {
+			entriesKey: "patterns",
+			entry: defineInventoryEntryParser<WorkspacePatternInventoryEntry>({
+				entryName: "PATTERNS",
+				fields: [
+					{ key: "file", required: true },
+					{ key: "slug", required: true },
+				],
+			}),
+			hasSectionKey: "hasPatternsSection",
+		},
 		value: {
 			name: "PATTERNS",
 			section: PATTERNS_CONST_SECTION,
@@ -441,6 +565,20 @@ const INVENTORY_SECTIONS: readonly InventorySectionDescriptor[] = [
 		interface: {
 			name: "WorkspaceBindingSourceConfig",
 			section: BINDING_SOURCES_INTERFACE_SECTION,
+		},
+		parse: {
+			entriesKey: "bindingSources",
+			entry: defineInventoryEntryParser<WorkspaceBindingSourceInventoryEntry>({
+				entryName: "BINDING_SOURCES",
+				fields: [
+					{ key: "attribute" },
+					{ key: "block" },
+					{ key: "editorFile", required: true },
+					{ key: "serverFile", required: true },
+					{ key: "slug", required: true },
+				],
+			}),
+			hasSectionKey: "hasBindingSourcesSection",
 		},
 		value: {
 			name: "BINDING_SOURCES",
@@ -452,6 +590,41 @@ const INVENTORY_SECTIONS: readonly InventorySectionDescriptor[] = [
 			name: "WorkspaceRestResourceConfig",
 			section: REST_RESOURCES_INTERFACE_SECTION,
 		},
+		parse: {
+			entriesKey: "restResources",
+			entry: defineInventoryEntryParser<WorkspaceRestResourceInventoryEntry>({
+				entryName: "REST_RESOURCES",
+				fields: [
+					{ key: "apiFile", required: true },
+					{ key: "clientFile", required: true },
+					{ key: "dataFile", required: true },
+					{
+						key: "methods",
+						kind: "stringArray",
+						required: true,
+						validate: (value, context) => {
+							const methods = Array.isArray(value) ? value : [];
+							const invalidMethods = methods.filter(
+								(method) =>
+									!(REST_RESOURCE_METHOD_IDS as readonly string[]).includes(method),
+							);
+							if (invalidMethods.length > 0) {
+								throw new Error(
+									`${context.entryName}[${context.elementIndex}].${context.key} includes unsupported values: ${invalidMethods.join(", ")}.`,
+								);
+							}
+						},
+					},
+					{ key: "namespace", required: true },
+					{ key: "openApiFile", required: true },
+					{ key: "phpFile", required: true },
+					{ key: "slug", required: true },
+					{ key: "typesFile", required: true },
+					{ key: "validatorsFile", required: true },
+				],
+			}),
+			hasSectionKey: "hasRestResourcesSection",
+		},
 		value: {
 			name: "REST_RESOURCES",
 			section: REST_RESOURCES_CONST_SECTION,
@@ -461,6 +634,25 @@ const INVENTORY_SECTIONS: readonly InventorySectionDescriptor[] = [
 		interface: {
 			name: "WorkspaceAbilityConfig",
 			section: ABILITIES_INTERFACE_SECTION,
+		},
+		parse: {
+			entriesKey: "abilities",
+			entry: defineInventoryEntryParser<WorkspaceAbilityInventoryEntry>({
+				entryName: "ABILITIES",
+				fields: [
+					{ key: "clientFile", required: true },
+					{ key: "configFile", required: true },
+					{ key: "dataFile", required: true },
+					{ key: "inputSchemaFile", required: true },
+					{ key: "inputTypeName", required: true },
+					{ key: "outputSchemaFile", required: true },
+					{ key: "outputTypeName", required: true },
+					{ key: "phpFile", required: true },
+					{ key: "slug", required: true },
+					{ key: "typesFile", required: true },
+				],
+			}),
+			hasSectionKey: "hasAbilitiesSection",
 		},
 		value: {
 			name: "ABILITIES",
@@ -472,6 +664,25 @@ const INVENTORY_SECTIONS: readonly InventorySectionDescriptor[] = [
 			name: "WorkspaceAiFeatureConfig",
 			section: AI_FEATURES_INTERFACE_SECTION,
 		},
+		parse: {
+			entriesKey: "aiFeatures",
+			entry: defineInventoryEntryParser<WorkspaceAiFeatureInventoryEntry>({
+				entryName: "AI_FEATURES",
+				fields: [
+					{ key: "aiSchemaFile", required: true },
+					{ key: "apiFile", required: true },
+					{ key: "clientFile", required: true },
+					{ key: "dataFile", required: true },
+					{ key: "namespace", required: true },
+					{ key: "openApiFile", required: true },
+					{ key: "phpFile", required: true },
+					{ key: "slug", required: true },
+					{ key: "typesFile", required: true },
+					{ key: "validatorsFile", required: true },
+				],
+			}),
+			hasSectionKey: "hasAiFeaturesSection",
+		},
 		value: {
 			name: "AI_FEATURES",
 			section: AI_FEATURES_CONST_SECTION,
@@ -482,6 +693,19 @@ const INVENTORY_SECTIONS: readonly InventorySectionDescriptor[] = [
 			name: "WorkspaceAdminViewConfig",
 			section: ADMIN_VIEWS_INTERFACE_SECTION,
 		},
+		parse: {
+			entriesKey: "adminViews",
+			entry: defineInventoryEntryParser<WorkspaceAdminViewInventoryEntry>({
+				entryName: "ADMIN_VIEWS",
+				fields: [
+					{ key: "file", required: true },
+					{ key: "phpFile", required: true },
+					{ key: "slug", required: true },
+					{ key: "source" },
+				],
+			}),
+			hasSectionKey: "hasAdminViewsSection",
+		},
 		value: {
 			name: "ADMIN_VIEWS",
 			section: ADMIN_VIEWS_CONST_SECTION,
@@ -491,6 +715,18 @@ const INVENTORY_SECTIONS: readonly InventorySectionDescriptor[] = [
 		interface: {
 			name: "WorkspaceEditorPluginConfig",
 			section: EDITOR_PLUGINS_INTERFACE_SECTION,
+		},
+		parse: {
+			entriesKey: "editorPlugins",
+			entry: defineInventoryEntryParser<WorkspaceEditorPluginInventoryEntry>({
+				entryName: "EDITOR_PLUGINS",
+				fields: [
+					{ key: "file", required: true },
+					{ key: "slug", required: true },
+					{ key: "slot", required: true },
+				],
+			}),
+			hasSectionKey: "hasEditorPluginsSection",
 		},
 		value: {
 			name: "EDITOR_PLUGINS",
@@ -622,320 +858,96 @@ function getRequiredStringArrayProperty(
 	);
 }
 
-function parseBlockEntries(arrayLiteral: ts.ArrayLiteralExpression): WorkspaceBlockInventoryEntry[] {
+function parseInventoryEntries<T extends object>(
+	arrayLiteral: ts.ArrayLiteralExpression,
+	descriptor: InventoryEntryParserDescriptor,
+): T[] {
 	return arrayLiteral.elements.map((element, elementIndex) => {
 		if (!ts.isObjectLiteralExpression(element)) {
 			throw new Error(
-				`BLOCKS[${elementIndex}] must be an object literal in scripts/block-config.ts.`,
+				`${descriptor.entryName}[${elementIndex}] must be an object literal in scripts/block-config.ts.`,
 			);
 		}
 
-		return {
-			apiTypesFile: getOptionalStringProperty("BLOCKS", elementIndex, element, "apiTypesFile"),
-			attributeTypeName: getOptionalStringProperty(
-				"BLOCKS",
+		const entry: Record<string, string | string[] | undefined> = {};
+		for (const field of descriptor.fields) {
+			const kind = field.kind ?? "string";
+			const value =
+				kind === "stringArray"
+					? getRequiredStringArrayProperty(
+							descriptor.entryName,
+							elementIndex,
+							element,
+							field.key,
+						)
+					: field.required
+						? getRequiredStringProperty(
+								descriptor.entryName,
+								elementIndex,
+								element,
+								field.key,
+							)
+						: getOptionalStringProperty(
+								descriptor.entryName,
+								elementIndex,
+								element,
+								field.key,
+							);
+
+			field.validate?.(value, {
 				elementIndex,
-				element,
-				"attributeTypeName",
-			),
-			openApiFile: getOptionalStringProperty("BLOCKS", elementIndex, element, "openApiFile"),
-			slug: getRequiredStringProperty("BLOCKS", elementIndex, element, "slug"),
-			typesFile: getRequiredStringProperty("BLOCKS", elementIndex, element, "typesFile"),
-		};
+				entryName: descriptor.entryName,
+				key: field.key,
+			});
+			entry[field.key] = value;
+		}
+
+		return entry as T;
 	});
 }
 
-function parseVariationEntries(
-	arrayLiteral: ts.ArrayLiteralExpression,
-): WorkspaceVariationInventoryEntry[] {
-	return arrayLiteral.elements.map((element, elementIndex) => {
-		if (!ts.isObjectLiteralExpression(element)) {
-			throw new Error(
-				`VARIATIONS[${elementIndex}] must be an object literal in scripts/block-config.ts.`,
-			);
-		}
-
+function parseInventorySection<T extends object>(
+	sourceFile: ts.SourceFile,
+	descriptor: InventorySectionDescriptor,
+): {
+	entries: T[];
+	found: boolean;
+} {
+	if (!descriptor.parse) {
 		return {
-			block: getRequiredStringProperty("VARIATIONS", elementIndex, element, "block"),
-			file: getRequiredStringProperty("VARIATIONS", elementIndex, element, "file"),
-			slug: getRequiredStringProperty("VARIATIONS", elementIndex, element, "slug"),
+			entries: [],
+			found: false,
 		};
-	});
-}
+	}
 
-function parseBlockStyleEntries(
-	arrayLiteral: ts.ArrayLiteralExpression,
-): WorkspaceBlockStyleInventoryEntry[] {
-	return arrayLiteral.elements.map((element, elementIndex) => {
-		if (!ts.isObjectLiteralExpression(element)) {
-			throw new Error(
-				`BLOCK_STYLES[${elementIndex}] must be an object literal in scripts/block-config.ts.`,
-			);
+	const exportName = descriptor.parse.exportName ?? descriptor.value?.name;
+	if (!exportName) {
+		throw new Error("Inventory parser descriptor is missing an export name.");
+	}
+
+	const exportedArray = findExportedArrayLiteral(sourceFile, exportName);
+	if (!exportedArray.found) {
+		if (descriptor.parse.required) {
+			throw new Error(`scripts/block-config.ts must export a ${exportName} array.`);
 		}
-
 		return {
-			block: getRequiredStringProperty("BLOCK_STYLES", elementIndex, element, "block"),
-			file: getRequiredStringProperty("BLOCK_STYLES", elementIndex, element, "file"),
-			slug: getRequiredStringProperty("BLOCK_STYLES", elementIndex, element, "slug"),
+			entries: [],
+			found: false,
 		};
-	});
-}
-
-function parseBlockTransformEntries(
-	arrayLiteral: ts.ArrayLiteralExpression,
-): WorkspaceBlockTransformInventoryEntry[] {
-	return arrayLiteral.elements.map((element, elementIndex) => {
-		if (!ts.isObjectLiteralExpression(element)) {
-			throw new Error(
-				`BLOCK_TRANSFORMS[${elementIndex}] must be an object literal in scripts/block-config.ts.`,
-			);
+	}
+	if (!exportedArray.array) {
+		if (descriptor.parse.required) {
+			throw new Error(`scripts/block-config.ts must export a ${exportName} array.`);
 		}
-
-		return {
-			block: getRequiredStringProperty("BLOCK_TRANSFORMS", elementIndex, element, "block"),
-			file: getRequiredStringProperty("BLOCK_TRANSFORMS", elementIndex, element, "file"),
-			from: getRequiredStringProperty("BLOCK_TRANSFORMS", elementIndex, element, "from"),
-			slug: getRequiredStringProperty("BLOCK_TRANSFORMS", elementIndex, element, "slug"),
-			to: getRequiredStringProperty("BLOCK_TRANSFORMS", elementIndex, element, "to"),
-		};
-	});
-}
-
-function parsePatternEntries(arrayLiteral: ts.ArrayLiteralExpression): WorkspacePatternInventoryEntry[] {
-	return arrayLiteral.elements.map((element, elementIndex) => {
-		if (!ts.isObjectLiteralExpression(element)) {
-			throw new Error(
-				`PATTERNS[${elementIndex}] must be an object literal in scripts/block-config.ts.`,
-			);
-		}
-
-		return {
-			file: getRequiredStringProperty("PATTERNS", elementIndex, element, "file"),
-			slug: getRequiredStringProperty("PATTERNS", elementIndex, element, "slug"),
-		};
-	});
-}
-
-function parseBindingSourceEntries(
-	arrayLiteral: ts.ArrayLiteralExpression,
-): WorkspaceBindingSourceInventoryEntry[] {
-	return arrayLiteral.elements.map((element, elementIndex) => {
-		if (!ts.isObjectLiteralExpression(element)) {
-			throw new Error(
-				`BINDING_SOURCES[${elementIndex}] must be an object literal in scripts/block-config.ts.`,
-			);
-		}
-
-		return {
-			attribute: getOptionalStringProperty(
-				"BINDING_SOURCES",
-				elementIndex,
-				element,
-				"attribute",
-			),
-			block: getOptionalStringProperty("BINDING_SOURCES", elementIndex, element, "block"),
-			editorFile: getRequiredStringProperty("BINDING_SOURCES", elementIndex, element, "editorFile"),
-			serverFile: getRequiredStringProperty("BINDING_SOURCES", elementIndex, element, "serverFile"),
-			slug: getRequiredStringProperty("BINDING_SOURCES", elementIndex, element, "slug"),
-		};
-	});
-}
-
-function parseRestResourceEntries(
-	arrayLiteral: ts.ArrayLiteralExpression,
-): WorkspaceRestResourceInventoryEntry[] {
-	return arrayLiteral.elements.map((element, elementIndex) => {
-		if (!ts.isObjectLiteralExpression(element)) {
-			throw new Error(
-				`REST_RESOURCES[${elementIndex}] must be an object literal in scripts/block-config.ts.`,
-			);
-		}
-
-		const methods = getRequiredStringArrayProperty(
-			"REST_RESOURCES",
-			elementIndex,
-			element,
-			"methods",
+		throw new Error(
+			`scripts/block-config.ts must export ${exportName} as an array literal.`,
 		);
-		const invalidMethods = methods.filter(
-			(method) => !(REST_RESOURCE_METHOD_IDS as readonly string[]).includes(method),
-		);
-		if (invalidMethods.length > 0) {
-			throw new Error(
-				`REST_RESOURCES[${elementIndex}].methods includes unsupported values: ${invalidMethods.join(", ")}.`,
-			);
-		}
+	}
 
-		return {
-			apiFile: getRequiredStringProperty("REST_RESOURCES", elementIndex, element, "apiFile"),
-			clientFile: getRequiredStringProperty(
-				"REST_RESOURCES",
-				elementIndex,
-				element,
-				"clientFile",
-			),
-			dataFile: getRequiredStringProperty("REST_RESOURCES", elementIndex, element, "dataFile"),
-			methods,
-			namespace: getRequiredStringProperty(
-				"REST_RESOURCES",
-				elementIndex,
-				element,
-				"namespace",
-			),
-			openApiFile: getRequiredStringProperty(
-				"REST_RESOURCES",
-				elementIndex,
-				element,
-				"openApiFile",
-			),
-			phpFile: getRequiredStringProperty("REST_RESOURCES", elementIndex, element, "phpFile"),
-			slug: getRequiredStringProperty("REST_RESOURCES", elementIndex, element, "slug"),
-			typesFile: getRequiredStringProperty(
-				"REST_RESOURCES",
-				elementIndex,
-				element,
-				"typesFile",
-			),
-			validatorsFile: getRequiredStringProperty(
-				"REST_RESOURCES",
-				elementIndex,
-				element,
-				"validatorsFile",
-			),
-		};
-	});
-}
-
-function parseAiFeatureEntries(
-	arrayLiteral: ts.ArrayLiteralExpression,
-): WorkspaceAiFeatureInventoryEntry[] {
-	return arrayLiteral.elements.map((element, elementIndex) => {
-		if (!ts.isObjectLiteralExpression(element)) {
-			throw new Error(
-				`AI_FEATURES[${elementIndex}] must be an object literal in scripts/block-config.ts.`,
-			);
-		}
-
-		return {
-			aiSchemaFile: getRequiredStringProperty(
-				"AI_FEATURES",
-				elementIndex,
-				element,
-				"aiSchemaFile",
-			),
-			apiFile: getRequiredStringProperty("AI_FEATURES", elementIndex, element, "apiFile"),
-			clientFile: getRequiredStringProperty(
-				"AI_FEATURES",
-				elementIndex,
-				element,
-				"clientFile",
-			),
-			dataFile: getRequiredStringProperty("AI_FEATURES", elementIndex, element, "dataFile"),
-			namespace: getRequiredStringProperty(
-				"AI_FEATURES",
-				elementIndex,
-				element,
-				"namespace",
-			),
-			openApiFile: getRequiredStringProperty(
-				"AI_FEATURES",
-				elementIndex,
-				element,
-				"openApiFile",
-			),
-			phpFile: getRequiredStringProperty("AI_FEATURES", elementIndex, element, "phpFile"),
-			slug: getRequiredStringProperty("AI_FEATURES", elementIndex, element, "slug"),
-			typesFile: getRequiredStringProperty("AI_FEATURES", elementIndex, element, "typesFile"),
-			validatorsFile: getRequiredStringProperty(
-				"AI_FEATURES",
-				elementIndex,
-				element,
-				"validatorsFile",
-			),
-		};
-	});
-}
-
-function parseAbilityEntries(
-	arrayLiteral: ts.ArrayLiteralExpression,
-): WorkspaceAbilityInventoryEntry[] {
-	return arrayLiteral.elements.map((element, elementIndex) => {
-		if (!ts.isObjectLiteralExpression(element)) {
-			throw new Error(
-				`ABILITIES[${elementIndex}] must be an object literal in scripts/block-config.ts.`,
-			);
-		}
-
-		return {
-			clientFile: getRequiredStringProperty("ABILITIES", elementIndex, element, "clientFile"),
-			configFile: getRequiredStringProperty("ABILITIES", elementIndex, element, "configFile"),
-			dataFile: getRequiredStringProperty("ABILITIES", elementIndex, element, "dataFile"),
-			inputSchemaFile: getRequiredStringProperty(
-				"ABILITIES",
-				elementIndex,
-				element,
-				"inputSchemaFile",
-			),
-			inputTypeName: getRequiredStringProperty(
-				"ABILITIES",
-				elementIndex,
-				element,
-				"inputTypeName",
-			),
-			outputSchemaFile: getRequiredStringProperty(
-				"ABILITIES",
-				elementIndex,
-				element,
-				"outputSchemaFile",
-			),
-			outputTypeName: getRequiredStringProperty(
-				"ABILITIES",
-				elementIndex,
-				element,
-				"outputTypeName",
-			),
-			phpFile: getRequiredStringProperty("ABILITIES", elementIndex, element, "phpFile"),
-			slug: getRequiredStringProperty("ABILITIES", elementIndex, element, "slug"),
-			typesFile: getRequiredStringProperty("ABILITIES", elementIndex, element, "typesFile"),
-		};
-	});
-}
-
-function parseEditorPluginEntries(
-	arrayLiteral: ts.ArrayLiteralExpression,
-): WorkspaceEditorPluginInventoryEntry[] {
-	return arrayLiteral.elements.map((element, elementIndex) => {
-		if (!ts.isObjectLiteralExpression(element)) {
-			throw new Error(
-				`EDITOR_PLUGINS[${elementIndex}] must be an object literal in scripts/block-config.ts.`,
-			);
-		}
-
-		return {
-			file: getRequiredStringProperty("EDITOR_PLUGINS", elementIndex, element, "file"),
-			slug: getRequiredStringProperty("EDITOR_PLUGINS", elementIndex, element, "slug"),
-			slot: getRequiredStringProperty("EDITOR_PLUGINS", elementIndex, element, "slot"),
-		};
-	});
-}
-
-function parseAdminViewEntries(
-	arrayLiteral: ts.ArrayLiteralExpression,
-): WorkspaceAdminViewInventoryEntry[] {
-	return arrayLiteral.elements.map((element, elementIndex) => {
-		if (!ts.isObjectLiteralExpression(element)) {
-			throw new Error(
-				`ADMIN_VIEWS[${elementIndex}] must be an object literal in scripts/block-config.ts.`,
-			);
-		}
-
-		return {
-			file: getRequiredStringProperty("ADMIN_VIEWS", elementIndex, element, "file"),
-			phpFile: getRequiredStringProperty("ADMIN_VIEWS", elementIndex, element, "phpFile"),
-			slug: getRequiredStringProperty("ADMIN_VIEWS", elementIndex, element, "slug"),
-			source: getOptionalStringProperty("ADMIN_VIEWS", elementIndex, element, "source"),
-		};
-	});
+	return {
+		entries: parseInventoryEntries<T>(exportedArray.array, descriptor.parse.entry),
+		found: true,
+	};
 }
 
 /**
@@ -953,83 +965,48 @@ export function parseWorkspaceInventorySource(source: string): Omit<WorkspaceInv
 		true,
 		ts.ScriptKind.TS,
 	);
-	const blockArray = findExportedArrayLiteral(sourceFile, "BLOCKS");
-	if (!blockArray.found || !blockArray.array) {
-		throw new Error("scripts/block-config.ts must export a BLOCKS array.");
-	}
-	const variationArray = findExportedArrayLiteral(sourceFile, "VARIATIONS");
-	const blockStyleArray = findExportedArrayLiteral(sourceFile, "BLOCK_STYLES");
-	const blockTransformArray = findExportedArrayLiteral(sourceFile, "BLOCK_TRANSFORMS");
-	const patternArray = findExportedArrayLiteral(sourceFile, "PATTERNS");
-	const bindingSourceArray = findExportedArrayLiteral(sourceFile, "BINDING_SOURCES");
-	const restResourceArray = findExportedArrayLiteral(sourceFile, "REST_RESOURCES");
-	const abilityArray = findExportedArrayLiteral(sourceFile, "ABILITIES");
-	const aiFeatureArray = findExportedArrayLiteral(sourceFile, "AI_FEATURES");
-	const adminViewArray = findExportedArrayLiteral(sourceFile, "ADMIN_VIEWS");
-	const editorPluginArray = findExportedArrayLiteral(sourceFile, "EDITOR_PLUGINS");
-	if (variationArray.found && !variationArray.array) {
-		throw new Error("scripts/block-config.ts must export VARIATIONS as an array literal.");
-	}
-	if (blockStyleArray.found && !blockStyleArray.array) {
-		throw new Error("scripts/block-config.ts must export BLOCK_STYLES as an array literal.");
-	}
-	if (blockTransformArray.found && !blockTransformArray.array) {
-		throw new Error("scripts/block-config.ts must export BLOCK_TRANSFORMS as an array literal.");
-	}
-	if (patternArray.found && !patternArray.array) {
-		throw new Error("scripts/block-config.ts must export PATTERNS as an array literal.");
-	}
-	if (bindingSourceArray.found && !bindingSourceArray.array) {
-		throw new Error("scripts/block-config.ts must export BINDING_SOURCES as an array literal.");
-	}
-	if (restResourceArray.found && !restResourceArray.array) {
-		throw new Error("scripts/block-config.ts must export REST_RESOURCES as an array literal.");
-	}
-	if (abilityArray.found && !abilityArray.array) {
-		throw new Error("scripts/block-config.ts must export ABILITIES as an array literal.");
-	}
-	if (aiFeatureArray.found && !aiFeatureArray.array) {
-		throw new Error("scripts/block-config.ts must export AI_FEATURES as an array literal.");
-	}
-	if (adminViewArray.found && !adminViewArray.array) {
-		throw new Error("scripts/block-config.ts must export ADMIN_VIEWS as an array literal.");
-	}
-	if (editorPluginArray.found && !editorPluginArray.array) {
-		throw new Error("scripts/block-config.ts must export EDITOR_PLUGINS as an array literal.");
+	const parsedInventory: WorkspaceInventoryParseResult = {
+		abilities: [],
+		adminViews: [],
+		aiFeatures: [],
+		bindingSources: [],
+		blockStyles: [],
+		blockTransforms: [],
+		blocks: parseInventorySection<WorkspaceBlockInventoryEntry>(
+			sourceFile,
+			BLOCK_INVENTORY_SECTION,
+		).entries,
+		editorPlugins: [],
+		hasAbilitiesSection: false,
+		hasAdminViewsSection: false,
+		hasAiFeaturesSection: false,
+		hasBindingSourcesSection: false,
+		hasBlockStylesSection: false,
+		hasBlockTransformsSection: false,
+		hasEditorPluginsSection: false,
+		hasPatternsSection: false,
+		hasRestResourcesSection: false,
+		hasVariationsSection: false,
+		patterns: [],
+		restResources: [],
+		source,
+		variations: [],
+	};
+
+	const mutableInventory = parsedInventory as Record<string, unknown>;
+	for (const section of INVENTORY_SECTIONS) {
+		if (!section.parse) {
+			continue;
+		}
+
+		const parsedSection = parseInventorySection(sourceFile, section);
+		mutableInventory[section.parse.entriesKey] = parsedSection.entries;
+		if (section.parse.hasSectionKey) {
+			mutableInventory[section.parse.hasSectionKey] = parsedSection.found;
+		}
 	}
 
-	return {
-		abilities: abilityArray.array ? parseAbilityEntries(abilityArray.array) : [],
-		adminViews: adminViewArray.array ? parseAdminViewEntries(adminViewArray.array) : [],
-		aiFeatures: aiFeatureArray.array ? parseAiFeatureEntries(aiFeatureArray.array) : [],
-		bindingSources: bindingSourceArray.array
-			? parseBindingSourceEntries(bindingSourceArray.array)
-			: [],
-		blockStyles: blockStyleArray.array ? parseBlockStyleEntries(blockStyleArray.array) : [],
-		blockTransforms: blockTransformArray.array
-			? parseBlockTransformEntries(blockTransformArray.array)
-			: [],
-		blocks: parseBlockEntries(blockArray.array),
-		hasAbilitiesSection: abilityArray.found,
-		hasAdminViewsSection: adminViewArray.found,
-		hasAiFeaturesSection: aiFeatureArray.found,
-		hasBindingSourcesSection: bindingSourceArray.found,
-		hasBlockStylesSection: blockStyleArray.found,
-		hasBlockTransformsSection: blockTransformArray.found,
-		hasEditorPluginsSection: editorPluginArray.found,
-		hasPatternsSection: patternArray.found,
-		hasRestResourcesSection: restResourceArray.found,
-		hasVariationsSection: variationArray.found,
-		editorPlugins: editorPluginArray.array
-			? parseEditorPluginEntries(editorPluginArray.array)
-			: [],
-		patterns: patternArray.array ? parsePatternEntries(patternArray.array) : [],
-		restResources: restResourceArray.array
-			? parseRestResourceEntries(restResourceArray.array)
-			: [],
-		source,
-		variations: variationArray.array ? parseVariationEntries(variationArray.array) : [],
-	};
+	return parsedInventory;
 }
 
 /**

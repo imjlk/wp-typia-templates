@@ -4,7 +4,7 @@ import * as path from "node:path";
 import { cleanupScaffoldTempRoot, createScaffoldTempRoot, entryPath, getCommandErrorMessage, linkWorkspaceNodeModules, parseJsonObjectFromOutput, runCli, scaffoldOfficialWorkspace, stripPhpFunction, workspaceTemplatePackageManifest } from "./helpers/scaffold-test-harness.js";
 import { scaffoldProject } from "../src/runtime/index.js";
 import { getDoctorChecks } from "../src/runtime/cli-core.js";
-import { updateWorkspaceInventorySource } from "../src/runtime/workspace-inventory.js";
+import { parseWorkspaceInventorySource, updateWorkspaceInventorySource } from "../src/runtime/workspace-inventory.js";
 
 describe("@wp-typia/project-tools workspace doctor", () => {
   const tempRoot = createScaffoldTempRoot("wp-typia-workspace-doctor-");
@@ -547,11 +547,150 @@ test("workspace inventory section descriptors support optional interface and con
     "const INVENTORY_SECTIONS: readonly InventorySectionDescriptor[]"
   );
   expect(inventorySource).toContain("interface?: {");
+  expect(inventorySource).toContain("parse?: {");
   expect(inventorySource).toContain("value?: {");
   expect(inventorySource).toContain("for (const section of INVENTORY_SECTIONS)");
+  expect(inventorySource).toContain("parseInventorySection(sourceFile, section)");
+  expect(inventorySource).not.toContain("function parseVariationEntries");
+  expect(inventorySource).not.toContain("function parseRestResourceEntries");
   expect(inventorySource).not.toContain(
     "if (!/export\\s+interface\\s+WorkspaceVariationConfig\\b/u.test(nextSource))"
   );
+});
+
+test("workspace inventory parser covers every descriptor-backed section", () => {
+  const inventory = parseWorkspaceInventorySource(`
+export const BLOCKS = [
+  { slug: "counter-card", typesFile: "src/blocks/counter-card/types.ts" },
+];
+export const VARIATIONS = [
+  { block: "counter-card", file: "src/blocks/counter-card/variations/hero-card.ts", slug: "hero-card" },
+];
+export const BLOCK_STYLES = [
+  { block: "counter-card", file: "src/blocks/counter-card/styles/outline.ts", slug: "outline" },
+];
+export const BLOCK_TRANSFORMS = [
+  { block: "counter-card", file: "src/blocks/counter-card/transforms/card.ts", from: "core/paragraph", slug: "paragraph-card", to: "demo/counter-card" },
+];
+export const PATTERNS = [
+  { file: "src/patterns/hero-layout.php", slug: "hero-layout" },
+];
+export const BINDING_SOURCES = [
+  { attribute: "content", block: "counter-card", editorFile: "src/bindings/hero-data/editor.ts", serverFile: "src/bindings/hero-data/server.php", slug: "hero-data" },
+];
+export const REST_RESOURCES = [
+  { apiFile: "src/rest/products/api.ts", clientFile: "src/rest/products/client.ts", dataFile: "src/rest/products/data.ts", methods: [ "list", "read" ], namespace: "demo-space/v1", openApiFile: "src/rest/products/openapi.json", phpFile: "inc/rest/products.php", slug: "products", typesFile: "src/rest/products/types.ts", validatorsFile: "src/rest/products/validators.ts" },
+];
+export const ABILITIES = [
+  { clientFile: "src/abilities/review-workflow/client.ts", configFile: "src/abilities/review-workflow/config.ts", dataFile: "src/abilities/review-workflow/data.ts", inputSchemaFile: "src/abilities/review-workflow/input.schema.json", inputTypeName: "ReviewInput", outputSchemaFile: "src/abilities/review-workflow/output.schema.json", outputTypeName: "ReviewOutput", phpFile: "inc/abilities/review-workflow.php", slug: "review-workflow", typesFile: "src/abilities/review-workflow/types.ts" },
+];
+export const AI_FEATURES = [
+  { aiSchemaFile: "src/ai-features/brief-suggestions/ai.schema.json", apiFile: "src/ai-features/brief-suggestions/api.ts", clientFile: "src/ai-features/brief-suggestions/client.ts", dataFile: "src/ai-features/brief-suggestions/data.ts", namespace: "demo-space/v1", openApiFile: "src/ai-features/brief-suggestions/openapi.json", phpFile: "inc/ai-features/brief-suggestions.php", slug: "brief-suggestions", typesFile: "src/ai-features/brief-suggestions/types.ts", validatorsFile: "src/ai-features/brief-suggestions/validators.ts" },
+];
+export const ADMIN_VIEWS = [
+  { file: "src/admin-views/products/index.tsx", phpFile: "inc/admin-views/products.php", slug: "products", source: "rest-resource:products" },
+];
+export const EDITOR_PLUGINS = [
+  { file: "src/editor-plugins/seo-panel/index.tsx", slug: "seo-panel", slot: "PluginDocumentSettingPanel" },
+];
+`);
+
+  expect(inventory.blocks[0]).toMatchObject({
+    slug: "counter-card",
+    typesFile: "src/blocks/counter-card/types.ts",
+  });
+  expect(inventory.variations[0]).toMatchObject({
+    block: "counter-card",
+    slug: "hero-card",
+  });
+  expect(inventory.blockStyles[0]).toMatchObject({
+    block: "counter-card",
+    slug: "outline",
+  });
+  expect(inventory.blockTransforms[0]).toMatchObject({
+    from: "core/paragraph",
+    slug: "paragraph-card",
+    to: "demo/counter-card",
+  });
+  expect(inventory.patterns[0]).toMatchObject({ slug: "hero-layout" });
+  expect(inventory.bindingSources[0]).toMatchObject({
+    attribute: "content",
+    block: "counter-card",
+    slug: "hero-data",
+  });
+  expect(inventory.restResources[0]).toMatchObject({
+    methods: ["list", "read"],
+    namespace: "demo-space/v1",
+    slug: "products",
+  });
+  expect(inventory.abilities[0]).toMatchObject({
+    inputTypeName: "ReviewInput",
+    outputTypeName: "ReviewOutput",
+    slug: "review-workflow",
+  });
+  expect(inventory.aiFeatures[0]).toMatchObject({
+    aiSchemaFile: "src/ai-features/brief-suggestions/ai.schema.json",
+    slug: "brief-suggestions",
+  });
+  expect(inventory.adminViews[0]).toMatchObject({
+    slug: "products",
+    source: "rest-resource:products",
+  });
+  expect(inventory.editorPlugins[0]).toMatchObject({
+    slot: "PluginDocumentSettingPanel",
+    slug: "seo-panel",
+  });
+  expect({
+    hasAbilitiesSection: inventory.hasAbilitiesSection,
+    hasAdminViewsSection: inventory.hasAdminViewsSection,
+    hasAiFeaturesSection: inventory.hasAiFeaturesSection,
+    hasBindingSourcesSection: inventory.hasBindingSourcesSection,
+    hasBlockStylesSection: inventory.hasBlockStylesSection,
+    hasBlockTransformsSection: inventory.hasBlockTransformsSection,
+    hasEditorPluginsSection: inventory.hasEditorPluginsSection,
+    hasPatternsSection: inventory.hasPatternsSection,
+    hasRestResourcesSection: inventory.hasRestResourcesSection,
+    hasVariationsSection: inventory.hasVariationsSection,
+  }).toEqual({
+    hasAbilitiesSection: true,
+    hasAdminViewsSection: true,
+    hasAiFeaturesSection: true,
+    hasBindingSourcesSection: true,
+    hasBlockStylesSection: true,
+    hasBlockTransformsSection: true,
+    hasEditorPluginsSection: true,
+    hasPatternsSection: true,
+    hasRestResourcesSection: true,
+    hasVariationsSection: true,
+  });
+});
+
+test("workspace inventory parser keeps descriptor validation messages clear", () => {
+  expect(() =>
+    parseWorkspaceInventorySource("export const BLOCKS = {} as never;")
+  ).toThrow("scripts/block-config.ts must export a BLOCKS array.");
+
+  expect(() =>
+    parseWorkspaceInventorySource(`
+export const BLOCKS = [
+  { slug: "counter-card", typesFile: "src/blocks/counter-card/types.ts" },
+];
+export const BLOCK_STYLES = [ false ];
+`)
+  ).toThrow(
+    "BLOCK_STYLES[0] must be an object literal in scripts/block-config.ts."
+  );
+
+  expect(() =>
+    parseWorkspaceInventorySource(`
+export const BLOCKS = [
+  { slug: "counter-card", typesFile: "src/blocks/counter-card/types.ts" },
+];
+export const REST_RESOURCES = [
+  { apiFile: "src/rest/products/api.ts", clientFile: "src/rest/products/client.ts", dataFile: "src/rest/products/data.ts", methods: [ "list", "publish" ], namespace: "demo-space/v1", openApiFile: "src/rest/products/openapi.json", phpFile: "inc/rest/products.php", slug: "products", typesFile: "src/rest/products/types.ts", validatorsFile: "src/rest/products/validators.ts" },
+];
+`)
+  ).toThrow("REST_RESOURCES[0].methods includes unsupported values: publish.");
 });
 
 test("workspace inventory repair avoids duplicating existing section constants", () => {
