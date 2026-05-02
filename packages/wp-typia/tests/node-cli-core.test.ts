@@ -67,11 +67,15 @@ describe('Node fallback CLI core routing', () => {
     expect(createHelp.error).toBeUndefined();
     expect(createHelp.exitCode).toBe(0);
     expect(createHelp.stdout).toContain('Usage: wp-typia create <project-dir>');
+    expect(createHelp.stdout).toContain('Runtime: Node fallback');
+    expect(createHelp.stdout).toContain('Supported flags:');
     expect(createHelp.stdout).toContain('--template');
 
     expect(commandHelp.error).toBeUndefined();
     expect(commandHelp.exitCode).toBe(0);
     expect(commandHelp.stdout).toContain('wp-typia templates <list|inspect>');
+    expect(commandHelp.stdout).toContain('Runtime: Node fallback');
+    expect(commandHelp.stdout).toContain('Supported flags:');
     expect(commandHelp.stdout).toContain('--id');
   });
 
