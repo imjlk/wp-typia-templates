@@ -249,11 +249,11 @@ function parseExternalTemplateCacheTtlDays(value: unknown): number | null {
 function resolveExternalTemplateCacheTtlMs(
   options: Pick<ExternalTemplateCachePruneOptions, 'env' | 'ttlDays'> = {},
 ): number | null {
+  const env = options.env ?? process.env
   const ttlDays =
     options.ttlDays === undefined
       ? parseExternalTemplateCacheTtlDays(
-          options.env?.[EXTERNAL_TEMPLATE_CACHE_TTL_DAYS_ENV] ??
-            process.env[EXTERNAL_TEMPLATE_CACHE_TTL_DAYS_ENV],
+          env[EXTERNAL_TEMPLATE_CACHE_TTL_DAYS_ENV],
         )
       : parseExternalTemplateCacheTtlDays(options.ttlDays)
   if (ttlDays === null) {
