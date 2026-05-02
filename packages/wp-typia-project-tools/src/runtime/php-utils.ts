@@ -252,7 +252,7 @@ export function findPhpFunctionRange(
 			index += 2;
 			continue;
 		}
-		if (character === "#") {
+		if (character === "#" && source[index + 1] !== "[") {
 			mode = "line-comment";
 			index += 1;
 			continue;

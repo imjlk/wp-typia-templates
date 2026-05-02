@@ -111,6 +111,31 @@ function keep_me() {
 	expect(range?.source).not.toContain("function keep_me()");
 });
 
+test("findPhpFunctionRange preserves PHP 8 attributes instead of treating them as comments", () => {
+	const source = `<?php
+function wp_typia_demo() {
+\t#[ExampleAttribute] class LocalThing {
+\t\tpublic function value() {
+\t\t\treturn true;
+\t\t}
+\t}
+
+\treturn array();
+}
+
+function keep_me() {
+\treturn true;
+}
+`;
+
+	const range = findPhpFunctionRange(source, "wp_typia_demo");
+
+	expect(range).not.toBeNull();
+	expect(range?.source).toContain("#[ExampleAttribute] class LocalThing");
+	expect(range?.source).toContain("return array();");
+	expect(range?.source).not.toContain("function keep_me()");
+});
+
 test("findPhpFunctionRange returns null for unterminated heredoc content", () => {
 	const source = `<?php
 function wp_typia_demo() {
