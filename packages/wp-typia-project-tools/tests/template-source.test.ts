@@ -7,6 +7,7 @@ import { blockTypesPackageVersion, cleanupScaffoldTempRoot, createBlockExternalF
 import { getTemplateVariables, scaffoldProject } from "../src/runtime/index.js";
 import { resolveTemplateId } from "../src/runtime/scaffold.js";
 import {
+  EXTERNAL_TEMPLATE_CACHE_PRUNE_INTERVAL_MS_ENV,
   EXTERNAL_TEMPLATE_CACHE_TTL_DAYS_ENV,
   findReusableExternalTemplateSourceCache,
   pruneExternalTemplateCache,
@@ -583,6 +584,191 @@ test("external template cache prune helper deterministically prunes expired entr
   } finally {
     restoreEnvValue("WP_TYPIA_EXTERNAL_TEMPLATE_CACHE", originalCache);
     restoreEnvValue("WP_TYPIA_EXTERNAL_TEMPLATE_CACHE_DIR", originalCacheDir);
+    restoreEnvValue(EXTERNAL_TEMPLATE_CACHE_TTL_DAYS_ENV, originalCacheTtl);
+  }
+});
+
+test("external template cache prune helper skips fresh last-pruned scans", async () => {
+  const originalCache = process.env.WP_TYPIA_EXTERNAL_TEMPLATE_CACHE;
+  const originalCacheDir = process.env.WP_TYPIA_EXTERNAL_TEMPLATE_CACHE_DIR;
+  const originalCacheInterval =
+    process.env[EXTERNAL_TEMPLATE_CACHE_PRUNE_INTERVAL_MS_ENV];
+  const originalCacheTtl = process.env[EXTERNAL_TEMPLATE_CACHE_TTL_DAYS_ENV];
+  const cacheDir = path.join(tempRoot, "ttl-throttle-skip-cache");
+  const nowMs = Date.now();
+
+  process.env.WP_TYPIA_EXTERNAL_TEMPLATE_CACHE_DIR = cacheDir;
+  process.env[EXTERNAL_TEMPLATE_CACHE_PRUNE_INTERVAL_MS_ENV] = "60000";
+  process.env[EXTERNAL_TEMPLATE_CACHE_TTL_DAYS_ENV] = "7";
+  delete process.env.WP_TYPIA_EXTERNAL_TEMPLATE_CACHE;
+
+  try {
+    const staleResolution = await resolveExternalTemplateSourceCache(
+      {
+        keyParts: ["ttl-throttle-skip", "stale"],
+        metadata: { name: "stale" },
+        namespace: "npm",
+      },
+      async (sourceDir) => {
+        fs.writeFileSync(path.join(sourceDir, "package.json"), "{}", "utf8");
+      }
+    );
+
+    if (!staleResolution) {
+      throw new Error("Expected a populated external template cache entry.");
+    }
+
+    setCacheMarkerCreatedAt(
+      staleResolution.sourceDir,
+      new Date(nowMs - 10 * 24 * 60 * 60 * 1000)
+    );
+
+    const firstPruneResult = await pruneExternalTemplateCache({
+      force: true,
+      now: nowMs,
+    });
+
+    expect(firstPruneResult.skippedByThrottle).toBe(false);
+    expect(firstPruneResult.prunedEntries).toBe(1);
+    expect(fs.existsSync(path.dirname(staleResolution.sourceDir))).toBe(false);
+
+    const nextStaleResolution = await resolveExternalTemplateSourceCache(
+      {
+        keyParts: ["ttl-throttle-skip", "next-stale"],
+        metadata: { name: "next-stale" },
+        namespace: "npm",
+      },
+      async (sourceDir) => {
+        fs.writeFileSync(path.join(sourceDir, "package.json"), "{}", "utf8");
+      }
+    );
+
+    if (!nextStaleResolution) {
+      throw new Error("Expected a populated external template cache entry.");
+    }
+
+    setCacheMarkerCreatedAt(
+      nextStaleResolution.sourceDir,
+      new Date(nowMs - 10 * 24 * 60 * 60 * 1000)
+    );
+
+    const skippedPruneResult = await pruneExternalTemplateCache({
+      now: nowMs + 1000,
+    });
+
+    expect(skippedPruneResult.skippedByThrottle).toBe(true);
+    expect(skippedPruneResult.prunedEntries).toBe(0);
+    expect(skippedPruneResult.scannedEntries).toBe(0);
+    expect(fs.existsSync(path.dirname(nextStaleResolution.sourceDir))).toBe(
+      true
+    );
+  } finally {
+    restoreEnvValue("WP_TYPIA_EXTERNAL_TEMPLATE_CACHE", originalCache);
+    restoreEnvValue("WP_TYPIA_EXTERNAL_TEMPLATE_CACHE_DIR", originalCacheDir);
+    restoreEnvValue(
+      EXTERNAL_TEMPLATE_CACHE_PRUNE_INTERVAL_MS_ENV,
+      originalCacheInterval
+    );
+    restoreEnvValue(EXTERNAL_TEMPLATE_CACHE_TTL_DAYS_ENV, originalCacheTtl);
+  }
+});
+
+test("external template cache prune helper reruns after interval or settings changes", async () => {
+  const originalCache = process.env.WP_TYPIA_EXTERNAL_TEMPLATE_CACHE;
+  const originalCacheDir = process.env.WP_TYPIA_EXTERNAL_TEMPLATE_CACHE_DIR;
+  const originalCacheInterval =
+    process.env[EXTERNAL_TEMPLATE_CACHE_PRUNE_INTERVAL_MS_ENV];
+  const originalCacheTtl = process.env[EXTERNAL_TEMPLATE_CACHE_TTL_DAYS_ENV];
+  const intervalCacheDir = path.join(tempRoot, "ttl-throttle-interval-cache");
+  const settingsCacheDir = path.join(tempRoot, "ttl-throttle-settings-cache");
+  const nowMs = Date.now();
+
+  delete process.env.WP_TYPIA_EXTERNAL_TEMPLATE_CACHE;
+  process.env[EXTERNAL_TEMPLATE_CACHE_PRUNE_INTERVAL_MS_ENV] = "60000";
+  process.env[EXTERNAL_TEMPLATE_CACHE_TTL_DAYS_ENV] = "7";
+
+  try {
+    process.env.WP_TYPIA_EXTERNAL_TEMPLATE_CACHE_DIR = intervalCacheDir;
+    ensurePrivateDirectory(intervalCacheDir);
+    await pruneExternalTemplateCache({
+      force: true,
+      now: nowMs,
+    });
+
+    const intervalStaleResolution = await resolveExternalTemplateSourceCache(
+      {
+        keyParts: ["ttl-throttle-interval", "stale"],
+        metadata: { name: "stale" },
+        namespace: "npm",
+      },
+      async (sourceDir) => {
+        fs.writeFileSync(path.join(sourceDir, "package.json"), "{}", "utf8");
+      }
+    );
+
+    if (!intervalStaleResolution) {
+      throw new Error("Expected a populated external template cache entry.");
+    }
+
+    setCacheMarkerCreatedAt(
+      intervalStaleResolution.sourceDir,
+      new Date(nowMs - 10 * 24 * 60 * 60 * 1000)
+    );
+
+    const intervalPruneResult = await pruneExternalTemplateCache({
+      now: nowMs + 60001,
+    });
+
+    expect(intervalPruneResult.skippedByThrottle).toBe(false);
+    expect(intervalPruneResult.prunedEntries).toBe(1);
+    expect(fs.existsSync(path.dirname(intervalStaleResolution.sourceDir))).toBe(
+      false
+    );
+
+    process.env.WP_TYPIA_EXTERNAL_TEMPLATE_CACHE_DIR = settingsCacheDir;
+    ensurePrivateDirectory(settingsCacheDir);
+    await pruneExternalTemplateCache({
+      force: true,
+      now: nowMs,
+    });
+
+    const settingsStaleResolution = await resolveExternalTemplateSourceCache(
+      {
+        keyParts: ["ttl-throttle-settings", "stale"],
+        metadata: { name: "stale" },
+        namespace: "npm",
+      },
+      async (sourceDir) => {
+        fs.writeFileSync(path.join(sourceDir, "package.json"), "{}", "utf8");
+      }
+    );
+
+    if (!settingsStaleResolution) {
+      throw new Error("Expected a populated external template cache entry.");
+    }
+
+    setCacheMarkerCreatedAt(
+      settingsStaleResolution.sourceDir,
+      new Date(nowMs - 4 * 24 * 60 * 60 * 1000)
+    );
+
+    const settingsPruneResult = await pruneExternalTemplateCache({
+      now: nowMs + 1000,
+      ttlDays: 3,
+    });
+
+    expect(settingsPruneResult.skippedByThrottle).toBe(false);
+    expect(settingsPruneResult.prunedEntries).toBe(1);
+    expect(fs.existsSync(path.dirname(settingsStaleResolution.sourceDir))).toBe(
+      false
+    );
+  } finally {
+    restoreEnvValue("WP_TYPIA_EXTERNAL_TEMPLATE_CACHE", originalCache);
+    restoreEnvValue("WP_TYPIA_EXTERNAL_TEMPLATE_CACHE_DIR", originalCacheDir);
+    restoreEnvValue(
+      EXTERNAL_TEMPLATE_CACHE_PRUNE_INTERVAL_MS_ENV,
+      originalCacheInterval
+    );
     restoreEnvValue(EXTERNAL_TEMPLATE_CACHE_TTL_DAYS_ENV, originalCacheTtl);
   }
 });

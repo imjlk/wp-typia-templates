@@ -26,14 +26,33 @@ export const EXTERNAL_TEMPLATE_CACHE_TTL_DAYS_ENV =
   'WP_TYPIA_EXTERNAL_TEMPLATE_CACHE_TTL_DAYS'
 
 /**
+ * Environment variable that overrides how often TTL pruning may scan the cache.
+ *
+ * Unset values use the default interval. Zero, negative, and non-numeric values
+ * disable scan throttling.
+ */
+export const EXTERNAL_TEMPLATE_CACHE_PRUNE_INTERVAL_MS_ENV =
+  'WP_TYPIA_EXTERNAL_TEMPLATE_CACHE_PRUNE_INTERVAL_MS'
+
+/**
  * Marker file written after a cache entry is fully populated.
  */
 const CACHE_MARKER_FILE = 'wp-typia-template-cache.json'
 
 /**
+ * Marker file written after a full TTL prune scan completes.
+ */
+const CACHE_PRUNE_MARKER_FILE = 'wp-typia-template-cache-prune.json'
+
+/**
  * Milliseconds in one TTL day.
  */
 const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000
+
+/**
+ * Default minimum interval between full external template cache prune scans.
+ */
+const DEFAULT_CACHE_PRUNE_INTERVAL_MS = 60 * 60 * 1000
 
 /**
  * Private directory mode used for cache roots and entries on POSIX platforms.
@@ -149,9 +168,19 @@ export interface ExternalTemplateCachePruneOptions {
   env?: NodeJS.ProcessEnv
 
   /**
+   * Force a full prune scan even when the last-pruned marker is still fresh.
+   */
+  force?: boolean
+
+  /**
    * Clock override for deterministic tests.
    */
   now?: Date | number
+
+  /**
+   * Minimum interval between full prune scans. Omit for the environment/default.
+   */
+  pruneIntervalMs?: number
 
   /**
    * TTL override in days. When omitted, the TTL environment variable is used.
@@ -182,6 +211,11 @@ export interface ExternalTemplateCachePruneResult {
    * Candidate directories skipped because they were malformed or unsafe.
    */
   skippedEntries: number
+
+  /**
+   * Whether a recent last-pruned marker skipped the full cache directory scan.
+   */
+  skippedByThrottle: boolean
 
   /**
    * Resolved TTL in milliseconds, or `null` when pruning was disabled.
@@ -262,6 +296,41 @@ function resolveExternalTemplateCacheTtlMs(
 
   const ttlMs = ttlDays * MILLISECONDS_PER_DAY
   return Number.isFinite(ttlMs) ? ttlMs : null
+}
+
+function parseExternalTemplateCachePruneIntervalMs(
+  value: unknown,
+): number | null {
+  if (typeof value !== 'string' && typeof value !== 'number') {
+    return null
+  }
+
+  const intervalMs =
+    typeof value === 'number' ? value : Number(value.trim())
+  if (!Number.isFinite(intervalMs) || intervalMs <= 0) {
+    return null
+  }
+
+  return intervalMs
+}
+
+function resolveExternalTemplateCachePruneIntervalMs(
+  options: Pick<
+    ExternalTemplateCachePruneOptions,
+    'env' | 'pruneIntervalMs'
+  > = {},
+): number | null {
+  if (options.pruneIntervalMs !== undefined) {
+    return parseExternalTemplateCachePruneIntervalMs(options.pruneIntervalMs)
+  }
+
+  const env = options.env ?? process.env
+  const envValue = env[EXTERNAL_TEMPLATE_CACHE_PRUNE_INTERVAL_MS_ENV]
+  if (envValue === undefined) {
+    return DEFAULT_CACHE_PRUNE_INTERVAL_MS
+  }
+
+  return parseExternalTemplateCachePruneIntervalMs(envValue)
 }
 
 /**
@@ -516,6 +585,19 @@ function parseCacheMarkerMetadata(
   }
 }
 
+async function readCacheEntryMarker(
+  markerPath: string,
+): Promise<{
+  createdAtMs: number
+  metadata: ExternalTemplateCacheMetadata
+} | null> {
+  try {
+    return parseCacheMarkerMetadata(await fsp.readFile(markerPath, 'utf8'))
+  } catch {
+    return null
+  }
+}
+
 function cacheMetadataMatches(
   actual: ExternalTemplateCacheMetadata,
   expected: ExternalTemplateCacheMetadata,
@@ -532,6 +614,46 @@ function getExternalTemplateCacheNowMs(now: Date | number | undefined): number {
         : Date.now()
 
   return Number.isFinite(nowMs) ? nowMs : Date.now()
+}
+
+function isCacheEntryFreshForTtl(
+  createdAtMs: number,
+  nowMs: number,
+  ttlMs: number | null,
+): boolean {
+  return ttlMs === null || createdAtMs >= nowMs - ttlMs
+}
+
+async function getReusableCacheEntryMarker(
+  entryDir: string,
+  markerPath: string,
+  sourceDir: string,
+): Promise<{
+  createdAtMs: number
+  metadata: ExternalTemplateCacheMetadata
+} | null> {
+  if (!(await isReusableCacheEntry(entryDir, markerPath, sourceDir))) {
+    return null
+  }
+
+  return readCacheEntryMarker(markerPath)
+}
+
+async function isReusableFreshCacheEntry(
+  entryDir: string,
+  markerPath: string,
+  sourceDir: string,
+  nowMs: number,
+  ttlMs: number | null,
+): Promise<boolean> {
+  const marker = await getReusableCacheEntryMarker(
+    entryDir,
+    markerPath,
+    sourceDir,
+  )
+  return (
+    marker !== null && isCacheEntryFreshForTtl(marker.createdAtMs, nowMs, ttlMs)
+  )
 }
 
 function isPathInsideDirectory(
@@ -562,6 +684,119 @@ async function removeCacheEntryWithinRoot(
   }
 }
 
+function getCachePruneMarkerPath(cacheRoot: string): string {
+  return path.join(cacheRoot, CACHE_PRUNE_MARKER_FILE)
+}
+
+function parseCachePruneMarker(markerText: string): {
+  prunedAtMs: number
+  pruneIntervalMs: number | null
+  ttlMs: number
+} | null {
+  let marker: unknown
+  try {
+    marker = JSON.parse(markerText)
+  } catch {
+    return null
+  }
+  if (typeof marker !== 'object' || marker === null || Array.isArray(marker)) {
+    return null
+  }
+
+  const rawPrunedAt = (marker as { prunedAt?: unknown }).prunedAt
+  const prunedAtMs =
+    typeof rawPrunedAt === 'string' ? Date.parse(rawPrunedAt) : Number.NaN
+  const rawPruneIntervalMs = (marker as { pruneIntervalMs?: unknown })
+    .pruneIntervalMs
+  const rawTtlMs = (marker as { ttlMs?: unknown }).ttlMs
+  if (typeof rawTtlMs !== 'number' || !Number.isFinite(rawTtlMs)) {
+    return null
+  }
+  if (!Number.isFinite(prunedAtMs)) {
+    return null
+  }
+  if (
+    rawPruneIntervalMs !== null &&
+    (typeof rawPruneIntervalMs !== 'number' ||
+      !Number.isFinite(rawPruneIntervalMs))
+  ) {
+    return null
+  }
+
+  return {
+    prunedAtMs,
+    pruneIntervalMs: rawPruneIntervalMs ?? null,
+    ttlMs: rawTtlMs,
+  }
+}
+
+async function shouldSkipExternalTemplateCachePrune({
+  cacheRoot,
+  force,
+  nowMs,
+  pruneIntervalMs,
+  ttlMs,
+}: {
+  cacheRoot: string
+  force: boolean | undefined
+  nowMs: number
+  pruneIntervalMs: number | null
+  ttlMs: number
+}): Promise<boolean> {
+  if (force || pruneIntervalMs === null) {
+    return false
+  }
+
+  let markerText: string
+  try {
+    markerText = await fsp.readFile(getCachePruneMarkerPath(cacheRoot), 'utf8')
+  } catch {
+    return false
+  }
+
+  const marker = parseCachePruneMarker(markerText)
+  if (
+    !marker ||
+    marker.ttlMs !== ttlMs ||
+    marker.pruneIntervalMs !== pruneIntervalMs
+  ) {
+    return false
+  }
+
+  const elapsedMs = nowMs - marker.prunedAtMs
+  return elapsedMs >= 0 && elapsedMs < pruneIntervalMs
+}
+
+async function writeExternalTemplateCachePruneMarker({
+  cacheRoot,
+  nowMs,
+  pruneIntervalMs,
+  ttlMs,
+}: {
+  cacheRoot: string
+  nowMs: number
+  pruneIntervalMs: number | null
+  ttlMs: number
+}): Promise<void> {
+  try {
+    await fsp.writeFile(
+      getCachePruneMarkerPath(cacheRoot),
+      `${JSON.stringify(
+        {
+          prunedAt: new Date(nowMs).toISOString(),
+          pruneIntervalMs,
+          ttlMs,
+        },
+        null,
+        2,
+      )}\n`,
+      'utf8',
+    )
+  } catch {
+    // Prune markers are an optimization; failing to write one keeps TTL safe.
+  }
+}
+
 /**
  * Removes stale external template cache entries when a positive TTL is configured.
  *
@@ -581,15 +816,34 @@ export async function pruneExternalTemplateCache(
     env,
     ttlDays: options.ttlDays,
   })
+  const pruneIntervalMs = resolveExternalTemplateCachePruneIntervalMs({
+    env,
+    pruneIntervalMs: options.pruneIntervalMs,
+  })
   const result: ExternalTemplateCachePruneResult = {
     cacheRoot,
     prunedEntries: 0,
     scannedEntries: 0,
     skippedEntries: 0,
+    skippedByThrottle: false,
     ttlMs,
   }
 
   if (ttlMs === null || !(await isPrivateCacheDirectory(cacheRoot))) {
+    return result
+  }
+
+  const nowMs = getExternalTemplateCacheNowMs(options.now)
+  if (
+    await shouldSkipExternalTemplateCachePrune({
+      cacheRoot,
+      force: options.force,
+      nowMs,
+      pruneIntervalMs,
+      ttlMs,
+    })
+  ) {
+    result.skippedByThrottle = true
     return result
   }
 
@@ -600,7 +854,7 @@ export async function pruneExternalTemplateCache(
     return result
   }
 
-  const expiresBeforeMs = getExternalTemplateCacheNowMs(options.now) - ttlMs
+  const expiresBeforeMs = nowMs - ttlMs
   for (const namespaceEntry of namespaceEntries) {
     if (!namespaceEntry.isDirectory()) {
       continue
@@ -641,20 +895,11 @@ export async function pruneExternalTemplateCache(
 
       const markerPath = path.join(entryDir, CACHE_MARKER_FILE)
       const sourceDir = path.join(entryDir, 'source')
-      if (!(await isReusableCacheEntry(entryDir, markerPath, sourceDir))) {
-        result.skippedEntries += 1
-        continue
-      }
-
-      let markerText: string
-      try {
-        markerText = await fsp.readFile(markerPath, 'utf8')
-      } catch {
-        result.skippedEntries += 1
-        continue
-      }
-
-      const marker = parseCacheMarkerMetadata(markerText)
+      const marker = await getReusableCacheEntryMarker(
+        entryDir,
+        markerPath,
+        sourceDir,
+      )
       if (!marker) {
         result.skippedEntries += 1
         continue
@@ -669,6 +914,13 @@ export async function pruneExternalTemplateCache(
       }
     }
   }
+
+  await writeExternalTemplateCachePruneMarker({
+    cacheRoot,
+    nowMs,
+    pruneIntervalMs,
+    ttlMs,
+  })
 
   return result
 }
@@ -704,6 +956,8 @@ export async function findReusableExternalTemplateSourceCache(
   ) {
     return null
   }
+  const ttlMs = resolveExternalTemplateCacheTtlMs()
+  const nowMs = getExternalTemplateCacheNowMs(undefined)
   await pruneExternalTemplateCache()
 
   let entries: fs.Dirent[]
@@ -722,19 +976,16 @@ export async function findReusableExternalTemplateSourceCache(
     const entryDir = path.join(namespaceDir, entry.name)
     const markerPath = path.join(entryDir, CACHE_MARKER_FILE)
     const sourceDir = path.join(entryDir, 'source')
-    if (!(await isReusableCacheEntry(entryDir, markerPath, sourceDir))) {
-      continue
-    }
-
-    let markerText: string
-    try {
-      markerText = await fsp.readFile(markerPath, 'utf8')
-    } catch {
-      continue
-    }
-
-    const marker = parseCacheMarkerMetadata(markerText)
-    if (!marker || !cacheMetadataMatches(marker.metadata, descriptor.metadata)) {
+    const marker = await getReusableCacheEntryMarker(
+      entryDir,
+      markerPath,
+      sourceDir,
+    )
+    if (
+      !marker ||
+      !isCacheEntryFreshForTtl(marker.createdAtMs, nowMs, ttlMs) ||
+      !cacheMetadataMatches(marker.metadata, descriptor.metadata)
+    ) {
       continue
     }
     if (!bestEntry || marker.createdAtMs > bestEntry.createdAtMs) {
@@ -785,13 +1036,26 @@ export async function resolveExternalTemplateSourceCache(
   ) {
     return null
   }
+  const ttlMs = resolveExternalTemplateCacheTtlMs()
+  const nowMs = getExternalTemplateCacheNowMs(undefined)
   await pruneExternalTemplateCache()
 
-  if (await isReusableCacheEntry(entryDir, markerPath, sourceDir)) {
+  const existingMarker = await getReusableCacheEntryMarker(
+    entryDir,
+    markerPath,
+    sourceDir,
+  )
+  if (
+    existingMarker &&
+    isCacheEntryFreshForTtl(existingMarker.createdAtMs, nowMs, ttlMs)
+  ) {
     return {
       cacheHit: true,
       sourceDir,
     }
+  }
+  if (existingMarker) {
+    await removeCacheEntryWithinRoot(cacheRoot, entryDir)
   }
 
   const temporaryEntryDir = path.join(
@@ -849,7 +1113,13 @@ export async function resolveExternalTemplateSourceCache(
     const errorCode = getNodeErrorCode(error)
     if (
       CACHE_PUBLISH_RACE_ERROR_CODES.has(errorCode) &&
-      (await isReusableCacheEntry(entryDir, markerPath, sourceDir))
+      (await isReusableFreshCacheEntry(
+        entryDir,
+        markerPath,
+        sourceDir,
+        nowMs,
+        ttlMs,
+      ))
     ) {
       return {
         cacheHit: true,
