@@ -432,7 +432,32 @@ export const EDITOR_PLUGINS: WorkspaceEditorPluginConfig[] = [
 ];
 `;
 
+type WorkspaceInventoryUpdateOptions = {
+	abilityEntries?: string[];
+	adminViewEntries?: string[];
+	aiFeatureEntries?: string[];
+	blockEntries?: string[];
+	blockStyleEntries?: string[];
+	blockTransformEntries?: string[];
+	bindingSourceEntries?: string[];
+	editorPluginEntries?: string[];
+	patternEntries?: string[];
+	restResourceEntries?: string[];
+	transformSource?: (source: string) => string;
+	variationEntries?: string[];
+};
+
+type WorkspaceInventoryAppendOptionKey = Exclude<
+	keyof WorkspaceInventoryUpdateOptions,
+	"transformSource"
+>;
+
 type InventorySectionDescriptor = {
+	/** Optional marker metadata used when appending generated entries. */
+	append?: {
+		marker: string;
+		optionKey: WorkspaceInventoryAppendOptionKey;
+	};
 	/** Optional exported interface that backs the inventory section entries. */
 	interface?: {
 		name: string;
@@ -454,6 +479,10 @@ type InventorySectionDescriptor = {
 };
 
 const BLOCK_INVENTORY_SECTION: InventorySectionDescriptor = {
+	append: {
+		marker: BLOCK_CONFIG_ENTRY_MARKER,
+		optionKey: "blockEntries",
+	},
 	parse: {
 		entriesKey: "blocks",
 		entry: defineInventoryEntryParser<WorkspaceBlockInventoryEntry>({
@@ -473,6 +502,10 @@ const BLOCK_INVENTORY_SECTION: InventorySectionDescriptor = {
 
 const INVENTORY_SECTIONS: readonly InventorySectionDescriptor[] = [
 	{
+		append: {
+			marker: VARIATION_CONFIG_ENTRY_MARKER,
+			optionKey: "variationEntries",
+		},
 		interface: {
 			name: "WorkspaceVariationConfig",
 			section: VARIATIONS_INTERFACE_SECTION,
@@ -495,6 +528,10 @@ const INVENTORY_SECTIONS: readonly InventorySectionDescriptor[] = [
 		},
 	},
 	{
+		append: {
+			marker: BLOCK_STYLE_CONFIG_ENTRY_MARKER,
+			optionKey: "blockStyleEntries",
+		},
 		interface: {
 			name: "WorkspaceBlockStyleConfig",
 			section: BLOCK_STYLES_INTERFACE_SECTION,
@@ -517,6 +554,10 @@ const INVENTORY_SECTIONS: readonly InventorySectionDescriptor[] = [
 		},
 	},
 	{
+		append: {
+			marker: BLOCK_TRANSFORM_CONFIG_ENTRY_MARKER,
+			optionKey: "blockTransformEntries",
+		},
 		interface: {
 			name: "WorkspaceBlockTransformConfig",
 			section: BLOCK_TRANSFORMS_INTERFACE_SECTION,
@@ -541,6 +582,10 @@ const INVENTORY_SECTIONS: readonly InventorySectionDescriptor[] = [
 		},
 	},
 	{
+		append: {
+			marker: PATTERN_CONFIG_ENTRY_MARKER,
+			optionKey: "patternEntries",
+		},
 		interface: {
 			name: "WorkspacePatternConfig",
 			section: PATTERNS_INTERFACE_SECTION,
@@ -562,6 +607,10 @@ const INVENTORY_SECTIONS: readonly InventorySectionDescriptor[] = [
 		},
 	},
 	{
+		append: {
+			marker: BINDING_SOURCE_CONFIG_ENTRY_MARKER,
+			optionKey: "bindingSourceEntries",
+		},
 		interface: {
 			name: "WorkspaceBindingSourceConfig",
 			section: BINDING_SOURCES_INTERFACE_SECTION,
@@ -586,6 +635,10 @@ const INVENTORY_SECTIONS: readonly InventorySectionDescriptor[] = [
 		},
 	},
 	{
+		append: {
+			marker: REST_RESOURCE_CONFIG_ENTRY_MARKER,
+			optionKey: "restResourceEntries",
+		},
 		interface: {
 			name: "WorkspaceRestResourceConfig",
 			section: REST_RESOURCES_INTERFACE_SECTION,
@@ -631,6 +684,10 @@ const INVENTORY_SECTIONS: readonly InventorySectionDescriptor[] = [
 		},
 	},
 	{
+		append: {
+			marker: ABILITY_CONFIG_ENTRY_MARKER,
+			optionKey: "abilityEntries",
+		},
 		interface: {
 			name: "WorkspaceAbilityConfig",
 			section: ABILITIES_INTERFACE_SECTION,
@@ -660,6 +717,10 @@ const INVENTORY_SECTIONS: readonly InventorySectionDescriptor[] = [
 		},
 	},
 	{
+		append: {
+			marker: AI_FEATURE_CONFIG_ENTRY_MARKER,
+			optionKey: "aiFeatureEntries",
+		},
 		interface: {
 			name: "WorkspaceAiFeatureConfig",
 			section: AI_FEATURES_INTERFACE_SECTION,
@@ -689,6 +750,10 @@ const INVENTORY_SECTIONS: readonly InventorySectionDescriptor[] = [
 		},
 	},
 	{
+		append: {
+			marker: ADMIN_VIEW_CONFIG_ENTRY_MARKER,
+			optionKey: "adminViewEntries",
+		},
 		interface: {
 			name: "WorkspaceAdminViewConfig",
 			section: ADMIN_VIEWS_INTERFACE_SECTION,
@@ -712,6 +777,10 @@ const INVENTORY_SECTIONS: readonly InventorySectionDescriptor[] = [
 		},
 	},
 	{
+		append: {
+			marker: EDITOR_PLUGIN_CONFIG_ENTRY_MARKER,
+			optionKey: "editorPluginEntries",
+		},
 		interface: {
 			name: "WorkspaceEditorPluginConfig",
 			section: EDITOR_PLUGINS_INTERFACE_SECTION,
@@ -1104,6 +1173,24 @@ function appendEntriesAtMarker(source: string, marker: string, entries: string[]
 	return source.replace(marker, `${entries.join("\n")}\n${marker}`);
 }
 
+function appendInventorySectionEntries(
+	source: string,
+	options: WorkspaceInventoryUpdateOptions,
+): string {
+	let nextSource = source;
+	for (const section of [BLOCK_INVENTORY_SECTION, ...INVENTORY_SECTIONS]) {
+		if (!section.append) {
+			continue;
+		}
+		nextSource = appendEntriesAtMarker(
+			nextSource,
+			section.append.marker,
+			options[section.append.optionKey] ?? [],
+		);
+	}
+	return nextSource;
+}
+
 function ensureInterfaceField(
 	source: string,
 	interfaceName: string,
@@ -1218,76 +1305,13 @@ function normalizeInterfaceFieldBlock(
  */
 export function updateWorkspaceInventorySource(
 	source: string,
-	{
-		blockEntries = [],
-		blockStyleEntries = [],
-		blockTransformEntries = [],
-		bindingSourceEntries = [],
-		abilityEntries = [],
-		adminViewEntries = [],
-		aiFeatureEntries = [],
-		editorPluginEntries = [],
-		patternEntries = [],
-		restResourceEntries = [],
-		variationEntries = [],
-		transformSource,
-	}: {
-		abilityEntries?: string[];
-		adminViewEntries?: string[];
-		aiFeatureEntries?: string[];
-		blockEntries?: string[];
-		blockStyleEntries?: string[];
-		blockTransformEntries?: string[];
-		bindingSourceEntries?: string[];
-		editorPluginEntries?: string[];
-		patternEntries?: string[];
-		restResourceEntries?: string[];
-		transformSource?: (source: string) => string;
-		variationEntries?: string[];
-	} = {},
+	options: WorkspaceInventoryUpdateOptions = {},
 ): string {
 	let nextSource = ensureWorkspaceInventorySections(source);
-	if (transformSource) {
-		nextSource = transformSource(nextSource);
+	if (options.transformSource) {
+		nextSource = options.transformSource(nextSource);
 	}
-	nextSource = appendEntriesAtMarker(nextSource, BLOCK_CONFIG_ENTRY_MARKER, blockEntries);
-	nextSource = appendEntriesAtMarker(nextSource, VARIATION_CONFIG_ENTRY_MARKER, variationEntries);
-	nextSource = appendEntriesAtMarker(
-		nextSource,
-		BLOCK_STYLE_CONFIG_ENTRY_MARKER,
-		blockStyleEntries,
-	);
-	nextSource = appendEntriesAtMarker(
-		nextSource,
-		BLOCK_TRANSFORM_CONFIG_ENTRY_MARKER,
-		blockTransformEntries,
-	);
-	nextSource = appendEntriesAtMarker(nextSource, PATTERN_CONFIG_ENTRY_MARKER, patternEntries);
-	nextSource = appendEntriesAtMarker(
-		nextSource,
-		BINDING_SOURCE_CONFIG_ENTRY_MARKER,
-		bindingSourceEntries,
-	);
-	nextSource = appendEntriesAtMarker(
-		nextSource,
-		REST_RESOURCE_CONFIG_ENTRY_MARKER,
-		restResourceEntries,
-	);
-	nextSource = appendEntriesAtMarker(
-		nextSource,
-		ABILITY_CONFIG_ENTRY_MARKER,
-		abilityEntries,
-	);
-	nextSource = appendEntriesAtMarker(
-		nextSource,
-		AI_FEATURE_CONFIG_ENTRY_MARKER,
-		aiFeatureEntries,
-	);
-	nextSource = appendEntriesAtMarker(
-		nextSource,
-		ADMIN_VIEW_CONFIG_ENTRY_MARKER,
-		adminViewEntries,
-	);
+	nextSource = appendInventorySectionEntries(nextSource, options);
 	nextSource = ensureInterfaceField(
 		nextSource,
 		"WorkspaceBindingSourceConfig",
@@ -1325,11 +1349,6 @@ export function updateWorkspaceInventorySource(
 		"compatibility",
 		WORKSPACE_COMPATIBILITY_CONFIG_FIELD,
 		["optionalFeatureIds: string[];", "requiredFeatureIds: string[];"],
-	);
-	nextSource = appendEntriesAtMarker(
-		nextSource,
-		EDITOR_PLUGIN_CONFIG_ENTRY_MARKER,
-		editorPluginEntries,
 	);
 	return nextSource;
 }
