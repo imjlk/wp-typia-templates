@@ -751,6 +751,50 @@ describe('typia.llm adapter emitter', () => {
     });
   });
 
+  test('restores OpenAPI constraints by mutating only the cloned target schema', () => {
+    const parameters = {
+      $defs: {},
+      additionalProperties: false,
+      properties: {
+        publicWriteToken: {
+          type: 'string',
+        },
+      },
+      required: ['publicWriteToken'],
+      type: 'object',
+    } satisfies ILlmSchema.IParameters;
+    const sourceArtifact = {
+      description: 'Increment the counter.',
+      name: 'incrementCounter',
+      parameters,
+      tags: ['Counter'],
+    };
+    const sourceParametersSnapshot = JSON.parse(
+      JSON.stringify(parameters),
+    ) as ILlmSchema.IParameters;
+
+    const constrainedArtifact = applyOpenApiConstraintsToTypiaLlmFunctionArtifact(
+      {
+        functionArtifact: sourceArtifact,
+        openApiDocument: COUNTER_OPENAPI,
+        operationId: 'incrementCounter',
+      },
+    );
+
+    expect(constrainedArtifact).not.toBe(sourceArtifact);
+    expect(constrainedArtifact.parameters).not.toBe(parameters);
+    expect(parameters as ILlmSchema.IParameters).toEqual(sourceParametersSnapshot);
+    expect(constrainedArtifact.parameters).toMatchObject({
+      properties: {
+        publicWriteToken: {
+          minLength: 16,
+          pattern: '^pt_[a-z0-9]+$',
+          type: 'string',
+        },
+      },
+    });
+  });
+
   test('rejects malformed typia.llm parameter artifacts before OpenAPI constraint projection', () => {
     expect(() =>
       applyOpenApiConstraintsToTypiaLlmFunctionArtifact({

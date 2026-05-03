@@ -429,6 +429,13 @@ function collectOpenApiSeenReferences(
   return new Set([...seenReferences, reference]);
 }
 
+/**
+ * Copy constraint-oriented JSON Schema keywords from `source` into `target`.
+ *
+ * This helper intentionally mutates and returns `target` so nested OpenAPI
+ * constraint restoration can preserve the projected typia.llm schema shape.
+ * Callers that need immutable behavior should clone the target before calling.
+ */
 function mergeJsonSchemaConstraintProperties(
   document: OpenApiDocument,
   target: JsonSchemaObject,
