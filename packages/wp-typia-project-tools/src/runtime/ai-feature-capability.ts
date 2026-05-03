@@ -151,6 +151,13 @@ function normalizeSelections(
   return [...normalized.values()];
 }
 
+function validateFeatureMinimumVersions(
+  definition: AiFeatureDefinition,
+): void {
+  pickHigherVersionFloor(definition.minimumVersions?.wordpress, undefined);
+  pickHigherVersionFloor(definition.minimumVersions?.php, undefined);
+}
+
 /**
  * Resolves a normalized AI feature capability plan from a list of selections.
  *
@@ -181,6 +188,7 @@ export function resolveAiFeatureCapabilityPlan(
         `Unknown AI feature capability "${selection.featureId}".`,
       );
     }
+    validateFeatureMinimumVersions(definition);
 
     const resolvedDefinition = {
       ...definition,

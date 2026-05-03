@@ -55,10 +55,17 @@ export function pickHigherVersionFloor(
   current: string | undefined,
   candidate: string | undefined,
 ): string | undefined {
-  if (!candidate) {
+  if (current !== undefined) {
+    parseVersionFloorParts(current);
+  }
+  if (candidate !== undefined) {
+    parseVersionFloorParts(candidate);
+  }
+
+  if (candidate === undefined) {
     return current;
   }
-  if (!current) {
+  if (current === undefined) {
     return candidate;
   }
 

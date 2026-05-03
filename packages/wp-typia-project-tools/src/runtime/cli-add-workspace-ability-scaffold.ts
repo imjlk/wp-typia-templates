@@ -481,7 +481,10 @@ export async function scaffoldAbilityWorkspace({
 	abilitySlug,
 	compatibilityPolicy,
 	workspace,
-}: ScaffoldAbilityWorkspaceOptions): Promise<void> {
+}: ScaffoldAbilityWorkspaceOptions): Promise<{
+	warnings: string[];
+}> {
+	const compatibilityWarnings: string[] = [];
 	const blockConfigPath = path.join(workspace.projectDir, "scripts", "block-config.ts");
 	const bootstrapPath = getWorkspaceBootstrapPath(workspace);
 	const buildScriptPath = path.join(workspace.projectDir, "scripts", "build-workspace.mjs");
@@ -526,7 +529,11 @@ export async function scaffoldAbilityWorkspace({
 			await fsp.mkdir(path.dirname(phpFilePath), { recursive: true });
 			await ensureAbilityBootstrapAnchors(workspace);
 			await patchFile(bootstrapPath, (source) =>
-				updatePluginHeaderCompatibility(source, compatibilityPolicy),
+				updatePluginHeaderCompatibility(source, compatibilityPolicy, {
+					onWarning: (warning) => {
+						compatibilityWarnings.push(warning);
+					},
+				}),
 			);
 			await ensureAbilityPackageScripts(workspace);
 			await ensureAbilitySyncProjectAnchors(workspace);
@@ -568,4 +575,8 @@ export async function scaffoldAbilityWorkspace({
 			});
 		},
 	});
+
+	return {
+		warnings: compatibilityWarnings,
+	};
 }

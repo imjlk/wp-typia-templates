@@ -21,6 +21,7 @@ export async function runAddAbilityCommand({
 }: RunAddAbilityCommandOptions): Promise<{
 	abilitySlug: string;
 	projectDir: string;
+	warnings: string[];
 }> {
 	const workspace = resolveWorkspaceProject(cwd);
 	const abilitySlug = assertValidGeneratedSlug(
@@ -35,7 +36,7 @@ export async function runAddAbilityCommand({
 	const compatibilityPolicy = resolveScaffoldCompatibilityPolicy(
 		REQUIRED_WORKSPACE_ABILITY_COMPATIBILITY,
 	);
-	await scaffoldAbilityWorkspace({
+	const scaffoldResult = await scaffoldAbilityWorkspace({
 		abilitySlug,
 		compatibilityPolicy,
 		workspace,
@@ -44,5 +45,6 @@ export async function runAddAbilityCommand({
 	return {
 		abilitySlug,
 		projectDir: workspace.projectDir,
+		warnings: scaffoldResult.warnings,
 	};
 }

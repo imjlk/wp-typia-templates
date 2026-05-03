@@ -520,8 +520,10 @@ export const ADD_KIND_REGISTRY = {
         getValues: (result) => ({
           abilitySlug: result.abilitySlug,
         }),
+        getWarnings: (result) => result.warnings,
         missingNameMessage:
           '`wp-typia add ability` requires <name>. Usage: wp-typia add ability <name>.',
+        warnLine: context.warnLine,
       });
     },
     sortOrder: 90,

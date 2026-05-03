@@ -57,6 +57,7 @@ export async function scaffoldAiFeatureWorkspace({
 }: ScaffoldAiFeatureWorkspaceOptions): Promise<{
 	warnings: string[];
 }> {
+	const compatibilityWarnings: string[] = [];
 	const blockConfigPath = path.join(workspace.projectDir, "scripts", "block-config.ts");
 	const bootstrapPath = getWorkspaceBootstrapPath(workspace);
 	const packageJsonPath = path.join(workspace.projectDir, "package.json");
@@ -94,7 +95,11 @@ export async function scaffoldAiFeatureWorkspace({
 			await fsp.mkdir(path.dirname(phpFilePath), { recursive: true });
 			await ensureAiFeatureBootstrapAnchors(workspace);
 			await patchFile(bootstrapPath, (source) =>
-				updatePluginHeaderCompatibility(source, compatibilityPolicy),
+				updatePluginHeaderCompatibility(source, compatibilityPolicy, {
+					onWarning: (warning) => {
+						compatibilityWarnings.push(warning);
+					},
+				}),
 			);
 			const packageScriptChanges = await ensureAiFeaturePackageScripts(workspace);
 			await ensureAiFeatureSyncProjectAnchors(workspace);
@@ -150,11 +155,14 @@ export async function scaffoldAiFeatureWorkspace({
 			});
 
 			return {
-				warnings: packageScriptChanges.addedProjectToolsDependency
-					? [
-							"Added `@wp-typia/project-tools` to devDependencies for `sync-ai`. If this workspace was already installed, rerun your package manager install command before the first `wp-typia sync ai`.",
-						]
-					: [],
+				warnings: [
+					...compatibilityWarnings,
+					...(packageScriptChanges.addedProjectToolsDependency
+						? [
+								"Added `@wp-typia/project-tools` to devDependencies for `sync-ai`. If this workspace was already installed, rerun your package manager install command before the first `wp-typia sync ai`.",
+							]
+						: []),
+				],
 			};
 		},
 	});
