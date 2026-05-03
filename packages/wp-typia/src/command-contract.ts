@@ -99,7 +99,9 @@ function hasUnknownOptionBefore(argv: string[], endIndex: number): boolean {
       }
       if (
         !arg.includes('=') &&
-        SHARED_OPTION_PARSER.stringOptionNames.has(optionName)
+        SHARED_OPTION_PARSER.stringOptionNames.has(optionName) &&
+        argv[index + 1] &&
+        !argv[index + 1].startsWith('-')
       ) {
         index += 1;
       }
@@ -111,7 +113,11 @@ function hasUnknownOptionBefore(argv: string[], endIndex: number): boolean {
       if (!option) {
         return true;
       }
-      if (option.type === 'string') {
+      if (
+        option.type === 'string' &&
+        argv[index + 1] &&
+        !argv[index + 1].startsWith('-')
+      ) {
         index += 1;
       }
       continue;
