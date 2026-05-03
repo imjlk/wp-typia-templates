@@ -10,10 +10,7 @@ import {
   readOptionalStrictStringFlag,
   requireStrictStringFlag,
 } from './cli-string-flags';
-import {
-  toExternalLayerPromptOptions,
-  type ExternalLayerSelectOption,
-} from './external-layer-prompt-options';
+import { toExternalLayerPromptOptions } from './external-layer-prompt-options';
 import type { PrintLine } from './print-line';
 
 export { ADD_KIND_IDS } from './add-kind-ids';

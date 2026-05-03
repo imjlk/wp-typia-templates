@@ -303,6 +303,9 @@ describe('wp-typia package', () => {
     expect(projectToolsPackageManifest.exports['./cli']).toBeUndefined();
     expect(projectToolsPackageManifest.exports['./cli-add']).toBeDefined();
     expect(
+      projectToolsPackageManifest.exports['./cli-add-kind-ids'],
+    ).toBeDefined();
+    expect(
       projectToolsPackageManifest.exports['./cli-diagnostics'],
     ).toBeDefined();
     expect(projectToolsPackageManifest.exports['./cli-doctor']).toBeDefined();

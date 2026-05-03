@@ -82,6 +82,7 @@ test('shared add runtime keeps compatibility exports around focused modules', ()
 });
 
 test('focused add runtime modules own their helper categories', () => {
+  const addKindIdsSource = readRuntimeSource('cli-add-kind-ids.ts');
   const typesSource = readRuntimeSource('cli-add-types.ts');
   const validationSource = readRuntimeSource('cli-add-validation.ts');
   const filesystemSource = readRuntimeSource('cli-add-filesystem.ts');
@@ -89,8 +90,13 @@ test('focused add runtime modules own their helper categories', () => {
   const collisionSource = readRuntimeSource('cli-add-collision.ts');
   const helpSource = readRuntimeSource('cli-add-help.ts');
 
+  expect(addKindIdsSource).toContain('export const ADD_KIND_IDS');
   expect(typesSource).toContain('export interface RunAddBlockCommandOptions');
-  expect(typesSource).toContain('export const ADD_KIND_IDS');
+  expect(typesSource).toContain('from "./cli-add-kind-ids.js"');
+  expect(typesSource).toContain(
+    'export type { AddKindId } from "./cli-add-kind-ids.js";',
+  );
+  expect(typesSource).not.toContain('export const ADD_KIND_IDS = [');
   expect(validationSource).toContain('export function assertValidGeneratedSlug');
   expect(validationSource).toContain('export function assertValidRestResourceMethods');
   expect(validationSource).toContain('export function assertValidEditorPluginSlot');

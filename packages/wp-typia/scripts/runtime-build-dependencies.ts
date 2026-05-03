@@ -39,6 +39,10 @@ export const PROJECT_TOOLS_ALIASES = {
 		projectToolsRuntimeDir,
 		"cli-add.js",
 	),
+	"@wp-typia/project-tools/cli-add-kind-ids": path.join(
+		projectToolsRuntimeDir,
+		"cli-add-kind-ids.js",
+	),
 	"@wp-typia/project-tools/cli-diagnostics": path.join(
 		projectToolsRuntimeDir,
 		"cli-diagnostics.js",

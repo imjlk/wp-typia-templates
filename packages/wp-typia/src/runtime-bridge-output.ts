@@ -14,10 +14,6 @@ import {
   type OutputMarkerOptions,
   stripLeadingOutputMarker,
 } from './output-markers';
-import {
-  toExternalLayerPromptOptions,
-  type ExternalLayerSelectOption,
-} from './external-layer-prompt-options';
 import type { PrintLine } from './print-line';
 
 export type CreateProgressPayload = {

@@ -1,24 +1,5 @@
-/**
- * Supported top-level `wp-typia add` kinds exposed by the canonical CLI.
- */
-export const ADD_KIND_IDS = [
-	"admin-view",
-	"block",
-	"variation",
-	"style",
-	"transform",
-	"pattern",
-	"binding-source",
-	"rest-resource",
-	"ability",
-	"ai-feature",
-	"hooked-block",
-	"editor-plugin",
-] as const;
-/**
- * Union of supported top-level `wp-typia add` kind ids.
- */
-export type AddKindId = (typeof ADD_KIND_IDS)[number];
+export { ADD_KIND_IDS } from "./cli-add-kind-ids.js";
+export type { AddKindId } from "./cli-add-kind-ids.js";
 
 /**
  * Supported plugin-level REST resource methods accepted by
