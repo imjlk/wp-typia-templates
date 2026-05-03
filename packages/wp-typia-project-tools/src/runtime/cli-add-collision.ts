@@ -10,10 +10,35 @@ type ScaffoldFilesystemCollision = {
 	relativePath: string;
 };
 
+type ScaffoldFilesystemCollisionDescriptor<TContext> = {
+	label: string;
+	relativePath: (context: TContext) => string;
+};
+
 type ScaffoldInventoryCollision<TEntry> = {
 	entries: readonly TEntry[];
 	exists: (entry: TEntry) => boolean;
 	message: string;
+};
+
+type ScaffoldInventoryCollisionDescriptor<TContext, TEntry> = {
+	entries: (inventory: WorkspaceInventory) => readonly TEntry[];
+	exists: (entry: TEntry, context: TContext) => boolean;
+	message: (context: TContext) => string;
+};
+
+type ScaffoldCollisionDescriptor<TContext, TEntry> = {
+	filesystemCollisions: readonly ScaffoldFilesystemCollisionDescriptor<TContext>[];
+	inventoryCollision?: ScaffoldInventoryCollisionDescriptor<TContext, TEntry>;
+};
+
+type BlockChildCollisionContext = {
+	blockSlug: string;
+	slug: string;
+};
+
+type SlugCollisionContext = {
+	slug: string;
 };
 
 /**
@@ -45,6 +70,245 @@ export function assertScaffoldDoesNotExist<TEntry>(options: {
 }
 
 /**
+ * Run descriptor-backed add-kind collision checks.
+ *
+ * Use descriptors when an add kind only needs predictable filesystem and
+ * inventory targets. Keep custom checks for add kinds that depend on rendered
+ * template outputs, compound scaffolds, or other command-specific state.
+ *
+ * @param options Descriptor, context, inventory, and project root for the check.
+ * @throws {Error} When any descriptor-backed target already exists.
+ */
+function assertAddKindScaffoldDoesNotExist<TContext, TEntry>(options: {
+	projectDir: string;
+	inventory: WorkspaceInventory;
+	context: TContext;
+	descriptor: ScaffoldCollisionDescriptor<TContext, TEntry>;
+}): void {
+	const inventoryCollision = options.descriptor.inventoryCollision;
+	assertScaffoldDoesNotExist({
+		filesystemCollisions: options.descriptor.filesystemCollisions.map(
+			(collision) => ({
+				label: collision.label,
+				relativePath: collision.relativePath(options.context),
+			}),
+		),
+		inventoryCollision: inventoryCollision
+			? {
+					entries: inventoryCollision.entries(options.inventory),
+					exists: (entry) => inventoryCollision.exists(entry, options.context),
+					message: inventoryCollision.message(options.context),
+				}
+			: undefined,
+		projectDir: options.projectDir,
+	});
+}
+
+const VARIATION_COLLISION_DESCRIPTOR: ScaffoldCollisionDescriptor<
+	BlockChildCollisionContext,
+	WorkspaceInventory["variations"][number]
+> = {
+	filesystemCollisions: [
+		{
+			label: "A variation",
+			relativePath: ({ blockSlug, slug }) =>
+				path.join("src", "blocks", blockSlug, "variations", `${slug}.ts`),
+		},
+	],
+	inventoryCollision: {
+		entries: (inventory) => inventory.variations,
+		exists: (entry, { blockSlug, slug }) =>
+			entry.block === blockSlug && entry.slug === slug,
+		message: ({ blockSlug, slug }) =>
+			`A variation inventory entry already exists for ${blockSlug}/${slug}. Choose a different name.`,
+	},
+};
+
+const BLOCK_STYLE_COLLISION_DESCRIPTOR: ScaffoldCollisionDescriptor<
+	BlockChildCollisionContext,
+	WorkspaceInventory["blockStyles"][number]
+> = {
+	filesystemCollisions: [
+		{
+			label: "A block style",
+			relativePath: ({ blockSlug, slug }) =>
+				path.join("src", "blocks", blockSlug, "styles", `${slug}.ts`),
+		},
+	],
+	inventoryCollision: {
+		entries: (inventory) => inventory.blockStyles,
+		exists: (entry, { blockSlug, slug }) =>
+			entry.block === blockSlug && entry.slug === slug,
+		message: ({ blockSlug, slug }) =>
+			`A block style inventory entry already exists for ${blockSlug}/${slug}. Choose a different name.`,
+	},
+};
+
+const BLOCK_TRANSFORM_COLLISION_DESCRIPTOR: ScaffoldCollisionDescriptor<
+	BlockChildCollisionContext,
+	WorkspaceInventory["blockTransforms"][number]
+> = {
+	filesystemCollisions: [
+		{
+			label: "A block transform",
+			relativePath: ({ blockSlug, slug }) =>
+				path.join("src", "blocks", blockSlug, "transforms", `${slug}.ts`),
+		},
+	],
+	inventoryCollision: {
+		entries: (inventory) => inventory.blockTransforms,
+		exists: (entry, { blockSlug, slug }) =>
+			entry.block === blockSlug && entry.slug === slug,
+		message: ({ blockSlug, slug }) =>
+			`A block transform inventory entry already exists for ${blockSlug}/${slug}. Choose a different name.`,
+	},
+};
+
+const PATTERN_COLLISION_DESCRIPTOR: ScaffoldCollisionDescriptor<
+	SlugCollisionContext,
+	WorkspaceInventory["patterns"][number]
+> = {
+	filesystemCollisions: [
+		{
+			label: "A pattern",
+			relativePath: ({ slug }) => path.join("src", "patterns", `${slug}.php`),
+		},
+	],
+	inventoryCollision: {
+		entries: (inventory) => inventory.patterns,
+		exists: (entry, { slug }) => entry.slug === slug,
+		message: ({ slug }) =>
+			`A pattern inventory entry already exists for ${slug}. Choose a different name.`,
+	},
+};
+
+const BINDING_SOURCE_COLLISION_DESCRIPTOR: ScaffoldCollisionDescriptor<
+	SlugCollisionContext,
+	WorkspaceInventory["bindingSources"][number]
+> = {
+	filesystemCollisions: [
+		{
+			label: "A binding source",
+			relativePath: ({ slug }) => path.join("src", "bindings", slug),
+		},
+	],
+	inventoryCollision: {
+		entries: (inventory) => inventory.bindingSources,
+		exists: (entry, { slug }) => entry.slug === slug,
+		message: ({ slug }) =>
+			`A binding source inventory entry already exists for ${slug}. Choose a different name.`,
+	},
+};
+
+const REST_RESOURCE_COLLISION_DESCRIPTOR: ScaffoldCollisionDescriptor<
+	SlugCollisionContext,
+	WorkspaceInventory["restResources"][number]
+> = {
+	filesystemCollisions: [
+		{
+			label: "A REST resource",
+			relativePath: ({ slug }) => path.join("src", "rest", slug),
+		},
+		{
+			label: "A REST resource bootstrap",
+			relativePath: ({ slug }) => path.join("inc", "rest", `${slug}.php`),
+		},
+	],
+	inventoryCollision: {
+		entries: (inventory) => inventory.restResources,
+		exists: (entry, { slug }) => entry.slug === slug,
+		message: ({ slug }) =>
+			`A REST resource inventory entry already exists for ${slug}. Choose a different name.`,
+	},
+};
+
+const ADMIN_VIEW_COLLISION_DESCRIPTOR: ScaffoldCollisionDescriptor<
+	SlugCollisionContext,
+	WorkspaceInventory["adminViews"][number]
+> = {
+	filesystemCollisions: [
+		{
+			label: "An admin view",
+			relativePath: ({ slug }) => path.join("src", "admin-views", slug),
+		},
+		{
+			label: "An admin view bootstrap",
+			relativePath: ({ slug }) =>
+				path.join("inc", "admin-views", `${slug}.php`),
+		},
+	],
+	inventoryCollision: {
+		entries: (inventory) => inventory.adminViews,
+		exists: (entry, { slug }) => entry.slug === slug,
+		message: ({ slug }) =>
+			`An admin view inventory entry already exists for ${slug}. Choose a different name.`,
+	},
+};
+
+const ABILITY_COLLISION_DESCRIPTOR: ScaffoldCollisionDescriptor<
+	SlugCollisionContext,
+	WorkspaceInventory["abilities"][number]
+> = {
+	filesystemCollisions: [
+		{
+			label: "An ability scaffold",
+			relativePath: ({ slug }) => path.join("src", "abilities", slug),
+		},
+		{
+			label: "An ability bootstrap",
+			relativePath: ({ slug }) => path.join("inc", "abilities", `${slug}.php`),
+		},
+	],
+	inventoryCollision: {
+		entries: (inventory) => inventory.abilities,
+		exists: (entry, { slug }) => entry.slug === slug,
+		message: ({ slug }) =>
+			`An ability inventory entry already exists for ${slug}. Choose a different name.`,
+	},
+};
+
+const AI_FEATURE_COLLISION_DESCRIPTOR: ScaffoldCollisionDescriptor<
+	SlugCollisionContext,
+	WorkspaceInventory["aiFeatures"][number]
+> = {
+	filesystemCollisions: [
+		{
+			label: "An AI feature",
+			relativePath: ({ slug }) => path.join("src", "ai-features", slug),
+		},
+		{
+			label: "An AI feature bootstrap",
+			relativePath: ({ slug }) =>
+				path.join("inc", "ai-features", `${slug}.php`),
+		},
+	],
+	inventoryCollision: {
+		entries: (inventory) => inventory.aiFeatures,
+		exists: (entry, { slug }) => entry.slug === slug,
+		message: ({ slug }) =>
+			`An AI feature inventory entry already exists for ${slug}. Choose a different name.`,
+	},
+};
+
+const EDITOR_PLUGIN_COLLISION_DESCRIPTOR: ScaffoldCollisionDescriptor<
+	SlugCollisionContext,
+	WorkspaceInventory["editorPlugins"][number]
+> = {
+	filesystemCollisions: [
+		{
+			label: "An editor plugin",
+			relativePath: ({ slug }) => path.join("src", "editor-plugins", slug),
+		},
+	],
+	inventoryCollision: {
+		entries: (inventory) => inventory.editorPlugins,
+		exists: (entry, { slug }) => entry.slug === slug,
+		message: ({ slug }) =>
+			`An editor plugin inventory entry already exists for ${slug}. Choose a different name.`,
+	},
+};
+
+/**
  * Ensure a block variation scaffold does not already exist.
  *
  * @param projectDir Absolute workspace root used to resolve scaffold paths.
@@ -59,24 +323,10 @@ export function assertVariationDoesNotExist(
 	variationSlug: string,
 	inventory: WorkspaceInventory,
 ): void {
-	assertScaffoldDoesNotExist({
-		filesystemCollisions: [
-			{
-				label: "A variation",
-				relativePath: path.join(
-					"src",
-					"blocks",
-					blockSlug,
-					"variations",
-					`${variationSlug}.ts`,
-				),
-			},
-		],
-		inventoryCollision: {
-			entries: inventory.variations,
-			exists: (entry) => entry.block === blockSlug && entry.slug === variationSlug,
-			message: `A variation inventory entry already exists for ${blockSlug}/${variationSlug}. Choose a different name.`,
-		},
+	assertAddKindScaffoldDoesNotExist({
+		context: { blockSlug, slug: variationSlug },
+		descriptor: VARIATION_COLLISION_DESCRIPTOR,
+		inventory,
 		projectDir,
 	});
 }
@@ -96,24 +346,10 @@ export function assertBlockStyleDoesNotExist(
 	styleSlug: string,
 	inventory: WorkspaceInventory,
 ): void {
-	assertScaffoldDoesNotExist({
-		filesystemCollisions: [
-			{
-				label: "A block style",
-				relativePath: path.join(
-					"src",
-					"blocks",
-					blockSlug,
-					"styles",
-					`${styleSlug}.ts`,
-				),
-			},
-		],
-		inventoryCollision: {
-			entries: inventory.blockStyles,
-			exists: (entry) => entry.block === blockSlug && entry.slug === styleSlug,
-			message: `A block style inventory entry already exists for ${blockSlug}/${styleSlug}. Choose a different name.`,
-		},
+	assertAddKindScaffoldDoesNotExist({
+		context: { blockSlug, slug: styleSlug },
+		descriptor: BLOCK_STYLE_COLLISION_DESCRIPTOR,
+		inventory,
 		projectDir,
 	});
 }
@@ -133,25 +369,10 @@ export function assertBlockTransformDoesNotExist(
 	transformSlug: string,
 	inventory: WorkspaceInventory,
 ): void {
-	assertScaffoldDoesNotExist({
-		filesystemCollisions: [
-			{
-				label: "A block transform",
-				relativePath: path.join(
-					"src",
-					"blocks",
-					blockSlug,
-					"transforms",
-					`${transformSlug}.ts`,
-				),
-			},
-		],
-		inventoryCollision: {
-			entries: inventory.blockTransforms,
-			exists: (entry) =>
-				entry.block === blockSlug && entry.slug === transformSlug,
-			message: `A block transform inventory entry already exists for ${blockSlug}/${transformSlug}. Choose a different name.`,
-		},
+	assertAddKindScaffoldDoesNotExist({
+		context: { blockSlug, slug: transformSlug },
+		descriptor: BLOCK_TRANSFORM_COLLISION_DESCRIPTOR,
+		inventory,
 		projectDir,
 	});
 }
@@ -171,18 +392,10 @@ export function assertPatternDoesNotExist(
 	patternSlug: string,
 	inventory: WorkspaceInventory,
 ): void {
-	assertScaffoldDoesNotExist({
-		filesystemCollisions: [
-			{
-				label: "A pattern",
-				relativePath: path.join("src", "patterns", `${patternSlug}.php`),
-			},
-		],
-		inventoryCollision: {
-			entries: inventory.patterns,
-			exists: (entry) => entry.slug === patternSlug,
-			message: `A pattern inventory entry already exists for ${patternSlug}. Choose a different name.`,
-		},
+	assertAddKindScaffoldDoesNotExist({
+		context: { slug: patternSlug },
+		descriptor: PATTERN_COLLISION_DESCRIPTOR,
+		inventory,
 		projectDir,
 	});
 }
@@ -202,18 +415,10 @@ export function assertBindingSourceDoesNotExist(
 	bindingSourceSlug: string,
 	inventory: WorkspaceInventory,
 ): void {
-	assertScaffoldDoesNotExist({
-		filesystemCollisions: [
-			{
-				label: "A binding source",
-				relativePath: path.join("src", "bindings", bindingSourceSlug),
-			},
-		],
-		inventoryCollision: {
-			entries: inventory.bindingSources,
-			exists: (entry) => entry.slug === bindingSourceSlug,
-			message: `A binding source inventory entry already exists for ${bindingSourceSlug}. Choose a different name.`,
-		},
+	assertAddKindScaffoldDoesNotExist({
+		context: { slug: bindingSourceSlug },
+		descriptor: BINDING_SOURCE_COLLISION_DESCRIPTOR,
+		inventory,
 		projectDir,
 	});
 }
@@ -233,22 +438,10 @@ export function assertRestResourceDoesNotExist(
 	restResourceSlug: string,
 	inventory: WorkspaceInventory,
 ): void {
-	assertScaffoldDoesNotExist({
-		filesystemCollisions: [
-			{
-				label: "A REST resource",
-				relativePath: path.join("src", "rest", restResourceSlug),
-			},
-			{
-				label: "A REST resource bootstrap",
-				relativePath: path.join("inc", "rest", `${restResourceSlug}.php`),
-			},
-		],
-		inventoryCollision: {
-			entries: inventory.restResources,
-			exists: (entry) => entry.slug === restResourceSlug,
-			message: `A REST resource inventory entry already exists for ${restResourceSlug}. Choose a different name.`,
-		},
+	assertAddKindScaffoldDoesNotExist({
+		context: { slug: restResourceSlug },
+		descriptor: REST_RESOURCE_COLLISION_DESCRIPTOR,
+		inventory,
 		projectDir,
 	});
 }
@@ -267,22 +460,10 @@ export function assertAdminViewDoesNotExist(
 	adminViewSlug: string,
 	inventory: WorkspaceInventory,
 ): void {
-	assertScaffoldDoesNotExist({
-		filesystemCollisions: [
-			{
-				label: "An admin view",
-				relativePath: path.join("src", "admin-views", adminViewSlug),
-			},
-			{
-				label: "An admin view bootstrap",
-				relativePath: path.join("inc", "admin-views", `${adminViewSlug}.php`),
-			},
-		],
-		inventoryCollision: {
-			entries: inventory.adminViews,
-			exists: (entry) => entry.slug === adminViewSlug,
-			message: `An admin view inventory entry already exists for ${adminViewSlug}. Choose a different name.`,
-		},
+	assertAddKindScaffoldDoesNotExist({
+		context: { slug: adminViewSlug },
+		descriptor: ADMIN_VIEW_COLLISION_DESCRIPTOR,
+		inventory,
 		projectDir,
 	});
 }
@@ -304,22 +485,10 @@ export function assertAbilityDoesNotExist(
 	abilitySlug: string,
 	inventory: WorkspaceInventory,
 ): void {
-	assertScaffoldDoesNotExist({
-		filesystemCollisions: [
-			{
-				label: "An ability scaffold",
-				relativePath: path.join("src", "abilities", abilitySlug),
-			},
-			{
-				label: "An ability bootstrap",
-				relativePath: path.join("inc", "abilities", `${abilitySlug}.php`),
-			},
-		],
-		inventoryCollision: {
-			entries: inventory.abilities,
-			exists: (entry) => entry.slug === abilitySlug,
-			message: `An ability inventory entry already exists for ${abilitySlug}. Choose a different name.`,
-		},
+	assertAddKindScaffoldDoesNotExist({
+		context: { slug: abilitySlug },
+		descriptor: ABILITY_COLLISION_DESCRIPTOR,
+		inventory,
 		projectDir,
 	});
 }
@@ -339,22 +508,10 @@ export function assertAiFeatureDoesNotExist(
 	aiFeatureSlug: string,
 	inventory: WorkspaceInventory,
 ): void {
-	assertScaffoldDoesNotExist({
-		filesystemCollisions: [
-			{
-				label: "An AI feature",
-				relativePath: path.join("src", "ai-features", aiFeatureSlug),
-			},
-			{
-				label: "An AI feature bootstrap",
-				relativePath: path.join("inc", "ai-features", `${aiFeatureSlug}.php`),
-			},
-		],
-		inventoryCollision: {
-			entries: inventory.aiFeatures,
-			exists: (entry) => entry.slug === aiFeatureSlug,
-			message: `An AI feature inventory entry already exists for ${aiFeatureSlug}. Choose a different name.`,
-		},
+	assertAddKindScaffoldDoesNotExist({
+		context: { slug: aiFeatureSlug },
+		descriptor: AI_FEATURE_COLLISION_DESCRIPTOR,
+		inventory,
 		projectDir,
 	});
 }
@@ -373,18 +530,10 @@ export function assertEditorPluginDoesNotExist(
 	editorPluginSlug: string,
 	inventory: WorkspaceInventory,
 ): void {
-	assertScaffoldDoesNotExist({
-		filesystemCollisions: [
-			{
-				label: "An editor plugin",
-				relativePath: path.join("src", "editor-plugins", editorPluginSlug),
-			},
-		],
-		inventoryCollision: {
-			entries: inventory.editorPlugins,
-			exists: (entry) => entry.slug === editorPluginSlug,
-			message: `An editor plugin inventory entry already exists for ${editorPluginSlug}. Choose a different name.`,
-		},
+	assertAddKindScaffoldDoesNotExist({
+		context: { slug: editorPluginSlug },
+		descriptor: EDITOR_PLUGIN_COLLISION_DESCRIPTOR,
+		inventory,
 		projectDir,
 	});
 }
