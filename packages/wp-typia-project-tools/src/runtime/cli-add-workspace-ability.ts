@@ -14,6 +14,9 @@ import {
 
 /**
  * Add one typed workflow ability scaffold to an official workspace project.
+ *
+ * @returns Generated ability metadata plus non-fatal scaffold warnings, such
+ * as repaired malformed existing plugin header floor values.
  */
 export async function runAddAbilityCommand({
 	abilityName,

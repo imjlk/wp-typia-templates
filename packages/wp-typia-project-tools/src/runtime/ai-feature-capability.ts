@@ -154,8 +154,26 @@ function normalizeSelections(
 function validateFeatureMinimumVersions(
   definition: AiFeatureDefinition,
 ): void {
-  pickHigherVersionFloor(definition.minimumVersions?.wordpress, undefined);
-  pickHigherVersionFloor(definition.minimumVersions?.php, undefined);
+  for (const [platform, value] of [
+    ['wordpress', definition.minimumVersions?.wordpress],
+    ['php', definition.minimumVersions?.php],
+  ] as const) {
+    if (value === undefined) {
+      continue;
+    }
+
+    try {
+      pickHigherVersionFloor(value, undefined);
+    } catch (error) {
+      throw new Error(
+        [
+          `Invalid ${platform} minimum version floor for AI feature "${definition.id}": "${value}".`,
+          'Expected dotted numeric segments such as "6.7" or "8.1.2".',
+        ].join(' '),
+        { cause: error },
+      );
+    }
+  }
 }
 
 /**

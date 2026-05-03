@@ -593,7 +593,7 @@ describe('WordPress AI AbilitySpec foundation', () => {
         },
       ),
     ).toThrow(
-      /parseVersionFloorParts received an invalid version floor "6\.x"/,
+      /Invalid wordpress minimum version floor for AI feature "invalid-feature": "6\.x"/,
     );
 
     expect(() =>
@@ -616,7 +616,7 @@ describe('WordPress AI AbilitySpec foundation', () => {
         },
       ),
     ).toThrow(
-      /parseVersionFloorParts received an invalid version floor "6\.x"/,
+      /Invalid wordpress minimum version floor for AI feature "invalid-feature": "6\.x"/,
     );
 
     expect(() =>
@@ -651,7 +651,7 @@ describe('WordPress AI AbilitySpec foundation', () => {
         },
       ),
     ).toThrow(
-      /parseVersionFloorParts received an invalid version floor "7\.x"/,
+      /Invalid wordpress minimum version floor for AI feature "invalid-feature": "7\.x"/,
     );
   });
 });
