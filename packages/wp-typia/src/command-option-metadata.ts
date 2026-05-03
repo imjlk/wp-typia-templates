@@ -487,7 +487,7 @@ export const COMMAND_ROUTING_METADATA = buildArgvWalkerRoutingMetadata(
   ALL_COMMAND_OPTION_METADATA,
 );
 
-function createMissingOptionValueError(
+export function createMissingOptionValueError(
   optionLabel: string,
 ): ReturnType<typeof createCliDiagnosticCodeError> {
   return createCliDiagnosticCodeError(

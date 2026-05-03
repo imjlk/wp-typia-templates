@@ -1,9 +1,5 @@
 import path from 'node:path';
 import {
-  CLI_DIAGNOSTIC_CODES,
-  createCliDiagnosticCodeError,
-} from '@wp-typia/project-tools/cli-diagnostics';
-import {
   collectPositionalIndexes,
   findFirstPositionalIndex,
 } from '../bin/argv-walker.js';
@@ -14,6 +10,7 @@ import {
   COMMAND_OPTION_METADATA_BY_GROUP,
   COMMAND_ROUTING_METADATA,
   GLOBAL_OPTION_METADATA,
+  createMissingOptionValueError,
 } from './command-option-metadata';
 export {
   WP_TYPIA_BUNLI_MIGRATION_DOC,
@@ -71,15 +68,6 @@ const SHORT_OPTION_NAMES_WITH_VALUES = new Set<string>(
     .filter(([, option]) => option.type === 'string')
     .map(([short]) => short),
 );
-
-function createMissingOptionValueError(
-  optionLabel: string,
-): ReturnType<typeof createCliDiagnosticCodeError> {
-  return createCliDiagnosticCodeError(
-    CLI_DIAGNOSTIC_CODES.MISSING_ARGUMENT,
-    `\`${optionLabel}\` requires a value.`,
-  );
-}
 
 export function isReservedTopLevelCommandName(value: string): boolean {
   return WP_TYPIA_RESERVED_TOP_LEVEL_COMMAND_NAMES.includes(
