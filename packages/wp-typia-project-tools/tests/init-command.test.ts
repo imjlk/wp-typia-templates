@@ -2,7 +2,9 @@ import { afterAll, describe, expect, test } from "bun:test";
 import * as fs from "node:fs";
 import * as path from "node:path";
 
-import { applyInitPlan, getInitPlan } from "../src/runtime/cli-init.js";
+import { applyInitPlan } from "../src/runtime/cli-init-apply.js";
+import { runInitCommand } from "../src/runtime/cli-init.js";
+import { getInitPlan } from "../src/runtime/cli-init-plan.js";
 import { getPackageVersions } from "../src/runtime/package-versions.js";
 import {
 	cleanupScaffoldTempRoot,
@@ -130,6 +132,27 @@ describe("wp-typia init", () => {
 			plan.notes.some((note) =>
 				note.includes("snapshotted and rolled back automatically"),
 			),
+		).toBe(true);
+	});
+
+	test("facade routes preview and apply through the split init modules", async () => {
+		const projectDir = path.join(tempRoot, "retrofit-facade-routing");
+		scaffoldRetrofitProject(projectDir, {
+			interfaceName: "RetrofitFacadeRoutingAttributes",
+		});
+
+		const previewPlan = await runInitCommand({ projectDir });
+		const appliedPlan = await runInitCommand({
+			apply: true,
+			projectDir,
+		});
+
+		expect(previewPlan.status).toBe("preview");
+		expect(previewPlan.commandMode).toBe("preview-only");
+		expect(appliedPlan.status).toBe("applied");
+		expect(appliedPlan.commandMode).toBe("apply");
+		expect(
+			fs.existsSync(path.join(projectDir, "scripts", "sync-project.ts")),
 		).toBe(true);
 	});
 
