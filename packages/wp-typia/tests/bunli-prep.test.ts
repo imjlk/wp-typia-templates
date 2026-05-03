@@ -2,6 +2,7 @@ import { describe, expect, test } from 'bun:test';
 import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
+import { CLI_DIAGNOSTIC_CODES } from '@wp-typia/project-tools/cli-diagnostics';
 
 import { COMMAND_ROUTING_METADATA } from '../src/command-option-metadata';
 import {
@@ -33,6 +34,19 @@ const runtimeDependencyHelperSource = fs.readFileSync(
 );
 
 describe('wp-typia Bunli preparation', () => {
+  function expectMissingOptionValue(callback: () => unknown): void {
+    let caught: unknown;
+    try {
+      callback();
+    } catch (error) {
+      caught = error;
+    }
+
+    expect(caught).toMatchObject({
+      code: CLI_DIAGNOSTIC_CODES.MISSING_ARGUMENT,
+    });
+  }
+
   test('checks in the Bunli prep tree while promoting a built CLI runtime', () => {
     expect(packageManifest.bin['wp-typia']).toBe('bin/wp-typia.js');
     expect(packageManifest.files).toContain('dist-bunli/');
@@ -340,11 +354,11 @@ describe('wp-typia Bunli preparation', () => {
       '--position',
       'after',
     ]);
-    expect(() =>
+    expectMissingOptionValue(() =>
       normalizeWpTypiaArgv(['templates', 'inspect', '--id']),
-    ).toThrow(/`--id` requires a value\./);
-    expect(() => normalizeWpTypiaArgv(['mcp', 'sync', '--output-dir'])).toThrow(
-      /`--output-dir` requires a value\./,
+    );
+    expectMissingOptionValue(() =>
+      normalizeWpTypiaArgv(['mcp', 'sync', '--output-dir']),
     );
     expect(
       normalizeWpTypiaArgv(['mcp', 'sync', '--output-dir=.bunli/custom-mcp']),

@@ -285,9 +285,35 @@ describe('Node fallback CLI core routing', () => {
     expect(result.stdout).toBe('');
     expect(result.stderr).toBe('');
     expect(result.error).toBeInstanceOf(Error);
+    expect((result.error as { code?: string }).code).toBe('missing-argument');
     expect((result.error as Error).message).toContain(
       '`--format` requires a value.',
     );
+  });
+
+  test('emits structured missing option value diagnostics with command context', async () => {
+    const result = await captureNodeCli(
+      ['templates', '--id', '--format', 'json'],
+      { entrypoint: true },
+    );
+    const parsed = JSON.parse(result.stderr) as {
+      error?: {
+        code?: string;
+        command?: string;
+        detailLines?: string[];
+        kind?: string;
+      };
+      ok?: boolean;
+    };
+
+    expect(result.error).toBeUndefined();
+    expect(result.exitCode).toBe(1);
+    expect(result.stdout).toBe('');
+    expect(parsed.ok).toBe(false);
+    expect(parsed.error?.kind).toBe('command-execution');
+    expect(parsed.error?.code).toBe('missing-argument');
+    expect(parsed.error?.command).toBe('templates');
+    expect(parsed.error?.detailLines).toContain('`--id` requires a value.');
   });
 
   test('emits structured command output when --format json is explicit', async () => {

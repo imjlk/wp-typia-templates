@@ -1,5 +1,9 @@
 import path from 'node:path';
 import {
+  CLI_DIAGNOSTIC_CODES,
+  createCliDiagnosticCodeError,
+} from '@wp-typia/project-tools/cli-diagnostics';
+import {
   collectPositionalIndexes,
   findFirstPositionalIndex,
 } from '../bin/argv-walker.js';
@@ -68,6 +72,15 @@ const SHORT_OPTION_NAMES_WITH_VALUES = new Set<string>(
     .map(([short]) => short),
 );
 
+function createMissingOptionValueError(
+  optionLabel: string,
+): ReturnType<typeof createCliDiagnosticCodeError> {
+  return createCliDiagnosticCodeError(
+    CLI_DIAGNOSTIC_CODES.MISSING_ARGUMENT,
+    `\`${optionLabel}\` requires a value.`,
+  );
+}
+
 export function isReservedTopLevelCommandName(value: string): boolean {
   return WP_TYPIA_RESERVED_TOP_LEVEL_COMMAND_NAMES.includes(
     value as (typeof WP_TYPIA_RESERVED_TOP_LEVEL_COMMAND_NAMES)[number],
@@ -100,7 +113,7 @@ function assertStringOptionValues(argv: string[]): void {
       if (SHORT_OPTION_NAMES_WITH_VALUES.has(arg.slice(1))) {
         const next = argv[index + 1];
         if (!next || next.startsWith('-')) {
-          throw new Error(`\`${arg}\` requires a value.`);
+          throw createMissingOptionValueError(arg);
         }
         index += 1;
       }
@@ -117,14 +130,14 @@ function assertStringOptionValues(argv: string[]): void {
 
     if (arg.includes('=')) {
       if (!inlineValue) {
-        throw new Error(`\`--${rawName}\` requires a value.`);
+        throw createMissingOptionValueError(`--${rawName}`);
       }
       continue;
     }
 
     const next = argv[index + 1];
     if (!next || next.startsWith('-')) {
-      throw new Error(`\`--${rawName}\` requires a value.`);
+      throw createMissingOptionValueError(`--${rawName}`);
     }
     index += 1;
   }
