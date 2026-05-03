@@ -138,12 +138,12 @@ export function resolveCanonicalCommandContext(argv: string[]): string {
     return 'wp-typia';
   }
 
-  if (isReservedTopLevelCommandName(firstPositional)) {
-    return firstPositional;
-  }
-
   if (hasUnknownOptionBefore(argv, firstPositionalIndex)) {
     return 'wp-typia';
+  }
+
+  if (isReservedTopLevelCommandName(firstPositional)) {
+    return firstPositional;
   }
 
   return positionalIndexes.length === 1 ? 'create' : firstPositional;
