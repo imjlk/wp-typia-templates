@@ -1,6 +1,8 @@
 import { expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
+import { join, resolve } from "node:path";
+
+import { resolveWorkspaceBootstrapPath } from "../src/runtime/cli-doctor-workspace-shared.js";
 
 const sourceRoot = resolve(import.meta.dir, "..", "src", "runtime");
 
@@ -49,4 +51,15 @@ test("cli-doctor keeps environment and workspace checks in dedicated modules", (
 	expect(workspaceBindingsSource).toContain("export function getWorkspaceBindingDoctorChecks(");
 	expect(workspaceFeaturesSource).toContain("export function getWorkspaceFeatureDoctorChecks(");
 	expect(workspacePackageSource).toContain("export function getWorkspacePackageMetadataCheck(");
+});
+
+test("cli-doctor resolves workspace bootstrap paths for scoped and unscoped packages", () => {
+	const projectDir = resolve("/tmp", "wp-typia-doctor-demo");
+
+	expect(resolveWorkspaceBootstrapPath(projectDir, "@example/demo-plugin")).toBe(
+		join(projectDir, "demo-plugin.php"),
+	);
+	expect(resolveWorkspaceBootstrapPath(projectDir, "demo-plugin")).toBe(
+		join(projectDir, "demo-plugin.php"),
+	);
 });

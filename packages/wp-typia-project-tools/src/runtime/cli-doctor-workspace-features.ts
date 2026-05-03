@@ -10,6 +10,7 @@ import {
 import {
 	checkExistingFiles,
 	createDoctorCheck,
+	resolveWorkspaceBootstrapPath,
 	WORKSPACE_ABILITY_EDITOR_ASSET,
 	WORKSPACE_ABILITY_EDITOR_SCRIPT,
 	WORKSPACE_ABILITY_GLOB,
@@ -99,8 +100,7 @@ function checkWorkspaceRestResourceBootstrap(
 	packageName: string,
 	phpPrefix: string,
 ): DoctorCheck {
-	const packageBaseName = packageName.split("/").pop() ?? packageName;
-	const bootstrapPath = path.join(projectDir, `${packageBaseName}.php`);
+	const bootstrapPath = resolveWorkspaceBootstrapPath(projectDir, packageName);
 	if (!fs.existsSync(bootstrapPath)) {
 		return createDoctorCheck(
 			"REST resource bootstrap",
@@ -188,8 +188,7 @@ function checkWorkspaceAbilityBootstrap(
 	packageName: string,
 	phpPrefix: string,
 ): DoctorCheck {
-	const packageBaseName = packageName.split("/").pop() ?? packageName;
-	const bootstrapPath = path.join(projectDir, `${packageBaseName}.php`);
+	const bootstrapPath = resolveWorkspaceBootstrapPath(projectDir, packageName);
 	if (!fs.existsSync(bootstrapPath)) {
 		return createDoctorCheck(
 			"Ability bootstrap",
@@ -324,8 +323,7 @@ function checkWorkspaceAiFeatureBootstrap(
 	packageName: string,
 	phpPrefix: string,
 ): DoctorCheck {
-	const packageBaseName = packageName.split("/").pop() ?? packageName;
-	const bootstrapPath = path.join(projectDir, `${packageBaseName}.php`);
+	const bootstrapPath = resolveWorkspaceBootstrapPath(projectDir, packageName);
 	if (!fs.existsSync(bootstrapPath)) {
 		return createDoctorCheck(
 			"AI feature bootstrap",
@@ -389,8 +387,7 @@ function checkWorkspaceEditorPluginBootstrap(
 	packageName: string,
 	phpPrefix: string,
 ): DoctorCheck {
-	const packageBaseName = packageName.split("/").pop() ?? packageName;
-	const bootstrapPath = path.join(projectDir, `${packageBaseName}.php`);
+	const bootstrapPath = resolveWorkspaceBootstrapPath(projectDir, packageName);
 	if (!fs.existsSync(bootstrapPath)) {
 		return createDoctorCheck(
 			"Editor plugin bootstrap",
@@ -508,8 +505,7 @@ function checkWorkspaceAdminViewBootstrap(
 	packageName: string,
 	phpPrefix: string,
 ): DoctorCheck {
-	const packageBaseName = packageName.split("/").pop() ?? packageName;
-	const bootstrapPath = path.join(projectDir, `${packageBaseName}.php`);
+	const bootstrapPath = resolveWorkspaceBootstrapPath(projectDir, packageName);
 	if (!fs.existsSync(bootstrapPath)) {
 		return createDoctorCheck(
 			"Admin view bootstrap",
