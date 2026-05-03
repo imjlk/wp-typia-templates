@@ -14,6 +14,9 @@ import {
 
 /**
  * Add one typed workflow ability scaffold to an official workspace project.
+ *
+ * @returns Generated ability metadata plus non-fatal scaffold warnings, such
+ * as repaired malformed existing plugin header floor values.
  */
 export async function runAddAbilityCommand({
 	abilityName,
@@ -21,6 +24,7 @@ export async function runAddAbilityCommand({
 }: RunAddAbilityCommandOptions): Promise<{
 	abilitySlug: string;
 	projectDir: string;
+	warnings: string[];
 }> {
 	const workspace = resolveWorkspaceProject(cwd);
 	const abilitySlug = assertValidGeneratedSlug(
@@ -35,7 +39,7 @@ export async function runAddAbilityCommand({
 	const compatibilityPolicy = resolveScaffoldCompatibilityPolicy(
 		REQUIRED_WORKSPACE_ABILITY_COMPATIBILITY,
 	);
-	await scaffoldAbilityWorkspace({
+	const scaffoldResult = await scaffoldAbilityWorkspace({
 		abilitySlug,
 		compatibilityPolicy,
 		workspace,
@@ -44,5 +48,6 @@ export async function runAddAbilityCommand({
 	return {
 		abilitySlug,
 		projectDir: workspace.projectDir,
+		warnings: scaffoldResult.warnings,
 	};
 }

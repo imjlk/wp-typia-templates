@@ -19,6 +19,12 @@ The baseline also applies to optional AI features. Optional features must use
 runtime gates and graceful degradation instead of raising the plugin header
 floor.
 
+Compatibility floors must use dotted numeric segments, for example `6.7`,
+`7.0`, or `8.1.2`. Wildcards and ranges such as `6.x`, `^6.7`, or `>=6.7` are
+not accepted. Invalid internal policy values fail fast; malformed existing
+plugin header values are replaced with the resolved policy floor and surfaced as
+CLI warnings so maintainers can fix the source value deliberately.
+
 ## Feature Modes
 
 - `required`: raises the generated plugin header to the highest required

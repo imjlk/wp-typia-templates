@@ -151,6 +151,31 @@ function normalizeSelections(
   return [...normalized.values()];
 }
 
+function validateFeatureMinimumVersions(
+  definition: AiFeatureDefinition,
+): void {
+  for (const [platform, value] of [
+    ['wordpress', definition.minimumVersions?.wordpress],
+    ['php', definition.minimumVersions?.php],
+  ] as const) {
+    if (value === undefined) {
+      continue;
+    }
+
+    try {
+      pickHigherVersionFloor(value, undefined);
+    } catch (error) {
+      throw new Error(
+        [
+          `Invalid ${platform} minimum version floor for AI feature "${definition.id}": "${value}".`,
+          'Expected dotted numeric segments such as "6.7" or "8.1.2".',
+        ].join(' '),
+        { cause: error },
+      );
+    }
+  }
+}
+
 /**
  * Resolves a normalized AI feature capability plan from a list of selections.
  *
@@ -181,6 +206,7 @@ export function resolveAiFeatureCapabilityPlan(
         `Unknown AI feature capability "${selection.featureId}".`,
       );
     }
+    validateFeatureMinimumVersions(definition);
 
     const resolvedDefinition = {
       ...definition,

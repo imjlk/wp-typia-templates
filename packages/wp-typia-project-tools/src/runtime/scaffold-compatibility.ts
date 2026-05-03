@@ -12,7 +12,10 @@ import {
   type ResolvedAiFeatureCapabilityPlan,
   resolveAiFeatureCapabilityPlan,
 } from './ai-feature-capability.js';
-import { pickHigherVersionFloor } from './version-floor.js';
+import {
+  parseVersionFloorParts,
+  pickHigherVersionFloor,
+} from './version-floor.js';
 
 /**
  * WordPress plugin header version floors emitted by scaffold templates.
@@ -42,6 +45,17 @@ export interface ScaffoldCompatibilityConfig {
   requiredFeatureIds: string[];
   requiredFeatures: string[];
   runtimeGates: string[];
+}
+
+/**
+ * Optional hooks for surfacing user-authored compatibility header repairs.
+ */
+export interface UpdatePluginHeaderCompatibilityOptions {
+  /**
+   * Receives warnings when a malformed existing plugin header value is
+   * replaced by the resolved policy floor.
+   */
+  onWarning?: (warning: string) => void;
 }
 
 /**
@@ -90,6 +104,13 @@ function pickHigherScaffoldVersionFloor(
 function pickHigherHeaderVersionFloor(
   policyValue: string,
   currentValue: string,
+  {
+    headerName,
+    onWarning,
+  }: {
+    headerName: string;
+    onWarning?: (warning: string) => void;
+  },
 ): string {
   const normalizedCurrentValue = currentValue.trim();
   if (!normalizedCurrentValue) {
@@ -98,9 +119,42 @@ function pickHigherHeaderVersionFloor(
 
   try {
     return pickHigherScaffoldVersionFloor(policyValue, normalizedCurrentValue);
-  } catch {
+  } catch (error) {
+    const warning = [
+      `Invalid plugin header version floor for ${headerName}: "${normalizedCurrentValue}".`,
+      'Expected dotted numeric segments such as "6.7" or "8.1.2".',
+      `Replacing it with compatibility policy value "${policyValue}".`,
+    ].join(' ');
+
+    if (!onWarning) {
+      throw new Error(warning, { cause: error });
+    }
+
+    onWarning(warning);
     return policyValue;
   }
+}
+
+function assertPolicyVersionFloor(headerName: string, value: string): void {
+  try {
+    parseVersionFloorParts(value);
+  } catch (error) {
+    throw new Error(
+      [
+        `Invalid scaffold compatibility policy floor for ${headerName}: "${value}".`,
+        'Expected dotted numeric segments such as "6.7" or "8.1.2".',
+      ].join(' '),
+      { cause: error },
+    );
+  }
+}
+
+function assertPluginHeaderPolicyVersionFloors(
+  pluginHeader: ScaffoldPluginHeaderCompatibility,
+): void {
+  assertPolicyVersionFloor('Requires at least', pluginHeader.requiresAtLeast);
+  assertPolicyVersionFloor('Tested up to', pluginHeader.testedUpTo);
+  assertPolicyVersionFloor('Requires PHP', pluginHeader.requiresPhp);
 }
 
 function formatRuntimeGate(feature: ResolvedAiFeatureCapability): string[] {
@@ -205,6 +259,8 @@ function replacePluginHeaderVersionFloor(
   source: string,
   pattern: RegExp,
   policyValue: string,
+  headerName: string,
+  options: UpdatePluginHeaderCompatibilityOptions,
 ): string {
   return source.replace(
     pattern,
@@ -213,6 +269,10 @@ function replacePluginHeaderVersionFloor(
       return `${versionPrefix}${pickHigherHeaderVersionFloor(
         policyValue,
         currentValue,
+        {
+          headerName,
+          onWarning: options.onWarning,
+        },
       )}${lineEnding}`;
     },
   );
@@ -221,28 +281,38 @@ function replacePluginHeaderVersionFloor(
 /**
  * Patch a generated plugin bootstrap header without lowering custom floors.
  *
- * Preserves the original header line endings while replacing empty or invalid
- * version strings with the policy values.
+ * Preserves the original header line endings while replacing empty version
+ * strings with policy values. Malformed user-authored values are reported
+ * through `options.onWarning`; without a warning handler they throw instead of
+ * falling back silently.
  */
 export function updatePluginHeaderCompatibility(
   source: string,
   policy: ScaffoldCompatibilityPolicy,
+  options: UpdatePluginHeaderCompatibilityOptions = {},
 ): string {
   const { pluginHeader } = policy;
+  assertPluginHeaderPolicyVersionFloors(pluginHeader);
 
   const nextSource = replacePluginHeaderVersionFloor(
     source,
     /(\* Requires at least:[^\S\r\n]*)([^\r\n]*)(\r?)/u,
     pluginHeader.requiresAtLeast,
+    'Requires at least',
+    options,
   );
   const nextSourceWithTestedUpTo = replacePluginHeaderVersionFloor(
     nextSource,
     /(\* Tested up to:[^\S\r\n]*)([^\r\n]*)(\r?)/u,
     pluginHeader.testedUpTo,
+    'Tested up to',
+    options,
   );
   return replacePluginHeaderVersionFloor(
     nextSourceWithTestedUpTo,
     /(\* Requires PHP:[^\S\r\n]*)([^\r\n]*)(\r?)/u,
     pluginHeader.requiresPhp,
+    'Requires PHP',
+    options,
   );
 }

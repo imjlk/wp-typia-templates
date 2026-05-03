@@ -503,7 +503,122 @@ describe('WordPress AI AbilitySpec foundation', () => {
     expect(nextSource).toContain(' */');
   });
 
+  test('surfaces invalid user-authored plugin header floors as warnings', () => {
+    const source = [
+      '<?php',
+      '/**',
+      ' * Plugin Name: Demo',
+      ' * Requires at least: 6.x',
+      ' * Tested up to:      6.9',
+      ' * Requires PHP:      8.x',
+      ' */',
+      '',
+    ].join('\n');
+    const warnings: string[] = [];
+    const nextSource = updatePluginHeaderCompatibility(
+      source,
+      resolveScaffoldCompatibilityPolicy(
+        REQUIRED_WORKSPACE_ABILITY_COMPATIBILITY,
+      ),
+      {
+        onWarning: (warning) => {
+          warnings.push(warning);
+        },
+      },
+    );
+
+    expect(nextSource).toContain(' * Requires at least: 7.0\n');
+    expect(nextSource).toContain(' * Tested up to:      7.0\n');
+    expect(nextSource).toContain(' * Requires PHP:      8.0\n');
+    expect(warnings).toEqual([
+      'Invalid plugin header version floor for Requires at least: "6.x". Expected dotted numeric segments such as "6.7" or "8.1.2". Replacing it with compatibility policy value "7.0".',
+      'Invalid plugin header version floor for Requires PHP: "8.x". Expected dotted numeric segments such as "6.7" or "8.1.2". Replacing it with compatibility policy value "8.0".',
+    ]);
+  });
+
+  test('rejects invalid user-authored plugin header floors without a warning handler', () => {
+    const source = [
+      '<?php',
+      '/**',
+      ' * Plugin Name: Demo',
+      ' * Requires at least: 6.x',
+      ' * Tested up to:      6.9',
+      ' * Requires PHP:      8.0',
+      ' */',
+      '',
+    ].join('\n');
+
+    expect(() =>
+      updatePluginHeaderCompatibility(
+        source,
+        resolveScaffoldCompatibilityPolicy(
+          REQUIRED_WORKSPACE_ABILITY_COMPATIBILITY,
+        ),
+      ),
+    ).toThrow(
+      /Invalid plugin header version floor for Requires at least: "6\.x"/,
+    );
+  });
+
+  test('rejects invalid scaffold compatibility baseline floors', () => {
+    expect(() =>
+      resolveScaffoldCompatibilityPolicy([], {
+        baseline: {
+          requiresAtLeast: '6.x',
+          requiresPhp: '8.0',
+          testedUpTo: '6.9',
+        },
+      }),
+    ).toThrow(/invalid version floor "6\.x"/);
+  });
+
   test('rejects invalid version floor segments instead of silently comparing them', () => {
+    expect(() =>
+      resolveAiFeatureCapabilityPlan(
+        [
+          {
+            featureId: 'invalid-feature',
+            mode: 'optional',
+          },
+        ],
+        {
+          'invalid-feature': {
+            description: 'Invalid optional floor',
+            id: 'invalid-feature',
+            label: 'Invalid optional floor',
+            minimumVersions: {
+              wordpress: '6.x',
+            },
+          },
+        },
+      ),
+    ).toThrow(
+      /Invalid wordpress minimum version floor for AI feature "invalid-feature": "6\.x"/,
+    );
+
+    expect(() =>
+      resolveAiFeatureCapabilityPlan(
+        [
+          {
+            featureId: 'invalid-feature',
+            mode: 'required',
+          },
+        ],
+        {
+          'invalid-feature': {
+            description: 'Invalid floor',
+            id: 'invalid-feature',
+            label: 'Invalid floor',
+            minimumVersions: {
+              wordpress: '6.x',
+            },
+          },
+        },
+      ),
+    ).toThrow(
+      /Invalid wordpress minimum version floor for AI feature "invalid-feature": "6\.x"/,
+    );
+
     expect(() =>
       resolveAiFeatureCapabilityPlan(
         [
@@ -536,7 +651,7 @@ describe('WordPress AI AbilitySpec foundation', () => {
         },
       ),
     ).toThrow(
-      /parseVersionFloorParts received an invalid version floor "7\.x"/,
+      /Invalid wordpress minimum version floor for AI feature "invalid-feature": "7\.x"/,
     );
   });
 });
