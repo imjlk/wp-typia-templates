@@ -546,15 +546,64 @@ test("workspace inventory section descriptors support optional interface and con
   expect(inventorySource).toContain(
     "const INVENTORY_SECTIONS: readonly InventorySectionDescriptor[]"
   );
+  expect(inventorySource).toContain("append?: {");
   expect(inventorySource).toContain("interface?: {");
   expect(inventorySource).toContain("parse?: {");
   expect(inventorySource).toContain("value?: {");
   expect(inventorySource).toContain("for (const section of INVENTORY_SECTIONS)");
+  expect(inventorySource).toContain(
+    "for (const section of [BLOCK_INVENTORY_SECTION, ...INVENTORY_SECTIONS])"
+  );
   expect(inventorySource).toContain("parseInventorySection(sourceFile, section)");
+  expect(inventorySource).toContain("appendInventorySectionEntries(nextSource, options)");
   expect(inventorySource).not.toContain("function parseVariationEntries");
   expect(inventorySource).not.toContain("function parseRestResourceEntries");
   expect(inventorySource).not.toContain(
+    "appendEntriesAtMarker(nextSource, VARIATION_CONFIG_ENTRY_MARKER"
+  );
+  expect(inventorySource).not.toContain(
     "if (!/export\\s+interface\\s+WorkspaceVariationConfig\\b/u.test(nextSource))"
+  );
+});
+
+test("workspace inventory mutation appends entries through section descriptors", () => {
+  const updatedSource = updateWorkspaceInventorySource(
+    `export interface WorkspaceBlockConfig {
+\tslug: string;
+\ttypesFile: string;
+}
+
+export const BLOCKS: WorkspaceBlockConfig[] = [
+\t// wp-typia add block entries
+];
+`,
+    {
+      adminViewEntries: [
+        '\t{ file: "src/admin-views/reports/index.tsx", phpFile: "inc/admin-views/reports.php", slug: "reports" },',
+      ],
+      blockEntries: [
+        '\t{ slug: "alert-card", typesFile: "src/blocks/alert-card/types.ts" },',
+      ],
+      blockStyleEntries: [
+        '\t{ block: "alert-card", file: "src/blocks/alert-card/styles/outline.ts", slug: "outline" },',
+      ],
+      editorPluginEntries: [
+        '\t{ file: "src/editor-plugins/seo-panel/index.tsx", slug: "seo-panel", slot: "PluginDocumentSettingPanel" },',
+      ],
+    }
+  );
+
+  expect(updatedSource).toContain(
+    '\t{ slug: "alert-card", typesFile: "src/blocks/alert-card/types.ts" },\n\t// wp-typia add block entries'
+  );
+  expect(updatedSource).toContain(
+    '\t{ block: "alert-card", file: "src/blocks/alert-card/styles/outline.ts", slug: "outline" },\n\t// wp-typia add style entries'
+  );
+  expect(updatedSource).toContain(
+    '\t{ file: "src/admin-views/reports/index.tsx", phpFile: "inc/admin-views/reports.php", slug: "reports" },\n\t// wp-typia add admin-view entries'
+  );
+  expect(updatedSource).toContain(
+    '\t{ file: "src/editor-plugins/seo-panel/index.tsx", slug: "seo-panel", slot: "PluginDocumentSettingPanel" },\n\t// wp-typia add editor-plugin entries'
   );
 });
 
