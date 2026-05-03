@@ -87,6 +87,20 @@ export function getWorkspaceBootstrapRelativePath(packageName: string): string {
 }
 
 /**
+ * Resolve the expected workspace bootstrap file inside a project root.
+ *
+ * @param projectDir Absolute workspace root directory.
+ * @param packageName Package name used to derive the plugin bootstrap basename.
+ * @returns Absolute PHP bootstrap file path for the workspace root.
+ */
+export function resolveWorkspaceBootstrapPath(
+	projectDir: string,
+	packageName: string,
+): string {
+	return path.join(projectDir, getWorkspaceBootstrapRelativePath(packageName));
+}
+
+/**
  * Verify that every referenced relative file exists inside a workspace.
  *
  * @param projectDir Absolute workspace root directory.

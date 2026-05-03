@@ -6,6 +6,7 @@ import { parseScaffoldBlockMetadata } from "@wp-typia/block-runtime/blocks";
 import {
 	checkExistingFiles,
 	createDoctorCheck,
+	resolveWorkspaceBootstrapPath,
 	WORKSPACE_FULL_BLOCK_NAME_PATTERN,
 	WORKSPACE_GENERATED_BLOCK_ARTIFACTS,
 } from "./cli-doctor-workspace-shared.js";
@@ -515,8 +516,7 @@ function checkWorkspaceBlockIframeCompatibility(
 }
 
 function checkWorkspacePatternBootstrap(projectDir: string, packageName: string): DoctorCheck {
-	const packageBaseName = packageName.split("/").pop() ?? packageName;
-	const bootstrapPath = path.join(projectDir, `${packageBaseName}.php`);
+	const bootstrapPath = resolveWorkspaceBootstrapPath(projectDir, packageName);
 	if (!fs.existsSync(bootstrapPath)) {
 		return createDoctorCheck("Pattern bootstrap", "fail", `Missing ${path.basename(bootstrapPath)}`);
 	}

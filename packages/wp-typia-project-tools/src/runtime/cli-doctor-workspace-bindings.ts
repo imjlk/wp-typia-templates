@@ -6,6 +6,7 @@ import { parseScaffoldBlockMetadata } from "@wp-typia/block-runtime/blocks";
 import {
 	checkExistingFiles,
 	createDoctorCheck,
+	resolveWorkspaceBootstrapPath,
 	WORKSPACE_BINDING_EDITOR_ASSET,
 	WORKSPACE_BINDING_EDITOR_SCRIPT,
 	WORKSPACE_BINDING_SERVER_GLOB,
@@ -17,8 +18,7 @@ import type { WorkspaceInventory } from "./workspace-inventory.js";
 import type { WorkspaceProject } from "./workspace-project.js";
 
 function checkWorkspaceBindingBootstrap(projectDir: string, packageName: string): DoctorCheck {
-	const packageBaseName = packageName.split("/").pop() ?? packageName;
-	const bootstrapPath = path.join(projectDir, `${packageBaseName}.php`);
+	const bootstrapPath = resolveWorkspaceBootstrapPath(projectDir, packageName);
 	if (!fs.existsSync(bootstrapPath)) {
 		return createDoctorCheck(
 			"Binding bootstrap",
