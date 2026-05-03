@@ -18,6 +18,12 @@ function buildRetrofitBlockConfigEntry(
 	].join("\n");
 }
 
+/**
+ * Generate the `scripts/block-config.ts` source for retrofit block targets.
+ *
+ * @param targets Existing block targets detected by the init plan.
+ * @returns Complete TypeScript source for the generated block config helper.
+ */
 export function buildRetrofitBlockConfigSource(
 	targets: RetrofitInitBlockTarget[],
 ): string {
@@ -43,6 +49,11 @@ ${blockEntries}
 	return `${updateWorkspaceInventorySource(baseSource)}\n`;
 }
 
+/**
+ * Generate the `scripts/sync-types-to-block-json.ts` helper source.
+ *
+ * @returns Complete TypeScript source for the metadata sync helper.
+ */
 export function buildRetrofitSyncTypesScriptSource(): string {
 	return `/* eslint-disable no-console */
 import path from 'node:path';
@@ -123,6 +134,11 @@ main().catch( ( error ) => {
 `;
 }
 
+/**
+ * Generate the `scripts/sync-project.ts` orchestration helper source.
+ *
+ * @returns Complete TypeScript source for the project sync entrypoint.
+ */
 export function buildRetrofitSyncProjectScriptSource(): string {
 	return `/* eslint-disable no-console */
 import { spawnSync } from 'node:child_process';
@@ -225,6 +241,12 @@ main().catch( ( error ) => {
 `;
 }
 
+/**
+ * Build the helper file source map written by `wp-typia init --apply`.
+ *
+ * @param blockTargets Existing block targets detected by the init plan.
+ * @returns Relative helper file paths mapped to their generated source.
+ */
 export function buildRetrofitHelperFiles(
 	blockTargets: RetrofitInitBlockTarget[],
 ): Record<string, string> {
