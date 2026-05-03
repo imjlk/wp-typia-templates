@@ -9,6 +9,9 @@ import {
   resolveWorkspaceBlock,
 } from '../src/runtime/cli-add-block-json.js';
 import {
+  assertAbilityDoesNotExist,
+  assertAdminViewDoesNotExist,
+  assertAiFeatureDoesNotExist,
   assertRestResourceDoesNotExist,
   assertScaffoldDoesNotExist,
   assertVariationDoesNotExist,
@@ -104,6 +107,7 @@ test('focused add runtime modules own their helper categories', () => {
   expect(filesystemSource).toContain('export async function rollbackWorkspaceMutation');
   expect(blockJsonSource).toContain('export function readWorkspaceBlockJson');
   expect(blockJsonSource).toContain('export function getMutableBlockHooks');
+  expect(collisionSource).toContain('function assertAddKindScaffoldDoesNotExist');
   expect(collisionSource).toContain('export function assertScaffoldDoesNotExist');
   expect(collisionSource).toContain('export function assertEditorPluginDoesNotExist');
   expect(helpSource).toContain('export function formatAddHelpText');
@@ -292,6 +296,46 @@ test('focused collision helpers check every REST resource filesystem target', ()
     ),
   ).toThrow(
     'A REST resource bootstrap already exists at inc/rest/products.php. Choose a different name.',
+  );
+});
+
+test('descriptor-backed collision helpers preserve representative add-kind messages', () => {
+  const projectDir = path.join(tempRoot, 'descriptor-collision');
+  const adminViewDir = path.join(projectDir, 'src', 'admin-views', 'reports');
+  const abilityDir = path.join(projectDir, 'src', 'abilities', 'review-workflow');
+  const aiFeatureBootstrapPath = path.join(
+    projectDir,
+    'inc',
+    'ai-features',
+    'brief-suggestions.php',
+  );
+  fs.mkdirSync(adminViewDir, { recursive: true });
+  fs.mkdirSync(abilityDir, { recursive: true });
+  fs.mkdirSync(path.dirname(aiFeatureBootstrapPath), { recursive: true });
+  fs.writeFileSync(aiFeatureBootstrapPath, '<?php\n', 'utf8');
+
+  expect(() =>
+    assertAdminViewDoesNotExist(projectDir, 'reports', createEmptyInventory()),
+  ).toThrow(
+    'An admin view already exists at src/admin-views/reports. Choose a different name.',
+  );
+  expect(() =>
+    assertAbilityDoesNotExist(
+      projectDir,
+      'review-workflow',
+      createEmptyInventory(),
+    ),
+  ).toThrow(
+    'An ability scaffold already exists at src/abilities/review-workflow. Choose a different name.',
+  );
+  expect(() =>
+    assertAiFeatureDoesNotExist(
+      projectDir,
+      'brief-suggestions',
+      createEmptyInventory(),
+    ),
+  ).toThrow(
+    'An AI feature bootstrap already exists at inc/ai-features/brief-suggestions.php. Choose a different name.',
   );
 });
 
