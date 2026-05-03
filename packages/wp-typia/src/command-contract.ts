@@ -75,6 +75,54 @@ export function isReservedTopLevelCommandName(value: string): boolean {
   );
 }
 
+function getLongOptionName(arg: string): string {
+  return arg.slice(2).split('=', 1)[0] ?? '';
+}
+
+function hasUnknownOptionBefore(argv: string[], endIndex: number): boolean {
+  for (let index = 0; index < endIndex; index += 1) {
+    const arg = argv[index];
+    if (arg === '--') {
+      return false;
+    }
+    if (!arg.startsWith('-') || arg === '-') {
+      continue;
+    }
+
+    if (arg.startsWith('--')) {
+      const optionName = getLongOptionName(arg);
+      if (
+        !SHARED_OPTION_PARSER.booleanOptionNames.has(optionName) &&
+        !SHARED_OPTION_PARSER.stringOptionNames.has(optionName)
+      ) {
+        return true;
+      }
+      if (
+        !arg.includes('=') &&
+        SHARED_OPTION_PARSER.stringOptionNames.has(optionName)
+      ) {
+        index += 1;
+      }
+      continue;
+    }
+
+    if (arg.length === 2) {
+      const option = SHARED_OPTION_PARSER.shortFlagMap.get(arg.slice(1));
+      if (!option) {
+        return true;
+      }
+      if (option.type === 'string') {
+        index += 1;
+      }
+      continue;
+    }
+
+    return true;
+  }
+
+  return false;
+}
+
 export function resolveCanonicalCommandContext(argv: string[]): string {
   const positionalIndexes = collectPositionalIndexes(
     argv,
@@ -92,6 +140,10 @@ export function resolveCanonicalCommandContext(argv: string[]): string {
 
   if (isReservedTopLevelCommandName(firstPositional)) {
     return firstPositional;
+  }
+
+  if (hasUnknownOptionBefore(argv, firstPositionalIndex)) {
+    return 'wp-typia';
   }
 
   return positionalIndexes.length === 1 ? 'create' : firstPositional;
