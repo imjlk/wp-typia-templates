@@ -1,4 +1,8 @@
 import { z } from 'zod';
+import {
+  CLI_DIAGNOSTIC_CODES,
+  createCliDiagnosticCodeError,
+} from '@wp-typia/project-tools/cli-diagnostics';
 
 export type CommandOptionMetadata = {
   argumentKind?: 'flag';
@@ -483,6 +487,24 @@ export const COMMAND_ROUTING_METADATA = buildArgvWalkerRoutingMetadata(
   ALL_COMMAND_OPTION_METADATA,
 );
 
+export function createMissingOptionValueError(
+  optionLabel: string,
+): ReturnType<typeof createCliDiagnosticCodeError> {
+  return createCliDiagnosticCodeError(
+    CLI_DIAGNOSTIC_CODES.MISSING_ARGUMENT,
+    `\`${optionLabel}\` requires a value.`,
+  );
+}
+
+function createUnknownOptionError(
+  optionLabel: string,
+): ReturnType<typeof createCliDiagnosticCodeError> {
+  return createCliDiagnosticCodeError(
+    CLI_DIAGNOSTIC_CODES.INVALID_ARGUMENT,
+    `Unknown option \`${optionLabel}\`.`,
+  );
+}
+
 export function extractKnownOptionValuesFromArgv(
   argv: string[],
   options: {
@@ -520,7 +542,7 @@ export function extractKnownOptionValuesFromArgv(
       }
       const next = argv[index + 1];
       if (!next || next.startsWith('-')) {
-        throw new Error(`\`${arg}\` requires a value.`);
+        throw createMissingOptionValueError(arg);
       }
       flags[shortFlag.name] = next;
       index += 1;
@@ -548,14 +570,14 @@ export function extractKnownOptionValuesFromArgv(
       }
       if (inlineValue !== undefined) {
         if (!inlineValue) {
-          throw new Error(`\`--${rawName}\` requires a value.`);
+          throw createMissingOptionValueError(`--${rawName}`);
         }
         flags[rawName] = inlineValue;
         continue;
       }
       const next = argv[index + 1];
       if (!next || next.startsWith('-')) {
-        throw new Error(`\`--${rawName}\` requires a value.`);
+        throw createMissingOptionValueError(`--${rawName}`);
       }
       flags[rawName] = next;
       index += 1;
@@ -600,7 +622,7 @@ export function parseCommandArgvWithMetadata(
     if (arg.length === 2 && arg.startsWith('-')) {
       const shortFlag = options.parser.shortFlagMap.get(arg.slice(1));
       if (!shortFlag) {
-        throw new Error(`Unknown option \`${arg}\`.`);
+        throw createUnknownOptionError(arg);
       }
       if (shortFlag.type === 'boolean') {
         flags[shortFlag.name] = true;
@@ -608,7 +630,7 @@ export function parseCommandArgvWithMetadata(
       }
       const next = argv[index + 1];
       if (!next || next.startsWith('-')) {
-        throw new Error(`\`${arg}\` requires a value.`);
+        throw createMissingOptionValueError(arg);
       }
       flags[shortFlag.name] = next;
       index += 1;
@@ -627,18 +649,18 @@ export function parseCommandArgvWithMetadata(
         continue;
       }
       if (!options.parser.stringOptionNames.has(rawName)) {
-        throw new Error(`Unknown option \`--${rawName}\`.`);
+        throw createUnknownOptionError(`--${rawName}`);
       }
       if (inlineValue !== undefined) {
         if (!inlineValue) {
-          throw new Error(`\`--${rawName}\` requires a value.`);
+          throw createMissingOptionValueError(`--${rawName}`);
         }
         flags[rawName] = inlineValue;
         continue;
       }
       const next = argv[index + 1];
       if (!next || next.startsWith('-')) {
-        throw new Error(`\`--${rawName}\` requires a value.`);
+        throw createMissingOptionValueError(`--${rawName}`);
       }
       flags[rawName] = next;
       index += 1;
@@ -646,7 +668,7 @@ export function parseCommandArgvWithMetadata(
     }
 
     if (arg.startsWith('-')) {
-      throw new Error(`Unknown option \`${arg}\`.`);
+      throw createUnknownOptionError(arg);
     }
 
     positionals.push(arg);

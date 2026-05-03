@@ -2,7 +2,6 @@ import packageJson from '../package.json';
 import {
   CLI_DIAGNOSTIC_CODES,
   createCliCommandError,
-  createCliDiagnosticCodeError,
   formatCliDiagnosticError,
   serializeCliDiagnosticError,
 } from '@wp-typia/project-tools/cli-diagnostics';
@@ -68,6 +67,7 @@ import {
   WP_TYPIA_NODE_FALLBACK_TOP_LEVEL_COMMAND_NAMES,
   WP_TYPIA_POSITIONAL_ALIAS_USAGE,
   normalizeWpTypiaArgv,
+  resolveCanonicalCommandContext,
 } from './command-contract';
 
 type GlobalFlags = {
@@ -132,34 +132,18 @@ export function parseGlobalFlags(argv: string[]): {
   argv: string[];
   flags: GlobalFlags;
 } {
-  try {
-    const { argv: nextArgv, flags } = extractKnownOptionValuesFromArgv(argv, {
-      optionNames: ['format', 'id'],
-      parser: NODE_FALLBACK_OPTION_PARSER,
-    });
+  const { argv: nextArgv, flags } = extractKnownOptionValuesFromArgv(argv, {
+    optionNames: ['format', 'id'],
+    parser: NODE_FALLBACK_OPTION_PARSER,
+  });
 
-    return {
-      argv: nextArgv,
-      flags: {
-        format: typeof flags.format === 'string' ? flags.format : undefined,
-        id: typeof flags.id === 'string' ? flags.id : undefined,
-      },
-    };
-  } catch (error) {
-    if (
-      error instanceof Error &&
-      /\`--format\` requires a value\.|\`--id\` requires a value\./.test(
-        error.message,
-      )
-    ) {
-      throw createCliDiagnosticCodeError(
-        CLI_DIAGNOSTIC_CODES.MISSING_ARGUMENT,
-        error.message,
-      );
-    }
-
-    throw error;
-  }
+  return {
+    argv: nextArgv,
+    flags: {
+      format: typeof flags.format === 'string' ? flags.format : undefined,
+      id: typeof flags.id === 'string' ? flags.id : undefined,
+    },
+  };
 }
 
 async function applyNodeFallbackConfigDefaults(
@@ -726,11 +710,15 @@ export async function runNodeCliEntrypoint(
     await runNodeCli(argv);
   } catch (error) {
     if (prefersStructuredErrorOutput) {
+      const diagnostic = createCliCommandError({
+        command: resolveCanonicalCommandContext(argv),
+        error,
+      });
       process.stderr.write(
         `${JSON.stringify(
           {
             ok: false,
-            error: serializeCliDiagnosticError(error),
+            error: serializeCliDiagnosticError(diagnostic),
           },
           null,
           2,

@@ -10,6 +10,7 @@ import {
   COMMAND_OPTION_METADATA_BY_GROUP,
   COMMAND_ROUTING_METADATA,
   GLOBAL_OPTION_METADATA,
+  createMissingOptionValueError,
 } from './command-option-metadata';
 export {
   WP_TYPIA_BUNLI_MIGRATION_DOC,
@@ -74,6 +75,86 @@ export function isReservedTopLevelCommandName(value: string): boolean {
   );
 }
 
+function getLongOptionName(arg: string): string {
+  return arg.slice(2).split('=', 1)[0] ?? '';
+}
+
+function hasUnknownOptionBefore(argv: string[], endIndex: number): boolean {
+  for (let index = 0; index < endIndex; index += 1) {
+    const arg = argv[index];
+    if (arg === '--') {
+      return false;
+    }
+    if (!arg.startsWith('-') || arg === '-') {
+      continue;
+    }
+
+    if (arg.startsWith('--')) {
+      const optionName = getLongOptionName(arg);
+      if (
+        !SHARED_OPTION_PARSER.booleanOptionNames.has(optionName) &&
+        !SHARED_OPTION_PARSER.stringOptionNames.has(optionName)
+      ) {
+        return true;
+      }
+      if (
+        !arg.includes('=') &&
+        SHARED_OPTION_PARSER.stringOptionNames.has(optionName) &&
+        argv[index + 1] &&
+        !argv[index + 1].startsWith('-')
+      ) {
+        index += 1;
+      }
+      continue;
+    }
+
+    if (arg.length === 2) {
+      const option = SHARED_OPTION_PARSER.shortFlagMap.get(arg.slice(1));
+      if (!option) {
+        return true;
+      }
+      if (
+        option.type === 'string' &&
+        argv[index + 1] &&
+        !argv[index + 1].startsWith('-')
+      ) {
+        index += 1;
+      }
+      continue;
+    }
+
+    return true;
+  }
+
+  return false;
+}
+
+export function resolveCanonicalCommandContext(argv: string[]): string {
+  const positionalIndexes = collectPositionalIndexes(
+    argv,
+    COMMAND_ROUTING_METADATA,
+  );
+  const firstPositionalIndex = positionalIndexes[0] ?? -1;
+  if (firstPositionalIndex === -1) {
+    return 'wp-typia';
+  }
+
+  const firstPositional = argv[firstPositionalIndex];
+  if (!firstPositional) {
+    return 'wp-typia';
+  }
+
+  if (hasUnknownOptionBefore(argv, firstPositionalIndex)) {
+    return 'wp-typia';
+  }
+
+  if (isReservedTopLevelCommandName(firstPositional)) {
+    return firstPositional;
+  }
+
+  return positionalIndexes.length === 1 ? 'create' : firstPositional;
+}
+
 function assertStringOptionValues(argv: string[]): void {
   const firstPositionalIndex = findFirstPositionalIndex(
     argv,
@@ -100,7 +181,7 @@ function assertStringOptionValues(argv: string[]): void {
       if (SHORT_OPTION_NAMES_WITH_VALUES.has(arg.slice(1))) {
         const next = argv[index + 1];
         if (!next || next.startsWith('-')) {
-          throw new Error(`\`${arg}\` requires a value.`);
+          throw createMissingOptionValueError(arg);
         }
         index += 1;
       }
@@ -117,14 +198,14 @@ function assertStringOptionValues(argv: string[]): void {
 
     if (arg.includes('=')) {
       if (!inlineValue) {
-        throw new Error(`\`--${rawName}\` requires a value.`);
+        throw createMissingOptionValueError(`--${rawName}`);
       }
       continue;
     }
 
     const next = argv[index + 1];
     if (!next || next.startsWith('-')) {
-      throw new Error(`\`--${rawName}\` requires a value.`);
+      throw createMissingOptionValueError(`--${rawName}`);
     }
     index += 1;
   }

@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'bun:test';
+import { CLI_DIAGNOSTIC_CODES } from '@wp-typia/project-tools/cli-diagnostics';
 
 import {
   ALL_COMMAND_OPTION_METADATA,
@@ -19,6 +20,24 @@ import {
 } from '../src/command-option-metadata';
 
 describe('command option metadata helpers', () => {
+  function expectDiagnosticCode(
+    callback: () => unknown,
+    code: string,
+    message: string,
+  ): void {
+    let caught: unknown;
+    try {
+      callback();
+    } catch (error) {
+      caught = error;
+    }
+
+    expect(caught).toMatchObject({
+      code,
+      message,
+    });
+  }
+
   test('parses string and boolean flags from shared metadata', () => {
     const parsed = parseCommandArgvWithMetadata(
       ['--dry-run', '-t', 'basic', '-y', 'demo-project'],
@@ -248,5 +267,46 @@ describe('command option metadata helpers', () => {
       id: 'basic',
     });
     expect(extracted.argv).toEqual(['templates', 'inspect', '--', '--format']);
+  });
+
+  test('throws diagnostic-coded errors for parser option failures', () => {
+    const parser = buildCommandOptionParser(
+      GLOBAL_OPTION_METADATA,
+      DOCTOR_OPTION_METADATA,
+    );
+
+    expectDiagnosticCode(
+      () =>
+      parseCommandArgvWithMetadata(['doctor', '--format'], {
+        parser,
+      }),
+      CLI_DIAGNOSTIC_CODES.MISSING_ARGUMENT,
+      '`--format` requires a value.',
+    );
+    expectDiagnosticCode(
+      () =>
+      parseCommandArgvWithMetadata(['doctor', '--unknown'], {
+        parser,
+      }),
+      CLI_DIAGNOSTIC_CODES.INVALID_ARGUMENT,
+      'Unknown option `--unknown`.',
+    );
+  });
+
+  test('throws diagnostic-coded errors for missing extracted global option values', () => {
+    const parser = buildCommandOptionParser(ALL_COMMAND_OPTION_METADATA);
+
+    expectDiagnosticCode(
+      () =>
+      extractKnownOptionValuesFromArgv(
+        ['templates', '--id', '--format', 'json'],
+        {
+          optionNames: ['format', 'id'],
+          parser,
+        },
+      ),
+      CLI_DIAGNOSTIC_CODES.MISSING_ARGUMENT,
+      '`--id` requires a value.',
+    );
   });
 });
