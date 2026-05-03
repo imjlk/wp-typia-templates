@@ -316,6 +316,31 @@ describe('Node fallback CLI core routing', () => {
     expect(parsed.error?.detailLines).toContain('`--id` requires a value.');
   });
 
+  test('emits structured alias option diagnostics with create command context', async () => {
+    const result = await captureNodeCli(
+      ['alias-project', '--id', '--format', 'json'],
+      { entrypoint: true },
+    );
+    const parsed = JSON.parse(result.stderr) as {
+      error?: {
+        code?: string;
+        command?: string;
+        detailLines?: string[];
+        kind?: string;
+      };
+      ok?: boolean;
+    };
+
+    expect(result.error).toBeUndefined();
+    expect(result.exitCode).toBe(1);
+    expect(result.stdout).toBe('');
+    expect(parsed.ok).toBe(false);
+    expect(parsed.error?.kind).toBe('command-execution');
+    expect(parsed.error?.code).toBe('missing-argument');
+    expect(parsed.error?.command).toBe('create');
+    expect(parsed.error?.detailLines).toContain('`--id` requires a value.');
+  });
+
   test('emits structured command output when --format json is explicit', async () => {
     const tempRoot = createTempRoot('wp-typia-node-json-create-');
 

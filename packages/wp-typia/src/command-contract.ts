@@ -75,6 +75,28 @@ export function isReservedTopLevelCommandName(value: string): boolean {
   );
 }
 
+export function resolveCanonicalCommandContext(argv: string[]): string {
+  const positionalIndexes = collectPositionalIndexes(
+    argv,
+    COMMAND_ROUTING_METADATA,
+  );
+  const firstPositionalIndex = positionalIndexes[0] ?? -1;
+  if (firstPositionalIndex === -1) {
+    return 'wp-typia';
+  }
+
+  const firstPositional = argv[firstPositionalIndex];
+  if (!firstPositional) {
+    return 'wp-typia';
+  }
+
+  if (isReservedTopLevelCommandName(firstPositional)) {
+    return firstPositional;
+  }
+
+  return positionalIndexes.length === 1 ? 'create' : firstPositional;
+}
+
 function assertStringOptionValues(argv: string[]): void {
   const firstPositionalIndex = findFirstPositionalIndex(
     argv,

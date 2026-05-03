@@ -21,7 +21,6 @@ import {
   SYNC_OPTION_METADATA,
   TEMPLATES_OPTION_METADATA,
 } from './command-option-metadata';
-import { resolveEntrypointCliCommand } from './cli-command-resolution';
 import { prefersStructuredCliArgv } from './cli-diagnostic-output';
 import {
   normalizeCliOutputFormatArgv,
@@ -68,6 +67,7 @@ import {
   WP_TYPIA_NODE_FALLBACK_TOP_LEVEL_COMMAND_NAMES,
   WP_TYPIA_POSITIONAL_ALIAS_USAGE,
   normalizeWpTypiaArgv,
+  resolveCanonicalCommandContext,
 } from './command-contract';
 
 type GlobalFlags = {
@@ -711,7 +711,7 @@ export async function runNodeCliEntrypoint(
   } catch (error) {
     if (prefersStructuredErrorOutput) {
       const diagnostic = createCliCommandError({
-        command: resolveEntrypointCliCommand(argv),
+        command: resolveCanonicalCommandContext(argv),
         error,
       });
       process.stderr.write(
