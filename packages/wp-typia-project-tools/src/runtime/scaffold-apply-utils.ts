@@ -80,10 +80,7 @@ const LOCKFILES: Record<PackageManagerId, string[]> = {
 };
 
 export async function ensureDirectory(targetDir: string, allowExisting = false): Promise<void> {
-	if (!(await pathExists(targetDir))) {
-		await fsp.mkdir(targetDir, { recursive: true });
-		return;
-	}
+	await fsp.mkdir(targetDir, { recursive: true });
 
 	if (allowExisting) {
 		return;

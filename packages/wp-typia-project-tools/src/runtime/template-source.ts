@@ -121,30 +121,37 @@ export async function resolveTemplateSource(
         (await detectTemplateSourceFormat(normalizedSeed.blockDir))
       if (renderedFormat === 'wp-typia') {
         const normalized = await normalizeWpTypiaTemplateSeed(normalizedSeed)
-        const supportsMigrationUi =
-          (await getTemplateProjectTypeAsync(normalizedSeed.blockDir)) ===
-          'workspace'
-        return {
-          cleanup: async () => {
-            await normalized.cleanup?.()
-            await seed.cleanup?.()
-          },
-          defaultCategory: await getDefaultCategoryAsync(normalizedSeed.blockDir),
-          description:
-            'A wp-typia scaffold normalized from an official external template config',
-          features: [
-            'Remote source',
-            'official external template',
-            'wp-typia format',
-            ...(supportsMigrationUi ? ['workspace-capable scaffold'] : []),
-          ],
-          format,
-          id: 'remote:create-block-external',
-          isOfficialWorkspaceTemplate,
-          selectedVariant: normalizedSeed.selectedVariant ?? null,
-          supportsMigrationUi,
-          templateDir: normalized.blockDir,
-          warnings: normalizedSeed.warnings ?? [],
+        try {
+          const [projectType, defaultCategory] = await Promise.all([
+            getTemplateProjectTypeAsync(normalizedSeed.blockDir),
+            getDefaultCategoryAsync(normalizedSeed.blockDir),
+          ])
+          const supportsMigrationUi = projectType === 'workspace'
+          return {
+            cleanup: async () => {
+              await normalized.cleanup?.()
+              await seed.cleanup?.()
+            },
+            defaultCategory,
+            description:
+              'A wp-typia scaffold normalized from an official external template config',
+            features: [
+              'Remote source',
+              'official external template',
+              'wp-typia format',
+              ...(supportsMigrationUi ? ['workspace-capable scaffold'] : []),
+            ],
+            format,
+            id: 'remote:create-block-external',
+            isOfficialWorkspaceTemplate,
+            selectedVariant: normalizedSeed.selectedVariant ?? null,
+            supportsMigrationUi,
+            templateDir: normalized.blockDir,
+            warnings: normalizedSeed.warnings ?? [],
+          }
+        } catch (error) {
+          await normalized.cleanup?.()
+          throw error
         }
       }
 

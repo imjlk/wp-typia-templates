@@ -594,6 +594,7 @@ export async function normalizeCreateBlockSubset(
         await Promise.all(
           [
             'view.js',
+            'view.jsx',
             'view.ts',
             'view.tsx',
             'interactivity.js',
