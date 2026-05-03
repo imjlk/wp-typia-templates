@@ -12,6 +12,7 @@ import {
 } from './template-builtins.js'
 import { copyRawDirectory } from './template-render.js'
 import { createManagedTempRoot } from './temp-roots.js'
+import { pathExists } from './fs-async.js'
 import type {
   ResolvedTemplateSource,
   SeedSource,
@@ -69,6 +70,25 @@ function readRemoteBlockJson(blockDir: string): Record<string, unknown> {
   throw new Error(`Unable to locate block.json in ${blockDir}`)
 }
 
+async function readRemoteBlockJsonAsync(
+  blockDir: string,
+): Promise<Record<string, unknown>> {
+  const sourceRoot = await getSeedSourceRoot(blockDir)
+  for (const candidate of [
+    path.join(blockDir, 'block.json'),
+    path.join(sourceRoot, 'block.json'),
+  ]) {
+    if (await pathExists(candidate)) {
+      return JSON.parse(await fsp.readFile(candidate, 'utf8')) as Record<
+        string,
+        unknown
+      >
+    }
+  }
+
+  throw new Error(`Unable to locate block.json in ${blockDir}`)
+}
+
 /**
  * Read a remote block source and return its default block category.
  *
@@ -78,6 +98,21 @@ function readRemoteBlockJson(blockDir: string): Record<string, unknown> {
 export function getDefaultCategory(sourceDir: string): string {
   try {
     const blockJson = readRemoteBlockJson(sourceDir)
+    return getDefaultCategoryFromBlockJson(blockJson)
+  } catch {
+    return 'widgets'
+  }
+}
+
+/**
+ * Read a remote block source and return its default block category asynchronously.
+ *
+ * @param sourceDir Block source directory that may contain a block.json file.
+ * @returns The declared block category, or "widgets" when detection fails.
+ */
+export async function getDefaultCategoryAsync(sourceDir: string): Promise<string> {
+  try {
+    const blockJson = await readRemoteBlockJsonAsync(sourceDir)
     return getDefaultCategoryFromBlockJson(blockJson)
   } catch {
     return 'widgets'
@@ -121,12 +156,76 @@ function readTemplatePackageJson(
   return null
 }
 
+async function readTemplatePackageJsonAsync(
+  sourceDir: string,
+): Promise<{
+  packageJson: { wpTypia?: { projectType?: unknown } }
+  sourcePath: string
+} | null> {
+  for (const candidate of [
+    path.join(sourceDir, 'package.json.mustache'),
+    path.join(sourceDir, 'package.json'),
+  ]) {
+    if (!(await pathExists(candidate))) {
+      continue
+    }
+
+    try {
+      assertExternalTemplateFileSize(candidate, {
+        label: `Template metadata file "${candidate}"`,
+        maxBytes: getExternalTemplatePackageJsonMaxBytes(),
+      })
+      return {
+        packageJson: JSON.parse(await fsp.readFile(candidate, 'utf8')) as {
+          wpTypia?: { projectType?: unknown }
+        },
+        sourcePath: candidate,
+      }
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : 'Unknown parse failure'
+      throw new Error(
+        `Failed to parse template metadata file "${candidate}": ${message}`,
+      )
+    }
+  }
+
+  return null
+}
+
 /**
  * Read `wpTypia.projectType` from a rendered or source template package
  * manifest and return it when present.
  */
 export function getTemplateProjectType(sourceDir: string): string | null {
   const packageJsonEntry = readTemplatePackageJson(sourceDir)
+  if (!packageJsonEntry) {
+    return null
+  }
+
+  const projectType = packageJsonEntry.packageJson.wpTypia?.projectType
+  if (projectType === undefined) {
+    return null
+  }
+  if (typeof projectType !== 'string' || projectType.trim().length === 0) {
+    throw new Error(
+      `Template metadata file "${packageJsonEntry.sourcePath}" defines wpTypia.projectType, but it must be a non-empty string.`,
+    )
+  }
+
+  return projectType
+}
+
+/**
+ * Read `wpTypia.projectType` from template metadata asynchronously.
+ *
+ * @param sourceDir Template source directory to inspect.
+ * @returns The project type when present, otherwise `null`.
+ */
+export async function getTemplateProjectTypeAsync(
+  sourceDir: string,
+): Promise<string | null> {
+  const packageJsonEntry = await readTemplatePackageJsonAsync(sourceDir)
   if (!packageJsonEntry) {
     return null
   }
@@ -171,7 +270,7 @@ export async function normalizeWpTypiaTemplateSeed(
         )
       },
     })
-    if (seed.assetsDir && fs.existsSync(seed.assetsDir)) {
+    if (seed.assetsDir && (await pathExists(seed.assetsDir))) {
       await fsp.cp(seed.assetsDir, path.join(normalizedDir, 'assets'), {
         recursive: true,
         force: true,
@@ -371,18 +470,18 @@ async function patchRemotePackageJson(
   )
 }
 
-function getSeedSourceRoot(blockDir: string): string {
-  return fs.existsSync(path.join(blockDir, 'src'))
+async function getSeedSourceRoot(blockDir: string): Promise<string> {
+  return (await pathExists(path.join(blockDir, 'src')))
     ? path.join(blockDir, 'src')
     : blockDir
 }
 
-function findSeedRenderPhp(seed: SeedSource): string | null {
+async function findSeedRenderPhp(seed: SeedSource): Promise<string | null> {
   for (const candidate of [
     path.join(seed.blockDir, 'render.php'),
     path.join(seed.rootDir, 'render.php'),
   ]) {
-    if (fs.existsSync(candidate)) {
+    if (await pathExists(candidate)) {
       return candidate
     }
   }
@@ -442,12 +541,12 @@ export async function normalizeCreateBlockSubset(
   )
   try {
     const templateDir = path.join(tempRoot, 'template')
-    const blockJson = readRemoteBlockJson(seed.blockDir)
-    const sourceRoot = getSeedSourceRoot(seed.blockDir)
+    const blockJson = await readRemoteBlockJsonAsync(seed.blockDir)
+    const sourceRoot = await getSeedSourceRoot(seed.blockDir)
 
     await fsp.mkdir(templateDir, { recursive: true })
     for (const layerDir of getBuiltInTemplateLayerDirs('basic')) {
-      if (!fs.existsSync(layerDir)) {
+      if (!(await pathExists(layerDir))) {
         if (isOmittableBuiltInTemplateLayerDir('basic', layerDir)) {
           continue
         }
@@ -464,12 +563,12 @@ export async function normalizeCreateBlockSubset(
       force: true,
     })
 
-    const remoteRenderPath = findSeedRenderPhp(seed)
+    const remoteRenderPath = await findSeedRenderPhp(seed)
     if (remoteRenderPath) {
       await fsp.copyFile(remoteRenderPath, path.join(templateDir, 'render.php'))
     }
 
-    if (seed.assetsDir && fs.existsSync(seed.assetsDir)) {
+    if (seed.assetsDir && (await pathExists(seed.assetsDir))) {
       await fsp.cp(seed.assetsDir, path.join(templateDir, 'assets'), {
         recursive: true,
         force: true,
@@ -491,11 +590,19 @@ export async function normalizeCreateBlockSubset(
     const needsInteractivity =
       typeof blockJson.viewScriptModule === 'string' ||
       typeof blockJson.viewScript === 'string' ||
-      fs.existsSync(path.join(templateDir, 'src', 'view.js')) ||
-      fs.existsSync(path.join(templateDir, 'src', 'view.ts')) ||
-      fs.existsSync(path.join(templateDir, 'src', 'view.tsx')) ||
-      fs.existsSync(path.join(templateDir, 'src', 'interactivity.js')) ||
-      fs.existsSync(path.join(templateDir, 'src', 'interactivity.ts'))
+      (
+        await Promise.all(
+          [
+            'view.js',
+            'view.ts',
+            'view.tsx',
+            'interactivity.js',
+            'interactivity.ts',
+          ].map((filename) =>
+            pathExists(path.join(templateDir, 'src', filename)),
+          ),
+        )
+      ).some(Boolean)
 
     await patchRemotePackageJson(templateDir, needsInteractivity)
 

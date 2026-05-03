@@ -1,4 +1,3 @@
-import fs from "node:fs";
 import { promises as fsp } from "node:fs";
 import { execSync } from "node:child_process";
 import path from "node:path";
@@ -10,6 +9,7 @@ import {
 } from "./package-managers.js";
 import type { PackageManagerId } from "./package-managers.js";
 import type { GeneratedPackageJson } from "./package-json-types.js";
+import { readOptionalUtf8File } from "./fs-async.js";
 
 const LOCKFILES: Record<PackageManagerId, string[]> = {
 	bun: ["bun.lock", "bun.lockb"],
@@ -51,12 +51,13 @@ export async function normalizePackageJson(
 	packageManagerId: PackageManagerId,
 ): Promise<void> {
 	const packageJsonPath = path.join(targetDir, "package.json");
-	if (!fs.existsSync(packageJsonPath)) {
+	const packageJsonSource = await readOptionalUtf8File(packageJsonPath);
+	if (packageJsonSource === null) {
 		return;
 	}
 
 	const packageManager = getPackageManager(packageManagerId);
-	const packageJson = JSON.parse(await fsp.readFile(packageJsonPath, "utf8")) as GeneratedPackageJson;
+	const packageJson = JSON.parse(packageJsonSource) as GeneratedPackageJson;
 	if (packageManagerId === "npm") {
 		delete packageJson.packageManager;
 	} else {

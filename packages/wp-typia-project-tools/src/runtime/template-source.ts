@@ -12,8 +12,8 @@ import {
 } from './template-source-locators.js'
 import {
   detectTemplateSourceFormat,
-  getTemplateProjectType,
-  getDefaultCategory,
+  getTemplateProjectTypeAsync,
+  getDefaultCategoryAsync,
   getTemplateVariableContext,
   normalizeCreateBlockSubset,
   normalizeWpTypiaTemplateSeed,
@@ -86,10 +86,10 @@ export async function resolveTemplateSource(
       }
       normalizedSeed = await normalizeWpTypiaTemplateSeed(seed)
       const supportsMigrationUi =
-        getTemplateProjectType(seed.blockDir) === 'workspace'
+        (await getTemplateProjectTypeAsync(seed.blockDir)) === 'workspace'
       return {
         id: templateId,
-        defaultCategory: getDefaultCategory(seed.blockDir),
+        defaultCategory: await getDefaultCategoryAsync(seed.blockDir),
         description: 'A remote wp-typia template source',
         features: ['Remote source', 'wp-typia format'],
         format,
@@ -122,13 +122,14 @@ export async function resolveTemplateSource(
       if (renderedFormat === 'wp-typia') {
         const normalized = await normalizeWpTypiaTemplateSeed(normalizedSeed)
         const supportsMigrationUi =
-          getTemplateProjectType(normalizedSeed.blockDir) === 'workspace'
+          (await getTemplateProjectTypeAsync(normalizedSeed.blockDir)) ===
+          'workspace'
         return {
           cleanup: async () => {
             await normalized.cleanup?.()
             await seed.cleanup?.()
           },
-          defaultCategory: getDefaultCategory(normalizedSeed.blockDir),
+          defaultCategory: await getDefaultCategoryAsync(normalizedSeed.blockDir),
           description:
             'A wp-typia scaffold normalized from an official external template config',
           features: [

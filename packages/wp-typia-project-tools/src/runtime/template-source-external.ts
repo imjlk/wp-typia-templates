@@ -1,6 +1,7 @@
 /// <reference path="./external-template-modules.d.ts" />
 
 import fs from 'node:fs'
+import { promises as fsp } from 'node:fs'
 import path from 'node:path'
 import { pathToFileURL } from 'node:url'
 
@@ -13,6 +14,7 @@ import { isPlainObject, type UnknownRecord } from './object-utils.js'
 import { toSegmentPascalCase } from './string-case.js'
 import { createManagedTempRoot } from './temp-roots.js'
 import { copyRawDirectory, copyRenderedDirectory } from './template-render.js'
+import { pathExists } from './fs-async.js'
 import type {
   ExternalTemplateConfig,
   SeedSource,
@@ -64,6 +66,25 @@ export function getExternalTemplateEntry(sourceDir: string): string | null {
   return null
 }
 
+/**
+ * Search a source directory for a supported external template entry asynchronously.
+ *
+ * @param sourceDir Directory that may contain an external template config entry.
+ * @returns The first matching entry path, or null when no supported entry exists.
+ */
+export async function findExternalTemplateEntry(
+  sourceDir: string,
+): Promise<string | null> {
+  for (const filename of EXTERNAL_TEMPLATE_ENTRY_CANDIDATES) {
+    const candidate = path.join(sourceDir, filename)
+    if (await pathExists(candidate)) {
+      return candidate
+    }
+  }
+
+  return null
+}
+
 async function loadExternalTemplateConfig<
   TView extends UnknownRecord = TemplateVariableContext,
 >(
@@ -72,7 +93,7 @@ async function loadExternalTemplateConfig<
   config: ExternalTemplateConfig<TView>
   warnings: string[]
 }> {
-  const entryPath = getExternalTemplateEntry(sourceDir)
+  const entryPath = await findExternalTemplateEntry(sourceDir)
   if (!entryPath) {
     throw new Error(`No external template config entry found in ${sourceDir}.`)
   }
@@ -81,7 +102,8 @@ async function loadExternalTemplateConfig<
     label: `External template config "${entryPath}"`,
     maxBytes: getExternalTemplateConfigMaxBytes(),
   })
-  const moduleUrl = `${pathToFileURL(entryPath).href}?mtime=${fs.statSync(entryPath).mtimeMs}`
+  const entryStats = await fsp.stat(entryPath)
+  const moduleUrl = `${pathToFileURL(entryPath).href}?mtime=${entryStats.mtimeMs}`
   const loadedModule = (await withExternalTemplateTimeout(
     `loading external template config "${entryPath}"`,
     () => import(moduleUrl),
@@ -324,10 +346,9 @@ export async function renderCreateBlockExternalTemplate(
       )
     }
 
+    const assetsDir = path.join(tempRoot, 'assets')
     return {
-      assetsDir: fs.existsSync(path.join(tempRoot, 'assets'))
-        ? path.join(tempRoot, 'assets')
-        : undefined,
+      assetsDir: (await pathExists(assetsDir)) ? assetsDir : undefined,
       blockDir,
       cleanup,
       formatHint,
