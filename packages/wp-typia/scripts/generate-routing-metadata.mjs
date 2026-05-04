@@ -25,15 +25,68 @@ const commandRegistryModulePath = path.join(
   'command-registry.ts',
 );
 const addKindIdsModulePath = path.join(packageRoot, 'src', 'add-kind-ids.ts');
-const projectToolsAddKindIdsModulePath = path.join(
-  packageRoot,
-  '..',
-  'wp-typia-project-tools',
-  'src',
-  'runtime',
-  'cli-add-kind-ids.ts',
-);
+const projectToolsAddKindIdsModulePath =
+  process.env.WP_TYPIA_PROJECT_TOOLS_ADD_KIND_IDS_SOURCE ??
+  path.join(
+    packageRoot,
+    '..',
+    'wp-typia-project-tools',
+    'src',
+    'runtime',
+    'cli-add-kind-ids.ts',
+  );
 const checkOnly = process.argv.includes('--check');
+
+async function readOptionalUtf8(filePath) {
+  try {
+    return await fs.readFile(filePath, 'utf8');
+  } catch (error) {
+    if (
+      typeof error === 'object' &&
+      error !== null &&
+      'code' in error &&
+      error.code === 'ENOENT'
+    ) {
+      return null;
+    }
+
+    throw error;
+  }
+}
+
+function assertStringArray(value, label) {
+  if (
+    !Array.isArray(value) ||
+    !value.every((entry) => typeof entry === 'string')
+  ) {
+    throw new Error(`${label} must export ADD_KIND_IDS as a string array.`);
+  }
+}
+
+async function resolveProjectToolsAddKindIdsExternalModule() {
+  const source = await readOptionalUtf8(projectToolsAddKindIdsModulePath);
+  if (source !== null) {
+    return {
+      modulePath: projectToolsAddKindIdsModulePath,
+      source,
+      specifier: '@wp-typia/project-tools/cli-add-kind-ids',
+    };
+  }
+
+  const specifier = '@wp-typia/project-tools/cli-add-kind-ids';
+  const namespace = await import(specifier);
+  assertStringArray(namespace.ADD_KIND_IDS, specifier);
+
+  return {
+    modulePath: specifier,
+    source: `export const ADD_KIND_IDS = ${JSON.stringify(
+      namespace.ADD_KIND_IDS,
+      null,
+      2,
+    )} as const;\n`,
+    specifier,
+  };
+}
 
 async function importTranspiledTypeScriptModule(
   modulePath,
@@ -48,8 +101,10 @@ async function importTranspiledTypeScriptModule(
     import('typescript'),
     fs.readFile(modulePath, 'utf8'),
     ...siblingModules.map((siblingPath) => fs.readFile(siblingPath, 'utf8')),
-    ...externalModules.map(({ modulePath: externalModulePath }) =>
-      fs.readFile(externalModulePath, 'utf8'),
+    ...externalModules.map((externalModule) =>
+      externalModule.source === undefined
+        ? fs.readFile(externalModule.modulePath, 'utf8')
+        : externalModule.source,
     ),
   ]);
   const siblingSources = supportingSources.slice(0, siblingModules.length);
@@ -200,34 +255,28 @@ function failCheck(pathname) {
 
 const [
   { COMMAND_ROUTING_METADATA },
-  {
-    WP_TYPIA_BUN_REQUIRED_TOP_LEVEL_COMMAND_NAMES,
-    WP_TYPIA_INTERACTIVE_RUNTIME_TOP_LEVEL_COMMAND_NAMES,
-    WP_TYPIA_RESERVED_TOP_LEVEL_COMMAND_NAMES,
-  },
+  projectToolsAddKindIdsExternalModule,
 ] = await Promise.all([
   importTranspiledTypeScriptModule(commandOptionMetadataModulePath),
-  importTranspiledTypeScriptModule(
-    commandRegistryModulePath,
-    [addKindIdsModulePath],
-    [
-      {
-        modulePath: projectToolsAddKindIdsModulePath,
-        specifier: '@wp-typia/project-tools/cli-add-kind-ids',
-      },
-    ],
-  ),
+  resolveProjectToolsAddKindIdsExternalModule(),
 ]);
 
+const {
+  WP_TYPIA_BUN_REQUIRED_TOP_LEVEL_COMMAND_NAMES: bunRequiredCommandNames,
+  WP_TYPIA_INTERACTIVE_RUNTIME_TOP_LEVEL_COMMAND_NAMES:
+    interactiveRuntimeCommandNames,
+  WP_TYPIA_RESERVED_TOP_LEVEL_COMMAND_NAMES: reservedCommandNames,
+} = await importTranspiledTypeScriptModule(
+  commandRegistryModulePath,
+  [addKindIdsModulePath],
+  [projectToolsAddKindIdsExternalModule],
+);
+
 const renderedFiles = renderRoutingMetadataFiles({
-  fullRuntimeCommands: Array.from(
-    WP_TYPIA_BUN_REQUIRED_TOP_LEVEL_COMMAND_NAMES,
-  ),
-  interactiveRuntimeCommands: Array.from(
-    WP_TYPIA_INTERACTIVE_RUNTIME_TOP_LEVEL_COMMAND_NAMES,
-  ),
+  fullRuntimeCommands: Array.from(bunRequiredCommandNames),
+  interactiveRuntimeCommands: Array.from(interactiveRuntimeCommandNames),
   longValueOptions: COMMAND_ROUTING_METADATA.longValueOptions,
-  reservedCommands: Array.from(WP_TYPIA_RESERVED_TOP_LEVEL_COMMAND_NAMES),
+  reservedCommands: Array.from(reservedCommandNames),
   shortValueOptions: COMMAND_ROUTING_METADATA.shortValueOptions,
 });
 
