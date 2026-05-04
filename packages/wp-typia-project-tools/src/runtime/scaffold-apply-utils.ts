@@ -1,4 +1,3 @@
-import fs from "node:fs";
 import { promises as fsp } from "node:fs";
 import path from "node:path";
 import { execSync } from "node:child_process";
@@ -38,6 +37,10 @@ import {
 	formatInstallCommand,
 	transformPackageManagerText,
 } from "./package-managers.js";
+import {
+	pathExists,
+	readOptionalUtf8File,
+} from "./fs-async.js";
 import { normalizePackageJson } from "./scaffold-package-manager-files.js";
 export {
 	applyWorkspaceMigrationCapability,
@@ -77,10 +80,7 @@ const LOCKFILES: Record<PackageManagerId, string[]> = {
 };
 
 export async function ensureDirectory(targetDir: string, allowExisting = false): Promise<void> {
-	if (!fs.existsSync(targetDir)) {
-		await fsp.mkdir(targetDir, { recursive: true });
-		return;
-	}
+	await fsp.mkdir(targetDir, { recursive: true });
 
 	if (allowExisting) {
 		return;
@@ -143,7 +143,7 @@ async function writeBuiltInCodeArtifacts(
 	}
 }
 
-function resolveScaffoldGeneratorNodeModulesPath(): string | null {
+async function resolveScaffoldGeneratorNodeModulesPath(): Promise<string | null> {
 	const projectToolsPackageRoot = path.resolve(__dirname, "..", "..");
 	const candidates = [
 		path.join(projectToolsPackageRoot, "node_modules"),
@@ -152,7 +152,7 @@ function resolveScaffoldGeneratorNodeModulesPath(): string | null {
 	];
 
 	for (const candidate of candidates) {
-		if (fs.existsSync(path.join(candidate, "typia", "package.json"))) {
+		if (await pathExists(path.join(candidate, "typia", "package.json"))) {
 			return candidate;
 		}
 	}
@@ -165,12 +165,12 @@ async function withEphemeralScaffoldNodeModules(
 	callback: () => Promise<void>,
 ): Promise<void> {
 	const targetNodeModulesPath = path.join(targetDir, "node_modules");
-	if (fs.existsSync(targetNodeModulesPath)) {
+	if (await pathExists(targetNodeModulesPath)) {
 		await callback();
 		return;
 	}
 
-	const sourceNodeModulesPath = resolveScaffoldGeneratorNodeModulesPath();
+	const sourceNodeModulesPath = await resolveScaffoldGeneratorNodeModulesPath();
 	if (!sourceNodeModulesPath) {
 		throw new Error(
 			"Unable to resolve a node_modules directory with typia for scaffold-time REST artifact generation.",
@@ -234,9 +234,7 @@ export async function normalizePackageManagerFiles(
 		return;
 	}
 
-	if (fs.existsSync(yarnRcPath)) {
-		await fsp.rm(yarnRcPath, { force: true });
-	}
+	await fsp.rm(yarnRcPath, { force: true });
 }
 
 export async function removeQueryLoopPlaceholderFiles(
@@ -265,10 +263,7 @@ export async function removeUnexpectedLockfiles(
 				return;
 			}
 
-			const filePath = path.join(targetDir, filename);
-			if (fs.existsSync(filePath)) {
-				await fsp.rm(filePath, { force: true });
-			}
+			await fsp.rm(path.join(targetDir, filename), { force: true });
 		}),
 	);
 }
@@ -426,7 +421,7 @@ export async function applyBuiltInScaffoldProjectFiles({
 		title: "Finalizing scaffold output",
 	});
 	const readmePath = path.join(projectDir, "README.md");
-	if (!fs.existsSync(readmePath)) {
+	if (!(await pathExists(readmePath))) {
 		await fsp.writeFile(
 			readmePath,
 			readmeContent ??
@@ -439,9 +434,7 @@ export async function applyBuiltInScaffoldProjectFiles({
 		);
 	}
 	const gitignorePath = path.join(projectDir, ".gitignore");
-	const existingGitignore = fs.existsSync(gitignorePath)
-		? await fsp.readFile(gitignorePath, "utf8")
-		: "";
+	const existingGitignore = await readOptionalUtf8File(gitignorePath) ?? "";
 	await fsp.writeFile(
 		gitignorePath,
 		mergeTextLines(gitignoreContent ?? buildGitignore(), existingGitignore),

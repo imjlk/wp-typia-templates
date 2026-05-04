@@ -20,6 +20,7 @@ import {
 import type { BuiltInTemplateId } from "./template-registry.js";
 import { getScaffoldTemplateVariableGroups } from "./scaffold-template-variable-groups.js";
 import type { GeneratedPackageJson } from "./package-json-types.js";
+import { pathExists } from "./fs-async.js";
 
 const EPHEMERAL_NODE_MODULES_LINK_TYPE = process.platform === "win32" ? "junction" : "dir";
 
@@ -34,10 +35,7 @@ export async function ensureScaffoldDirectory(
 	targetDir: string,
 	allowExisting = false,
 ): Promise<void> {
-	if (!fs.existsSync(targetDir)) {
-		await fsp.mkdir(targetDir, { recursive: true });
-		return;
-	}
+	await fsp.mkdir(targetDir, { recursive: true });
 
 	if (allowExisting) {
 		return;
@@ -218,7 +216,7 @@ export async function applyWorkspaceMigrationCapability(
  *
  * @returns The first matching path, or `null` when no candidate contains `typia`.
  */
-function resolveScaffoldGeneratorNodeModulesPath(): string | null {
+async function resolveScaffoldGeneratorNodeModulesPath(): Promise<string | null> {
 	const candidates = [
 		path.join(PROJECT_TOOLS_PACKAGE_ROOT, "node_modules"),
 		path.resolve(PROJECT_TOOLS_PACKAGE_ROOT, "..", ".."),
@@ -226,7 +224,7 @@ function resolveScaffoldGeneratorNodeModulesPath(): string | null {
 	];
 
 	for (const candidate of candidates) {
-		if (fs.existsSync(path.join(candidate, "typia", "package.json"))) {
+		if (await pathExists(path.join(candidate, "typia", "package.json"))) {
 			return candidate;
 		}
 	}
@@ -252,12 +250,12 @@ async function withEphemeralScaffoldNodeModules(
 	callback: () => Promise<void>,
 ): Promise<void> {
 	const targetNodeModulesPath = path.join(targetDir, "node_modules");
-	if (fs.existsSync(targetNodeModulesPath)) {
+	if (await pathExists(targetNodeModulesPath)) {
 		await callback();
 		return;
 	}
 
-	const sourceNodeModulesPath = resolveScaffoldGeneratorNodeModulesPath();
+	const sourceNodeModulesPath = await resolveScaffoldGeneratorNodeModulesPath();
 	if (!sourceNodeModulesPath) {
 		throw new Error(
 			"Unable to resolve a node_modules directory with typia for scaffold-time REST artifact generation.",

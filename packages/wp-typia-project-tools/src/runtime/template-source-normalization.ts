@@ -1,16 +1,18 @@
 /// <reference path="./external-template-modules.d.ts" />
 
-import fs from 'node:fs'
 import path from 'node:path'
 
 import { loadExternalTemplateLayerManifest } from './template-layers.js'
 import { getPackageVersions } from './package-versions.js'
-import { getExternalTemplateEntry } from './template-source-external.js'
-import { getTemplateProjectType } from './template-source-remote.js'
+import { findExternalTemplateEntry } from './template-source-external.js'
+import { getTemplateProjectTypeAsync } from './template-source-remote.js'
+import { pathExists } from './fs-async.js'
 export { renderCreateBlockExternalTemplate } from './template-source-external.js'
 export {
   getTemplateProjectType,
+  getTemplateProjectTypeAsync,
   getDefaultCategory,
+  getDefaultCategoryAsync,
   normalizeCreateBlockSubset,
   normalizeWpTypiaTemplateSeed,
 } from './template-source-remote.js'
@@ -54,7 +56,7 @@ export function getTemplateVariableContext(variables: {
 export async function detectTemplateSourceFormat(
   sourceDir: string,
 ): Promise<TemplateSourceFormat> {
-  if (fs.existsSync(path.join(sourceDir, 'package.json.mustache'))) {
+  if (await pathExists(path.join(sourceDir, 'package.json.mustache'))) {
     return 'wp-typia'
   }
 
@@ -64,33 +66,45 @@ export async function detectTemplateSourceFormat(
     )
   }
 
-  if (getExternalTemplateEntry(sourceDir)) {
+  if (await findExternalTemplateEntry(sourceDir)) {
     return 'create-block-external'
   }
 
-  if (getTemplateProjectType(sourceDir) !== null) {
+  if ((await getTemplateProjectTypeAsync(sourceDir)) !== null) {
     return 'wp-typia'
   }
 
-  const sourceRoot = fs.existsSync(path.join(sourceDir, 'src'))
+  const sourceRoot = await pathExists(path.join(sourceDir, 'src'))
     ? path.join(sourceDir, 'src')
     : sourceDir
   const blockJsonCandidates = [
     path.join(sourceDir, 'block.json'),
     path.join(sourceRoot, 'block.json'),
   ]
-  const hasBlockJson = blockJsonCandidates.some((candidate) =>
-    fs.existsSync(candidate),
-  )
-  const hasIndexFile = ['index.js', 'index.jsx', 'index.ts', 'index.tsx'].some(
-    (filename) => fs.existsSync(path.join(sourceRoot, filename)),
-  )
-  const hasEditFile = ['edit.js', 'edit.jsx', 'edit.ts', 'edit.tsx'].some(
-    (filename) => fs.existsSync(path.join(sourceRoot, filename)),
-  )
-  const hasSaveFile = ['save.js', 'save.jsx', 'save.ts', 'save.tsx'].some(
-    (filename) => fs.existsSync(path.join(sourceRoot, filename)),
-  )
+  const hasBlockJson = (
+    await Promise.all(blockJsonCandidates.map((candidate) => pathExists(candidate)))
+  ).some(Boolean)
+  const hasIndexFile = (
+    await Promise.all(
+      ['index.js', 'index.jsx', 'index.ts', 'index.tsx'].map((filename) =>
+        pathExists(path.join(sourceRoot, filename)),
+      ),
+    )
+  ).some(Boolean)
+  const hasEditFile = (
+    await Promise.all(
+      ['edit.js', 'edit.jsx', 'edit.ts', 'edit.tsx'].map((filename) =>
+        pathExists(path.join(sourceRoot, filename)),
+      ),
+    )
+  ).some(Boolean)
+  const hasSaveFile = (
+    await Promise.all(
+      ['save.js', 'save.jsx', 'save.ts', 'save.tsx'].map((filename) =>
+        pathExists(path.join(sourceRoot, filename)),
+      ),
+    )
+  ).some(Boolean)
 
   if (hasBlockJson && hasIndexFile && hasEditFile && hasSaveFile) {
     return 'create-block-subset'

@@ -1,4 +1,3 @@
-import fs from "node:fs";
 import { promises as fsp } from "node:fs";
 import path from "node:path";
 
@@ -77,6 +76,7 @@ import {
 	normalizeOptionalCliString,
 	resolveLocalCliPathOption,
 } from "./cli-validation.js";
+import { pathExists } from "./fs-async.js";
 
 const COLLECTION_IMPORT_LINE = "import '../../collection';";
 // This is a lightweight preflight heuristic for the common install layouts:
@@ -152,17 +152,20 @@ async function renderWorkspacePersistenceServerModule(
 	await copyInterpolatedDirectory(templateDir, targetDir, variables);
 }
 
-function hasInstalledWorkspaceDependencies(projectDir: string): boolean {
-	return WORKSPACE_INSTALL_MARKERS.some((marker) =>
-		fs.existsSync(path.join(projectDir, marker)),
-	);
+async function hasInstalledWorkspaceDependencies(projectDir: string): Promise<boolean> {
+	for (const marker of WORKSPACE_INSTALL_MARKERS) {
+		if (await pathExists(path.join(projectDir, marker))) {
+			return true;
+		}
+	}
+	return false;
 }
 
-function assertWorkspaceDependenciesInstalled(workspace: {
+async function assertWorkspaceDependenciesInstalled(workspace: {
 	packageManager: PackageManagerId;
 	projectDir: string;
-}): void {
-	if (hasInstalledWorkspaceDependencies(workspace.projectDir)) {
+}): Promise<void> {
+	if (await hasInstalledWorkspaceDependencies(workspace.projectDir)) {
 		return;
 	}
 
@@ -299,13 +302,13 @@ function collectWorkspaceBlockPaths(
 	return [path.join(projectDir, "src", "blocks", variables.slugKebabCase)];
 }
 
-function assertBlockTargetsDoNotExist(
+async function assertBlockTargetsDoNotExist(
 	projectDir: string,
 	templateId: AddBlockTemplateId,
 	variables: ScaffoldTemplateVariables,
-): void {
+): Promise<void> {
 	for (const targetPath of collectWorkspaceBlockPaths(projectDir, templateId, variables)) {
-		if (fs.existsSync(targetPath)) {
+		if (await pathExists(targetPath)) {
 			throw new Error(
 				`A block already exists at ${path.relative(projectDir, targetPath)}. Choose a different name.`,
 			);
@@ -318,11 +321,11 @@ async function updateWorkspaceMigrationConfigIfPresent(
 	newBlocks: MigrationBlockConfig[],
 ): Promise<void> {
 	const configPath = path.join(projectDir, "src", "migrations", "config.ts");
-	if (!fs.existsSync(configPath)) {
+	const configSource = await readOptionalFile(configPath);
+	if (configSource === null) {
 		return;
 	}
 
-	const configSource = await fsp.readFile(configPath, "utf8");
 	const config = parseMigrationConfig(configSource);
 	const existingBlocks = Array.isArray(config.blocks) ? config.blocks : [];
 	const nextBlocks = [
@@ -562,7 +565,7 @@ export async function runAddBlockCommand({
 		parseCompoundInnerBlocksPreset(innerBlocksPreset);
 
 	const workspace = resolveWorkspaceProject(cwd);
-	assertWorkspaceDependenciesInstalled(workspace);
+	await assertWorkspaceDependenciesInstalled(workspace);
 	const normalizedExternalLayerId = normalizeOptionalCliString(externalLayerId);
 	const normalizedExternalLayerSource = resolveLocalCliPathOption({
 		cwd,
@@ -653,7 +656,11 @@ export async function runAddBlockCommand({
 			});
 			return scaffoldResult;
 		})();
-		assertBlockTargetsDoNotExist(workspace.projectDir, resolvedTemplateId, result.variables);
+		await assertBlockTargetsDoNotExist(
+			workspace.projectDir,
+			resolvedTemplateId,
+			result.variables,
+		);
 		const mutationSnapshot: WorkspaceMutationSnapshot = {
 			fileSources: await snapshotWorkspaceFiles([
 				blockConfigPath,

@@ -12,8 +12,8 @@ import {
 } from './template-source-locators.js'
 import {
   detectTemplateSourceFormat,
-  getTemplateProjectType,
-  getDefaultCategory,
+  getTemplateProjectTypeAsync,
+  getDefaultCategoryAsync,
   getTemplateVariableContext,
   normalizeCreateBlockSubset,
   normalizeWpTypiaTemplateSeed,
@@ -86,10 +86,10 @@ export async function resolveTemplateSource(
       }
       normalizedSeed = await normalizeWpTypiaTemplateSeed(seed)
       const supportsMigrationUi =
-        getTemplateProjectType(seed.blockDir) === 'workspace'
+        (await getTemplateProjectTypeAsync(seed.blockDir)) === 'workspace'
       return {
         id: templateId,
-        defaultCategory: getDefaultCategory(seed.blockDir),
+        defaultCategory: await getDefaultCategoryAsync(seed.blockDir),
         description: 'A remote wp-typia template source',
         features: ['Remote source', 'wp-typia format'],
         format,
@@ -121,29 +121,37 @@ export async function resolveTemplateSource(
         (await detectTemplateSourceFormat(normalizedSeed.blockDir))
       if (renderedFormat === 'wp-typia') {
         const normalized = await normalizeWpTypiaTemplateSeed(normalizedSeed)
-        const supportsMigrationUi =
-          getTemplateProjectType(normalizedSeed.blockDir) === 'workspace'
-        return {
-          cleanup: async () => {
-            await normalized.cleanup?.()
-            await seed.cleanup?.()
-          },
-          defaultCategory: getDefaultCategory(normalizedSeed.blockDir),
-          description:
-            'A wp-typia scaffold normalized from an official external template config',
-          features: [
-            'Remote source',
-            'official external template',
-            'wp-typia format',
-            ...(supportsMigrationUi ? ['workspace-capable scaffold'] : []),
-          ],
-          format,
-          id: 'remote:create-block-external',
-          isOfficialWorkspaceTemplate,
-          selectedVariant: normalizedSeed.selectedVariant ?? null,
-          supportsMigrationUi,
-          templateDir: normalized.blockDir,
-          warnings: normalizedSeed.warnings ?? [],
+        try {
+          const [projectType, defaultCategory] = await Promise.all([
+            getTemplateProjectTypeAsync(normalizedSeed.blockDir),
+            getDefaultCategoryAsync(normalizedSeed.blockDir),
+          ])
+          const supportsMigrationUi = projectType === 'workspace'
+          return {
+            cleanup: async () => {
+              await normalized.cleanup?.()
+              await seed.cleanup?.()
+            },
+            defaultCategory,
+            description:
+              'A wp-typia scaffold normalized from an official external template config',
+            features: [
+              'Remote source',
+              'official external template',
+              'wp-typia format',
+              ...(supportsMigrationUi ? ['workspace-capable scaffold'] : []),
+            ],
+            format,
+            id: 'remote:create-block-external',
+            isOfficialWorkspaceTemplate,
+            selectedVariant: normalizedSeed.selectedVariant ?? null,
+            supportsMigrationUi,
+            templateDir: normalized.blockDir,
+            warnings: normalizedSeed.warnings ?? [],
+          }
+        } catch (error) {
+          await normalized.cleanup?.()
+          throw error
         }
       }
 
