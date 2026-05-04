@@ -1,5 +1,21 @@
 # wp-typia
 
+## 0.22.6 — 2026-05-04
+
+### Patch changes
+
+- [ea8c59e](https://github.com/imjlk/wp-typia/commit/ea8c59eceb6058d145422eaf9f841f8d978b2af8) Surface malformed scaffold compatibility version floors instead of silently falling back, including CLI warnings for repaired plugin headers. — Thanks @imjlk!
+- [75d4947](https://github.com/imjlk/wp-typia/commit/75d494760caff76a0b661a183f5a1427265bf2b2) Ignore PHP string and heredoc braces when repairing generated workspace bootstrap functions. — Thanks @imjlk!
+- [21a1e53](https://github.com/imjlk/wp-typia/commit/21a1e53e075a09edb5eb9573361675408c117a68) Emit diagnostic-coded CLI option parsing errors and preserve command context for structured Node fallback failures. — Thanks @imjlk!
+- [102e43d](https://github.com/imjlk/wp-typia/commit/102e43d5eb4914737efd2a7c95fdccc7dd3527c6) Use `npm install --no-audit` for first-run scaffold installs and document npm audit/peer-warning guidance for generated projects. — Thanks @imjlk!
+- [a50975e](https://github.com/imjlk/wp-typia/commit/a50975e07be2658ccd66248fb2983aa4d9782fc3) Keep acronym runs together when deriving kebab-case generated identifiers. — Thanks @imjlk!
+- [72d575f](https://github.com/imjlk/wp-typia/commit/72d575f75f808547e68649353399f3be09976ddd) Validate loaded wp-typia config files with a strict runtime schema and report clear diagnostics for unknown keys or invalid value types. — Thanks @imjlk!
+- [de42ed0](https://github.com/imjlk/wp-typia/commit/de42ed0c00a1912bbc3be43aedca3130758043c1) Normalize `--format text` through the Node fallback CLI before command dispatch. — Thanks @imjlk!
+- [a7d744e](https://github.com/imjlk/wp-typia/commit/a7d744e98d988096a356d38092bddf23d3eb4838) Single-source add kind ids through project-tools metadata so CLI routing and runtime add helpers cannot drift. — Thanks @imjlk!
+- [bd56023](https://github.com/imjlk/wp-typia/commit/bd56023d047524df8f48ab7888ca3bdd34755447) Keep routing metadata generation working when wp-typia is installed with packaged project-tools files instead of monorepo source files. — Thanks @imjlk!
+- [47352a6](https://github.com/imjlk/wp-typia/commit/47352a6ad026e1a6dd77f364442f9f48b0eff755) Enable public npm admin-view scaffolds now that @wp-typia/dataviews is published. — Thanks @imjlk!
+- Updated dependencies: project-tools (npm)@0.22.6
+
 ## 0.22.5 — 2026-05-02
 
 ### Patch changes
