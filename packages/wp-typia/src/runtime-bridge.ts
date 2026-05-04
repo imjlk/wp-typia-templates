@@ -23,6 +23,7 @@ import {
   buildCreateDryRunPayload,
   buildInitCompletionPayload,
   buildMigrationCompletionPayload,
+  type CreateProgressPayload,
   formatCreateProgressLine,
   printBlock,
   printCompletionPayload,
@@ -36,15 +37,11 @@ export {
   buildCreateDryRunPayload,
   buildInitCompletionPayload,
   buildMigrationCompletionPayload,
+  type CreateProgressPayload,
   formatCreateProgressLine,
   printCompletionPayload,
 } from './runtime-bridge-output';
 export { executeSyncCommand } from './runtime-bridge-sync';
-
-type CreateProgressPayload = {
-  detail: string;
-  title: string;
-};
 
 type CreateExecutionInput = {
   projectDir: string;

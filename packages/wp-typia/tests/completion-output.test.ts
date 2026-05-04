@@ -7,6 +7,7 @@ import packageJson from '../package.json';
 import {
   buildCreateCompletionPayload,
   buildCreateDryRunPayload,
+  type CreateProgressPayload as BridgeCreateProgressPayload,
   formatCreateProgressLine,
   buildMigrationCompletionPayload,
   printCompletionPayload,
@@ -17,7 +18,25 @@ import {
   buildStructuredCompletionSuccessPayload,
   buildStructuredInitSuccessPayload,
   buildSyncDryRunPayload,
+  type CreateProgressPayload as OutputCreateProgressPayload,
 } from '../src/runtime-bridge-output';
+
+type ExpectTrue<TValue extends true> = TValue;
+type IsEqual<TLeft, TRight> =
+  (<TValue>() => TValue extends TLeft ? 1 : 2) extends <
+    TValue,
+  >() => TValue extends TRight ? 1 : 2
+    ? true
+    : false;
+type CreateProgressPayloadCompatibility = ExpectTrue<
+  IsEqual<BridgeCreateProgressPayload, OutputCreateProgressPayload>
+>;
+
+const runtimeBridgeOutputTypeCompatibilityChecks = {
+  createProgressPayload: true,
+} satisfies {
+  createProgressPayload: CreateProgressPayloadCompatibility;
+};
 
 const UNICODE_MARKER_OPTIONS = {
   env: {
@@ -50,6 +69,12 @@ afterAll(() => {
 });
 
 describe('alternate-buffer completion output helpers', () => {
+  test('keeps create progress payload type single-sourced across bridge exports', () => {
+    expect(runtimeBridgeOutputTypeCompatibilityChecks).toEqual({
+      createProgressPayload: true,
+    });
+  });
+
   test('create completion payload preserves reviewable next steps and optional onboarding', () => {
     const payload = buildCreateCompletionPayload(
       {
