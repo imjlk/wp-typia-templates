@@ -53,7 +53,7 @@ describe('alternate-buffer completion output helpers', () => {
   test('create completion payload preserves reviewable next steps and optional onboarding', () => {
     const payload = buildCreateCompletionPayload(
       {
-        nextSteps: ['cd demo-block', 'npm install', 'npm run dev'],
+        nextSteps: ['cd demo-block', 'npm install --no-audit', 'npm run dev'],
         optionalOnboarding: {
           note: 'Run npm run sync before your first commit if you edited types.',
           shortNote:
@@ -80,7 +80,7 @@ describe('alternate-buffer completion output helpers', () => {
     ]);
     expect(payload.nextSteps).toEqual([
       'cd demo-block',
-      'npm install',
+      'npm install --no-audit',
       'npm run dev',
     ]);
     expect(payload.optionalTitle).toBe('Verify and sync (optional):');
@@ -99,7 +99,7 @@ describe('alternate-buffer completion output helpers', () => {
 
     printCompletionPayload(
       {
-        nextSteps: ['cd demo-block', 'npm install'],
+        nextSteps: ['cd demo-block', 'npm install --no-audit'],
         optionalLines: [
           `npx --yes wp-typia@${packageJson.version} doctor`,
           'npm run sync',
@@ -126,7 +126,7 @@ describe('alternate-buffer completion output helpers', () => {
       'Project directory: /tmp/demo-block',
       'Next steps:',
       '  cd demo-block',
-      '  npm install',
+      '  npm install --no-audit',
       '\nVerify and sync (optional):',
       `  npx --yes wp-typia@${packageJson.version} doctor`,
       '  npm run sync',

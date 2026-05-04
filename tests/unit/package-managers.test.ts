@@ -18,7 +18,7 @@ describe("package manager runtime helpers", () => {
 		expect(Object.keys(PACKAGE_MANAGERS)).toEqual(PACKAGE_MANAGER_IDS);
 		expect(getPackageManagerSelectOptions()).toEqual([
 			{ hint: "bun install", label: "Bun", value: "bun" },
-			{ hint: "npm install", label: "npm", value: "npm" },
+			{ hint: "npm install --no-audit", label: "npm", value: "npm" },
 			{ hint: "pnpm install", label: "pnpm", value: "pnpm" },
 			{ hint: "yarn install", label: "Yarn", value: "yarn" },
 		]);
@@ -38,7 +38,7 @@ describe("package manager runtime helpers", () => {
 				runWithArgs: "bun run sync-types --strict --report json",
 			},
 			npm: {
-				install: "npm install",
+				install: "npm install --no-audit",
 				run: "npm run sync-types",
 				runWithArgs: "npm run sync-types -- --strict --report json",
 			},
@@ -87,7 +87,7 @@ describe("package manager runtime helpers", () => {
 
 		expect(transformPackageManagerText(content, "npm")).toBe(
 			[
-				"npm install && npm run sync-types -- --strict || npm install --save-dev @types/node;",
+				"npm install --no-audit && npm run sync-types -- --strict || npm install --save-dev @types/node;",
 				"`npm run lint`, npm ci.",
 				"postbun run should stay untouched.",
 			].join(" "),

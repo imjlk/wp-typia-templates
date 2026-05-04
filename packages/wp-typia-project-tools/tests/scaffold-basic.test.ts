@@ -291,7 +291,9 @@ describe('@wp-typia/project-tools scaffold core', () => {
       expect(fs.existsSync(path.join(targetDir, '.wp-env.test.json'))).toBe(
         false,
       );
-      expect(readme).toContain('npm install');
+      expect(readme).toContain('npm install --no-audit');
+      expect(readme).toContain('Run `npm audit` separately');
+      expect(readme).toContain('React peer dependency noise');
       expect(readme).toContain('npm run dev');
       expect(readme).toContain('npm run start');
       expect(readme).toContain('## Quick Start');

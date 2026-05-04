@@ -23,7 +23,7 @@ const PACKAGE_MANAGER_DATA: PackageManagerDefinition[] = [
 		id: "npm",
 		label: "npm",
 		packageManagerField: "npm@11.6.1",
-		installCommand: "npm install",
+		installCommand: "npm install --no-audit",
 		frozenInstallCommand: "npm ci",
 	},
 	{
