@@ -54,9 +54,11 @@ function getPackageManagerInstallGuidance(packageManager: PackageManagerId): str
 		return '';
 	}
 
+	const installCommand = formatInstallCommand(packageManager);
+
 	return [
 		'',
-		'> npm note: the scaffold uses `npm install --no-audit` for the first install so npm does not spend the initial create flow in the audit resolver. Run `npm audit` separately when you want npm vulnerability output.',
+		`> npm note: the scaffold uses \`${installCommand}\` for the first install so npm does not spend the initial create flow in the audit resolver. Run \`npm audit\` separately when you want npm vulnerability output.`,
 		'> If npm prints React peer dependency noise from WordPress block-editor packages, validate with `npm run typecheck` and `npm run build` before changing WordPress package ranges.',
 	].join('\n');
 }

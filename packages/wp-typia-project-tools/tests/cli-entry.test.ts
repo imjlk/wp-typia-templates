@@ -1448,7 +1448,7 @@ test("node entry rejects add block before workspace dependencies are installed",
   );
 
   expect(errorMessage).toContain("Workspace dependencies have not been installed yet.");
-  expect(errorMessage).toContain("Run `npm install` from the workspace root");
+  expect(errorMessage).toContain("Run `npm install --no-audit` from the workspace root");
   expect(errorMessage).toContain("`wp-typia add block ...`");
 });
 
