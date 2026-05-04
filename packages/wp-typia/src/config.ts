@@ -198,8 +198,7 @@ async function readJsonFile(filePath: string): Promise<unknown | undefined> {
 	}
 
 	try {
-		const parsed = JSON.parse(source);
-		return isRecord(parsed) ? parsed : null;
+		return JSON.parse(source);
 	} catch (error) {
 		const message = error instanceof Error ? error.message : String(error);
 		throw createCliDiagnosticCodeError(

@@ -208,21 +208,45 @@ describe('wp-typia user config loading', () => {
     const tempRoot = fs.mkdtempSync(
       path.join(os.tmpdir(), 'wp-typia-config-root-type-'),
     );
+    const configPath = path.join(tempRoot, 'override.json');
 
     try {
-      writeJson(path.join(tempRoot, 'override.json'), null);
+      writeJson(configPath, null);
 
-      let thrown: unknown;
+      let nullRootError: unknown;
       try {
         await loadWpTypiaUserConfigFromSource(tempRoot, './override.json');
       } catch (error) {
-        thrown = error;
+        nullRootError = error;
       }
 
-      expect(thrown).toBeInstanceOf(Error);
-      expect(thrown).toHaveProperty('code', 'invalid-argument');
-      expect(String((thrown as Error).message)).toContain('config');
-      expect(String((thrown as Error).message)).toContain('expected object');
+      expect(nullRootError).toBeInstanceOf(Error);
+      expect(nullRootError).toHaveProperty('code', 'invalid-argument');
+      expect(String((nullRootError as Error).message)).toContain('config');
+      expect(String((nullRootError as Error).message)).toContain(
+        'expected object',
+      );
+      expect(String((nullRootError as Error).message)).toContain(
+        'received null',
+      );
+
+      writeJson(configPath, []);
+
+      let arrayRootError: unknown;
+      try {
+        await loadWpTypiaUserConfigFromSource(tempRoot, './override.json');
+      } catch (error) {
+        arrayRootError = error;
+      }
+
+      expect(arrayRootError).toBeInstanceOf(Error);
+      expect(arrayRootError).toHaveProperty('code', 'invalid-argument');
+      expect(String((arrayRootError as Error).message)).toContain(
+        'expected object',
+      );
+      expect(String((arrayRootError as Error).message)).toContain(
+        'received array',
+      );
     } finally {
       fs.rmSync(tempRoot, { force: true, recursive: true });
     }
