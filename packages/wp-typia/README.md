@@ -28,6 +28,13 @@ Extend an existing workspace with:
 `wp-typia create <project-dir>` when `<project-dir>` is the only positional
 argument.
 
+Configuration files:
+
+- `wp-typia` loads `~/.config/wp-typia/config.json`, `.wp-typiarc`, `.wp-typiarc.json`, then `package.json#wp-typia`; later sources override earlier sources
+- `--config <path>` is an explicit override loaded after the default sources, relative to the current working directory unless absolute
+- config files use a strict schema: unknown keys are errors rather than warnings or stripped values, so typos fail near the source config file
+- object values are deep-merged, while arrays such as `mcp.schemaSources` replace earlier arrays instead of concatenating
+
 Compatibility notes:
 
 - `@wp-typia/project-tools` is the canonical programmatic project orchestration package

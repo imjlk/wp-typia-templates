@@ -7,6 +7,7 @@ import {
   loadWpTypiaUserConfig,
   loadWpTypiaUserConfigFromSource,
   mergeWpTypiaUserConfig,
+  validateWpTypiaUserConfig,
   type WpTypiaUserConfig,
 } from '../src/config';
 import { extractWpTypiaConfigOverride } from '../src/config-override';
@@ -65,6 +66,41 @@ describe('wp-typia user config loading', () => {
     expect(merged.mcp?.schemaSources).not.toBe(incoming.mcp?.schemaSources);
   });
 
+  test('validates in-memory config objects with the strict unknown-key policy', () => {
+    expect(
+      validateWpTypiaUserConfig(
+        {
+          create: {
+            'dry-run': true,
+            template: 'basic',
+          },
+          mcp: {
+            schemaSources: [
+              {
+                namespace: 'demo',
+                path: './mcp-tools.json',
+              },
+            ],
+          },
+        },
+        'test config',
+      ),
+    ).toEqual({
+      create: {
+        'dry-run': true,
+        template: 'basic',
+      },
+      mcp: {
+        schemaSources: [
+          {
+            namespace: 'demo',
+            path: './mcp-tools.json',
+          },
+        ],
+      },
+    });
+  });
+
   test('loads explicit config sources relative to the requested working directory', async () => {
     const tempRoot = fs.mkdtempSync(
       path.join(os.tmpdir(), 'wp-typia-config-source-'),
@@ -86,6 +122,107 @@ describe('wp-typia user config loading', () => {
           template: 'compound',
         },
       });
+    } finally {
+      fs.rmSync(tempRoot, { force: true, recursive: true });
+    }
+  });
+
+  test('rejects unknown keys in explicit config override sources', async () => {
+    const tempRoot = fs.mkdtempSync(
+      path.join(os.tmpdir(), 'wp-typia-config-unknown-'),
+    );
+
+    try {
+      writeJson(path.join(tempRoot, 'override.json'), {
+        create: {
+          template: 'basic',
+          typo: 'unexpected',
+        },
+        custom: true,
+      });
+
+      let thrown: unknown;
+      try {
+        await loadWpTypiaUserConfigFromSource(tempRoot, './override.json');
+      } catch (error) {
+        thrown = error;
+      }
+
+      expect(thrown).toBeInstanceOf(Error);
+      expect(thrown).toHaveProperty('code', 'invalid-argument');
+      expect(String((thrown as Error).message)).toContain(
+        'Invalid wp-typia config at',
+      );
+      expect(String((thrown as Error).message)).toContain(
+        'create: unknown key "typo"',
+      );
+      expect(String((thrown as Error).message)).toContain(
+        'config: unknown key "custom"',
+      );
+    } finally {
+      fs.rmSync(tempRoot, { force: true, recursive: true });
+    }
+  });
+
+  test('rejects invalid config value types with path-specific diagnostics', async () => {
+    const tempRoot = fs.mkdtempSync(
+      path.join(os.tmpdir(), 'wp-typia-config-invalid-type-'),
+    );
+
+    try {
+      writeJson(path.join(tempRoot, 'override.json'), {
+        create: {
+          'dry-run': 'yes',
+        },
+        mcp: {
+          schemaSources: [
+            {
+              namespace: 'demo',
+              path: false,
+            },
+          ],
+        },
+      });
+
+      let thrown: unknown;
+      try {
+        await loadWpTypiaUserConfigFromSource(tempRoot, './override.json');
+      } catch (error) {
+        thrown = error;
+      }
+
+      expect(thrown).toBeInstanceOf(Error);
+      expect(thrown).toHaveProperty('code', 'invalid-argument');
+      expect(String((thrown as Error).message)).toContain('create.dry-run');
+      expect(String((thrown as Error).message)).toContain('expected boolean');
+      expect(String((thrown as Error).message)).toContain(
+        'mcp.schemaSources[0].path',
+      );
+      expect(String((thrown as Error).message)).toContain('expected string');
+    } finally {
+      fs.rmSync(tempRoot, { force: true, recursive: true });
+    }
+  });
+
+  test('rejects non-object config file roots instead of treating them as absent', async () => {
+    const tempRoot = fs.mkdtempSync(
+      path.join(os.tmpdir(), 'wp-typia-config-root-type-'),
+    );
+
+    try {
+      writeJson(path.join(tempRoot, 'override.json'), null);
+
+      let thrown: unknown;
+      try {
+        await loadWpTypiaUserConfigFromSource(tempRoot, './override.json');
+      } catch (error) {
+        thrown = error;
+      }
+
+      expect(thrown).toBeInstanceOf(Error);
+      expect(thrown).toHaveProperty('code', 'invalid-argument');
+      expect(String((thrown as Error).message)).toContain('config');
+      expect(String((thrown as Error).message)).toContain('expected object');
     } finally {
       fs.rmSync(tempRoot, { force: true, recursive: true });
     }
@@ -161,6 +298,42 @@ describe('wp-typia user config loading', () => {
           ],
         },
       });
+    } finally {
+      fs.rmSync(tempRoot, { force: true, recursive: true });
+    }
+  });
+
+  test('validates package.json#wp-typia with the same config schema', async () => {
+    const tempRoot = fs.mkdtempSync(
+      path.join(os.tmpdir(), 'wp-typia-package-config-invalid-'),
+    );
+
+    try {
+      writeJson(path.join(tempRoot, 'package.json'), {
+        name: 'demo-config-project',
+        'wp-typia': {
+          mcp: {
+            schemaSources: 'not-an-array',
+          },
+        },
+      });
+
+      let thrown: unknown;
+      try {
+        await loadWpTypiaUserConfig(tempRoot);
+      } catch (error) {
+        thrown = error;
+      }
+
+      expect(thrown).toBeInstanceOf(Error);
+      expect(thrown).toHaveProperty('code', 'invalid-argument');
+      expect(String((thrown as Error).message)).toContain(
+        'package.json#wp-typia',
+      );
+      expect(String((thrown as Error).message)).toContain(
+        'mcp.schemaSources',
+      );
+      expect(String((thrown as Error).message)).toContain('expected array');
     } finally {
       fs.rmSync(tempRoot, { force: true, recursive: true });
     }

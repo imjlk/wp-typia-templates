@@ -504,6 +504,54 @@ describe('Node fallback CLI core routing', () => {
     }
   });
 
+  test('reports config validation errors before dispatching create defaults', async () => {
+    const tempRoot = createTempRoot('wp-typia-node-config-invalid-');
+    writeJson(path.join(tempRoot, 'wp-typia.config.json'), {
+      create: {
+        'dry-run': 'yes',
+      },
+    });
+
+    try {
+      const result = await captureNodeCli(
+        [
+          'create',
+          'config-card',
+          '--config',
+          'wp-typia.config.json',
+          '--format',
+          'json',
+        ],
+        { cwd: tempRoot, entrypoint: true },
+      );
+      const parsed = JSON.parse(result.stderr) as {
+        error?: {
+          code?: string;
+          command?: string;
+          detailLines?: string[];
+          kind?: string;
+        };
+        ok?: boolean;
+      };
+
+      expect(result.error).toBeUndefined();
+      expect(result.exitCode).toBe(1);
+      expect(result.stdout).toBe('');
+      expect(parsed.ok).toBe(false);
+      expect(parsed.error?.kind).toBe('command-execution');
+      expect(parsed.error?.command).toBe('create');
+      expect(parsed.error?.code).toBe('invalid-argument');
+      expect(parsed.error?.detailLines?.join('\n')).toContain(
+        'create.dry-run',
+      );
+      expect(parsed.error?.detailLines?.join('\n')).toContain(
+        'expected boolean',
+      );
+    } finally {
+      removeTempRoot(tempRoot);
+    }
+  });
+
   test('captures structured entrypoint errors on stderr', async () => {
     const result = await captureNodeCli(['create', '--format', 'json'], {
       entrypoint: true,
