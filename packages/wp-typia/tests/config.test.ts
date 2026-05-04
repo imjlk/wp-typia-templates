@@ -2,15 +2,41 @@ import { describe, expect, test } from 'bun:test';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import type { z } from 'zod';
 
 import {
   loadWpTypiaUserConfig,
   loadWpTypiaUserConfigFromSource,
   mergeWpTypiaUserConfig,
   validateWpTypiaUserConfig,
+  type getMcpSchemaSources,
+  type WpTypiaSchemaSource,
   type WpTypiaUserConfig,
+  type wpTypiaUserConfigSchema,
 } from '../src/config';
 import { extractWpTypiaConfigOverride } from '../src/config-override';
+
+type ExpectTrue<TValue extends true> = TValue;
+type IsEqual<TLeft, TRight> =
+  (<TValue>() => TValue extends TLeft ? 1 : 2) extends <
+    TValue,
+  >() => TValue extends TRight ? 1 : 2
+    ? true
+    : false;
+type UserConfigSchemaCompatibility = ExpectTrue<
+  IsEqual<z.infer<typeof wpTypiaUserConfigSchema>, WpTypiaUserConfig>
+>;
+type SchemaSourceReturnCompatibility = ExpectTrue<
+  IsEqual<ReturnType<typeof getMcpSchemaSources>, WpTypiaSchemaSource[]>
+>;
+
+const configTypeCompatibilityChecks = {
+  schemaSources: true,
+  userConfig: true,
+} satisfies {
+  schemaSources: SchemaSourceReturnCompatibility;
+  userConfig: UserConfigSchemaCompatibility;
+};
 
 function writeJson(filePath: string, value: unknown): void {
   fs.mkdirSync(path.dirname(filePath), { recursive: true });
@@ -18,6 +44,13 @@ function writeJson(filePath: string, value: unknown): void {
 }
 
 describe('wp-typia user config loading', () => {
+  test('keeps exported config types derived from the Zod schema', () => {
+    expect(configTypeCompatibilityChecks).toEqual({
+      schemaSources: true,
+      userConfig: true,
+    });
+  });
+
   test('deep merges objects while replacing arrays from later config sources', () => {
     const base: WpTypiaUserConfig = {
       create: {

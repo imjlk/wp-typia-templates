@@ -9,49 +9,6 @@ import {
 } from "@wp-typia/project-tools/cli-diagnostics";
 import { z, type ZodIssue } from "zod";
 
-export type WpTypiaSchemaSource = {
-	namespace: string;
-	path: string;
-};
-
-export type WpTypiaUserConfig = {
-	create?: {
-		"alternate-render-targets"?: string;
-		"inner-blocks-preset"?: string;
-		"data-storage"?: string;
-		"dry-run"?: boolean;
-		"external-layer-id"?: string;
-		"external-layer-source"?: string;
-		namespace?: string;
-		"no-install"?: boolean;
-		"package-manager"?: string;
-		"persistence-policy"?: string;
-		"php-prefix"?: string;
-		"query-post-type"?: string;
-		template?: string;
-		"text-domain"?: string;
-		variant?: string;
-		"with-migration-ui"?: boolean;
-		"with-test-preset"?: boolean;
-		"with-wp-env"?: boolean;
-		yes?: boolean;
-	};
-	add?: {
-		block?: {
-			"alternate-render-targets"?: string;
-			"data-storage"?: string;
-			"external-layer-id"?: string;
-			"external-layer-source"?: string;
-			"inner-blocks-preset"?: string;
-			"persistence-policy"?: string;
-			template?: string;
-		};
-	};
-	mcp?: {
-		schemaSources?: WpTypiaSchemaSource[];
-	};
-};
-
 export const WP_TYPIA_CONFIG_SOURCES = [
 	"~/.config/wp-typia/config.json",
 	".wp-typiarc",
@@ -114,13 +71,16 @@ const mcpConfigSchema = z
 	})
 	.strict();
 
-const wpTypiaUserConfigSchema = z
+export const wpTypiaUserConfigSchema = z
 	.object({
 		add: addConfigSchema.optional(),
 		create: createConfigSchema.optional(),
 		mcp: mcpConfigSchema.optional(),
 	})
 	.strict();
+
+export type WpTypiaSchemaSource = z.infer<typeof wpTypiaSchemaSourceSchema>;
+export type WpTypiaUserConfig = z.infer<typeof wpTypiaUserConfigSchema>;
 
 function formatIssuePath(issuePath: ZodIssue["path"]): string {
 	if (issuePath.length === 0) {
