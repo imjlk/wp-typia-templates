@@ -1,5 +1,23 @@
 # @wp-typia/project-tools
 
+## 0.22.6 — 2026-05-04
+
+### Patch changes
+
+- [39ccb03](https://github.com/imjlk/wp-typia/commit/39ccb038e7614e3fbeb797f379a17f25ac5daa32) Split retrofit init planning, package mutations, apply orchestration, and helper script templates into focused runtime modules without changing init behavior. — Thanks @imjlk!
+- [ea8c59e](https://github.com/imjlk/wp-typia/commit/ea8c59eceb6058d145422eaf9f841f8d978b2af8) Surface malformed scaffold compatibility version floors instead of silently falling back, including CLI warnings for repaired plugin headers. — Thanks @imjlk!
+- [75d4947](https://github.com/imjlk/wp-typia/commit/75d494760caff76a0b661a183f5a1427265bf2b2) Ignore PHP string and heredoc braces when repairing generated workspace bootstrap functions. — Thanks @imjlk!
+- [102e43d](https://github.com/imjlk/wp-typia/commit/102e43d5eb4914737efd2a7c95fdccc7dd3527c6) Use `npm install --no-audit` for first-run scaffold installs and document npm audit/peer-warning guidance for generated projects. — Thanks @imjlk!
+- [a50975e](https://github.com/imjlk/wp-typia/commit/a50975e07be2658ccd66248fb2983aa4d9782fc3) Keep acronym runs together when deriving kebab-case generated identifiers. — Thanks @imjlk!
+- [acdb0c4](https://github.com/imjlk/wp-typia/commit/acdb0c4c85174266afda454c844993da5c1d6cb1) Throttle external template cache pruning with a last-pruned marker while preserving TTL correctness for reused entries. — Thanks @imjlk!
+- [a5f62b0](https://github.com/imjlk/wp-typia/commit/a5f62b03a5d1bf09c817fd119dd8da9903292c7a) Refactor workspace add collision preflights around descriptor-backed filesystem and inventory targets. — Thanks @imjlk!
+- [74d77c4](https://github.com/imjlk/wp-typia/commit/74d77c4484d9ecb2a888b2d23839d87ecba1e937) Reduce synchronous filesystem probes in async scaffold, add-block, and remote template normalization paths. — Thanks @imjlk!
+- [a7d744e](https://github.com/imjlk/wp-typia/commit/a7d744e98d988096a356d38092bddf23d3eb4838) Single-source add kind ids through project-tools metadata so CLI routing and runtime add helpers cannot drift. — Thanks @imjlk!
+- [46f77c4](https://github.com/imjlk/wp-typia/commit/46f77c40c4cfed6b02b934af8566c60269eca1bf) Share workspace doctor bootstrap path resolution across scoped and unscoped package checks. — Thanks @imjlk!
+- [dd4d6cc](https://github.com/imjlk/wp-typia/commit/dd4d6cc4e119feffe8653f0505d5a37fc51ed4ec) Route workspace inventory mutation appends through section descriptors while preserving the generated inventory format. — Thanks @imjlk!
+- [47352a6](https://github.com/imjlk/wp-typia/commit/47352a6ad026e1a6dd77f364442f9f48b0eff755) Enable public npm admin-view scaffolds now that @wp-typia/dataviews is published. — Thanks @imjlk!
+- [9b12c5e](https://github.com/imjlk/wp-typia/commit/9b12c5e5372aa1fb86e8ba1bcfba043a5030b9cf) Clarify that typia.llm OpenAPI constraint restoration mutates its cloned target schema while preserving public artifact inputs. — Thanks @imjlk!
+
 ## 0.22.5 — 2026-05-02
 
 ### Patch changes
