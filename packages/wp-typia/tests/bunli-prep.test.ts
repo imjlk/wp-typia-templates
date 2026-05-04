@@ -176,6 +176,28 @@ describe('wp-typia Bunli preparation', () => {
     expect(result.stderr).not.toContain('Routing metadata is out of date');
   });
 
+  test('validates routing metadata when project-tools source files are unavailable', () => {
+    const result = spawnSync(
+      'node',
+      ['scripts/generate-routing-metadata.mjs', '--check'],
+      {
+        cwd: packageRoot,
+        encoding: 'utf8',
+        env: {
+          ...process.env,
+          WP_TYPIA_PROJECT_TOOLS_ADD_KIND_IDS_SOURCE: path.join(
+            repoRoot,
+            '.cache',
+            'missing-cli-add-kind-ids.ts',
+          ),
+        },
+      },
+    );
+
+    expect(result.status).toBe(0);
+    expect(result.stderr).not.toContain('Routing metadata is out of date');
+  });
+
   test('runtime rebuild fallback targets sibling linked packages directly', () => {
     const runtimeBuildScript = fs.readFileSync(
       path.join(packageRoot, 'scripts', 'build-bunli-runtime.ts'),
