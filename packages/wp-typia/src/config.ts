@@ -137,7 +137,8 @@ function formatConfigValidationIssue(issue: ZodIssue): string {
 	const pathLabel = formatIssuePath(issue.path);
 	if (issue.code === "unrecognized_keys") {
 		const keys = issue.keys.map((key) => `"${String(key)}"`).join(", ");
-		return `${pathLabel}: unknown key ${keys}. Unknown keys are errors in wp-typia config.`;
+		const label = issue.keys.length === 1 ? "unknown key" : "unknown keys";
+		return `${pathLabel}: ${label} ${keys}. Unknown keys are errors in wp-typia config.`;
 	}
 
 	return `${pathLabel}: ${issue.message}`;
