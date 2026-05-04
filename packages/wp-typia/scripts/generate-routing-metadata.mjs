@@ -86,6 +86,8 @@ async function pruneStaleRoutingMetadataTempDirs() {
         fs.rm(path.join(routingMetadataTempParentDir, entry.name), {
           force: true,
           recursive: true,
+        }).catch(() => {
+          // Stale temp cleanup is best-effort and should not block generation.
         }),
       ),
   );
@@ -153,7 +155,6 @@ async function importTranspiledTypeScriptModule(
     },
     fileName: modulePath,
   });
-  await pruneStaleRoutingMetadataTempDirs();
   await fs.mkdir(routingMetadataTempParentDir, { recursive: true });
   const tempDir = await fs.mkdtemp(
     path.join(routingMetadataTempParentDir, routingMetadataTempDirPrefix),
@@ -289,6 +290,8 @@ function failCheck(pathname) {
   );
   process.exit(1);
 }
+
+await pruneStaleRoutingMetadataTempDirs();
 
 const [
   { COMMAND_ROUTING_METADATA },
