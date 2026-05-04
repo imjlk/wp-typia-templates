@@ -284,7 +284,7 @@ test("runScaffoldFlow defaults persistence scaffolds to custom-table and authent
   expect(pluginBootstrap).toContain("custom-table");
   expect(flow.nextSteps).toEqual([
     `cd ${projectInput}`,
-    "npm install",
+    "npm install --no-audit",
     "npm run dev",
   ]);
   expect(flow.optionalOnboarding.steps).toEqual(["npm run sync"]);
@@ -411,7 +411,7 @@ test("runScaffoldFlow keeps compound next steps minimal while surfacing optional
 
   expect(flow.nextSteps).toEqual([
     `cd ${projectInput}`,
-    "npm install",
+    "npm install --no-audit",
     "npm run dev",
   ]);
   expect(flow.optionalOnboarding.steps).toEqual(["npm run sync"]);
@@ -756,7 +756,7 @@ test("runScaffoldFlow carries query-loop post type overrides into the generated 
   expect(flow.result.variables.queryPostType).toBe("book");
   expect(flow.nextSteps).toEqual([
     `cd ${projectInput}`,
-    "npm install",
+    "npm install --no-audit",
     "npm run dev",
   ]);
   expect(flow.optionalOnboarding.steps).toEqual([]);
@@ -1448,7 +1448,7 @@ test("node entry rejects add block before workspace dependencies are installed",
   );
 
   expect(errorMessage).toContain("Workspace dependencies have not been installed yet.");
-  expect(errorMessage).toContain("Run `npm install` from the workspace root");
+  expect(errorMessage).toContain("Run `npm install --no-audit` from the workspace root");
   expect(errorMessage).toContain("`wp-typia add block ...`");
 });
 

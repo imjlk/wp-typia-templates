@@ -49,6 +49,20 @@ function formatReadmeTemplateIdentity(templateId: string): string {
 	return [`- Template id: ${templateId}`, '- Type: custom or external scaffold'].join('\n');
 }
 
+function getPackageManagerInstallGuidance(packageManager: PackageManagerId): string {
+	if (packageManager !== 'npm') {
+		return '';
+	}
+
+	const installCommand = formatInstallCommand(packageManager);
+
+	return [
+		'',
+		`> npm note: the scaffold uses \`${installCommand}\` for the first install so npm does not spend the initial create flow in the audit resolver. Run \`npm audit\` separately when you want npm vulnerability output.`,
+		'> If npm prints React peer dependency noise from WordPress block-editor packages, validate with `npm run typecheck` and `npm run build` before changing WordPress package ranges.',
+	].join('\n');
+}
+
 /**
  * Builds the generated README markdown for one scaffolded project.
  *
@@ -150,6 +164,7 @@ ${formatReadmeTemplateIdentity(templateId)}
 ${formatInstallCommand(packageManager)}
 ${formatRunScript(packageManager, developmentScript)}
 \`\`\`
+${getPackageManagerInstallGuidance(packageManager)}
 
 ${getQuickStartWorkflowNote(packageManager, templateId, {
     compoundPersistenceEnabled,

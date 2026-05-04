@@ -191,7 +191,7 @@ describe("alternate-buffer TUI lifecycle", () => {
 
 	test("run helper can defer exit while completion state takes over", async () => {
 		const completion = {
-			nextSteps: ["cd demo", "npm install"],
+			nextSteps: ["cd demo", "npm install --no-audit"],
 			title: "✅ Created Demo Block",
 		};
 		let exited = 0;
@@ -363,7 +363,7 @@ describe("alternate-buffer TUI lifecycle", () => {
 		const rendered = renderStaticMarkupSilently(
 			createElement(FirstPartyCompletionViewport, {
 				completion: {
-					nextSteps: ["cd demo-block", "npm install", "npm run dev"],
+					nextSteps: ["cd demo-block", "npm install --no-audit", "npm run dev"],
 					optionalLines: ["npm run sync"],
 					optionalNote: "Review the generated metadata before first commit.",
 					optionalTitle: "Advanced sync (optional):",
