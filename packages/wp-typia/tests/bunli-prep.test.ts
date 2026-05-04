@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { CLI_DIAGNOSTIC_CODES } from '@wp-typia/project-tools/cli-diagnostics';
 
@@ -176,26 +177,48 @@ describe('wp-typia Bunli preparation', () => {
     expect(result.stderr).not.toContain('Routing metadata is out of date');
   });
 
-  test('validates routing metadata when project-tools source files are unavailable', () => {
-    const result = spawnSync(
-      'node',
-      ['scripts/generate-routing-metadata.mjs', '--check'],
-      {
-        cwd: packageRoot,
-        encoding: 'utf8',
-        env: {
-          ...process.env,
-          WP_TYPIA_PROJECT_TOOLS_ADD_KIND_IDS_SOURCE: path.join(
-            repoRoot,
-            '.cache',
-            'missing-cli-add-kind-ids.ts',
-          ),
-        },
-      },
+  test('validates routing metadata from a packaged copy without sibling source files', () => {
+    const tempDir = fs.mkdtempSync(
+      path.join(os.tmpdir(), 'wp-typia-packaged-routing-'),
     );
+    const packagedRoot = path.join(tempDir, 'wp-typia');
 
-    expect(result.status).toBe(0);
-    expect(result.stderr).not.toContain('Routing metadata is out of date');
+    try {
+      for (const entry of ['bin', 'scripts', 'src', 'package.json']) {
+        fs.cpSync(path.join(packageRoot, entry), path.join(packagedRoot, entry), {
+          recursive: true,
+        });
+      }
+      fs.symlinkSync(
+        path.join(packageRoot, 'node_modules'),
+        path.join(packagedRoot, 'node_modules'),
+        'dir',
+      );
+
+      const result = spawnSync(
+        'node',
+        ['scripts/generate-routing-metadata.mjs', '--check'],
+        {
+          cwd: packagedRoot,
+          encoding: 'utf8',
+          env: {
+            ...process.env,
+            WP_TYPIA_PROJECT_TOOLS_ADD_KIND_IDS_SOURCE: path.join(
+              tempDir,
+              'wp-typia-project-tools',
+              'src',
+              'runtime',
+              'cli-add-kind-ids.ts',
+            ),
+          },
+        },
+      );
+
+      expect(result.status).toBe(0);
+      expect(result.stderr).not.toContain('Routing metadata is out of date');
+    } finally {
+      fs.rmSync(tempDir, { force: true, recursive: true });
+    }
   });
 
   test('runtime rebuild fallback targets sibling linked packages directly', () => {
