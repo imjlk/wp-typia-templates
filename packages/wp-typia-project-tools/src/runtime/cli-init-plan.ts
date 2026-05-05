@@ -6,23 +6,22 @@ import ts from "typescript";
 
 import { discoverMigrationInitLayout } from "./migration-project.js";
 import type { MigrationBlockConfig } from "./migration-types.js";
-import {
-	formatAddDevDependenciesCommand,
-	formatPackageExecCommand,
-	formatRunScript,
-	type PackageManagerId,
-} from "./package-managers.js";
+import { formatPackageExecCommand, formatRunScript, type PackageManagerId } from "./package-managers.js";
 import { toPascalCase } from "./string-case.js";
 import {
 	buildDependencyChanges,
 	buildPackageManagerFieldChange,
-	buildRequiredDevDependencyMapEntries,
 	buildScriptChanges,
 	getWpTypiaCliSpecifier,
 	hasExistingWpTypiaProjectSurface,
 	readProjectPackageJson,
 	resolveInitPackageManager,
 } from "./cli-init-package-json.js";
+import {
+	buildInitPlanChangeSummary,
+	buildInitPlanNextSteps,
+	buildRetrofitPlanSummary,
+} from "./cli-init-plan-presentation.js";
 import {
 	RETROFIT_APPLY_PREVIEW_NOTE,
 	SUPPORTED_RETROFIT_LAYOUT_NOTE,
@@ -264,128 +263,6 @@ function buildPlannedFiles(
 	];
 }
 
-function buildChangeSummary(
-	changes: Pick<
-		RetrofitInitPlan,
-		"generatedArtifacts" | "packageChanges" | "plannedFiles"
-	>,
-	options: {
-		includeGeneratedArtifacts: boolean;
-	},
-): string[] {
-	const lines: string[] = [];
-
-	for (const dependencyChange of changes.packageChanges.addDevDependencies) {
-		lines.push(
-			`devDependency ${dependencyChange.action} ${dependencyChange.name} -> ${dependencyChange.requiredValue}`,
-		);
-	}
-
-	if (changes.packageChanges.packageManagerField) {
-		lines.push(
-			`packageManager ${changes.packageChanges.packageManagerField.action} -> ${changes.packageChanges.packageManagerField.requiredValue}`,
-		);
-	}
-
-	for (const scriptChange of changes.packageChanges.scripts) {
-		lines.push(
-			`script ${scriptChange.action} ${scriptChange.name} -> ${scriptChange.requiredValue}`,
-		);
-	}
-
-	for (const filePlan of changes.plannedFiles) {
-		lines.push(`file ${filePlan.action} ${filePlan.path} (${filePlan.purpose})`);
-	}
-
-	if (options.includeGeneratedArtifacts) {
-		for (const artifactPath of changes.generatedArtifacts) {
-			lines.push(`generated artifact ${artifactPath}`);
-		}
-	}
-
-	return lines;
-}
-
-function buildNextSteps(options: {
-	commandMode: InitCommandMode;
-	dependencyChangeCount: number;
-	hasPlannedChanges: boolean;
-	layoutKind: InitPlanLayoutKind;
-	packageManager: PackageManagerId;
-}): string[] {
-	const cliSpecifier = getWpTypiaCliSpecifier();
-	const syncTypesRun = formatRunScript(options.packageManager, "sync-types");
-	const syncRun = formatRunScript(options.packageManager, "sync");
-	const doctorRun = formatPackageExecCommand(
-		options.packageManager,
-		cliSpecifier,
-		"doctor",
-	);
-	const migrationInitRun = formatPackageExecCommand(
-		options.packageManager,
-		cliSpecifier,
-		"migrate init --current-migration-version v1",
-	);
-	const dependencyInstallCommand = formatAddDevDependenciesCommand(
-		options.packageManager,
-		buildRequiredDevDependencyMapEntries(),
-	);
-
-	if (options.layoutKind === "unsupported") {
-		return [
-			"Align the project to one of the supported retrofit layouts listed below, then rerun `wp-typia init`.",
-			dependencyInstallCommand,
-			syncTypesRun,
-			doctorRun,
-		];
-	}
-
-	if (options.commandMode === "apply") {
-		return [
-			...(options.dependencyChangeCount > 0
-				? [
-						"Install or reinstall project dependencies so the retrofit sync scripts and metadata generators are available locally.",
-						dependencyInstallCommand,
-				  ]
-				: []),
-			syncRun,
-			doctorRun,
-			`Optional migration bootstrap: ${migrationInitRun}`,
-		];
-	}
-
-	const steps = [
-		...(options.hasPlannedChanges
-			? [
-					"Re-run `wp-typia init --apply` to write the planned package.json changes and helper files automatically.",
-					...(options.dependencyChangeCount > 0 ? [dependencyInstallCommand] : []),
-			  ]
-			: []),
-		syncRun,
-		doctorRun,
-		`Optional migration bootstrap: ${migrationInitRun}`,
-	];
-
-	return steps;
-}
-
-function buildRetrofitPlanSummary(options: {
-	commandMode: InitCommandMode;
-	status: InitPlanStatus;
-}): string {
-	if (options.status === "already-initialized") {
-		return options.commandMode === "apply"
-			? "This project already exposes the minimum wp-typia retrofit surface. No files were changed."
-			: "This project already exposes the minimum wp-typia retrofit surface.";
-	}
-
-	if (options.commandMode === "apply") {
-		return "Applied the minimum wp-typia retrofit surface so package.json and helper scripts are ready for the next install and sync run.";
-	}
-
-	return "This command previews the minimum wp-typia adoption layer for the current project without rewriting it into a full scaffold.";
-}
-
 export function createRetrofitPlan(options: {
 	commandMode: InitCommandMode;
 	detectedLayout: {
@@ -405,7 +282,7 @@ export function createRetrofitPlan(options: {
 	status: InitPlanStatus;
 }): RetrofitInitPlan {
 	const includeGeneratedArtifacts = options.commandMode === "preview-only";
-	const plannedChanges = buildChangeSummary(
+	const plannedChanges = buildInitPlanChangeSummary(
 		{
 			generatedArtifacts: options.generatedArtifacts,
 			packageChanges: options.packageChanges,
@@ -423,7 +300,7 @@ export function createRetrofitPlan(options: {
 		generatedArtifacts: options.generatedArtifacts,
 		nextSteps:
 			options.nextSteps ??
-			buildNextSteps({
+			buildInitPlanNextSteps({
 				commandMode: options.commandMode,
 				dependencyChangeCount: options.packageChanges.addDevDependencies.length,
 				hasPlannedChanges: plannedChanges.length > 0,

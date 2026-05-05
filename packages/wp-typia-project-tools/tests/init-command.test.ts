@@ -5,6 +5,11 @@ import * as path from "node:path";
 import { applyInitPlan } from "../src/runtime/cli-init-apply.js";
 import { runInitCommand } from "../src/runtime/cli-init.js";
 import { getInitPlan } from "../src/runtime/cli-init-plan.js";
+import {
+	buildInitPlanChangeSummary,
+	buildInitPlanNextSteps,
+	buildRetrofitPlanSummary,
+} from "../src/runtime/cli-init-plan-presentation.js";
 import { getPackageVersions } from "../src/runtime/package-versions.js";
 import {
 	cleanupScaffoldTempRoot,
@@ -263,6 +268,81 @@ describe("wp-typia init", () => {
 				path.join(projectDir, "scripts", "sync-types-to-block-json.ts"),
 			),
 		).toBe(true);
+	});
+
+	test("plan presentation helpers keep summary, changes, and next steps stable", () => {
+		const changes = buildInitPlanChangeSummary(
+			{
+				generatedArtifacts: ["src/typia.manifest.json"],
+				packageChanges: {
+					addDevDependencies: [
+						{
+							action: "add",
+							name: "@wp-typia/block-runtime",
+							requiredValue: "1.2.3",
+						},
+					],
+					packageManagerField: {
+						action: "update",
+						currentValue: "bun@1.3.11",
+						requiredValue: "npm@11.6.1",
+					},
+					scripts: [
+						{
+							action: "add",
+							name: "sync",
+							requiredValue: "tsx scripts/sync-project.ts",
+						},
+					],
+				},
+				plannedFiles: [
+					{
+						action: "add",
+						path: "scripts/sync-project.ts",
+						purpose: "Provide one shared sync entrypoint.",
+					},
+				],
+			},
+			{
+				includeGeneratedArtifacts: true,
+			},
+		);
+		const nextSteps = buildInitPlanNextSteps({
+			commandMode: "preview-only",
+			dependencyChangeCount: 0,
+			hasPlannedChanges: false,
+			layoutKind: "single-block",
+			packageManager: "npm",
+		});
+
+		expect(changes).toEqual([
+			"devDependency add @wp-typia/block-runtime -> 1.2.3",
+			"packageManager update -> npm@11.6.1",
+			"script add sync -> tsx scripts/sync-project.ts",
+			"file add scripts/sync-project.ts (Provide one shared sync entrypoint.)",
+			"generated artifact src/typia.manifest.json",
+		]);
+		expect(nextSteps).toEqual([
+			"npm run sync",
+			`npx --yes wp-typia@${wpTypiaPackageManifest.version} doctor`,
+			`Optional migration bootstrap: npx --yes wp-typia@${wpTypiaPackageManifest.version} migrate init --current-migration-version v1`,
+		]);
+		expect(
+			buildRetrofitPlanSummary({
+				commandMode: "preview-only",
+				status: "preview",
+			}),
+		).toBe(
+			"This command previews the minimum wp-typia adoption layer for the current project without rewriting it into a full scaffold.",
+		);
+		expect(
+			buildRetrofitPlanSummary({
+				commandMode: "apply",
+				status: "already-initialized",
+			}),
+		).toBe(
+			"This project already exposes the minimum wp-typia retrofit surface. No files were changed.",
+		);
 	});
 
 	test("rolls back package.json changes when apply mode cannot finish writing helper files", async () => {
