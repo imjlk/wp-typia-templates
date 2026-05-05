@@ -84,6 +84,14 @@ test('shared add runtime keeps compatibility exports around focused modules', ()
   expect(sharedSource).not.toContain('export function formatAddHelpText');
 });
 
+test('converted async add helpers do not use sync filesystem probes', () => {
+  for (const fileName of ['cli-add-workspace.ts', 'cli-add-block-json.ts']) {
+    expect(readRuntimeSource(fileName)).not.toMatch(
+      /\bfs\.(?:readdirSync|readFileSync|existsSync)\b/u,
+    );
+  }
+});
+
 test('focused add runtime modules own their helper categories', () => {
   const addKindIdsSource = readRuntimeSource('cli-add-kind-ids.ts');
   const typesSource = readRuntimeSource('cli-add-types.ts');
@@ -105,7 +113,7 @@ test('focused add runtime modules own their helper categories', () => {
   expect(validationSource).toContain('export function assertValidEditorPluginSlot');
   expect(filesystemSource).toContain('export async function snapshotWorkspaceFiles');
   expect(filesystemSource).toContain('export async function rollbackWorkspaceMutation');
-  expect(blockJsonSource).toContain('export function readWorkspaceBlockJson');
+  expect(blockJsonSource).toContain('export async function readWorkspaceBlockJson');
   expect(blockJsonSource).toContain('export function getMutableBlockHooks');
   expect(collisionSource).toContain('function assertAddKindScaffoldDoesNotExist');
   expect(collisionSource).toContain('export function assertScaffoldDoesNotExist');
@@ -347,7 +355,7 @@ test('shared optional file reader returns null for missing paths and reads exist
   await expect(readOptionalFile(filePath)).resolves.toBe('hello\n');
 });
 
-test('focused block-json helpers resolve workspace blocks and read metadata', () => {
+test('focused block-json helpers resolve workspace blocks and read metadata', async () => {
   const projectDir = path.join(tempRoot, 'block-json-read');
   const blockJsonPath = path.join(
     projectDir,
@@ -380,13 +388,15 @@ test('focused block-json helpers resolve workspace blocks and read metadata', ()
   );
 
   const { blockJson, blockJsonPath: resolvedBlockJsonPath } =
-    readWorkspaceBlockJson(projectDir, 'counter-card');
+    await readWorkspaceBlockJson(projectDir, 'counter-card');
   expect(resolvedBlockJsonPath).toBe(blockJsonPath);
   expect(blockJson).toMatchObject({
     name: 'demo/counter-card',
     title: 'Counter Card',
   });
-  expect(() => readWorkspaceBlockJson(projectDir, 'missing-card')).toThrow(
+  await expect(
+    readWorkspaceBlockJson(projectDir, 'missing-card'),
+  ).rejects.toThrow(
     'Missing src/blocks/missing-card/block.json for workspace block "missing-card".',
   );
 });

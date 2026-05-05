@@ -1,10 +1,10 @@
-import fs from "node:fs";
 import path from "node:path";
 import { parseScaffoldBlockMetadata } from "@wp-typia/block-runtime/blocks";
 
 import type {
 	WorkspaceInventory,
 } from "./workspace-inventory.js";
+import { readOptionalUtf8File } from "./fs-async.js";
 
 /**
  * Resolve an existing workspace block inventory entry by slug.
@@ -35,15 +35,16 @@ export function resolveWorkspaceBlock(
  * @returns Parsed block metadata and the absolute `block.json` path.
  * @throws {Error} When the file is missing or cannot be parsed as scaffold metadata.
  */
-export function readWorkspaceBlockJson(
+export async function readWorkspaceBlockJson(
 	projectDir: string,
 	blockSlug: string,
-): {
+): Promise<{
 	blockJson: Record<string, unknown>;
 	blockJsonPath: string;
-} {
+}> {
 	const blockJsonPath = path.join(projectDir, "src", "blocks", blockSlug, "block.json");
-	if (!fs.existsSync(blockJsonPath)) {
+	const source = await readOptionalUtf8File(blockJsonPath);
+	if (source === null) {
 		throw new Error(
 			`Missing ${path.relative(projectDir, blockJsonPath)} for workspace block "${blockSlug}".`,
 		);
@@ -52,7 +53,7 @@ export function readWorkspaceBlockJson(
 	let blockJson: Record<string, unknown>;
 	try {
 		blockJson = parseScaffoldBlockMetadata<Record<string, unknown>>(
-			JSON.parse(fs.readFileSync(blockJsonPath, "utf8")),
+			JSON.parse(source),
 		);
 	} catch (error) {
 		throw new Error(

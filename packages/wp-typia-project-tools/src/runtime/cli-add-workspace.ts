@@ -1,8 +1,8 @@
-import fs from "node:fs";
 import { promises as fsp } from "node:fs";
 import path from "node:path";
 
 import type { HookedBlockPositionId } from "./hooked-blocks.js";
+import { pathExists } from "./fs-async.js";
 import { resolveWorkspaceProject } from "./workspace-project.js";
 import { appendWorkspaceInventoryEntries, readWorkspaceInventory } from "./workspace-inventory.js";
 import { toKebabCase, toSnakeCase, toTitleCase } from "./string-case.js";
@@ -534,8 +534,7 @@ async function writeVariationRegistry(
 	const variationsIndexPath = path.join(variationsDir, "index.ts");
 	await fsp.mkdir(variationsDir, { recursive: true });
 
-	const existingVariationSlugs = fs
-		.readdirSync(variationsDir)
+	const existingVariationSlugs = (await fsp.readdir(variationsDir))
 		.filter((entry) => entry.endsWith(".ts") && entry !== "index.ts")
 		.map((entry) => entry.replace(/\.ts$/u, ""));
 	const nextVariationSlugs = Array.from(new Set([...existingVariationSlugs, variationSlug])).sort();
@@ -555,8 +554,7 @@ async function writeBlockStyleRegistry(
 	const stylesIndexPath = path.join(stylesDir, "index.ts");
 	await fsp.mkdir(stylesDir, { recursive: true });
 
-	const existingStyleSlugs = fs
-		.readdirSync(stylesDir)
+	const existingStyleSlugs = (await fsp.readdir(stylesDir))
 		.filter((entry) => entry.endsWith(".ts") && entry !== "index.ts")
 		.map((entry) => entry.replace(/\.ts$/u, ""));
 	const nextStyleSlugs = Array.from(new Set([...existingStyleSlugs, styleSlug])).sort();
@@ -572,8 +570,7 @@ async function writeBlockTransformRegistry(
 	const transformsIndexPath = path.join(transformsDir, "index.ts");
 	await fsp.mkdir(transformsDir, { recursive: true });
 
-	const existingTransformSlugs = fs
-		.readdirSync(transformsDir)
+	const existingTransformSlugs = (await fsp.readdir(transformsDir))
 		.filter((entry) => entry.endsWith(".ts") && entry !== "index.ts")
 		.map((entry) => entry.replace(/\.ts$/u, ""));
 	const nextTransformSlugs = Array.from(
@@ -707,7 +704,7 @@ export async function runAddVariationCommand({
 	const variationsDir = path.join(workspace.projectDir, "src", "blocks", blockSlug, "variations");
 	const variationFilePath = path.join(variationsDir, `${variationSlug}.ts`);
 	const variationsIndexPath = path.join(variationsDir, "index.ts");
-	const shouldRemoveVariationsDirOnRollback = !fs.existsSync(variationsDir);
+	const shouldRemoveVariationsDirOnRollback = !(await pathExists(variationsDir));
 	const mutationSnapshot: WorkspaceMutationSnapshot = {
 		fileSources: await snapshotWorkspaceFiles([
 			blockConfigPath,
@@ -787,7 +784,7 @@ export async function runAddBlockStyleCommand({
 	const stylesDir = path.join(workspace.projectDir, "src", "blocks", blockSlug, "styles");
 	const styleFilePath = path.join(stylesDir, `${styleSlug}.ts`);
 	const stylesIndexPath = path.join(stylesDir, "index.ts");
-	const shouldRemoveStylesDirOnRollback = !fs.existsSync(stylesDir);
+	const shouldRemoveStylesDirOnRollback = !(await pathExists(stylesDir));
 	const mutationSnapshot: WorkspaceMutationSnapshot = {
 		fileSources: await snapshotWorkspaceFiles([
 			blockConfigPath,
@@ -900,7 +897,7 @@ export async function runAddBlockTransformCommand({
 	);
 	const transformFilePath = path.join(transformsDir, `${transformSlug}.ts`);
 	const transformsIndexPath = path.join(transformsDir, "index.ts");
-	const shouldRemoveTransformsDirOnRollback = !fs.existsSync(transformsDir);
+	const shouldRemoveTransformsDirOnRollback = !(await pathExists(transformsDir));
 	const mutationSnapshot: WorkspaceMutationSnapshot = {
 		fileSources: await snapshotWorkspaceFiles([
 			blockConfigPath,
@@ -990,7 +987,10 @@ export async function runAddHookedBlockCommand({
 			"`wp-typia add hooked-block` cannot hook a block relative to its own block name.",
 		);
 	}
-	const { blockJson, blockJsonPath } = readWorkspaceBlockJson(workspace.projectDir, blockSlug);
+	const { blockJson, blockJsonPath } = await readWorkspaceBlockJson(
+		workspace.projectDir,
+		blockSlug,
+	);
 	const blockJsonRelativePath = path.relative(workspace.projectDir, blockJsonPath);
 	const blockHooks = getMutableBlockHooks(blockJson, blockJsonRelativePath);
 
