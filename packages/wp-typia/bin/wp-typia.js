@@ -35,6 +35,24 @@ const buildScriptEntrypoint = path.join(
   'build-bunli-runtime.ts',
 );
 const sourceCliEntrypoint = path.join(packageRoot, 'src', 'cli.ts');
+const sourceCheckoutRoot = path.resolve(packageRoot, '..', '..');
+const sourceProjectToolsPackageRoot = path.resolve(
+  packageRoot,
+  '..',
+  'wp-typia-project-tools',
+);
+const sourceProjectToolsPackageManifest = path.join(
+  sourceProjectToolsPackageRoot,
+  'package.json',
+);
+const sourceProjectToolsRuntimeProbe = path.join(
+  sourceProjectToolsPackageRoot,
+  'dist',
+  'runtime',
+  'cli-diagnostics.js',
+);
+const sourceProjectToolsBuildCommand =
+  'bun run --filter @wp-typia/project-tools build';
 const standaloneGuidance =
   'Prefer not to install Bun? Use the standalone wp-typia binary from the GitHub release assets.';
 
@@ -67,7 +85,72 @@ function canAutobuildSourceCheckout() {
   );
 }
 
+function hasMissingSourceProjectToolsRuntime() {
+  return (
+    canAutobuildSourceCheckout() &&
+    fs.existsSync(path.join(sourceCheckoutRoot, 'package.json')) &&
+    fs.existsSync(sourceProjectToolsPackageManifest) &&
+    !fs.existsSync(sourceProjectToolsRuntimeProbe)
+  );
+}
+
+function ensureSourceProjectToolsRuntime() {
+  if (!hasMissingSourceProjectToolsRuntime()) {
+    return true;
+  }
+
+  const relativeProbe = path.relative(
+    sourceCheckoutRoot,
+    sourceProjectToolsRuntimeProbe,
+  );
+
+  console.error(
+    `wp-typia source checkout is missing @wp-typia/project-tools build artifacts (${relativeProbe}).`,
+  );
+
+  if (!isWorkingBunBinary()) {
+    console.error(
+      `Error: wp-typia cannot rebuild @wp-typia/project-tools because no working Bun binary was found. Run \`${sourceProjectToolsBuildCommand}\` from the repository root after installing Bun, then rerun wp-typia.`,
+    );
+    process.exit(1);
+  }
+
+  console.error(
+    `Running \`${sourceProjectToolsBuildCommand}\` from ${sourceCheckoutRoot} before rebuilding the CLI runtime...`,
+  );
+
+  const buildResult = spawnSync(
+    bunBinary,
+    ['run', '--filter', '@wp-typia/project-tools', 'build'],
+    {
+      cwd: sourceCheckoutRoot,
+      env: process.env,
+      stdio: 'inherit',
+    },
+  );
+
+  if (buildResult.status !== 0) {
+    console.error(
+      `Error: @wp-typia/project-tools build failed. Run \`${sourceProjectToolsBuildCommand}\` from the repository root, then rerun wp-typia.`,
+    );
+    process.exit(buildResult.status ?? 1);
+  }
+
+  if (fs.existsSync(sourceProjectToolsRuntimeProbe)) {
+    return true;
+  }
+
+  console.error(
+    `Error: @wp-typia/project-tools build completed but ${relativeProbe} is still missing. Run \`${sourceProjectToolsBuildCommand}\` from the repository root, then rerun wp-typia.`,
+  );
+  return false;
+}
+
 function ensureBuiltRuntime() {
+  if (!ensureSourceProjectToolsRuntime()) {
+    return false;
+  }
+
   if (fs.existsSync(cliEntrypoint) && fs.existsSync(nodeCliEntrypoint)) {
     return true;
   }

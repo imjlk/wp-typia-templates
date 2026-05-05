@@ -829,6 +829,140 @@ describe('wp-typia package', () => {
     expect(result.stdout.trim()).toBe(`wp-typia ${packageManifest.version}`);
   });
 
+  test('guides source checkout bootstrap when project-tools dist is missing', () => {
+    const tempRoot = fs.mkdtempSync(
+      path.join(os.tmpdir(), 'wp-typia-source-bootstrap-'),
+    );
+    const sourcePackageRoot = path.join(tempRoot, 'packages', 'wp-typia');
+    const sourceProjectToolsRoot = path.join(
+      tempRoot,
+      'packages',
+      'wp-typia-project-tools',
+    );
+    const fakeBunPath = path.join(tempRoot, 'fake-bun.mjs');
+    const fakeBunLogPath = path.join(tempRoot, 'fake-bun.log');
+
+    try {
+      fs.writeFileSync(
+        path.join(tempRoot, 'package.json'),
+        `${JSON.stringify({
+          private: true,
+          workspaces: ['packages/*'],
+        })}\n`,
+        'utf8',
+      );
+      fs.mkdirSync(path.join(sourcePackageRoot, 'scripts'), {
+        recursive: true,
+      });
+      fs.mkdirSync(path.join(sourcePackageRoot, 'src'), { recursive: true });
+      fs.mkdirSync(sourceProjectToolsRoot, { recursive: true });
+      fs.cpSync(
+        path.join(packageRoot, 'bin'),
+        path.join(sourcePackageRoot, 'bin'),
+        { recursive: true },
+      );
+      fs.writeFileSync(
+        path.join(sourcePackageRoot, 'package.json'),
+        `${JSON.stringify(
+          {
+            name: 'wp-typia',
+            scripts: {
+              build: 'bun run generate && bun scripts/build-bunli-runtime.ts',
+            },
+            type: 'module',
+          },
+          null,
+          2,
+        )}\n`,
+        'utf8',
+      );
+      fs.writeFileSync(
+        path.join(sourcePackageRoot, 'scripts', 'build-bunli-runtime.ts'),
+        'export {};\n',
+        'utf8',
+      );
+      fs.writeFileSync(
+        path.join(sourcePackageRoot, 'src', 'cli.ts'),
+        'export {};\n',
+        'utf8',
+      );
+      fs.writeFileSync(
+        path.join(sourceProjectToolsRoot, 'package.json'),
+        `${JSON.stringify({
+          name: '@wp-typia/project-tools',
+          type: 'module',
+        })}\n`,
+        'utf8',
+      );
+      fs.writeFileSync(
+        fakeBunPath,
+        `#!/usr/bin/env node
+import fs from 'node:fs';
+
+const args = process.argv.slice(2);
+if (args.length === 1 && args[0] === '--version') {
+  console.log('1.3.11');
+  process.exit(0);
+}
+
+fs.appendFileSync(${JSON.stringify(fakeBunLogPath)}, \`\${JSON.stringify(args)}\\n\`);
+if (
+  args[0] === 'run' &&
+  args[1] === '--filter' &&
+  args[2] === '@wp-typia/project-tools' &&
+  args[3] === 'build'
+) {
+  console.error('simulated project-tools build failure');
+  process.exit(17);
+}
+
+process.exit(0);
+`,
+        'utf8',
+      );
+      fs.chmodSync(fakeBunPath, 0o755);
+
+      const result = runCapturedCommand(
+        process.execPath,
+        [path.join(sourcePackageRoot, 'bin', 'wp-typia.js'), '--version'],
+        {
+          env: {
+            ...withoutAIAgentEnv(),
+            BUN_BIN: fakeBunPath,
+            PATH: [
+              path.dirname(process.execPath),
+              process.env.PATH ?? '',
+            ].join(path.delimiter),
+          },
+        },
+      );
+      const fakeBunCalls = fs
+        .readFileSync(fakeBunLogPath, 'utf8')
+        .trim()
+        .split('\n')
+        .filter(Boolean)
+        .map((line) => JSON.parse(line) as string[]);
+
+      expect(result.status).toBe(17);
+      expect(result.stdout).toBe('');
+      expect(result.stderr).toContain(
+        'source checkout is missing @wp-typia/project-tools build artifacts',
+      );
+      expect(result.stderr.replace(/\\/g, '/')).toContain(
+        'packages/wp-typia-project-tools/dist/runtime/cli-diagnostics.js',
+      );
+      expect(result.stderr).toContain(
+        'bun run --filter @wp-typia/project-tools build',
+      );
+      expect(result.stderr).toContain('repository root');
+      expect(fakeBunCalls).toEqual([
+        ['run', '--filter', '@wp-typia/project-tools', 'build'],
+      ]);
+    } finally {
+      fs.rmSync(tempRoot, { force: true, recursive: true });
+    }
+  });
+
   test('renders general and command help without requiring a local Bun binary', () => {
     const noCommandResult = runCapturedCommand(process.execPath, [entryPath], {
       env: withoutLocalBunEnv(),
