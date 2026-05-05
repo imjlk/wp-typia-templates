@@ -83,6 +83,37 @@ function keep_me() {
 	expect(range?.source).not.toContain("function keep_me()");
 });
 
+test("PHP scanner keeps double-quoted interpolation blocks in string mode", () => {
+	const source = `<?php
+function wp_typia_demo() {
+\t$name = 'Reader';
+\t$message = "Hello {$name}";
+\t$value = "Value: {$object->property}";
+\t$quoted = "Quoted: {$object->labels["wp_enqueue_script_module("]}";
+\t$brace = "Brace: {$object->labels["}"]}";
+\treturn array( $message, $value, $quoted, $brace );
+}
+
+function keep_me() {
+\twp_enqueue_script_module( 'real-call', 'url', array(), null );
+}
+`;
+
+	const range = findPhpFunctionRange(source, "wp_typia_demo");
+
+	expect(range).not.toBeNull();
+	expect(range?.source).toContain('$message = "Hello {$name}";');
+	expect(range?.source).toContain('$value = "Value: {$object->property}";');
+	expect(range?.source).toContain(
+		'$quoted = "Quoted: {$object->labels["wp_enqueue_script_module("]}";',
+	);
+	expect(range?.source).toContain('$brace = "Brace: {$object->labels["}"]}";');
+	expect(range?.source).not.toContain("function keep_me()");
+	expect(hasPhpFunctionCall(range?.source ?? "", "wp_enqueue_script_module")).toBe(
+		false,
+	);
+});
+
 test("findPhpFunctionRange ignores braces inside heredoc and nowdoc content", () => {
 	const source = `<?php
 function wp_typia_demo() {

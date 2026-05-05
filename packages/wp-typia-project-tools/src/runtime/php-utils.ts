@@ -16,6 +16,7 @@ type PhpFunctionScanMode =
 	| "block-comment"
 	| "code"
 	| "double-quoted"
+	| "double-quoted-interpolation"
 	| "heredoc"
 	| "line-comment"
 	| "single-quoted";
@@ -27,6 +28,8 @@ type PhpHeredocStart = {
 
 type PhpScannerState = {
 	heredocDelimiter: string;
+	interpolationDepth: number;
+	interpolationQuote: string;
 	mode: PhpFunctionScanMode;
 };
 
@@ -229,6 +232,8 @@ function matchesPhpFunctionCallAt(
 function createPhpScannerState(): PhpScannerState {
 	return {
 		heredocDelimiter: "",
+		interpolationDepth: 0,
+		interpolationQuote: "",
 		mode: "code",
 	};
 }
@@ -264,9 +269,50 @@ function advancePhpScanner(
 		if (character === "\\") {
 			return { ambiguous: false, inCode: false, index: index + 2 };
 		}
+		if (
+			state.mode === "double-quoted" &&
+			character === "{" &&
+			source[index + 1] === "$"
+		) {
+			state.mode = "double-quoted-interpolation";
+			state.interpolationDepth = 1;
+			state.interpolationQuote = "";
+			return { ambiguous: false, inCode: false, index: index + 2 };
+		}
 		if (character === quote) {
 			state.mode = "code";
 		}
+		return { ambiguous: false, inCode: false, index: index + 1 };
+	}
+
+	if (state.mode === "double-quoted-interpolation") {
+		if (state.interpolationQuote) {
+			if (character === "\\") {
+				return { ambiguous: false, inCode: false, index: index + 2 };
+			}
+			if (character === state.interpolationQuote) {
+				state.interpolationQuote = "";
+			}
+			return { ambiguous: false, inCode: false, index: index + 1 };
+		}
+
+		if (character === "'" || character === '"') {
+			state.interpolationQuote = character;
+			return { ambiguous: false, inCode: false, index: index + 1 };
+		}
+		if (character === "{") {
+			state.interpolationDepth += 1;
+			return { ambiguous: false, inCode: false, index: index + 1 };
+		}
+		if (character === "}") {
+			state.interpolationDepth -= 1;
+			if (state.interpolationDepth <= 0) {
+				state.interpolationDepth = 0;
+				state.mode = "double-quoted";
+			}
+			return { ambiguous: false, inCode: false, index: index + 1 };
+		}
+
 		return { ambiguous: false, inCode: false, index: index + 1 };
 	}
 
