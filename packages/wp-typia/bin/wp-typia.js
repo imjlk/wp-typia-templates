@@ -107,6 +107,14 @@ function ensureSourceProjectToolsRuntime() {
   console.error(
     `wp-typia source checkout is missing @wp-typia/project-tools build artifacts (${relativeProbe}).`,
   );
+
+  if (!isWorkingBunBinary()) {
+    console.error(
+      `Error: wp-typia cannot rebuild @wp-typia/project-tools because no working Bun binary was found. Run \`${sourceProjectToolsBuildCommand}\` from the repository root after installing Bun, then rerun wp-typia.`,
+    );
+    process.exit(1);
+  }
+
   console.error(
     `Running \`${sourceProjectToolsBuildCommand}\` from ${sourceCheckoutRoot} before rebuilding the CLI runtime...`,
   );
@@ -139,15 +147,15 @@ function ensureSourceProjectToolsRuntime() {
 }
 
 function ensureBuiltRuntime() {
+  if (!ensureSourceProjectToolsRuntime()) {
+    return false;
+  }
+
   if (fs.existsSync(cliEntrypoint) && fs.existsSync(nodeCliEntrypoint)) {
     return true;
   }
 
   if (!canAutobuildSourceCheckout() || !isWorkingBunBinary()) {
-    return false;
-  }
-
-  if (!ensureSourceProjectToolsRuntime()) {
     return false;
   }
 
