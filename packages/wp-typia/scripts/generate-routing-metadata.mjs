@@ -36,6 +36,8 @@ const projectToolsAddKindIdsModulePath =
     'cli-add-kind-ids.ts',
   );
 const checkOnly = process.argv.includes('--check');
+const routingMetadataTempDirPrefix = 'routing-metadata-';
+const routingMetadataTempParentDir = path.join(packageRoot, '.cache');
 
 async function readOptionalUtf8(filePath) {
   try {
@@ -52,6 +54,43 @@ async function readOptionalUtf8(filePath) {
 
     throw error;
   }
+}
+
+async function pruneStaleRoutingMetadataTempDirs() {
+  let entries;
+  try {
+    entries = await fs.readdir(routingMetadataTempParentDir, {
+      withFileTypes: true,
+    });
+  } catch (error) {
+    if (
+      typeof error === 'object' &&
+      error !== null &&
+      'code' in error &&
+      error.code === 'ENOENT'
+    ) {
+      return;
+    }
+
+    throw error;
+  }
+
+  await Promise.all(
+    entries
+      .filter(
+        (entry) =>
+          entry.isDirectory() &&
+          entry.name.startsWith(routingMetadataTempDirPrefix),
+      )
+      .map((entry) =>
+        fs.rm(path.join(routingMetadataTempParentDir, entry.name), {
+          force: true,
+          recursive: true,
+        }).catch(() => {
+          // Stale temp cleanup is best-effort and should not block generation.
+        }),
+      ),
+  );
 }
 
 function assertStringArray(value, label) {
@@ -116,10 +155,9 @@ async function importTranspiledTypeScriptModule(
     },
     fileName: modulePath,
   });
-  const tempParentDir = path.join(packageRoot, '.cache');
-  await fs.mkdir(tempParentDir, { recursive: true });
+  await fs.mkdir(routingMetadataTempParentDir, { recursive: true });
   const tempDir = await fs.mkdtemp(
-    path.join(tempParentDir, 'routing-metadata-'),
+    path.join(routingMetadataTempParentDir, routingMetadataTempDirPrefix),
   );
   const tempFile = path.join(
     tempDir,
@@ -252,6 +290,8 @@ function failCheck(pathname) {
   );
   process.exit(1);
 }
+
+await pruneStaleRoutingMetadataTempDirs();
 
 const [
   { COMMAND_ROUTING_METADATA },

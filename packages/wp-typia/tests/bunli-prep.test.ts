@@ -177,6 +177,44 @@ describe('wp-typia Bunli preparation', () => {
     expect(result.stderr).not.toContain('Routing metadata is out of date');
   });
 
+  test('prunes stale routing metadata temp directories without touching other cache entries', () => {
+    const cacheDir = path.join(packageRoot, '.cache');
+    const staleRoutingTempDir = path.join(
+      cacheDir,
+      'routing-metadata-stale-test',
+    );
+    const unrelatedCacheDir = path.join(cacheDir, 'not-routing-metadata');
+
+    fs.mkdirSync(path.join(staleRoutingTempDir, 'nested'), {
+      recursive: true,
+    });
+    fs.writeFileSync(
+      path.join(staleRoutingTempDir, 'nested', 'leftover.js'),
+      '',
+      'utf8',
+    );
+    fs.mkdirSync(unrelatedCacheDir, { recursive: true });
+
+    try {
+      const result = spawnSync(
+        'node',
+        ['scripts/generate-routing-metadata.mjs', '--check'],
+        {
+          cwd: packageRoot,
+          encoding: 'utf8',
+        },
+      );
+
+      expect(result.status).toBe(0);
+      expect(result.stderr).not.toContain('Routing metadata is out of date');
+      expect(fs.existsSync(staleRoutingTempDir)).toBe(false);
+      expect(fs.existsSync(unrelatedCacheDir)).toBe(true);
+    } finally {
+      fs.rmSync(staleRoutingTempDir, { force: true, recursive: true });
+      fs.rmSync(unrelatedCacheDir, { force: true, recursive: true });
+    }
+  });
+
   test('validates routing metadata from a packaged copy without sibling source files', () => {
     const tempDir = fs.mkdtempSync(
       path.join(os.tmpdir(), 'wp-typia-packaged-routing-'),
