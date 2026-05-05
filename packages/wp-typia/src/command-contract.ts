@@ -1,5 +1,9 @@
 import path from 'node:path';
 import {
+  CLI_DIAGNOSTIC_CODES,
+  createCliDiagnosticCodeError,
+} from '@wp-typia/project-tools/cli-diagnostics';
+import {
   collectPositionalIndexes,
   findFirstPositionalIndex,
 } from '../bin/argv-walker.js';
@@ -232,13 +236,15 @@ function assertPositionalAliasProjectDir(projectDir: string): void {
     path.normalize(projectDir).replace(/[\\/]+$/u, '') ||
     path.normalize(projectDir);
   if (normalizedProjectDir === '.' || normalizedProjectDir === '..') {
-    throw new Error(
+    throw createCliDiagnosticCodeError(
+      CLI_DIAGNOSTIC_CODES.INVALID_ARGUMENT,
       `The positional alias does not scaffold into \`${projectDir}\`. Use \`${WP_TYPIA_CANONICAL_CREATE_USAGE}\` with an explicit child directory instead.`,
     );
   }
 
   if (looksLikeStructuredProjectInput(projectDir)) {
-    throw new Error(
+    throw createCliDiagnosticCodeError(
+      CLI_DIAGNOSTIC_CODES.INVALID_ARGUMENT,
       `The positional alias only accepts unambiguous local project directories. Use \`${WP_TYPIA_CANONICAL_CREATE_USAGE}\` for \`${projectDir}\`.`,
     );
   }
@@ -260,7 +266,8 @@ export function normalizeWpTypiaArgv(argv: string[]): string[] {
   }
 
   if (firstPositional === 'migrations') {
-    throw new Error(
+    throw createCliDiagnosticCodeError(
+      CLI_DIAGNOSTIC_CODES.INVALID_ARGUMENT,
       '`wp-typia migrations` was removed in favor of `wp-typia migrate`. Use `wp-typia migrate <subcommand>` instead.',
     );
   }
@@ -279,7 +286,8 @@ export function normalizeWpTypiaArgv(argv: string[]): string[] {
           typeof value === 'string' && value.length > 0,
       );
 
-    throw new Error(
+    throw createCliDiagnosticCodeError(
+      CLI_DIAGNOSTIC_CODES.INVALID_ARGUMENT,
       `The positional alias only accepts a single project directory. Use \`${WP_TYPIA_CANONICAL_CREATE_USAGE}\` for scaffold invocations with additional positional arguments, or check the command spelling if you meant another top-level command. Extra positional arguments: ${extraPositionals.map((value) => `\`${value}\``).join(', ')}.`,
     );
   }

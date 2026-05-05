@@ -2357,7 +2357,7 @@ process.exit(0);
     expect(parsed.error?.code).toBe('missing-argument');
   });
 
-  test('emits a machine-readable invalid-command error code for positional-alias typos after value options in Bun runtime JSON mode', () => {
+  test('emits a machine-readable invalid-argument error code for positional-alias typos after value options in Bun runtime JSON mode', () => {
     const result = runCapturedCommand(
       'bun',
       [
@@ -2383,7 +2383,7 @@ process.exit(0);
     expect(parsed.ok).toBe(false);
     expect(parsed.error?.kind).toBe('command-execution');
     expect(parsed.error?.command).toBe('temlates');
-    expect(parsed.error?.code).toBe('invalid-command');
+    expect(parsed.error?.code).toBe('invalid-argument');
   });
 
   test('loads MCP schema sources from an explicit --config override', () => {
