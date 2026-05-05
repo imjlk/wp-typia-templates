@@ -1,4 +1,8 @@
 import {
+	CLI_DIAGNOSTIC_CODES,
+	createCliDiagnosticCodeError,
+} from "./cli-diagnostics.js";
+import {
 	toKebabCase,
 	toSnakeCase,
 } from "./string-case.js";
@@ -48,7 +52,10 @@ export function assertValidIdentifier(
 ): string {
 	const result = validate(value);
 	if (result !== true) {
-		throw new Error(typeof result === "string" ? `${label}: ${result}` : `${label} is invalid`);
+		throw createCliDiagnosticCodeError(
+			CLI_DIAGNOSTIC_CODES.INVALID_ARGUMENT,
+			typeof result === "string" ? `${label}: ${result}` : `${label} is invalid`,
+		);
 	}
 
 	return value;
@@ -81,10 +88,14 @@ export function resolveNonEmptyNormalizedBlockSlug(options: {
 	}
 
 	if (options.input.trim().length === 0) {
-		throw new Error(`${options.label} is required. Use \`${options.usage}\`.`);
+		throw createCliDiagnosticCodeError(
+			CLI_DIAGNOSTIC_CODES.MISSING_ARGUMENT,
+			`${options.label} is required. Use \`${options.usage}\`.`,
+		);
 	}
 
-	throw new Error(
+	throw createCliDiagnosticCodeError(
+		CLI_DIAGNOSTIC_CODES.INVALID_ARGUMENT,
 		`${options.label} "${options.input.trim()}" normalizes to an empty slug. Use letters or numbers so wp-typia can generate a block slug.`,
 	);
 }

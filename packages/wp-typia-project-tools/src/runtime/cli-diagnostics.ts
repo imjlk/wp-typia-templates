@@ -324,6 +324,12 @@ export function createCliDiagnosticCodeError<TCode extends CliDiagnosticCode>(
 	return error;
 }
 
+/**
+ * Compatibility-only fallback for legacy or third-party errors that have not
+ * yet been tagged by their throw site. New user-facing failures should pass an
+ * explicit code through `createCliDiagnosticCodeError()` or
+ * `createCliCommandError({ code })` instead of relying on message matching.
+ */
 function inferCliDiagnosticCode(options: {
 	command: string;
 	detailLines: string[];

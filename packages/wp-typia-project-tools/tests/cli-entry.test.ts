@@ -6,6 +6,7 @@ import { cleanupScaffoldTempRoot, createBlockExternalFixturePath, createBlockSub
 import { CLI_DIAGNOSTIC_CODE_METADATA, CLI_DIAGNOSTIC_CODES, createCliCommandError, createCliDiagnosticCodeError, getCliDiagnosticCodeMetadata, serializeCliDiagnosticError } from "../src/runtime/cli-diagnostics.js";
 import { formatHelpText, getDoctorChecks, getNextSteps, getOptionalOnboarding, runScaffoldFlow } from "../src/runtime/cli-core.js";
 import { assertValidEditorPluginSlot } from "../src/runtime/cli-add-shared.js";
+import { resolveNonEmptyNormalizedBlockSlug, resolveValidatedPhpPrefix } from "../src/runtime/scaffold-identifiers.js";
 import { collectScaffoldAnswers } from "../src/runtime/scaffold.js";
 import { getQuickStartWorkflowNote } from "../src/runtime/scaffold-onboarding.js";
 
@@ -129,6 +130,17 @@ describe("@wp-typia/project-tools scaffold CLI flow", () => {
     return parseStructuredCliFailure(output);
   }
 
+  function catchDiagnosticCodeError(callback: () => unknown): Error & { code?: string } {
+    try {
+      callback();
+    } catch (error) {
+      expect(error).toBeInstanceOf(Error);
+      return error as Error & { code?: string };
+    }
+
+    throw new Error("Expected callback to throw.");
+  }
+
 test("CLI diagnostics do not classify unknown template variants as missing templates", () => {
   const diagnostic = serializeCliDiagnosticError(
     createCliCommandError({
@@ -153,6 +165,40 @@ test("CLI diagnostics preserve explicit throw-site codes without message inferen
 
   expect(diagnostic.code).toBe("missing-argument");
   expect(diagnostic.message).toContain("Opaque scaffold preflight failure.");
+});
+
+test("scaffold identifier validation failures carry explicit diagnostic codes", () => {
+  const invalidPrefix = catchDiagnosticCodeError(() =>
+    resolveValidatedPhpPrefix("123 invalid")
+  );
+  expect(invalidPrefix.code).toBe(CLI_DIAGNOSTIC_CODES.INVALID_ARGUMENT);
+  expect(invalidPrefix.message).toContain(
+    "PHP prefix: Use letters, numbers, and underscores only"
+  );
+
+  const missingSlug = catchDiagnosticCodeError(() =>
+    resolveNonEmptyNormalizedBlockSlug({
+      input: "   ",
+      label: "Block name",
+      usage: "wp-typia add block <name>",
+    })
+  );
+  expect(missingSlug.code).toBe(CLI_DIAGNOSTIC_CODES.MISSING_ARGUMENT);
+  expect(missingSlug.message).toBe(
+    "Block name is required. Use `wp-typia add block <name>`."
+  );
+
+  const emptyNormalizedSlug = catchDiagnosticCodeError(() =>
+    resolveNonEmptyNormalizedBlockSlug({
+      input: "!!!",
+      label: "Block name",
+      usage: "wp-typia add block <name>",
+    })
+  );
+  expect(emptyNormalizedSlug.code).toBe(CLI_DIAGNOSTIC_CODES.INVALID_ARGUMENT);
+  expect(emptyNormalizedSlug.message).toContain(
+    'Block name "!!!" normalizes to an empty slug.'
+  );
 });
 
 test("CLI diagnostic metadata covers every stable code", () => {
