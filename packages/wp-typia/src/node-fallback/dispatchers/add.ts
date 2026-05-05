@@ -17,9 +17,11 @@ export async function dispatchNodeFallbackAdd({
   printLine,
 }: NodeFallbackDispatchContext): Promise<void> {
   if (!positionals[1]) {
-    const { formatAddHelpText } =
-      await import('@wp-typia/project-tools/cli-add');
-    printLine(formatAddHelpText());
+    if (mergedFlags.format !== 'json') {
+      const { formatAddHelpText } =
+        await import('@wp-typia/project-tools/cli-add');
+      printLine(formatAddHelpText());
+    }
     throw createCliCommandError({
       code: CLI_DIAGNOSTIC_CODES.MISSING_ARGUMENT,
       command: 'add',

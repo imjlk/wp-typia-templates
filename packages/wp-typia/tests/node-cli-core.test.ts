@@ -181,9 +181,11 @@ describe('Node fallback CLI core routing', () => {
     );
     expect(nodeCliSource).toContain("from './node-fallback/help'");
     expect(nodeCliSource).not.toContain('formatAddHelpText');
-    expect(addDispatcherSource).toContain('Add-specific normalization stays here');
+    expect(addDispatcherSource).toContain(
+      'export async function dispatchNodeFallbackAdd',
+    );
     expect(createDispatcherSource).toContain(
-      'Create-specific normalization stays here',
+      'export async function dispatchNodeFallbackCreate',
     );
     expect(helpSource).toContain('export function printBlock');
   });
@@ -272,6 +274,24 @@ describe('Node fallback CLI core routing', () => {
       code: 'missing-argument',
       command: 'add',
     });
+  });
+
+  test('keeps missing add kinds machine-readable in structured mode', async () => {
+    const result = await captureNodeCli(['add', '--format', 'json'], {
+      entrypoint: true,
+    });
+    const parsed = JSON.parse(result.stderr) as {
+      error?: { code?: string; command?: string; kind?: string };
+      ok?: boolean;
+    };
+
+    expect(result.error).toBeUndefined();
+    expect(result.exitCode).toBe(1);
+    expect(result.stdout).toBe('');
+    expect(parsed.ok).toBe(false);
+    expect(parsed.error?.kind).toBe('command-execution');
+    expect(parsed.error?.command).toBe('add');
+    expect(parsed.error?.code).toBe('missing-argument');
   });
 
   test('dispatches init structured previews from the Node fallback runtime', async () => {
