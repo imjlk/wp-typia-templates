@@ -1,3 +1,5 @@
+// Keep this list fixed so generated slugs and file paths do not drift when
+// project config changes. Domain-specific acronyms should use separators.
 const COMMON_ACRONYM_PREFIXES = [
   'HTML',
   'HTTP',

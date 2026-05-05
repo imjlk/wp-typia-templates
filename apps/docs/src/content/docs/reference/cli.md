@@ -148,6 +148,27 @@ Common flags:
 The positional alias `wp-typia <project-dir>` remains available only for
 unambiguous create invocations with a single local project directory.
 
+### Generated slug casing and acronyms
+
+Generated block slugs, text domains, PHP prefixes, file names, and related
+identifiers are derived from the normalized kebab-case project or block name.
+The normalizer keeps a fixed built-in list of common WordPress/web acronyms
+together, including `API`, `CTA`, `HTML`, `HTTP`, `ID`, `JSON`, `REST`, `URL`,
+`UUID`, `WP`, and `XML`.
+
+That acronym list is intentionally not project-configurable. Domain-specific
+names such as `CRMLeadForm`, `SEOSettingsPanel`, or `SSOLoginBlock` still
+normalize as `crmlead-form`, `seosettings-panel`, and `ssologin-block` because
+`CRM`, `SEO`, and `SSO` are not part of the stable built-in set. Use explicit
+word separators instead, such as `CRM Lead Form`, when the generated slug must
+be `crm-lead-form`.
+
+Keeping the list fixed makes repeated scaffold/add commands reproducible across
+machines and config sources. A project-defined acronym dictionary could silently
+change generated paths, block names, package handles, REST routes, and migration
+fixture directories when config changes, so compatibility-sensitive projects
+should treat slug spelling as explicit input rather than ambient configuration.
+
 ### External template cache
 
 Remote template resolution keeps the existing timeout, size, and symlink guards.
