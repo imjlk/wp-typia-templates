@@ -25,6 +25,17 @@ type PhpHeredocStart = {
 	delimiter: string;
 };
 
+type PhpScannerState = {
+	heredocDelimiter: string;
+	mode: PhpFunctionScanMode;
+};
+
+type PhpScannerAdvanceResult = {
+	ambiguous: boolean;
+	inCode: boolean;
+	index: number;
+};
+
 export function escapeRegex(value: string): string {
 	return value.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&");
 }
@@ -215,6 +226,101 @@ function matchesPhpFunctionCallAt(
 	return callStart !== null && source[callStart] === "(";
 }
 
+function createPhpScannerState(): PhpScannerState {
+	return {
+		heredocDelimiter: "",
+		mode: "code",
+	};
+}
+
+function advancePhpScanner(
+	source: string,
+	index: number,
+	state: PhpScannerState,
+): PhpScannerAdvanceResult {
+	const character = source[index];
+
+	if (state.mode === "heredoc") {
+		const closingEnd = findPhpHeredocClosingEnd(
+			source,
+			index,
+			state.heredocDelimiter,
+		);
+		if (closingEnd !== null) {
+			state.mode = "code";
+			state.heredocDelimiter = "";
+			return { ambiguous: false, inCode: false, index: closingEnd };
+		}
+
+		const nextLineStart = findPhpLineBoundary(source, index).nextStart;
+		if (nextLineStart <= index) {
+			return { ambiguous: true, inCode: false, index };
+		}
+		return { ambiguous: false, inCode: false, index: nextLineStart };
+	}
+
+	if (state.mode === "single-quoted" || state.mode === "double-quoted") {
+		const quote = state.mode === "single-quoted" ? "'" : '"';
+		if (character === "\\") {
+			return { ambiguous: false, inCode: false, index: index + 2 };
+		}
+		if (character === quote) {
+			state.mode = "code";
+		}
+		return { ambiguous: false, inCode: false, index: index + 1 };
+	}
+
+	if (state.mode === "line-comment") {
+		if (character === "\r" || character === "\n") {
+			state.mode = "code";
+		}
+		return { ambiguous: false, inCode: false, index: index + 1 };
+	}
+
+	if (state.mode === "block-comment") {
+		if (character === "*" && source[index + 1] === "/") {
+			state.mode = "code";
+			return { ambiguous: false, inCode: false, index: index + 2 };
+		}
+		return { ambiguous: false, inCode: false, index: index + 1 };
+	}
+
+	if (character === "'") {
+		state.mode = "single-quoted";
+		return { ambiguous: false, inCode: false, index: index + 1 };
+	}
+	if (character === '"') {
+		state.mode = "double-quoted";
+		return { ambiguous: false, inCode: false, index: index + 1 };
+	}
+	if (character === "/" && source[index + 1] === "/") {
+		state.mode = "line-comment";
+		return { ambiguous: false, inCode: false, index: index + 2 };
+	}
+	if (character === "#" && source[index + 1] !== "[") {
+		state.mode = "line-comment";
+		return { ambiguous: false, inCode: false, index: index + 1 };
+	}
+	if (character === "/" && source[index + 1] === "*") {
+		state.mode = "block-comment";
+		return { ambiguous: false, inCode: false, index: index + 2 };
+	}
+	if (character === "<") {
+		const heredocStart = parsePhpHeredocStart(source, index);
+		if (heredocStart) {
+			state.mode = "heredoc";
+			state.heredocDelimiter = heredocStart.delimiter;
+			return {
+				ambiguous: false,
+				inCode: false,
+				index: heredocStart.contentStart,
+			};
+		}
+	}
+
+	return { ambiguous: false, inCode: true, index };
+}
+
 /**
  * Detect a PHP function call outside strings, comments, heredoc, and nowdoc blocks.
  *
@@ -223,98 +329,18 @@ function matchesPhpFunctionCallAt(
  * @returns Whether `source` contains a code-mode call to `functionName`.
  */
 export function hasPhpFunctionCall(source: string, functionName: string): boolean {
-	let mode: PhpFunctionScanMode = "code";
-	let heredocDelimiter = "";
+	const scanner = createPhpScannerState();
 	let index = 0;
 	while (index < source.length) {
-		const character = source[index];
-
-		if (mode === "heredoc") {
-			const closingEnd = findPhpHeredocClosingEnd(
-				source,
-				index,
-				heredocDelimiter,
-			);
-			if (closingEnd !== null) {
-				mode = "code";
-				heredocDelimiter = "";
-				index = closingEnd;
-				continue;
-			}
-
-			const nextLineStart = findPhpLineBoundary(source, index).nextStart;
-			if (nextLineStart <= index) {
-				return false;
-			}
-			index = nextLineStart;
+		const scan = advancePhpScanner(source, index, scanner);
+		if (scan.ambiguous) {
+			return false;
+		}
+		if (!scan.inCode) {
+			index = scan.index;
 			continue;
 		}
 
-		if (mode === "single-quoted" || mode === "double-quoted") {
-			const quote = mode === "single-quoted" ? "'" : '"';
-			if (character === "\\") {
-				index += 2;
-				continue;
-			}
-			if (character === quote) {
-				mode = "code";
-			}
-			index += 1;
-			continue;
-		}
-
-		if (mode === "line-comment") {
-			if (character === "\r" || character === "\n") {
-				mode = "code";
-			}
-			index += 1;
-			continue;
-		}
-
-		if (mode === "block-comment") {
-			if (character === "*" && source[index + 1] === "/") {
-				mode = "code";
-				index += 2;
-				continue;
-			}
-			index += 1;
-			continue;
-		}
-
-		if (character === "'") {
-			mode = "single-quoted";
-			index += 1;
-			continue;
-		}
-		if (character === '"') {
-			mode = "double-quoted";
-			index += 1;
-			continue;
-		}
-		if (character === "/" && source[index + 1] === "/") {
-			mode = "line-comment";
-			index += 2;
-			continue;
-		}
-		if (character === "#" && source[index + 1] !== "[") {
-			mode = "line-comment";
-			index += 1;
-			continue;
-		}
-		if (character === "/" && source[index + 1] === "*") {
-			mode = "block-comment";
-			index += 2;
-			continue;
-		}
-		if (character === "<") {
-			const heredocStart = parsePhpHeredocStart(source, index);
-			if (heredocStart) {
-				mode = "heredoc";
-				heredocDelimiter = heredocStart.delimiter;
-				index = heredocStart.contentStart;
-				continue;
-			}
-		}
 		if (matchesPhpFunctionCallAt(source, index, functionName)) {
 			return true;
 		}
@@ -355,98 +381,19 @@ export function findPhpFunctionRange(
 	const openBraceIndex = functionStart + openBraceOffset;
 
 	let depth = 0;
-	let mode: PhpFunctionScanMode = "code";
-	let heredocDelimiter = "";
+	const scanner = createPhpScannerState();
 	let index = openBraceIndex;
 	while (index < source.length) {
+		const scan = advancePhpScanner(source, index, scanner);
+		if (scan.ambiguous) {
+			return null;
+		}
+		if (!scan.inCode) {
+			index = scan.index;
+			continue;
+		}
+
 		const character = source[index];
-
-		if (mode === "heredoc") {
-			const closingEnd = findPhpHeredocClosingEnd(
-				source,
-				index,
-				heredocDelimiter,
-			);
-			if (closingEnd !== null) {
-				mode = "code";
-				heredocDelimiter = "";
-				index = closingEnd;
-				continue;
-			}
-
-			const nextLineStart = findPhpLineBoundary(source, index).nextStart;
-			if (nextLineStart <= index) {
-				return null;
-			}
-			index = nextLineStart;
-			continue;
-		}
-
-		if (mode === "single-quoted" || mode === "double-quoted") {
-			const quote = mode === "single-quoted" ? "'" : '"';
-			if (character === "\\") {
-				index += 2;
-				continue;
-			}
-			if (character === quote) {
-				mode = "code";
-			}
-			index += 1;
-			continue;
-		}
-
-		if (mode === "line-comment") {
-			if (character === "\r" || character === "\n") {
-				mode = "code";
-			}
-			index += 1;
-			continue;
-		}
-
-		if (mode === "block-comment") {
-			if (character === "*" && source[index + 1] === "/") {
-				mode = "code";
-				index += 2;
-				continue;
-			}
-			index += 1;
-			continue;
-		}
-
-		if (character === "'") {
-			mode = "single-quoted";
-			index += 1;
-			continue;
-		}
-		if (character === '"') {
-			mode = "double-quoted";
-			index += 1;
-			continue;
-		}
-		if (character === "/" && source[index + 1] === "/") {
-			mode = "line-comment";
-			index += 2;
-			continue;
-		}
-		if (character === "#" && source[index + 1] !== "[") {
-			mode = "line-comment";
-			index += 1;
-			continue;
-		}
-		if (character === "/" && source[index + 1] === "*") {
-			mode = "block-comment";
-			index += 2;
-			continue;
-		}
-		if (character === "<") {
-			const heredocStart = parsePhpHeredocStart(source, index);
-			if (heredocStart) {
-				mode = "heredoc";
-				heredocDelimiter = heredocStart.delimiter;
-				index = heredocStart.contentStart;
-				continue;
-			}
-		}
 
 		if (character === "{") {
 			depth += 1;

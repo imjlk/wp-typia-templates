@@ -224,6 +224,89 @@ TEXT;
 	).toBe(true);
 });
 
+test("PHP scanner transitions agree between range and call helpers", () => {
+	const scenarios = [
+		{
+			body: "\t$fake = 'wp_enqueue_script_module({';\n\treturn true;",
+			hasCall: false,
+			label: "single-quoted string",
+		},
+		{
+			body: '\t$fake = "wp_enqueue_script_module({";\n\treturn true;',
+			hasCall: false,
+			label: "double-quoted string",
+		},
+		{
+			body: "\t// wp_enqueue_script_module({\n\treturn true;",
+			hasCall: false,
+			label: "line comment",
+		},
+		{
+			body: "\t# wp_enqueue_script_module({\n\treturn true;",
+			hasCall: false,
+			label: "hash comment",
+		},
+		{
+			body: "\t/* wp_enqueue_script_module({ */\n\treturn true;",
+			hasCall: false,
+			label: "block comment",
+		},
+		{
+			body: `\t$fake = <<<TEXT
+wp_enqueue_script_module({
+TEXT;
+\treturn true;`,
+			hasCall: false,
+			label: "heredoc",
+		},
+		{
+			body: `\t$fake = <<<'TEXT'
+wp_enqueue_script_module({
+TEXT;
+\treturn true;`,
+			hasCall: false,
+			label: "nowdoc",
+		},
+		{
+			body: "\twp_enqueue_script_module( 'demo', 'url', array(), null );\n\treturn true;",
+			hasCall: true,
+			label: "code call",
+		},
+	];
+
+	for (const scenario of scenarios) {
+		const source = `<?php
+function wp_typia_demo() {
+${scenario.body}
+}
+
+function keep_me() {
+\treturn true;
+}
+`;
+		const range = findPhpFunctionRange(source, "wp_typia_demo");
+		if (!range) {
+			throw new Error(`Expected PHP function range for ${scenario.label}`);
+		}
+
+		expect(range.source).not.toContain("function keep_me()");
+		expect(hasPhpFunctionCall(range.source, "wp_enqueue_script_module")).toBe(
+			scenario.hasCall,
+		);
+	}
+});
+
+test("PHP scanner stays conservative when heredoc state is unterminated", () => {
+	const source = `<?php
+function wp_typia_demo() {
+\t$fake = <<<TEXT
+wp_enqueue_script_module(
+`;
+
+	expect(findPhpFunctionRange(source, "wp_typia_demo")).toBeNull();
+	expect(hasPhpFunctionCall(source, "wp_enqueue_script_module")).toBe(false);
+});
+
 test("replacePhpFunctionDefinition replaces only the targeted PHP function", () => {
 	const source = `<?php
 function wp_typia_demo() {
