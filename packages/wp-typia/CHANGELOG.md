@@ -1,5 +1,16 @@
 # wp-typia
 
+## 0.22.7 — 2026-05-05
+
+### Patch changes
+
+- [9bcd217](https://github.com/imjlk/wp-typia/commit/9bcd21709a5f488a6695723997c010f4ac455f9a) Single-source the create progress payload type across runtime bridge modules. — Thanks @imjlk!
+- [721da32](https://github.com/imjlk/wp-typia/commit/721da328c5d980376d011bcade086a383d5f1a38) Derive the public wp-typia user config types from the Zod validation schema. — Thanks @imjlk!
+- [a63a6c2](https://github.com/imjlk/wp-typia/commit/a63a6c207951eea9a269b833ef631ffa62310197) Prune stale routing metadata generator temp directories before creating a new temp workspace. — Thanks @imjlk!
+- [b4991e6](https://github.com/imjlk/wp-typia/commit/b4991e66701565e8ec7d3f155ec93597d6298010) Keep the managed @wp-typia/dataviews fallback range aligned with the released package version. — Thanks @imjlk!
+- [eeef40f](https://github.com/imjlk/wp-typia/commit/eeef40f241a4ab4f6c542904c2ad593e787388d7) Improve source checkout bootstrap guidance when local project-tools build artifacts are missing. — Thanks @imjlk!
+- Updated dependencies: project-tools (npm)@0.22.7
+
 ## 0.22.6 — 2026-05-04
 
 ### Patch changes

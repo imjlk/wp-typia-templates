@@ -1,5 +1,14 @@
 # @wp-typia/project-tools
 
+## 0.22.7 — 2026-05-05
+
+### Patch changes
+
+- [b4991e6](https://github.com/imjlk/wp-typia/commit/b4991e66701565e8ec7d3f155ec93597d6298010) Keep the managed @wp-typia/dataviews fallback range aligned with the released package version. — Thanks @imjlk!
+- [98f9df7](https://github.com/imjlk/wp-typia/commit/98f9df7a32564e2e9efcdf487d032fe39256b3de) Reduce synchronous filesystem probes in async add workspace and block JSON helpers. — Thanks @imjlk!
+- [c3e7614](https://github.com/imjlk/wp-typia/commit/c3e7614022a3bca38158a1abaa1a4d506ceaea08) Split retrofit init plan presentation helpers out of the main planning module. — Thanks @imjlk!
+- [94d388b](https://github.com/imjlk/wp-typia/commit/94d388bfd4793729af4c262e96ddf222612215ac) Share PHP scanner state transitions between function range and call helpers. — Thanks @imjlk!
+
 ## 0.22.6 — 2026-05-04
 
 ### Patch changes
