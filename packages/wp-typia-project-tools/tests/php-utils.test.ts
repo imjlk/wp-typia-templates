@@ -91,7 +91,8 @@ function wp_typia_demo() {
 \t$value = "Value: {$object->property}";
 \t$quoted = "Quoted: {$object->labels["wp_enqueue_script_module("]}";
 \t$brace = "Brace: {$object->labels["}"]}";
-\treturn array( $message, $value, $quoted, $brace );
+\t$commented = "Comment: {$object/* " } wp_enqueue_script_module( */->property}";
+\treturn array( $message, $value, $quoted, $brace, $commented );
 }
 
 function keep_me() {
@@ -108,6 +109,9 @@ function keep_me() {
 		'$quoted = "Quoted: {$object->labels["wp_enqueue_script_module("]}";',
 	);
 	expect(range?.source).toContain('$brace = "Brace: {$object->labels["}"]}";');
+	expect(range?.source).toContain(
+		'$commented = "Comment: {$object/* " } wp_enqueue_script_module( */->property}";',
+	);
 	expect(range?.source).not.toContain("function keep_me()");
 	expect(hasPhpFunctionCall(range?.source ?? "", "wp_enqueue_script_module")).toBe(
 		false,

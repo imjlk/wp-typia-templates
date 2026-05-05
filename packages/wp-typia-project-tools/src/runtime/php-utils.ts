@@ -28,6 +28,7 @@ type PhpHeredocStart = {
 
 type PhpScannerState = {
 	heredocDelimiter: string;
+	interpolationComment: "" | "block" | "line";
 	interpolationDepth: number;
 	interpolationQuote: string;
 	mode: PhpFunctionScanMode;
@@ -232,6 +233,7 @@ function matchesPhpFunctionCallAt(
 function createPhpScannerState(): PhpScannerState {
 	return {
 		heredocDelimiter: "",
+		interpolationComment: "",
 		interpolationDepth: 0,
 		interpolationQuote: "",
 		mode: "code",
@@ -275,6 +277,7 @@ function advancePhpScanner(
 			source[index + 1] === "$"
 		) {
 			state.mode = "double-quoted-interpolation";
+			state.interpolationComment = "";
 			state.interpolationDepth = 1;
 			state.interpolationQuote = "";
 			return { ambiguous: false, inCode: false, index: index + 2 };
@@ -296,6 +299,32 @@ function advancePhpScanner(
 			return { ambiguous: false, inCode: false, index: index + 1 };
 		}
 
+		if (state.interpolationComment === "line") {
+			if (character === "\r" || character === "\n") {
+				state.interpolationComment = "";
+			}
+			return { ambiguous: false, inCode: false, index: index + 1 };
+		}
+		if (state.interpolationComment === "block") {
+			if (character === "*" && source[index + 1] === "/") {
+				state.interpolationComment = "";
+				return { ambiguous: false, inCode: false, index: index + 2 };
+			}
+			return { ambiguous: false, inCode: false, index: index + 1 };
+		}
+
+		if (character === "/" && source[index + 1] === "/") {
+			state.interpolationComment = "line";
+			return { ambiguous: false, inCode: false, index: index + 2 };
+		}
+		if (character === "#" && source[index + 1] !== "[") {
+			state.interpolationComment = "line";
+			return { ambiguous: false, inCode: false, index: index + 1 };
+		}
+		if (character === "/" && source[index + 1] === "*") {
+			state.interpolationComment = "block";
+			return { ambiguous: false, inCode: false, index: index + 2 };
+		}
 		if (character === "'" || character === '"') {
 			state.interpolationQuote = character;
 			return { ambiguous: false, inCode: false, index: index + 1 };
@@ -307,6 +336,7 @@ function advancePhpScanner(
 		if (character === "}") {
 			state.interpolationDepth -= 1;
 			if (state.interpolationDepth <= 0) {
+				state.interpolationComment = "";
 				state.interpolationDepth = 0;
 				state.mode = "double-quoted";
 			}
