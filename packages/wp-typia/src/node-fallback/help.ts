@@ -1,0 +1,124 @@
+import packageJson from '../../package.json';
+import { formatAddKindList } from '../add-kind-registry';
+import {
+  ADD_OPTION_METADATA,
+  CREATE_OPTION_METADATA,
+  DOCTOR_OPTION_METADATA,
+  formatNodeFallbackOptionHelp,
+  INIT_OPTION_METADATA,
+  MIGRATE_OPTION_METADATA,
+  SYNC_OPTION_METADATA,
+  TEMPLATES_OPTION_METADATA,
+  type CommandOptionMetadataMap,
+} from '../command-option-metadata';
+import {
+  WP_TYPIA_CANONICAL_CREATE_USAGE,
+  WP_TYPIA_CANONICAL_MIGRATE_USAGE,
+  WP_TYPIA_FUTURE_COMMAND_TREE,
+  WP_TYPIA_POSITIONAL_ALIAS_USAGE,
+} from '../command-contract';
+import type { PrintLine } from '../print-line';
+import type { NodeFallbackExecutableCommandName } from './types';
+
+export const STANDALONE_GUIDANCE_LINE =
+  'Prefer not to install Bun? Use the standalone wp-typia binary from the GitHub release assets.';
+
+export const NODE_FALLBACK_RUNTIME_SUMMARY_LINES = [
+  'Runtime: Node fallback',
+  'Human-readable fallback for common non-interactive create/init/add/migrate flows, doctor, sync, templates, --help, and --version when Bun is unavailable.',
+  `Install Bun 1.3.11+ or use \`bunx wp-typia ...\` for the full Bunli/OpenTUI runtime and Bun-only command surfaces such as \`skills\`, \`completions\`, and \`mcp\`. ${STANDALONE_GUIDANCE_LINE}`,
+  'Output markers: WP_TYPIA_ASCII=1 forces ASCII markers, WP_TYPIA_ASCII=0 opts back into Unicode markers, and non-empty NO_COLOR requests ASCII markers when WP_TYPIA_ASCII is unset.',
+];
+
+export type NodeFallbackCommandHelpConfig = {
+  bodyLines?: string[];
+  heading: string;
+  optionMetadata: CommandOptionMetadataMap;
+};
+
+export function printBlock(printLine: PrintLine, lines: string[]) {
+  for (const line of lines) {
+    printLine(line);
+  }
+}
+
+export function renderGeneralHelp(printLine: PrintLine) {
+  printBlock(printLine, [
+    `wp-typia ${packageJson.version}`,
+    '',
+    'Canonical CLI package for wp-typia scaffolding and project workflows.',
+    '',
+    ...NODE_FALLBACK_RUNTIME_SUMMARY_LINES,
+    '',
+    'Commands:',
+    ...WP_TYPIA_FUTURE_COMMAND_TREE.map(
+      (command) => `- ${command.name}: ${command.description}`,
+    ),
+    '',
+    'Canonical usage:',
+    `- ${WP_TYPIA_CANONICAL_CREATE_USAGE}`,
+    '- wp-typia init [project-dir]',
+    `- ${WP_TYPIA_CANONICAL_MIGRATE_USAGE}`,
+    `- ${WP_TYPIA_POSITIONAL_ALIAS_USAGE}`,
+  ]);
+}
+
+export function renderNodeFallbackCommandHelp(
+  printLine: PrintLine,
+  config: NodeFallbackCommandHelpConfig,
+) {
+  printBlock(printLine, [
+    config.heading,
+    '',
+    ...NODE_FALLBACK_RUNTIME_SUMMARY_LINES,
+    '',
+    ...(config.bodyLines ? [...config.bodyLines, ''] : []),
+    'Supported flags:',
+    ...formatNodeFallbackOptionHelp(config.optionMetadata),
+  ]);
+}
+
+const NODE_FALLBACK_COMMAND_HELP_CONFIG = {
+  add: {
+    bodyLines: [`Supported kinds: ${formatAddKindList()}`],
+    heading: 'Usage: wp-typia add <kind> <name>',
+    optionMetadata: ADD_OPTION_METADATA,
+  },
+  create: {
+    heading: `Usage: ${WP_TYPIA_CANONICAL_CREATE_USAGE}`,
+    optionMetadata: CREATE_OPTION_METADATA,
+  },
+  doctor: {
+    bodyLines: [
+      'Runs read-only environment readiness checks. Official wp-typia workspace roots also get inventory, source-tree drift, iframe/API v3 compatibility, and shared convention checks.',
+    ],
+    heading: 'Usage: wp-typia doctor [--format json]',
+    optionMetadata: DOCTOR_OPTION_METADATA,
+  },
+  init: {
+    bodyLines: [
+      'Preview-by-default retrofit planner for existing WordPress block or plugin projects. Re-run with --apply to write package.json updates and helper scripts.',
+    ],
+    heading: 'Usage: wp-typia init [project-dir]',
+    optionMetadata: INIT_OPTION_METADATA,
+  },
+  migrate: {
+    heading: `Usage: ${WP_TYPIA_CANONICAL_MIGRATE_USAGE}`,
+    optionMetadata: MIGRATE_OPTION_METADATA,
+  },
+  sync: {
+    heading: 'Usage: wp-typia sync [ai]',
+    optionMetadata: SYNC_OPTION_METADATA,
+  },
+  templates: {
+    heading: 'wp-typia templates <list|inspect>',
+    optionMetadata: TEMPLATES_OPTION_METADATA,
+  },
+} satisfies Record<NodeFallbackExecutableCommandName, NodeFallbackCommandHelpConfig>;
+
+export const NODE_FALLBACK_HELP_RENDERERS = Object.fromEntries(
+  Object.entries(NODE_FALLBACK_COMMAND_HELP_CONFIG).map(([command, config]) => [
+    command,
+    (printLine: PrintLine) => renderNodeFallbackCommandHelp(printLine, config),
+  ]),
+) as Record<NodeFallbackExecutableCommandName, (printLine: PrintLine) => void>;

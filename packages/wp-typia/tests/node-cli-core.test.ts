@@ -148,6 +148,46 @@ describe('Node fallback CLI core routing', () => {
     expect(result.stdout).not.toContain('Usage: wp-typia create <project-dir>');
   });
 
+  test('keeps Node fallback dispatcher and help modules focused', () => {
+    const packageRoot = path.resolve(import.meta.dir, '..');
+    const nodeCliSource = fs.readFileSync(
+      path.join(packageRoot, 'src', 'node-cli.ts'),
+      'utf8',
+    );
+    const addDispatcherSource = fs.readFileSync(
+      path.join(packageRoot, 'src', 'node-fallback', 'dispatchers', 'add.ts'),
+      'utf8',
+    );
+    const createDispatcherSource = fs.readFileSync(
+      path.join(
+        packageRoot,
+        'src',
+        'node-fallback',
+        'dispatchers',
+        'create.ts',
+      ),
+      'utf8',
+    );
+    const helpSource = fs.readFileSync(
+      path.join(packageRoot, 'src', 'node-fallback', 'help.ts'),
+      'utf8',
+    );
+
+    expect(nodeCliSource).toContain(
+      "from './node-fallback/dispatchers/add'",
+    );
+    expect(nodeCliSource).toContain(
+      "from './node-fallback/dispatchers/create'",
+    );
+    expect(nodeCliSource).toContain("from './node-fallback/help'");
+    expect(nodeCliSource).not.toContain('formatAddHelpText');
+    expect(addDispatcherSource).toContain('Add-specific normalization stays here');
+    expect(createDispatcherSource).toContain(
+      'Create-specific normalization stays here',
+    );
+    expect(helpSource).toContain('export function printBlock');
+  });
+
   test('prints human and structured version output from the fallback runtime', async () => {
     const human = await captureNodeCli(['--version']);
     const text = await captureNodeCli(['version', '--format', 'text']);
