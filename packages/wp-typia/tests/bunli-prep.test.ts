@@ -48,6 +48,24 @@ describe('wp-typia Bunli preparation', () => {
     });
   }
 
+  function expectInvalidArgument(
+    callback: () => unknown,
+    message: RegExp,
+  ): void {
+    let caught: unknown;
+    try {
+      callback();
+    } catch (error) {
+      caught = error;
+    }
+
+    expect(caught).toBeInstanceOf(Error);
+    expect(caught).toMatchObject({
+      code: CLI_DIAGNOSTIC_CODES.INVALID_ARGUMENT,
+    });
+    expect((caught as Error).message).toMatch(message);
+  }
+
   test('checks in the Bunli prep tree while promoting a built CLI runtime', () => {
     expect(packageManifest.bin['wp-typia']).toBe('bin/wp-typia.js');
     expect(packageManifest.files).toContain('dist-bunli/');
@@ -340,6 +358,16 @@ describe('wp-typia Bunli preparation', () => {
     ).toContain('createCLI(');
   });
 
+  test('command contract validation failures stay diagnostic-coded', () => {
+    const commandContractSource = fs.readFileSync(
+      path.join(packageRoot, 'src', 'command-contract.ts'),
+      'utf8',
+    );
+
+    expect(commandContractSource).not.toMatch(/\bthrow new Error\b/u);
+    expect(commandContractSource).toContain('createCliDiagnosticCodeError');
+  });
+
   test('future Bunli command tree exposes every supported add kind', () => {
     const addCommand = WP_TYPIA_FUTURE_COMMAND_TREE.find(
       (command) => command.name === 'add',
@@ -409,13 +437,16 @@ describe('wp-typia Bunli preparation', () => {
     expect(normalizeWpTypiaArgv(['demo-block', '--template', 'basic'])).toEqual(
       ['create', 'demo-block', '--template', 'basic'],
     );
-    expect(() => normalizeWpTypiaArgv(['github:acme/template'])).toThrow(
+    expectInvalidArgument(
+      () => normalizeWpTypiaArgv(['github:acme/template']),
       /The positional alias only accepts unambiguous local project directories/,
     );
-    expect(() => normalizeWpTypiaArgv(['.'])).toThrow(
+    expectInvalidArgument(
+      () => normalizeWpTypiaArgv(['.']),
       /The positional alias does not scaffold into `\.`/,
     );
-    expect(() => normalizeWpTypiaArgv(['./'])).toThrow(
+    expectInvalidArgument(
+      () => normalizeWpTypiaArgv(['./']),
       /The positional alias does not scaffold into `\.\/`/,
     );
     expect(
@@ -449,8 +480,13 @@ describe('wp-typia Bunli preparation', () => {
     expect(
       normalizeWpTypiaArgv(['mcp', 'sync', '--output-dir', '.bunli/custom']),
     ).toEqual(['mcp', 'sync', '--output-dir', '.bunli/custom']);
-    expect(() => normalizeWpTypiaArgv(['temlates', 'list'])).toThrow(
+    expectInvalidArgument(
+      () => normalizeWpTypiaArgv(['temlates', 'list']),
       /only accepts a single project directory.*check the command spelling.*`list`/s,
+    );
+    expectInvalidArgument(
+      () => normalizeWpTypiaArgv(['migrations']),
+      /`wp-typia migrations` was removed/,
     );
   });
 });
