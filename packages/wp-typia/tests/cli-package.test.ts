@@ -948,7 +948,7 @@ process.exit(0);
       expect(result.stderr).toContain(
         'source checkout is missing @wp-typia/project-tools build artifacts',
       );
-      expect(result.stderr).toContain(
+      expect(result.stderr.replace(/\\/g, '/')).toContain(
         'packages/wp-typia-project-tools/dist/runtime/cli-diagnostics.js',
       );
       expect(result.stderr).toContain(
