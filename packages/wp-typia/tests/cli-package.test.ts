@@ -81,6 +81,10 @@ const nodeCliSource = fs.readFileSync(
   path.join(packageRoot, 'src', 'node-cli.ts'),
   'utf8',
 );
+const nodeFallbackHelpSource = fs.readFileSync(
+  path.join(packageRoot, 'src', 'node-fallback', 'help.ts'),
+  'utf8',
+);
 const cliSource = fs.readFileSync(
   path.join(packageRoot, 'src', 'cli.ts'),
   'utf8',
@@ -1131,26 +1135,29 @@ process.exit(0);
       'buildCommandOptions(TEMPLATES_OPTION_METADATA)',
     );
     expect(nodeCliSource).toMatch(/from ['"]\.\/command-option-metadata['"]/);
-    expect(nodeCliSource).toContain('renderNodeFallbackCommandHelp(config)');
-    expect(nodeCliSource).toContain(
+    expect(nodeCliSource).toContain("from './node-fallback/help'");
+    expect(nodeFallbackHelpSource).toContain(
+      'renderNodeFallbackCommandHelp(printLine, config)',
+    );
+    expect(nodeFallbackHelpSource).toContain(
       'optionMetadata: CREATE_OPTION_METADATA',
     );
-    expect(nodeCliSource).toContain(
+    expect(nodeFallbackHelpSource).toContain(
       'optionMetadata: INIT_OPTION_METADATA',
     );
-    expect(nodeCliSource).toContain(
+    expect(nodeFallbackHelpSource).toContain(
       'optionMetadata: ADD_OPTION_METADATA',
     );
-    expect(nodeCliSource).toContain(
+    expect(nodeFallbackHelpSource).toContain(
       'optionMetadata: SYNC_OPTION_METADATA',
     );
-    expect(nodeCliSource).toContain(
+    expect(nodeFallbackHelpSource).toContain(
       'optionMetadata: DOCTOR_OPTION_METADATA',
     );
-    expect(nodeCliSource).toContain(
+    expect(nodeFallbackHelpSource).toContain(
       'optionMetadata: MIGRATE_OPTION_METADATA',
     );
-    expect(nodeCliSource).toContain(
+    expect(nodeFallbackHelpSource).toContain(
       'optionMetadata: TEMPLATES_OPTION_METADATA',
     );
   });

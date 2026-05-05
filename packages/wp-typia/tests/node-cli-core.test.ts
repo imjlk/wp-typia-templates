@@ -148,6 +148,48 @@ describe('Node fallback CLI core routing', () => {
     expect(result.stdout).not.toContain('Usage: wp-typia create <project-dir>');
   });
 
+  test('keeps Node fallback dispatcher and help modules focused', () => {
+    const packageRoot = path.resolve(import.meta.dir, '..');
+    const nodeCliSource = fs.readFileSync(
+      path.join(packageRoot, 'src', 'node-cli.ts'),
+      'utf8',
+    );
+    const addDispatcherSource = fs.readFileSync(
+      path.join(packageRoot, 'src', 'node-fallback', 'dispatchers', 'add.ts'),
+      'utf8',
+    );
+    const createDispatcherSource = fs.readFileSync(
+      path.join(
+        packageRoot,
+        'src',
+        'node-fallback',
+        'dispatchers',
+        'create.ts',
+      ),
+      'utf8',
+    );
+    const helpSource = fs.readFileSync(
+      path.join(packageRoot, 'src', 'node-fallback', 'help.ts'),
+      'utf8',
+    );
+
+    expect(nodeCliSource).toContain(
+      "from './node-fallback/dispatchers/add'",
+    );
+    expect(nodeCliSource).toContain(
+      "from './node-fallback/dispatchers/create'",
+    );
+    expect(nodeCliSource).toContain("from './node-fallback/help'");
+    expect(nodeCliSource).not.toContain('formatAddHelpText');
+    expect(addDispatcherSource).toContain(
+      'export async function dispatchNodeFallbackAdd',
+    );
+    expect(createDispatcherSource).toContain(
+      'export async function dispatchNodeFallbackCreate',
+    );
+    expect(helpSource).toContain('export function printBlock');
+  });
+
   test('prints human and structured version output from the fallback runtime', async () => {
     const human = await captureNodeCli(['--version']);
     const text = await captureNodeCli(['version', '--format', 'text']);
@@ -232,6 +274,24 @@ describe('Node fallback CLI core routing', () => {
       code: 'missing-argument',
       command: 'add',
     });
+  });
+
+  test('keeps missing add kinds machine-readable in structured mode', async () => {
+    const result = await captureNodeCli(['add', '--format', 'json'], {
+      entrypoint: true,
+    });
+    const parsed = JSON.parse(result.stderr) as {
+      error?: { code?: string; command?: string; kind?: string };
+      ok?: boolean;
+    };
+
+    expect(result.error).toBeUndefined();
+    expect(result.exitCode).toBe(1);
+    expect(result.stdout).toBe('');
+    expect(parsed.ok).toBe(false);
+    expect(parsed.error?.kind).toBe('command-execution');
+    expect(parsed.error?.command).toBe('add');
+    expect(parsed.error?.code).toBe('missing-argument');
   });
 
   test('dispatches init structured previews from the Node fallback runtime', async () => {
