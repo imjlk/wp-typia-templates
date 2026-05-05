@@ -9,6 +9,10 @@ import {
 	type MCPToolGroup,
 	type MCPTool,
 } from "@bunli/plugin-mcp";
+import {
+	CLI_DIAGNOSTIC_CODES,
+	createCliDiagnosticCodeError,
+} from "@wp-typia/project-tools/cli-diagnostics";
 
 import type { WpTypiaSchemaSource } from "./config";
 
@@ -33,13 +37,30 @@ function isToolGroup(value: unknown): value is MCPToolGroup {
 	);
 }
 
+function getErrorMessage(error: unknown): string {
+	return error instanceof Error ? error.message : String(error);
+}
+
+function getErrorCauseOptions(error: unknown): ErrorOptions | undefined {
+	return error instanceof Error ? { cause: error } : undefined;
+}
+
 async function readSchemaSource(
 	cwd: string,
 	source: WpTypiaSchemaSource,
 ): Promise<MCPToolGroup> {
 	const schemaPath = path.resolve(cwd, source.path);
 	const raw = await fs.readFile(schemaPath, "utf8");
-	const parsed = JSON.parse(raw);
+	let parsed: unknown;
+	try {
+		parsed = JSON.parse(raw);
+	} catch (error) {
+		throw createCliDiagnosticCodeError(
+			CLI_DIAGNOSTIC_CODES.INVALID_ARGUMENT,
+			`Schema source "${source.path}" must contain valid JSON. ${getErrorMessage(error)}`,
+			getErrorCauseOptions(error),
+		);
+	}
 
 	if (isToolGroup(parsed)) {
 		return parsed;
@@ -52,7 +73,8 @@ async function readSchemaSource(
 		};
 	}
 
-	throw new Error(
+	throw createCliDiagnosticCodeError(
+		CLI_DIAGNOSTIC_CODES.INVALID_ARGUMENT,
 		`Schema source "${source.path}" must contain either one MCPToolGroup object or an array of MCP tools.`,
 	);
 }
@@ -79,7 +101,11 @@ export async function syncMcpSchemas(
 		tools: groups,
 	});
 	if (Result.isError(result)) {
-		throw result.error;
+		throw createCliDiagnosticCodeError(
+			CLI_DIAGNOSTIC_CODES.INVALID_ARGUMENT,
+			getErrorMessage(result.error),
+			getErrorCauseOptions(result.error),
+		);
 	}
 
 	const registry = groups.map((group) => ({
@@ -93,7 +119,11 @@ export async function syncMcpSchemas(
 			namespace: group.namespace,
 		});
 		if (Result.isError(convert)) {
-			throw convert.error;
+			throw createCliDiagnosticCodeError(
+				CLI_DIAGNOSTIC_CODES.INVALID_ARGUMENT,
+				getErrorMessage(convert.error),
+				getErrorCauseOptions(convert.error),
+			);
 		}
 	}
 

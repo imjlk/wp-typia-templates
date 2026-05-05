@@ -2247,6 +2247,78 @@ process.exit(0);
     expect(parsed.error?.code).toBe('configuration-missing');
   });
 
+  test('emits a machine-readable invalid-argument error code for malformed mcp schema sources', () => {
+    const tempRoot = fs.mkdtempSync(
+      path.join(os.tmpdir(), 'wp-typia-mcp-invalid-schema-'),
+    );
+    const schemaPath = path.join(tempRoot, 'mcp-tools.json');
+    const configPath = path.join(tempRoot, 'wp-typia.config.json');
+
+    try {
+      fs.writeFileSync(
+        schemaPath,
+        `${JSON.stringify(
+          {
+            namespace: 'demo',
+            tools: [{ description: 'Missing a tool name' }],
+          },
+          null,
+          2,
+        )}\n`,
+        'utf8',
+      );
+      fs.writeFileSync(
+        configPath,
+        `${JSON.stringify(
+          {
+            mcp: {
+              schemaSources: [
+                {
+                  namespace: 'demo',
+                  path: schemaPath,
+                },
+              ],
+            },
+          },
+          null,
+          2,
+        )}\n`,
+        'utf8',
+      );
+
+      const result = runCapturedCommand('node', [
+        entryPath,
+        '--config',
+        configPath,
+        'mcp',
+        'list',
+        '--format',
+        'json',
+      ]);
+      const parsed = JSON.parse(result.stderr.trim()) as {
+        error?: {
+          code?: string;
+          command?: string;
+          detailLines?: string[];
+          kind?: string;
+        };
+        ok?: boolean;
+      };
+
+      expect(result.status).toBe(1);
+      expect(result.stdout).toBe('');
+      expect(parsed.ok).toBe(false);
+      expect(parsed.error?.kind).toBe('command-execution');
+      expect(parsed.error?.command).toBe('mcp');
+      expect(parsed.error?.code).toBe('invalid-argument');
+      expect(parsed.error?.detailLines?.join('\n')).toContain(
+        `Schema source "${schemaPath}" must contain either one MCPToolGroup object or an array of MCP tools.`,
+      );
+    } finally {
+      fs.rmSync(tempRoot, { force: true, recursive: true });
+    }
+  });
+
   test('emits a machine-readable missing-argument error code for create in Bun runtime JSON mode', () => {
     const result = runCapturedCommand(
       'bun',
