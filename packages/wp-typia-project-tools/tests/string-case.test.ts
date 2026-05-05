@@ -33,6 +33,16 @@ test("toKebabCase avoids inventing boundaries in acronym-lowercase words", () =>
 	expect(toKebabCase("AABBcc")).toBe("aabbcc");
 });
 
+test("toKebabCase keeps project-specific acronyms deterministic unless separated", () => {
+	expect(toKebabCase("CRMLeadForm")).toBe("crmlead-form");
+	expect(toKebabCase("SEOSettingsPanel")).toBe("seosettings-panel");
+	expect(toKebabCase("SSOLoginBlock")).toBe("ssologin-block");
+
+	expect(toKebabCase("CRM Lead Form")).toBe("crm-lead-form");
+	expect(toKebabCase("SEO Settings Panel")).toBe("seo-settings-panel");
+	expect(toKebabCase("SSO Login Block")).toBe("sso-login-block");
+});
+
 test("toKebabCase preserves common slug normalization behavior", () => {
 	expect(toKebabCase("Demo Card")).toBe("demo-card");
 	expect(toKebabCase("demo_card")).toBe("demo-card");
