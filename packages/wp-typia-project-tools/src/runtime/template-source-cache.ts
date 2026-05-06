@@ -1,4 +1,4 @@
-import { createHash } from 'node:crypto'
+import { createHash, randomUUID } from 'node:crypto'
 import type { Dirent } from 'node:fs'
 import { promises as fsp } from 'node:fs'
 import path from 'node:path'
@@ -69,6 +69,12 @@ const SAFE_CACHE_NAMESPACE_SEGMENT = /^[A-Za-z0-9_.-]+$/u
  * Cache entries are deterministic SHA-256 digest directory names.
  */
 const SAFE_CACHE_ENTRY_SEGMENT = /^[a-f0-9]{64}$/u
+
+function createTemporaryCacheEntryDirName(cacheKey: string): string {
+  // Crypto randomness keeps concurrent cache populators from colliding on the
+  // staging directory before the final atomic rename publishes the cache entry.
+  return `.tmp-${cacheKey}-${process.pid}-${Date.now()}-${randomUUID()}`
+}
 
 /**
  * Serializable metadata recorded in the cache marker for diagnostics.
@@ -878,9 +884,7 @@ export async function resolveExternalTemplateSourceCache(
 
   const temporaryEntryDir = path.join(
     namespaceDir,
-    `.tmp-${cacheKey}-${process.pid}-${Date.now()}-${Math.random()
-      .toString(16)
-      .slice(2)}`,
+    createTemporaryCacheEntryDirName(cacheKey),
   )
   const temporarySourceDir = path.join(temporaryEntryDir, 'source')
   let populateFailed = false
