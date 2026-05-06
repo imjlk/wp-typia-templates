@@ -42,6 +42,7 @@ import {
 	SHARED_HOOKS_TEMPLATE,
 } from "./built-in-block-code-templates.js";
 import { getScaffoldTemplateVariableGroups } from "./scaffold-template-variable-groups.js";
+import { assertScaffoldTemplateCodeIdentifiers } from "./scaffold-template-assertions.js";
 import { renderMustacheTemplateString } from "./template-render.js";
 
 /**
@@ -72,6 +73,7 @@ function renderCodeTemplate(
 	template: string,
 	variables: ScaffoldTemplateVariables,
 ): string {
+	assertScaffoldTemplateCodeIdentifiers(variables);
 	const rendered = renderMustacheTemplateString(template, variables);
 	return rendered.endsWith("\n") ? rendered : `${rendered}\n`;
 }

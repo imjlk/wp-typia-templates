@@ -966,6 +966,21 @@ describe('built-in block artifacts', () => {
     },
   );
 
+  test('built-in code artifact builders assert target-language identifiers locally', () => {
+    const { variables } = buildArtifacts('basic');
+    const unsafeVariables = {
+      ...variables,
+      phpPrefix: '123-bad-prefix',
+    } as typeof variables;
+
+    expect(() =>
+      buildBuiltInCodeArtifacts({
+        templateId: 'basic',
+        variables: unsafeVariables,
+      }),
+    ).toThrow('Unsafe scaffold template variable "phpPrefix" for PHP identifier');
+  });
+
   test('compound persistence render emitter quotes heading fallbacks safely', () => {
     const answers = buildAnswers('compound');
     answers.title = `John's "Compound"`;

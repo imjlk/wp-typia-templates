@@ -230,3 +230,16 @@ export function getScaffoldTemplateVariableGroups(
 ): ScaffoldTemplateVariableGroups {
 	return variables[SCAFFOLD_TEMPLATE_VARIABLE_GROUPS];
 }
+
+export function isCompoundPersistenceEnabled(
+	variables: ScaffoldTemplateVariableGroupsCarrier,
+): boolean {
+	const compound = getScaffoldTemplateVariableGroups(variables).compound;
+	return compound.enabled && compound.persistenceEnabled;
+}
+
+export function getScaffoldAlternateRenderTargets(
+	variables: ScaffoldTemplateVariableGroupsCarrier,
+): ScaffoldAlternateRenderTargetVariableGroup {
+	return getScaffoldTemplateVariableGroups(variables).alternateRenderTargets;
+}

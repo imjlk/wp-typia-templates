@@ -1,4 +1,5 @@
 import type { ScaffoldTemplateVariables } from "./scaffold.js";
+import { isCompoundPersistenceEnabled } from "./scaffold-template-variable-groups.js";
 import {
 	DEFAULT_COMPOUND_CHILD_BODY_PLACEHOLDER,
 	buildAttributesFromSpecs,
@@ -385,7 +386,7 @@ export function buildCompoundParentAttributes(
 	variables: ScaffoldTemplateVariables,
 ): EmittedAttributeDefinition[] {
 	return buildAttributesFromSpecs(
-		variables.compoundPersistenceEnabled === "true"
+		isCompoundPersistenceEnabled(variables)
 			? [
 				...COMPOUND_PARENT_BASE_ATTRIBUTE_SPECS,
 				...COMPOUND_PARENT_PERSISTENCE_ATTRIBUTE_SPECS,

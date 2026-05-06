@@ -5,6 +5,10 @@ import {
 	renderArtifact,
 	toPhpSingleQuotedString,
 } from "./built-in-block-non-ts-render-utils.js";
+import {
+	getScaffoldAlternateRenderTargets,
+	isCompoundPersistenceEnabled,
+} from "./scaffold-template-variable-groups.js";
 
 const BASIC_STYLE_TEMPLATE = `/**
  * {{title}} Block Styles
@@ -855,7 +859,8 @@ export function buildInteractivityArtifacts(
 export function buildPersistenceArtifacts(
 	variables: ScaffoldTemplateVariables,
 ): BuiltInCodeArtifact[] {
-	if (variables.hasAlternateRenderTargets !== "true") {
+	const alternateRenderTargets = getScaffoldAlternateRenderTargets(variables);
+	if (!alternateRenderTargets.enabled) {
 		return [
 			renderArtifact("src/style.scss", PERSISTENCE_STYLE_TEMPLATE, variables),
 			renderArtifact("src/render.php", PERSISTENCE_RENDER_TEMPLATE, variables),
@@ -872,17 +877,17 @@ export function buildPersistenceArtifacts(
 		buildAlternateRenderEntryArtifact("src/render.php", "web", variables),
 	];
 
-	if (variables.hasAlternateEmailRenderTarget === "true") {
+	if (alternateRenderTargets.hasEmail) {
 		artifacts.push(
 			buildAlternateRenderEntryArtifact("src/render-email.php", "email", variables),
 		);
 	}
-	if (variables.hasAlternateMjmlRenderTarget === "true") {
+	if (alternateRenderTargets.hasMjml) {
 		artifacts.push(
 			buildAlternateRenderEntryArtifact("src/render-mjml.php", "mjml", variables),
 		);
 	}
-	if (variables.hasAlternatePlainTextRenderTarget === "true") {
+	if (alternateRenderTargets.hasPlainText) {
 		artifacts.push(
 			buildAlternateRenderEntryArtifact(
 				"src/render-text.php",
@@ -904,6 +909,7 @@ export function buildPersistenceArtifacts(
 export function buildCompoundArtifacts(
 	variables: ScaffoldTemplateVariables,
 ): BuiltInCodeArtifact[] {
+	const alternateRenderTargets = getScaffoldAlternateRenderTargets(variables);
 	const artifacts = [
 		renderArtifact(
 			`src/blocks/${variables.slugKebabCase}/style.scss`,
@@ -912,12 +918,12 @@ export function buildCompoundArtifacts(
 		),
 	];
 
-	if (variables.compoundPersistenceEnabled === "true") {
+	if (isCompoundPersistenceEnabled(variables)) {
 		const renderView = {
 			...variables,
 			titlePhpLiteral: toPhpSingleQuotedString(variables.title),
 		};
-		if (variables.hasAlternateRenderTargets === "true") {
+		if (alternateRenderTargets.enabled) {
 			artifacts.push(
 				renderArtifact(
 					`src/blocks/${variables.slugKebabCase}/render-targets.php`,
@@ -930,7 +936,7 @@ export function buildCompoundArtifacts(
 					variables,
 				),
 			);
-			if (variables.hasAlternateEmailRenderTarget === "true") {
+			if (alternateRenderTargets.hasEmail) {
 				artifacts.push(
 					buildAlternateRenderEntryArtifact(
 						`src/blocks/${variables.slugKebabCase}/render-email.php`,
@@ -939,7 +945,7 @@ export function buildCompoundArtifacts(
 					),
 				);
 			}
-			if (variables.hasAlternateMjmlRenderTarget === "true") {
+			if (alternateRenderTargets.hasMjml) {
 				artifacts.push(
 					buildAlternateRenderEntryArtifact(
 						`src/blocks/${variables.slugKebabCase}/render-mjml.php`,
@@ -948,7 +954,7 @@ export function buildCompoundArtifacts(
 					),
 				);
 			}
-			if (variables.hasAlternatePlainTextRenderTarget === "true") {
+			if (alternateRenderTargets.hasPlainText) {
 				artifacts.push(
 					buildAlternateRenderEntryArtifact(
 						`src/blocks/${variables.slugKebabCase}/render-text.php`,

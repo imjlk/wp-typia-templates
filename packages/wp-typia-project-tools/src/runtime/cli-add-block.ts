@@ -67,6 +67,7 @@ import {
 	type PackageManagerId,
 } from "./package-managers.js";
 import { parseCompoundInnerBlocksPreset } from "./compound-inner-blocks.js";
+import { isCompoundPersistenceEnabled } from "./scaffold-template-variable-groups.js";
 import {
 	resolveOptionalInteractiveExternalLayerId,
 } from "./external-layer-selection.js";
@@ -196,7 +197,7 @@ async function copyScaffoldedBlockSlice(
 			path.join(tempProjectDir, "src", "blocks", `${variables.slugKebabCase}-item`),
 			path.join(projectDir, "src", "blocks", `${variables.slugKebabCase}-item`),
 		);
-		if (variables.compoundPersistenceEnabled === "true") {
+		if (isCompoundPersistenceEnabled(variables)) {
 			await renderWorkspacePersistenceServerModule(projectDir, variables);
 		}
 		return;
@@ -399,7 +400,7 @@ async function syncWorkspaceAddedBlockArtifacts(
 
 	if (
 		templateId === "persistence" ||
-		(templateId === "compound" && variables.compoundPersistenceEnabled === "true")
+		(templateId === "compound" && isCompoundPersistenceEnabled(variables))
 	) {
 		await syncWorkspacePersistenceArtifacts(projectDir, variables);
 	}
@@ -704,7 +705,7 @@ export async function runAddBlockCommand({
 				buildConfigEntries(resolvedTemplateId, result.variables),
 				resolvedTemplateId === "persistence" ||
 					(resolvedTemplateId === "compound" &&
-						result.variables.compoundPersistenceEnabled === "true"),
+						isCompoundPersistenceEnabled(result.variables)),
 			);
 			await syncWorkspaceAddedBlockArtifacts(
 				workspace.projectDir,
