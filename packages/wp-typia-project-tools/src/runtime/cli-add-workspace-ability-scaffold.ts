@@ -94,7 +94,9 @@ async function readAbilityRegistrySlugs(registryPath: string): Promise<string[]>
 	}
 
 	return Array.from(
-		source.matchAll(/^\s*export\s+\*\s+from\s+['"]\.\/([^/'"]+)\/client['"];?\s*$/gmu),
+		source.matchAll(
+			/^\s*export\s+\*\s+from\s+['"]\.\/([^/'"]+)\/client(?:\.[cm]?[jt]sx?)?['"];?\s*$/gmu,
+		),
 	).map((match) => match[1]);
 }
 

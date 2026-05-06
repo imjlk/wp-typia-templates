@@ -413,6 +413,47 @@ function demo_space_enqueue_workflow_abilities() {
 		expect(webpackSource.match(/'abilities\/index'/g)?.length).toBe(1);
 	}, 20_000);
 
+	test("ability add keeps extension-suffixed registry entries when rewriting the generated section", async () => {
+		const targetDir = path.join(
+			tempRoot,
+			"demo-workspace-add-ability-extension-registry",
+		);
+		const workspaceSlug = "demo-workspace-add-ability-extension-registry";
+
+		await scaffoldAbilityWorkspace(
+			targetDir,
+			workspaceSlug,
+			"Demo Workspace Add Ability Extension Registry",
+			"Demo workspace add ability extension registry",
+		);
+		seedLegacyAbilityWorkspace(targetDir, workspaceSlug);
+
+		const abilitiesDir = path.join(targetDir, "src", "abilities");
+		fs.mkdirSync(abilitiesDir, { recursive: true });
+		const abilitiesIndexPath = path.join(abilitiesDir, "index.js");
+		fs.writeFileSync(
+			abilitiesIndexPath,
+			`// wp-typia add ability entries start
+export * from './legacy-workflow/client.js';
+// wp-typia add ability entries end
+`,
+			"utf8",
+		);
+
+		runCli("node", [entryPath, "add", "ability", "review-workflow"], {
+			cwd: targetDir,
+		});
+
+		const abilitiesIndexSource = fs.readFileSync(abilitiesIndexPath, "utf8");
+
+		expect(abilitiesIndexSource).toContain(
+			"export * from './legacy-workflow/client';",
+		);
+		expect(abilitiesIndexSource).toContain(
+			"export * from './review-workflow/client';",
+		);
+	}, 20_000);
+
 	test("ability duplicate failures preserve generated workspace files", async () => {
 		const targetDir = path.join(tempRoot, "demo-workspace-add-ability-rollback");
 		const workspaceSlug = "demo-workspace-add-ability-rollback";
