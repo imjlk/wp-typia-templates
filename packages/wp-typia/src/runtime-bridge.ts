@@ -101,6 +101,8 @@ const loadCliScaffoldRuntime = () =>
   import('@wp-typia/project-tools/cli-scaffold');
 const loadCliTemplatesRuntime = () =>
   import('@wp-typia/project-tools/cli-templates');
+const loadCreateTemplateValidationRuntime = () =>
+  import('@wp-typia/project-tools/create-template-validation');
 const loadWorkspaceProjectRuntime = () =>
   import('@wp-typia/project-tools/workspace-project');
 const loadMigrationsRuntime = () =>
@@ -282,26 +284,36 @@ export async function executeCreateCommand({
   prompt,
   warnLine = console.warn as PrintLine,
 }: CreateExecutionInput): Promise<AlternateBufferCompletionPayload> {
-  const [
-    { createReadlinePrompt },
-    { runScaffoldFlow },
-    { getTemplateSelectOptions },
-  ] = await Promise.all([
-    loadCliPromptRuntime(),
-    loadCliScaffoldRuntime(),
-    loadCliTemplatesRuntime(),
-  ]);
-  const shouldPrompt =
-    interactive ?? (!Boolean(flags.yes) && isInteractiveTerminal());
-  const activePrompt = shouldPrompt
-    ? (prompt ?? createReadlinePrompt())
-    : undefined;
-  const shouldPromptForExternalLayerSelection =
-    Boolean(activePrompt) && activePrompt !== prompt;
-  const effectiveYes =
-    Boolean(flags.yes) || (Boolean(flags['dry-run']) && !Boolean(activePrompt));
+  let activePrompt: ReadlinePrompt | undefined;
 
   try {
+    const requestedTemplateId = readOptionalLooseStringFlag(flags, 'template');
+    const resolvedTemplateId = requestedTemplateId
+      ? (
+          await loadCreateTemplateValidationRuntime()
+        ).validateExplicitCreateTemplateId(requestedTemplateId)
+      : undefined;
+    const [
+      { createReadlinePrompt },
+      { runScaffoldFlow },
+      { getTemplateSelectOptions },
+    ] = await Promise.all([
+      loadCliPromptRuntime(),
+      loadCliScaffoldRuntime(),
+      loadCliTemplatesRuntime(),
+    ]);
+    const shouldPrompt =
+      interactive ?? (!Boolean(flags.yes) && isInteractiveTerminal());
+    activePrompt = shouldPrompt
+      ? (prompt ?? createReadlinePrompt())
+      : undefined;
+    const scaffoldPrompt = activePrompt;
+    const shouldPromptForExternalLayerSelection =
+      Boolean(scaffoldPrompt) && scaffoldPrompt !== prompt;
+    const effectiveYes =
+      Boolean(flags.yes) ||
+      (Boolean(flags['dry-run']) && !Boolean(scaffoldPrompt));
+
     const flow = await runScaffoldFlow({
       alternateRenderTargets: readOptionalLooseStringFlag(
         flags,
@@ -319,7 +331,7 @@ export async function executeCreateCommand({
         flags,
         'inner-blocks-preset',
       ),
-      isInteractive: Boolean(activePrompt),
+      isInteractive: Boolean(scaffoldPrompt),
       namespace: readOptionalLooseStringFlag(flags, 'namespace'),
       noInstall: Boolean(flags['no-install']),
       packageManager: readOptionalLooseStringFlag(flags, 'package-manager'),
@@ -339,77 +351,77 @@ export async function executeCreateCommand({
           printLine(formatCreateProgressLine(payload));
         }
       },
-      promptText: activePrompt
+      promptText: scaffoldPrompt
         ? (message, defaultValue, validate) =>
-            activePrompt.text(message, defaultValue, validate)
+            scaffoldPrompt.text(message, defaultValue, validate)
         : undefined,
       queryPostType: readOptionalLooseStringFlag(flags, 'query-post-type'),
-      selectDataStorage: activePrompt
+      selectDataStorage: scaffoldPrompt
         ? () =>
-            activePrompt.select(
+            scaffoldPrompt.select(
               'Select a data storage mode',
               [...DATA_STORAGE_PROMPT_OPTIONS],
               1,
             )
         : undefined,
       selectExternalLayerId:
-        shouldPromptForExternalLayerSelection && activePrompt
+        shouldPromptForExternalLayerSelection && scaffoldPrompt
           ? (options) =>
-              activePrompt.select(
+              scaffoldPrompt.select(
                 'Select an external layer',
                 toExternalLayerPromptOptions(options),
                 1,
               )
           : undefined,
-      selectPackageManager: activePrompt
+      selectPackageManager: scaffoldPrompt
         ? () =>
-            activePrompt.select(
+            scaffoldPrompt.select(
               'Select a package manager',
               [...PACKAGE_MANAGER_PROMPT_OPTIONS],
               1,
             )
         : undefined,
-      selectPersistencePolicy: activePrompt
+      selectPersistencePolicy: scaffoldPrompt
         ? () =>
-            activePrompt.select(
+            scaffoldPrompt.select(
               'Select a persistence policy',
               [...PERSISTENCE_POLICY_PROMPT_OPTIONS],
               1,
             )
         : undefined,
-      selectTemplate: activePrompt
+      selectTemplate: scaffoldPrompt
         ? () =>
-            activePrompt.select(
+            scaffoldPrompt.select(
               'Select a template',
               getTemplateSelectOptions(),
               1,
             )
         : undefined,
-      selectWithMigrationUi: activePrompt
+      selectWithMigrationUi: scaffoldPrompt
         ? async () =>
-            (await activePrompt.select(
+            (await scaffoldPrompt.select(
               'Enable migration UI support?',
               [...BOOLEAN_PROMPT_OPTIONS],
               2,
             )) === 'yes'
         : undefined,
-      selectWithTestPreset: activePrompt
+      selectWithTestPreset: scaffoldPrompt
         ? async () =>
-            (await activePrompt.select(
+            (await scaffoldPrompt.select(
               'Include the Playwright test preset?',
               [...BOOLEAN_PROMPT_OPTIONS],
               2,
             )) === 'yes'
         : undefined,
-      selectWithWpEnv: activePrompt
+      selectWithWpEnv: scaffoldPrompt
         ? async () =>
-            (await activePrompt.select(
+            (await scaffoldPrompt.select(
               'Include a local wp-env preset?',
               [...BOOLEAN_PROMPT_OPTIONS],
               2,
             )) === 'yes'
         : undefined,
-      templateId: readOptionalLooseStringFlag(flags, 'template'),
+      templateId: resolvedTemplateId,
       textDomain: readOptionalLooseStringFlag(flags, 'text-domain'),
       variant: readOptionalLooseStringFlag(flags, 'variant'),
       withMigrationUi: flags['with-migration-ui'] as boolean | undefined,
