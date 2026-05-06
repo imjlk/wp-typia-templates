@@ -2,7 +2,7 @@ const BLOCK_SLUG_PATTERN = /^[a-z][a-z0-9-]*$/u;
 const PHP_IDENTIFIER_PATTERN = /^[a-z_][a-z0-9_]*$/u;
 const PHP_CONSTANT_IDENTIFIER_PATTERN = /^[A-Z_][A-Z0-9_]*$/u;
 const JAVASCRIPT_IDENTIFIER_PATTERN = /^[A-Za-z_$][\w$]*$/u;
-const QUERY_POST_TYPE_PATTERN = /^[a-z][a-z0-9_-]{0,19}$/u;
+const QUERY_POST_TYPE_PATTERN = /^[a-z0-9_-]{1,20}$/u;
 
 function assertOptionalStringPattern(
 	view: Record<string, unknown>,
