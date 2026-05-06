@@ -18,6 +18,8 @@ test("toKebabCase keeps acronym runs together", () => {
 	expect(toKebabCase("HeroCTABlock")).toBe("hero-cta-block");
 	expect(toKebabCase("JSONAPIResponse")).toBe("json-api-response");
 	expect(toKebabCase("XMLHTTPParser")).toBe("xml-http-parser");
+	expect(toKebabCase("AJAXHandler")).toBe("ajax-handler");
+	expect(toKebabCase("CPTArchive")).toBe("cpt-archive");
 
 	const repeatedIds = `${"ID".repeat(256)}Ab`;
 	expect(toKebabCase(repeatedIds)).toBe(
@@ -25,8 +27,15 @@ test("toKebabCase keeps acronym runs together", () => {
 	);
 });
 
-test("toKebabCase avoids inventing boundaries in acronym-lowercase words", () => {
-	expect(toKebabCase("URLslug")).toBe("urlslug");
+test("toKebabCase splits selected acronym-lowercase slug terms", () => {
+	expect(toKebabCase("URLslug")).toBe("url-slug");
+	expect(toKebabCase("AJAXslug")).toBe("ajax-slug");
+	expect(toKebabCase("CPTslug")).toBe("cpt-slug");
+	expect(toKebabCase("AJAXURLslug")).toBe("ajax-url-slug");
+});
+
+test("toKebabCase keeps naturalized acronym-lowercase words stable", () => {
+	expect(toKebabCase("RESTful")).toBe("restful");
 	expect(toKebabCase("HTTPserver")).toBe("httpserver");
 	expect(toKebabCase("XMLparser")).toBe("xmlparser");
 	expect(toKebabCase("GUIDe")).toBe("guide");

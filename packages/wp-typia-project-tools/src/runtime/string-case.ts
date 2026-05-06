@@ -6,7 +6,9 @@ const COMMON_ACRONYM_PREFIXES = [
   'JSON',
   'REST',
   'UUID',
+  'AJAX',
   'API',
+  'CPT',
   'CSS',
   'CTA',
   'DOM',
@@ -21,12 +23,22 @@ const COMMON_ACRONYM_PREFIXES = [
   'WP',
 ] as const;
 
+// Keep lowercase suffix splitting narrow so naturalized words such as
+// `RESTful` remain stable while WordPress slug terms like `URLslug` read well.
+const COMMON_ACRONYM_LOWERCASE_SUFFIXES = ['slug'] as const;
+
 function capitalizeSegment(segment: string): string {
   return segment.charAt(0).toUpperCase() + segment.slice(1);
 }
 
 function findCommonAcronymPrefix(segment: string): string | undefined {
   return COMMON_ACRONYM_PREFIXES.find((prefix) => segment.startsWith(prefix));
+}
+
+function isCommonAcronymLowercaseSuffix(suffix: string): boolean {
+  return COMMON_ACRONYM_LOWERCASE_SUFFIXES.includes(
+    suffix as (typeof COMMON_ACRONYM_LOWERCASE_SUFFIXES)[number],
+  );
 }
 
 function splitKnownAcronymSegment(segment: string): string {
@@ -40,6 +52,9 @@ function splitKnownAcronymSegment(segment: string): string {
     }
     const suffix = remaining.slice(prefix.length);
     if (/^[A-Z][a-z]/.test(suffix)) {
+      return [...prefixes, prefix, suffix].join('-');
+    }
+    if (/^[a-z]+$/.test(suffix) && isCommonAcronymLowercaseSuffix(suffix)) {
       return [...prefixes, prefix, suffix].join('-');
     }
 
@@ -61,10 +76,8 @@ function splitAcronymBoundary(value: string): string {
 /**
  * Normalize arbitrary text into a kebab-case identifier.
  * Common acronym runs stay grouped, with a boundary before the next
- * capitalized word.
- * Ambiguous acronym+lowercase inputs like `URLslug` intentionally stay as one
- * word because there is no PascalCase boundary marker before the lowercase
- * suffix.
+ * capitalized word or before a narrow allow-list of lowercase WordPress slug
+ * terms. Naturalized words such as `RESTful` intentionally stay as one word.
  *
  * @param input Raw text that may contain spaces, punctuation, or camelCase.
  * @returns A lowercase kebab-case string with collapsed separators.
