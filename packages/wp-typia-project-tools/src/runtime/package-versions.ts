@@ -101,12 +101,28 @@ function createContentFingerprint(source: string): string {
   return (hash >>> 0).toString(16);
 }
 
+function readPackageManifestFile(packageJsonPath: string): {
+  source: string;
+  stats: fs.Stats;
+} {
+  const fileDescriptor = fs.openSync(packageJsonPath, 'r');
+  try {
+    // Keep cache metadata and manifest contents tied to one opened file, so a
+    // concurrent path replacement cannot mix stats from one manifest with
+    // contents from another. The content fingerprint remains the final guard.
+    const stats = fs.fstatSync(fileDescriptor);
+    const source = fs.readFileSync(fileDescriptor, 'utf8');
+    return { source, stats };
+  } finally {
+    fs.closeSync(fileDescriptor);
+  }
+}
+
 function resolvePackageManifestLocation(
   packageJsonPath: string,
 ): PackageManifestLocation {
   try {
-    const stats = fs.statSync(packageJsonPath);
-    const source = fs.readFileSync(packageJsonPath, 'utf8');
+    const { source, stats } = readPackageManifestFile(packageJsonPath);
     return {
       cacheKey: `file:${packageJsonPath}:${stats.ino}:${stats.mtimeMs}:${stats.ctimeMs}:${stats.size}:${createContentFingerprint(source)}`,
       packageJsonPath,
