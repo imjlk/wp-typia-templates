@@ -1,7 +1,8 @@
 import { createHash } from 'node:crypto'
-import fs from 'node:fs'
+import type { Dirent } from 'node:fs'
 import { promises as fsp } from 'node:fs'
 import path from 'node:path'
+import { getNodeErrorCode, pathExists } from './fs-async.js'
 import {
   getExternalTemplateCacheNowMs,
   getExternalTemplateCacheRoot,
@@ -206,15 +207,6 @@ export function createExternalTemplateCacheKey(
     .digest('hex')
 }
 
-async function pathExists(filePath: string): Promise<boolean> {
-  try {
-    await fsp.access(filePath, fs.constants.F_OK)
-    return true
-  } catch {
-    return false
-  }
-}
-
 async function isDirectoryPath(directory: string): Promise<boolean> {
   try {
     const stats = await fsp.lstat(directory)
@@ -222,12 +214,6 @@ async function isDirectoryPath(directory: string): Promise<boolean> {
   } catch {
     return false
   }
-}
-
-function getNodeErrorCode(error: unknown): string {
-  return typeof error === 'object' && error !== null && 'code' in error
-    ? String((error as { code: unknown }).code)
-    : ''
 }
 
 async function removeTemporaryCacheEntry(entryDir: string): Promise<void> {
@@ -679,7 +665,7 @@ export async function pruneExternalTemplateCache(
     return result
   }
 
-  let namespaceEntries: fs.Dirent[]
+  let namespaceEntries: Dirent[]
   try {
     namespaceEntries = await fsp.readdir(cacheRoot, { withFileTypes: true })
   } catch {
@@ -701,7 +687,7 @@ export async function pruneExternalTemplateCache(
       continue
     }
 
-    let cacheEntries: fs.Dirent[]
+    let cacheEntries: Dirent[]
     try {
       cacheEntries = await fsp.readdir(namespaceDir, { withFileTypes: true })
     } catch {
@@ -792,7 +778,7 @@ export async function findReusableExternalTemplateSourceCache(
   const nowMs = getExternalTemplateCacheNowMs(undefined)
   await pruneExternalTemplateCache()
 
-  let entries: fs.Dirent[]
+  let entries: Dirent[]
   try {
     entries = await fsp.readdir(namespaceDir, { withFileTypes: true })
   } catch {

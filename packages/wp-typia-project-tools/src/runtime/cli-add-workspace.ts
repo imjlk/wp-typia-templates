@@ -3,6 +3,10 @@ import path from "node:path";
 
 import type { HookedBlockPositionId } from "./hooked-blocks.js";
 import { pathExists } from "./fs-async.js";
+import {
+	assertFullBlockName,
+	resolveWorkspaceTargetBlockName,
+} from "./block-targets.js";
 import { resolveWorkspaceProject } from "./workspace-project.js";
 import {
 	appendWorkspaceInventoryEntries,
@@ -57,7 +61,6 @@ const BLOCK_TRANSFORMS_CALL_PATTERN =
 	/applyWorkspaceBlockTransforms\s*\(\s*registration\s*\.\s*settings\s*\)\s*;?/u;
 const SCAFFOLD_REGISTRATION_SETTINGS_CALL_PATTERN =
 	/registerScaffoldBlockType\s*\(\s*registration\s*\.\s*name\s*,\s*registration\s*\.\s*settings\s*\)\s*;?/u;
-const FULL_BLOCK_NAME_PATTERN = /^[a-z0-9-]+\/[a-z0-9-]+$/u;
 
 function isIdentifierBoundary(source: string, index: number): boolean {
 	if (index < 0 || index >= source.length) {
@@ -584,53 +587,6 @@ async function writeBlockTransformRegistry(
 		buildBlockTransformIndexSource(nextTransformSlugs),
 		"utf8",
 	);
-}
-
-function assertFullBlockName(blockName: string, flagName: string): string {
-	const trimmed = blockName.trim();
-	if (!trimmed) {
-		throw new Error(`\`${flagName}\` requires a block name.`);
-	}
-	if (!FULL_BLOCK_NAME_PATTERN.test(trimmed)) {
-		throw new Error(`\`${flagName}\` must use <namespace/block-slug> format.`);
-	}
-
-	return trimmed;
-}
-
-function resolveWorkspaceTargetBlockName(
-	blockName: string,
-	namespace: string,
-	flagName: string,
-): { blockName: string; blockSlug: string } {
-	const trimmed = blockName.trim();
-	if (!trimmed) {
-		throw new Error(`\`${flagName}\` requires <block-slug|namespace/block-slug>.`);
-	}
-
-	const blockNameSegments = trimmed.split("/");
-	if (
-		blockNameSegments.length > 2 ||
-		blockNameSegments.some((segment) => segment.trim() === "")
-	) {
-		throw new Error(`\`${flagName}\` must use <block-slug|namespace/block-slug> format.`);
-	}
-
-	const [maybeNamespace, maybeSlug] =
-		blockNameSegments.length === 2
-			? blockNameSegments
-			: [undefined, blockNameSegments[0]];
-	if (maybeNamespace && maybeNamespace !== namespace) {
-		throw new Error(
-			`\`${flagName}\` references namespace "${maybeNamespace}". Expected "${namespace}".`,
-		);
-	}
-
-	const blockSlug = normalizeBlockSlug(maybeSlug ?? "");
-	return {
-		blockName: `${namespace}/${blockSlug}`,
-		blockSlug,
-	};
 }
 
 /**

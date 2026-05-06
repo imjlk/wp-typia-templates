@@ -6,6 +6,7 @@ import ts from "typescript";
 
 import { REST_RESOURCE_METHOD_IDS } from "./cli-add-shared.js";
 import { escapeRegex } from "./php-utils.js";
+import { getPropertyNameText } from "./ts-property-names.js";
 
 export interface WorkspaceBlockInventoryEntry {
 	apiTypesFile?: string;
@@ -803,14 +804,6 @@ const INVENTORY_SECTIONS: readonly InventorySectionDescriptor[] = [
 		},
 	},
 ];
-
-function getPropertyNameText(name: ts.PropertyName): string | null {
-	if (ts.isIdentifier(name) || ts.isStringLiteral(name)) {
-		return name.text;
-	}
-
-	return null;
-}
 
 function findExportedArrayLiteral(
 	sourceFile: ts.SourceFile,
