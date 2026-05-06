@@ -5,6 +5,10 @@ import {
 	getTemplateVariables,
 } from "../src/runtime/index.js";
 import {
+	getScaffoldAlternateRenderTargets,
+	isCompoundPersistenceEnabled,
+} from "../src/runtime/scaffold-template-variable-groups.js";
+import {
 	buildTemplateVariablesFromBlockSpec,
 	createBuiltInBlockSpec,
 } from "../src/runtime/block-generator-service-spec.js";
@@ -63,12 +67,18 @@ describe("scaffold template variable groups", () => {
 			throw new Error("Expected compound group to be enabled");
 		}
 		expect(groups.compound.persistenceEnabled).toBe(true);
+		expect(isCompoundPersistenceEnabled(variables)).toBe(true);
 		expect(groups.compound.innerBlocks.preset).toBe("horizontal");
-			expect(groups.alternateRenderTargets.enabled).toBe(true);
-			expect(groups.alternateRenderTargets.targets).toEqual(["email", "mjml"]);
-			expect(groups.alternateRenderTargets.hasEmail).toBe(true);
-			expect(groups.alternateRenderTargets.hasMjml).toBe(true);
-			expect(groups.alternateRenderTargets.hasPlainText).toBe(false);
+		expect(variables.compoundPersistenceEnabled).toBe("true");
+		expect(typeof groups.compound.persistenceEnabled).toBe("boolean");
+		expect(groups.alternateRenderTargets.enabled).toBe(true);
+		expect(groups.alternateRenderTargets.targets).toEqual(["email", "mjml"]);
+		expect(groups.alternateRenderTargets.hasEmail).toBe(true);
+		expect(groups.alternateRenderTargets.hasMjml).toBe(true);
+		expect(groups.alternateRenderTargets.hasPlainText).toBe(false);
+		expect(getScaffoldAlternateRenderTargets(variables).hasEmail).toBe(true);
+		expect(variables.hasAlternateEmailRenderTarget).toBe("true");
+		expect(typeof groups.alternateRenderTargets.hasEmail).toBe("boolean");
 		expect(groups.persistence.enabled).toBe(true);
 		if (!groups.persistence.enabled) {
 			throw new Error("Expected persistence group to be enabled");

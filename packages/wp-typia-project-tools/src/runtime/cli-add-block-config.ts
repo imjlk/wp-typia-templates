@@ -5,6 +5,7 @@ import {
 } from "./template-registry.js";
 import type { MigrationBlockConfig } from "./migration-types.js";
 import type { ScaffoldTemplateVariables } from "./scaffold.js";
+import { isCompoundPersistenceEnabled } from "./scaffold-template-variable-groups.js";
 import {
 	type AddBlockTemplateId,
 	quoteTsString,
@@ -127,7 +128,7 @@ export function buildConfigEntries(
 		return [buildPersistenceBlockConfigEntry(variables)];
 	}
 
-	if (variables.compoundPersistenceEnabled === "true") {
+	if (isCompoundPersistenceEnabled(variables)) {
 		return [
 			buildPersistenceBlockConfigEntry(variables),
 			buildCompoundChildConfigEntry(variables),

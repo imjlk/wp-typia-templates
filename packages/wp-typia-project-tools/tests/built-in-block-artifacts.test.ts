@@ -966,6 +966,40 @@ describe('built-in block artifacts', () => {
     },
   );
 
+  test('built-in code artifact builders assert target-language identifiers locally', () => {
+    const { variables } = buildArtifacts('basic');
+    const unsafeVariables = {
+      ...variables,
+      phpPrefix: '123-bad-prefix',
+    } as typeof variables;
+
+    expect(() =>
+      buildBuiltInCodeArtifacts({
+        templateId: 'basic',
+        variables: unsafeVariables,
+      }),
+    ).toThrow('Unsafe scaffold template variable "phpPrefix" for PHP identifier');
+  });
+
+  test('built-in query-loop builders accept CLI-valid post type identifiers', () => {
+    const answers = buildAnswers('query-loop');
+    answers.queryPostType = '3d-model';
+    const spec = createBuiltInBlockSpec({
+      answers,
+      templateId: 'query-loop',
+    });
+    const variables = buildTemplateVariablesFromBlockSpec(spec);
+    const codeArtifacts = buildBuiltInCodeArtifacts({
+      templateId: 'query-loop',
+      variables,
+    });
+
+    expect(
+      codeArtifacts.find((artifact) => artifact.relativePath === 'src/index.ts')
+        ?.source,
+    ).toContain('postType: "3d-model"');
+  });
+
   test('compound persistence render emitter quotes heading fallbacks safely', () => {
     const answers = buildAnswers('compound');
     answers.title = `John's "Compound"`;

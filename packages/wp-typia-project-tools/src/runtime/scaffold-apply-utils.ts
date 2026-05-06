@@ -54,6 +54,7 @@ import type {
 	ScaffoldProgressEvent,
 	ScaffoldTemplateVariables,
 } from "./scaffold.js";
+import { isCompoundPersistenceEnabled } from "./scaffold-template-variable-groups.js";
 export { buildGitignore, buildReadme, mergeTextLines } from "./scaffold-documents.js";
 
 export interface InstallDependenciesOptions {
@@ -197,7 +198,7 @@ export async function seedBuiltInPersistenceArtifacts(
 ): Promise<void> {
 	const needsPersistenceArtifacts =
 		templateId === "persistence" ||
-		(templateId === "compound" && variables.compoundPersistenceEnabled === "true");
+		(templateId === "compound" && isCompoundPersistenceEnabled(variables));
 
 	if (!needsPersistenceArtifacts) {
 		return;
@@ -442,7 +443,7 @@ export async function applyBuiltInScaffoldProjectFiles({
 	);
 	await normalizePackageJson(projectDir, packageManager);
 	await applyGeneratedProjectDxPackageJson({
-		compoundPersistenceEnabled: variables.compoundPersistenceEnabled === "true",
+		compoundPersistenceEnabled: isCompoundPersistenceEnabled(variables),
 		packageManager,
 		projectDir,
 		templateId,

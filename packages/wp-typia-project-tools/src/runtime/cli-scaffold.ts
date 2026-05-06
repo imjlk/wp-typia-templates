@@ -14,6 +14,7 @@ import {
 } from "./scaffold.js";
 import { parseAlternateRenderTargets } from "./alternate-render-targets.js";
 import { parseCompoundInnerBlocksPreset } from "./compound-inner-blocks.js";
+import { isCompoundPersistenceEnabled } from "./scaffold-template-variable-groups.js";
 import {
 	formatInstallCommand,
 	formatRunScript,
@@ -806,8 +807,9 @@ export async function runScaffoldFlow({
 				availableScripts,
 				packageManager: resolvedPackageManager,
 				templateId: resolvedTemplateId,
-				compoundPersistenceEnabled:
-					resolvedResult.result.variables.compoundPersistenceEnabled === "true",
+				compoundPersistenceEnabled: isCompoundPersistenceEnabled(
+					resolvedResult.result.variables,
+				),
 			}),
 			plan: resolvedResult.plan,
 			projectDir,

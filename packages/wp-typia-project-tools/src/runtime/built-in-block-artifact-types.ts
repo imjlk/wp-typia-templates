@@ -1,6 +1,7 @@
 import type {
 	ScaffoldTemplateVariables,
 } from "./scaffold.js";
+import { isCompoundPersistenceEnabled } from "./scaffold-template-variable-groups.js";
 
 interface AttributeDescription {
 	lines: string[];
@@ -293,7 +294,7 @@ export function buildCompoundTypesSource(
 	variables: ScaffoldTemplateVariables,
 	attributes: readonly EmittedAttributeDefinition[],
 ): string {
-	const persistenceEnabled = variables.compoundPersistenceEnabled === "true";
+	const persistenceEnabled = isCompoundPersistenceEnabled(variables);
 
 	return emitTypesModule({
 		preambleLines: persistenceEnabled

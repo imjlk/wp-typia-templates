@@ -1,5 +1,6 @@
 import type { BuiltInCodeArtifact } from "./built-in-block-code-artifacts.js";
 import type { ScaffoldTemplateVariables } from "./scaffold.js";
+import { assertScaffoldTemplateCodeIdentifiers } from "./scaffold-template-assertions.js";
 import { renderMustacheTemplateString } from "./template-render.js";
 
 /**
@@ -15,6 +16,7 @@ export function renderArtifact(
 	template: string,
 	view: Record<string, unknown>,
 ): BuiltInCodeArtifact {
+	assertScaffoldTemplateCodeIdentifiers(view);
 	const source = renderMustacheTemplateString(template, view);
 	return {
 		relativePath,
