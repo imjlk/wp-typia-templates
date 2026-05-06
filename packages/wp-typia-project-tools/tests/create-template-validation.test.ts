@@ -41,7 +41,10 @@ describe("create template boundary validation", () => {
 	test("keeps explicit external template locators for downstream resolution", () => {
 		const externalTemplateIds = [
 			"./templates/custom",
+			String.raw`.\templates\custom`,
 			"../templates/custom",
+			String.raw`..\templates\custom`,
+			String.raw`templates\custom`,
 			"/tmp/wp-typia-template",
 			String.raw`C:\templates\wp-typia-template`,
 			"github:owner/repo/templates/basic#main",

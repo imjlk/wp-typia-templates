@@ -31,7 +31,7 @@ const USER_FACING_TEMPLATE_IDS = [
 	OFFICIAL_WORKSPACE_TEMPLATE_ALIAS,
 ] as const;
 
-export function normalizeCreateTemplateSelection(templateId: string): string {
+function normalizeCreateTemplateSelection(templateId: string): string {
 	return templateId === OFFICIAL_WORKSPACE_TEMPLATE_ALIAS
 		? OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE
 		: templateId;
@@ -48,14 +48,17 @@ function looksLikeExplicitNonNpmExternalTemplateLocator(
 		path.isAbsolute(templateId) ||
 		looksLikeWindowsAbsoluteTemplatePath(templateId) ||
 		templateId.startsWith("./") ||
+		templateId.startsWith(".\\") ||
 		templateId.startsWith("../") ||
+		templateId.startsWith("..\\") ||
 		templateId.startsWith("@") ||
 		templateId.startsWith("github:") ||
-		templateId.includes("/")
+		templateId.includes("/") ||
+		templateId.includes("\\")
 	);
 }
 
-export function looksLikeExplicitCreateExternalTemplateLocator(
+function looksLikeExplicitCreateExternalTemplateLocator(
 	templateId: string,
 ): boolean {
 	return (
