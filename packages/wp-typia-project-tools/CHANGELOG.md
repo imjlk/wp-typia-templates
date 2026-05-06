@@ -1,5 +1,20 @@
 # @wp-typia/project-tools
 
+## 0.22.8 — 2026-05-06
+
+### Patch changes
+
+- [0a1c9e1](https://github.com/imjlk/wp-typia/commit/0a1c9e1efd8412e1eb3cd081c8b088bf01f25e94) Use typed scaffold variable groups for boolean scaffold decisions and assert generated identifier safety at built-in template render boundaries. — Thanks @imjlk!
+- [b518f20](https://github.com/imjlk/wp-typia/commit/b518f205d271f68cee14075c7a6b06cc26e17548) Use crypto-backed randomness for external template cache staging directory names. — Thanks @imjlk!
+- [1131748](https://github.com/imjlk/wp-typia/commit/1131748865c7a9632ff89ffcbeb0058bf46782cb) Keep double-quoted PHP interpolation blocks in string scan mode. — Thanks @imjlk!
+- [2a0f819](https://github.com/imjlk/wp-typia/commit/2a0f819d565d9c66088e0f6a081f37384384fd98) Read workspace inventory asynchronously in add workflow hot paths. — Thanks @imjlk!
+- [ca8c31f](https://github.com/imjlk/wp-typia/commit/ca8c31f3e998da8d4a919dc1c4a7464ddfbcb45b) Tag scaffold identifier and MCP schema validation failures with stable CLI diagnostic codes. — Thanks @imjlk!
+- [369fb19](https://github.com/imjlk/wp-typia/commit/369fb1914c3162209d19077b3eb88cee2141397c) Split external template cache policy helpers into a focused runtime module. — Thanks @imjlk!
+- [adf8ddb](https://github.com/imjlk/wp-typia/commit/adf8ddb9ae5fd430478ced0e1bcf7fcb5b8626b2) Consolidate runtime filesystem, property-name, and block target helpers. — Thanks @imjlk!
+- [3e5c11c](https://github.com/imjlk/wp-typia/commit/3e5c11c31e57ce7c3a64fbc9111a73754af20af1) Read package manifest cache metadata and contents through one file descriptor. — Thanks @imjlk!
+- [5c793a8](https://github.com/imjlk/wp-typia/commit/5c793a8c8ce05d8cc69066d906eb346141d198c0) Validate explicit create template ids before entering the full scaffold flow. — Thanks @imjlk!
+- [e0dcddd](https://github.com/imjlk/wp-typia/commit/e0dcdddbbcd77504e2730eeea86741f81d3a0a64) Improve WordPress acronym slug normalization for selected lowercase slug suffixes. — Thanks @imjlk!
+
 ## 0.22.7 — 2026-05-05
 
 ### Patch changes
