@@ -44,8 +44,10 @@ import {
 	appendPhpSnippetBeforeClosingTag,
 	insertPhpSnippetBeforeWorkspaceAnchors,
 } from "./cli-add-workspace-mutation.js";
+import { resolveWorkspaceBlockTargetName } from "./block-targets.js";
 import { pathExists, readOptionalUtf8File } from "./fs-async.js";
 import { normalizeOptionalCliString } from "./cli-validation.js";
+import { getPropertyNameText } from "./ts-property-names.js";
 
 const PATTERN_BOOTSTRAP_CATEGORY = "register_block_pattern_category";
 const BINDING_SOURCE_SERVER_GLOB = "/src/bindings/*/server.php";
@@ -100,42 +102,6 @@ function assertValidBindingAttributeName(attributeName: string): string {
 	}
 
 	return trimmed;
-}
-
-function resolveBindingTargetBlockSlug(
-	blockName: string,
-	namespace: string,
-): string {
-	const trimmed = blockName.trim();
-	if (!trimmed) {
-		throw new Error(
-			"`wp-typia add binding-source` requires --block <block-slug|namespace/block-slug> to include a value when --attribute is provided.",
-		);
-	}
-
-	const blockNameSegments = trimmed.split("/");
-	if (blockNameSegments.length > 2) {
-		throw new Error(
-			`Binding target block "${trimmed}" must use <block-slug> or <namespace/block-slug> format.`,
-		);
-	}
-	if (blockNameSegments.some((segment) => segment.trim() === "")) {
-		throw new Error(
-			`Binding target block "${trimmed}" must use <block-slug> or <namespace/block-slug> format without empty path segments.`,
-		);
-	}
-
-	const [maybeNamespace, maybeSlug] =
-		blockNameSegments.length === 2
-			? blockNameSegments
-			: [undefined, blockNameSegments[0]];
-	if (maybeNamespace && maybeNamespace !== namespace) {
-		throw new Error(
-			`Binding target block "${trimmed}" uses namespace "${maybeNamespace}". Expected "${namespace}".`,
-		);
-	}
-
-	return normalizeBlockSlug(maybeSlug ?? "");
 }
 
 function buildEditorPluginConfigEntry(
@@ -338,9 +304,20 @@ function resolveBindingTarget(
 		);
 	}
 
+	const targetBlock = resolveWorkspaceBlockTargetName(blockName ?? "", namespace, {
+		empty: () =>
+			"`wp-typia add binding-source` requires --block <block-slug|namespace/block-slug> to include a value when --attribute is provided.",
+		emptySegment: (input) =>
+			`Binding target block "${input}" must use <block-slug> or <namespace/block-slug> format without empty path segments.`,
+		invalidFormat: (input) =>
+			`Binding target block "${input}" must use <block-slug> or <namespace/block-slug> format.`,
+		namespaceMismatch: (input, actualNamespace, expectedNamespace) =>
+			`Binding target block "${input}" uses namespace "${actualNamespace}". Expected "${expectedNamespace}".`,
+	});
+
 	return {
 		attributeName: assertValidBindingAttributeName(attributeName ?? ""),
-		blockSlug: resolveBindingTargetBlockSlug(blockName ?? "", namespace),
+		blockSlug: targetBlock.blockSlug,
 	};
 }
 
@@ -382,14 +359,6 @@ function getInterfaceDeclaration(
 	visit(sourceFile);
 
 	return declaration ? { declaration, sourceFile } : undefined;
-}
-
-function getPropertyNameText(name: ts.PropertyName): string | undefined {
-	if (ts.isIdentifier(name) || ts.isStringLiteral(name) || ts.isNumericLiteral(name)) {
-		return name.text;
-	}
-
-	return undefined;
 }
 
 function interfaceHasAttributeMember(
