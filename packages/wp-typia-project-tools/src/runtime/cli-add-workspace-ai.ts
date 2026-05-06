@@ -6,7 +6,7 @@ import {
 	type RunAddAiFeatureCommandOptions,
 } from "./cli-add-shared.js";
 import { scaffoldAiFeatureWorkspace } from "./cli-add-workspace-ai-scaffold.js";
-import { readWorkspaceInventory } from "./workspace-inventory.js";
+import { readWorkspaceInventoryAsync } from "./workspace-inventory.js";
 import { resolveWorkspaceProject } from "./workspace-project.js";
 import {
 	OPTIONAL_WORDPRESS_AI_CLIENT_COMPATIBILITY,
@@ -44,7 +44,7 @@ export async function runAddAiFeatureCommand({
 		OPTIONAL_WORDPRESS_AI_CLIENT_COMPATIBILITY,
 	);
 
-	const inventory = readWorkspaceInventory(workspace.projectDir);
+	const inventory = await readWorkspaceInventoryAsync(workspace.projectDir);
 	assertAiFeatureDoesNotExist(workspace.projectDir, aiFeatureSlug, inventory);
 
 	const scaffoldResult = await scaffoldAiFeatureWorkspace({

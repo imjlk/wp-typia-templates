@@ -1,4 +1,3 @@
-import fs from "node:fs";
 import { promises as fsp } from "node:fs";
 import path from "node:path";
 
@@ -12,8 +11,8 @@ import {
 	type WorkspaceProject,
 } from "./workspace-project.js";
 import {
-	readWorkspaceInventory,
 	appendWorkspaceInventoryEntries,
+	readWorkspaceInventoryAsync,
 	type WorkspaceInventory,
 } from "./workspace-inventory.js";
 import { toPascalCase, toTitleCase } from "./string-case.js";
@@ -45,6 +44,7 @@ import {
 	appendPhpSnippetBeforeClosingTag,
 	insertPhpSnippetBeforeWorkspaceAnchors,
 } from "./cli-add-workspace-mutation.js";
+import { pathExists, readOptionalUtf8File } from "./fs-async.js";
 import { normalizeOptionalCliString } from "./cli-validation.js";
 
 const PATTERN_BOOTSTRAP_CATEGORY = "register_block_pattern_category";
@@ -960,11 +960,17 @@ async function ensureEditorPluginWebpackAnchors(workspace: WorkspaceProject): Pr
 	});
 }
 
-function resolveBindingSourceRegistryPath(projectDir: string): string {
+async function resolveBindingSourceRegistryPath(projectDir: string): Promise<string> {
 	const bindingsDir = path.join(projectDir, "src", "bindings");
-	return [path.join(bindingsDir, "index.ts"), path.join(bindingsDir, "index.js")].find(
-		(candidatePath) => fs.existsSync(candidatePath),
-	) ?? path.join(bindingsDir, "index.ts");
+	for (const candidatePath of [
+		path.join(bindingsDir, "index.ts"),
+		path.join(bindingsDir, "index.js"),
+	]) {
+		if (await pathExists(candidatePath)) {
+			return candidatePath;
+		}
+	}
+	return path.join(bindingsDir, "index.ts");
 }
 
 async function writeBindingSourceRegistry(
@@ -972,11 +978,10 @@ async function writeBindingSourceRegistry(
 	bindingSourceSlug: string,
 ): Promise<void> {
 	const bindingsDir = path.join(projectDir, "src", "bindings");
-	const bindingsIndexPath = resolveBindingSourceRegistryPath(projectDir);
+	const bindingsIndexPath = await resolveBindingSourceRegistryPath(projectDir);
 	await fsp.mkdir(bindingsDir, { recursive: true });
 
-	const existingBindingSourceSlugs = fs
-		.readdirSync(bindingsDir, { withFileTypes: true })
+	const existingBindingSourceSlugs = (await fsp.readdir(bindingsDir, { withFileTypes: true }))
 		.filter((entry) => entry.isDirectory())
 		.map((entry) => entry.name);
 	const nextBindingSourceSlugs = Array.from(
@@ -989,20 +994,25 @@ async function writeBindingSourceRegistry(
 	);
 }
 
-function resolveEditorPluginRegistryPath(projectDir: string): string {
+async function resolveEditorPluginRegistryPath(projectDir: string): Promise<string> {
 	const editorPluginsDir = path.join(projectDir, "src", "editor-plugins");
-	return [
+	for (const candidatePath of [
 		path.join(editorPluginsDir, "index.ts"),
 		path.join(editorPluginsDir, "index.js"),
-	].find((candidatePath) => fs.existsSync(candidatePath)) ?? path.join(editorPluginsDir, "index.ts");
+	]) {
+		if (await pathExists(candidatePath)) {
+			return candidatePath;
+		}
+	}
+	return path.join(editorPluginsDir, "index.ts");
 }
 
-function readEditorPluginRegistrySlugs(registryPath: string): string[] {
-	if (!fs.existsSync(registryPath)) {
+async function readEditorPluginRegistrySlugs(registryPath: string): Promise<string[]> {
+	const source = await readOptionalUtf8File(registryPath);
+	if (source === null) {
 		return [];
 	}
 
-	const source = fs.readFileSync(registryPath, "utf8");
 	return Array.from(
 		source.matchAll(
 			/^\s*import\s+['"]\.\/([^/'"]+)(?:\/index(?:\.[cm]?[jt]sx?)?)?['"];?\s*$/gmu,
@@ -1015,13 +1025,13 @@ async function writeEditorPluginRegistry(
 	editorPluginSlug: string,
 ): Promise<void> {
 	const editorPluginsDir = path.join(projectDir, "src", "editor-plugins");
-	const registryPath = resolveEditorPluginRegistryPath(projectDir);
+	const registryPath = await resolveEditorPluginRegistryPath(projectDir);
 	await fsp.mkdir(editorPluginsDir, { recursive: true });
 
-	const existingEditorPluginSlugs = readWorkspaceInventory(projectDir).editorPlugins.map((entry) =>
-		entry.slug,
-	);
-	const existingRegistrySlugs = readEditorPluginRegistrySlugs(registryPath);
+	const existingEditorPluginSlugs = (
+		await readWorkspaceInventoryAsync(projectDir)
+	).editorPlugins.map((entry) => entry.slug);
+	const existingRegistrySlugs = await readEditorPluginRegistrySlugs(registryPath);
 	const nextEditorPluginSlugs = Array.from(
 		new Set([...existingEditorPluginSlugs, ...existingRegistrySlugs, editorPluginSlug]),
 	).sort();
@@ -1064,13 +1074,15 @@ export async function runAddEditorPluginCommand({
 	);
 	const resolvedSlot = assertValidEditorPluginSlot(slot);
 
-	const inventory = readWorkspaceInventory(workspace.projectDir);
+	const inventory = await readWorkspaceInventoryAsync(workspace.projectDir);
 	assertEditorPluginDoesNotExist(workspace.projectDir, editorPluginSlug, inventory);
 
 	const blockConfigPath = path.join(workspace.projectDir, "scripts", "block-config.ts");
 	const bootstrapPath = getWorkspaceBootstrapPath(workspace);
 	const buildScriptPath = path.join(workspace.projectDir, "scripts", "build-workspace.mjs");
-	const editorPluginsIndexPath = resolveEditorPluginRegistryPath(workspace.projectDir);
+	const editorPluginsIndexPath = await resolveEditorPluginRegistryPath(
+		workspace.projectDir,
+	);
 	const webpackConfigPath = path.join(workspace.projectDir, "webpack.config.js");
 	const editorPluginDir = path.join(
 		workspace.projectDir,
@@ -1176,7 +1188,7 @@ export async function runAddPatternCommand({
 		"wp-typia add pattern <name>",
 	);
 
-	const inventory = readWorkspaceInventory(workspace.projectDir);
+	const inventory = await readWorkspaceInventoryAsync(workspace.projectDir);
 	assertPatternDoesNotExist(workspace.projectDir, patternSlug, inventory);
 
 	const blockConfigPath = path.join(workspace.projectDir, "scripts", "block-config.ts");
@@ -1252,7 +1264,7 @@ export async function runAddBindingSourceCommand({
 		"wp-typia add binding-source <name> [--block <block-slug|namespace/block-slug> --attribute <attribute>]",
 	);
 
-	const inventory = readWorkspaceInventory(workspace.projectDir);
+	const inventory = await readWorkspaceInventoryAsync(workspace.projectDir);
 	assertBindingSourceDoesNotExist(workspace.projectDir, bindingSourceSlug, inventory);
 	const target = resolveBindingTarget(
 		{
@@ -1265,7 +1277,7 @@ export async function runAddBindingSourceCommand({
 
 	const blockConfigPath = path.join(workspace.projectDir, "scripts", "block-config.ts");
 	const bootstrapPath = getWorkspaceBootstrapPath(workspace);
-	const bindingsIndexPath = resolveBindingSourceRegistryPath(workspace.projectDir);
+	const bindingsIndexPath = await resolveBindingSourceRegistryPath(workspace.projectDir);
 	const bindingSourceDir = path.join(workspace.projectDir, "src", "bindings", bindingSourceSlug);
 	const serverFilePath = path.join(bindingSourceDir, "server.php");
 	const editorFilePath = path.join(bindingSourceDir, "editor.ts");

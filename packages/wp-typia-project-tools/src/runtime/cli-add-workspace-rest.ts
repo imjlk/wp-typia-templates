@@ -31,7 +31,7 @@ import { syncRestResourceArtifacts } from "./rest-resource-artifacts.js";
 import { toPascalCase, toTitleCase } from "./string-case.js";
 import {
 	appendWorkspaceInventoryEntries,
-	readWorkspaceInventory,
+	readWorkspaceInventoryAsync,
 } from "./workspace-inventory.js";
 import { resolveWorkspaceProject } from "./workspace-project.js";
 
@@ -501,7 +501,7 @@ export async function runAddRestResourceCommand({
 		namespace,
 	);
 
-	const inventory = readWorkspaceInventory(workspace.projectDir);
+	const inventory = await readWorkspaceInventoryAsync(workspace.projectDir);
 	assertRestResourceDoesNotExist(workspace.projectDir, restResourceSlug, inventory);
 
 	const blockConfigPath = path.join(workspace.projectDir, "scripts", "block-config.ts");

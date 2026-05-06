@@ -4,7 +4,12 @@ import * as path from "node:path";
 import { cleanupScaffoldTempRoot, createScaffoldTempRoot, entryPath, getCommandErrorMessage, linkWorkspaceNodeModules, parseJsonObjectFromOutput, runCli, scaffoldOfficialWorkspace, stripPhpFunction, workspaceTemplatePackageManifest } from "./helpers/scaffold-test-harness.js";
 import { scaffoldProject } from "../src/runtime/index.js";
 import { getDoctorChecks } from "../src/runtime/cli-core.js";
-import { parseWorkspaceInventorySource, updateWorkspaceInventorySource } from "../src/runtime/workspace-inventory.js";
+import {
+  parseWorkspaceInventorySource,
+  readWorkspaceInventory,
+  readWorkspaceInventoryAsync,
+  updateWorkspaceInventorySource,
+} from "../src/runtime/workspace-inventory.js";
 
 describe("@wp-typia/project-tools workspace doctor", () => {
   const tempRoot = createScaffoldTempRoot("wp-typia-workspace-doctor-");
@@ -740,6 +745,27 @@ export const REST_RESOURCES = [
 ];
 `)
   ).toThrow("REST_RESOURCES[0].methods includes unsupported values: publish.");
+});
+
+test("async workspace inventory reader matches the sync compatibility reader", async () => {
+  const projectDir = path.join(tempRoot, "workspace-inventory-async-reader");
+  const scriptsDir = path.join(projectDir, "scripts");
+  fs.mkdirSync(scriptsDir, { recursive: true });
+  fs.writeFileSync(
+    path.join(scriptsDir, "block-config.ts"),
+    `export const BLOCKS = [
+\t{
+\t\tslug: "counter-card",
+\t\ttypesFile: "src/blocks/counter-card/types.ts",
+\t},
+];
+`,
+    "utf8"
+  );
+
+  await expect(readWorkspaceInventoryAsync(projectDir)).resolves.toEqual(
+    readWorkspaceInventory(projectDir)
+  );
 });
 
 test("workspace inventory repair avoids duplicating existing section constants", () => {

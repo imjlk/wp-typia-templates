@@ -4,7 +4,10 @@ import path from "node:path";
 import type { HookedBlockPositionId } from "./hooked-blocks.js";
 import { pathExists } from "./fs-async.js";
 import { resolveWorkspaceProject } from "./workspace-project.js";
-import { appendWorkspaceInventoryEntries, readWorkspaceInventory } from "./workspace-inventory.js";
+import {
+	appendWorkspaceInventoryEntries,
+	readWorkspaceInventoryAsync,
+} from "./workspace-inventory.js";
 import { toKebabCase, toSnakeCase, toTitleCase } from "./string-case.js";
 import {
 	assertBlockStyleDoesNotExist,
@@ -695,7 +698,7 @@ export async function runAddVariationCommand({
 		"wp-typia add variation <name> --block <block-slug>",
 	);
 
-	const inventory = readWorkspaceInventory(workspace.projectDir);
+	const inventory = await readWorkspaceInventoryAsync(workspace.projectDir);
 	resolveWorkspaceBlock(inventory, blockSlug);
 	assertVariationDoesNotExist(workspace.projectDir, blockSlug, variationSlug, inventory);
 
@@ -775,7 +778,7 @@ export async function runAddBlockStyleCommand({
 		"wp-typia add style <name> --block <block-slug>",
 	);
 
-	const inventory = readWorkspaceInventory(workspace.projectDir);
+	const inventory = await readWorkspaceInventoryAsync(workspace.projectDir);
 	resolveWorkspaceBlock(inventory, blockSlug);
 	assertBlockStyleDoesNotExist(workspace.projectDir, blockSlug, styleSlug, inventory);
 
@@ -871,7 +874,7 @@ export async function runAddBlockTransformCommand({
 		"--to",
 	);
 
-	const inventory = readWorkspaceInventory(workspace.projectDir);
+	const inventory = await readWorkspaceInventoryAsync(workspace.projectDir);
 	resolveWorkspaceBlock(inventory, target.blockSlug);
 	assertBlockTransformDoesNotExist(
 		workspace.projectDir,
@@ -976,7 +979,7 @@ export async function runAddHookedBlockCommand({
 }> {
 	const workspace = resolveWorkspaceProject(cwd);
 	const blockSlug = normalizeBlockSlug(blockName);
-	const inventory = readWorkspaceInventory(workspace.projectDir);
+	const inventory = await readWorkspaceInventoryAsync(workspace.projectDir);
 	resolveWorkspaceBlock(inventory, blockSlug);
 
 	const resolvedAnchorBlockName = assertValidHookAnchor(anchorBlockName);

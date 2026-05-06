@@ -1,11 +1,11 @@
-import fs from 'node:fs';
 import { promises as fsp } from 'node:fs';
 import path from 'node:path';
 
 import type { WorkspaceProject } from './workspace-project.js';
+import { pathExists, readOptionalUtf8File } from './fs-async.js';
 import {
   appendWorkspaceInventoryEntries,
-  readWorkspaceInventory,
+  readWorkspaceInventoryAsync,
 } from './workspace-inventory.js';
 import {
   buildAdminViewConfigEntry,
@@ -266,23 +266,25 @@ async function ensureAdminViewWebpackAnchors(
   });
 }
 
-function resolveAdminViewRegistryPath(projectDir: string): string {
+async function resolveAdminViewRegistryPath(projectDir: string): Promise<string> {
   const adminViewsDir = path.join(projectDir, 'src', 'admin-views');
-  return (
-    [
-      path.join(adminViewsDir, 'index.ts'),
-      path.join(adminViewsDir, 'index.js'),
-    ].find((candidatePath) => fs.existsSync(candidatePath)) ??
-    path.join(adminViewsDir, 'index.ts')
-  );
+  for (const candidatePath of [
+    path.join(adminViewsDir, 'index.ts'),
+    path.join(adminViewsDir, 'index.js'),
+  ]) {
+    if (await pathExists(candidatePath)) {
+      return candidatePath;
+    }
+  }
+  return path.join(adminViewsDir, 'index.ts');
 }
 
-function readAdminViewRegistrySlugs(registryPath: string): string[] {
-  if (!fs.existsSync(registryPath)) {
+async function readAdminViewRegistrySlugs(registryPath: string): Promise<string[]> {
+  const source = await readOptionalUtf8File(registryPath);
+  if (source === null) {
     return [];
   }
 
-  const source = fs.readFileSync(registryPath, 'utf8');
   return Array.from(
     source.matchAll(
       /^\s*import\s+['"]\.\/([^/'"]+)(?:\/index(?:\.[cm]?[jt]sx?)?)?['"];?\s*$/gmu,
@@ -295,13 +297,13 @@ async function writeAdminViewRegistry(
   adminViewSlug: string,
 ): Promise<void> {
   const adminViewsDir = path.join(projectDir, 'src', 'admin-views');
-  const registryPath = resolveAdminViewRegistryPath(projectDir);
+  const registryPath = await resolveAdminViewRegistryPath(projectDir);
   await fsp.mkdir(adminViewsDir, { recursive: true });
 
-  const existingAdminViewSlugs = readWorkspaceInventory(
-    projectDir,
+  const existingAdminViewSlugs = (
+    await readWorkspaceInventoryAsync(projectDir)
   ).adminViews.map((entry) => entry.slug);
-  const existingRegistrySlugs = readAdminViewRegistrySlugs(registryPath);
+  const existingRegistrySlugs = await readAdminViewRegistrySlugs(registryPath);
   const nextAdminViewSlugs = Array.from(
     new Set([
       ...existingAdminViewSlugs,
@@ -346,7 +348,7 @@ export async function scaffoldAdminViewWorkspace(options: {
     workspace.projectDir,
     'webpack.config.js',
   );
-  const adminViewsIndexPath = resolveAdminViewRegistryPath(
+  const adminViewsIndexPath = await resolveAdminViewRegistryPath(
     workspace.projectDir,
   );
   const adminViewDir = path.join(
