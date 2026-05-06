@@ -34,3 +34,15 @@ test('template source cache delegates environment policy to a focused module', (
     /export\s+function\s+resolveExternalTemplateCacheTtlMs\s*\(/,
   )
 })
+
+test('template source cache uses crypto randomness for temporary cache entries', () => {
+  const cacheSource = fs.readFileSync(
+    path.join(runtimeRoot, 'template-source-cache.ts'),
+    'utf8',
+  )
+
+  expect(cacheSource).toContain("import { createHash, randomUUID } from 'node:crypto'")
+  expect(cacheSource).toContain('createTemporaryCacheEntryDirName')
+  expect(cacheSource).toContain('randomUUID()')
+  expect(cacheSource).not.toContain('Math.random()')
+})
