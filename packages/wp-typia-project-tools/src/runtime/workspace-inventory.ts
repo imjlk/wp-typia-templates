@@ -1,4 +1,4 @@
-import fs from "node:fs";
+import { readFileSync } from "node:fs";
 import path from "node:path";
 import { readFile, writeFile } from "node:fs/promises";
 
@@ -1079,7 +1079,11 @@ export function parseWorkspaceInventorySource(source: string): Omit<WorkspaceInv
 }
 
 /**
- * Read and parse the canonical workspace inventory file.
+ * Synchronously read and parse the canonical workspace inventory file.
+ *
+ * This compatibility helper is intentionally sync-only for callers that expose
+ * synchronous APIs. Prefer `readWorkspaceInventoryAsync()` from async command
+ * paths so workspace reads do not block the event loop.
  *
  * @param projectDir Workspace root directory.
  * @returns Parsed `WorkspaceInventory` including the resolved `blockConfigPath`.
@@ -1089,7 +1093,41 @@ export function readWorkspaceInventory(projectDir: string): WorkspaceInventory {
 	const blockConfigPath = path.join(projectDir, "scripts", "block-config.ts");
 	let source: string;
 	try {
-		source = fs.readFileSync(blockConfigPath, "utf8");
+		source = readFileSync(blockConfigPath, "utf8");
+	} catch (error) {
+		if (
+			typeof error === "object" &&
+			error !== null &&
+			"code" in error &&
+			error.code === "ENOENT"
+		) {
+			throw new Error(
+				`Workspace inventory file is missing at ${blockConfigPath}. Expected scripts/block-config.ts to exist.`,
+			);
+		}
+		throw error;
+	}
+
+	return {
+		blockConfigPath,
+		...parseWorkspaceInventorySource(source),
+	};
+}
+
+/**
+ * Asynchronously read and parse the canonical workspace inventory file.
+ *
+ * @param projectDir Workspace root directory.
+ * @returns Parsed `WorkspaceInventory` including the resolved `blockConfigPath`.
+ * @throws {Error} When `scripts/block-config.ts` is missing or invalid.
+ */
+export async function readWorkspaceInventoryAsync(
+	projectDir: string,
+): Promise<WorkspaceInventory> {
+	const blockConfigPath = path.join(projectDir, "scripts", "block-config.ts");
+	let source: string;
+	try {
+		source = await readFile(blockConfigPath, "utf8");
 	} catch (error) {
 		if (
 			typeof error === "object" &&

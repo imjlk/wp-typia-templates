@@ -12,7 +12,7 @@ import {
 } from './cli-add-workspace-admin-view-source.js';
 import { scaffoldAdminViewWorkspace } from './cli-add-workspace-admin-view-scaffold.js';
 import { formatAdminViewSourceLocator } from './cli-add-workspace-admin-view-types.js';
-import { readWorkspaceInventory } from './workspace-inventory.js';
+import { readWorkspaceInventoryAsync } from './workspace-inventory.js';
 import { resolveWorkspaceProject } from './workspace-project.js';
 
 const ADD_ADMIN_VIEW_USAGE =
@@ -39,7 +39,7 @@ export async function runAddAdminViewCommand({
     ADD_ADMIN_VIEW_USAGE,
   );
   const parsedSource = parseAdminViewSource(source);
-  const inventory = readWorkspaceInventory(workspace.projectDir);
+  const inventory = await readWorkspaceInventoryAsync(workspace.projectDir);
   const restResource = resolveRestResourceSource(
     inventory.restResources,
     parsedSource,

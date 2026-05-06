@@ -5,7 +5,7 @@ import {
 	type RunAddAbilityCommandOptions,
 } from "./cli-add-shared.js";
 import { scaffoldAbilityWorkspace } from "./cli-add-workspace-ability-scaffold.js";
-import { readWorkspaceInventory } from "./workspace-inventory.js";
+import { readWorkspaceInventoryAsync } from "./workspace-inventory.js";
 import { resolveWorkspaceProject } from "./workspace-project.js";
 import {
 	REQUIRED_WORKSPACE_ABILITY_COMPATIBILITY,
@@ -33,7 +33,7 @@ export async function runAddAbilityCommand({
 		"wp-typia add ability <name>",
 	);
 
-	const inventory = readWorkspaceInventory(workspace.projectDir);
+	const inventory = await readWorkspaceInventoryAsync(workspace.projectDir);
 	assertAbilityDoesNotExist(workspace.projectDir, abilitySlug, inventory);
 
 	const compatibilityPolicy = resolveScaffoldCompatibilityPolicy(

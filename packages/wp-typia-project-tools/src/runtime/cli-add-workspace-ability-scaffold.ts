@@ -1,4 +1,3 @@
-import fs from "node:fs";
 import { promises as fsp } from "node:fs";
 import path from "node:path";
 
@@ -7,8 +6,9 @@ import semver from "semver";
 
 import {
 	appendWorkspaceInventoryEntries,
-	readWorkspaceInventory,
+	readWorkspaceInventoryAsync,
 } from "./workspace-inventory.js";
+import { pathExists, readOptionalUtf8File } from "./fs-async.js";
 import {
 	buildAbilityClientSource,
 	buildAbilityConfigEntry,
@@ -74,21 +74,29 @@ function resolveManagedDependencyVersion(
 		: requiredVersion;
 }
 
-function resolveAbilityRegistryPath(projectDir: string): string {
+async function resolveAbilityRegistryPath(projectDir: string): Promise<string> {
 	const abilitiesDir = path.join(projectDir, "src", "abilities");
-	return [path.join(abilitiesDir, "index.ts"), path.join(abilitiesDir, "index.js")].find(
-		(candidatePath) => fs.existsSync(candidatePath),
-	) ?? path.join(abilitiesDir, "index.ts");
+	for (const candidatePath of [
+		path.join(abilitiesDir, "index.ts"),
+		path.join(abilitiesDir, "index.js"),
+	]) {
+		if (await pathExists(candidatePath)) {
+			return candidatePath;
+		}
+	}
+	return path.join(abilitiesDir, "index.ts");
 }
 
-function readAbilityRegistrySlugs(registryPath: string): string[] {
-	if (!fs.existsSync(registryPath)) {
+async function readAbilityRegistrySlugs(registryPath: string): Promise<string[]> {
+	const source = await readOptionalUtf8File(registryPath);
+	if (source === null) {
 		return [];
 	}
 
-	const source = fs.readFileSync(registryPath, "utf8");
 	return Array.from(
-		source.matchAll(/^\s*export\s+\*\s+from\s+['"]\.\/([^/'"]+)\/client['"];?\s*$/gmu),
+		source.matchAll(
+			/^\s*export\s+\*\s+from\s+['"]\.\/([^/'"]+)\/client(?:\.[cm]?[jt]sx?)?['"];?\s*$/gmu,
+		),
 	).map((match) => match[1]);
 }
 
@@ -97,20 +105,18 @@ async function writeAbilityRegistry(
 	abilitySlug: string,
 ): Promise<void> {
 	const abilitiesDir = path.join(projectDir, "src", "abilities");
-	const registryPath = resolveAbilityRegistryPath(projectDir);
+	const registryPath = await resolveAbilityRegistryPath(projectDir);
 	await fsp.mkdir(abilitiesDir, { recursive: true });
 
-	const existingAbilitySlugs = readWorkspaceInventory(projectDir).abilities.map(
-		(entry) => entry.slug,
-	);
-	const existingRegistrySlugs = readAbilityRegistrySlugs(registryPath);
+	const existingAbilitySlugs = (
+		await readWorkspaceInventoryAsync(projectDir)
+	).abilities.map((entry) => entry.slug);
+	const existingRegistrySlugs = await readAbilityRegistrySlugs(registryPath);
 	const nextAbilitySlugs = Array.from(
 		new Set([...existingAbilitySlugs, ...existingRegistrySlugs, abilitySlug]),
 	).sort();
 	const generatedSection = buildAbilityRegistrySource(nextAbilitySlugs);
-	const existingSource = fs.existsSync(registryPath)
-		? fs.readFileSync(registryPath, "utf8")
-		: "";
+	const existingSource = (await readOptionalUtf8File(registryPath)) ?? "";
 	const generatedSectionPattern = new RegExp(
 		`${escapeRegex(ABILITY_REGISTRY_START_MARKER)}[\\s\\S]*?${escapeRegex(ABILITY_REGISTRY_END_MARKER)}\\n?`,
 		"u",
@@ -500,7 +506,7 @@ export async function scaffoldAbilityWorkspace({
 		"sync-project.ts",
 	);
 	const webpackConfigPath = path.join(workspace.projectDir, "webpack.config.js");
-	const abilitiesIndexPath = resolveAbilityRegistryPath(workspace.projectDir);
+	const abilitiesIndexPath = await resolveAbilityRegistryPath(workspace.projectDir);
 	const abilityDir = path.join(workspace.projectDir, "src", "abilities", abilitySlug);
 	const configFilePath = path.join(abilityDir, "ability.config.json");
 	const typesFilePath = path.join(abilityDir, "types.ts");
