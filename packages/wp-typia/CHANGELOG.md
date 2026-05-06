@@ -1,5 +1,15 @@
 # wp-typia
 
+## 0.22.8 — 2026-05-06
+
+### Patch changes
+
+- [ca8c31f](https://github.com/imjlk/wp-typia/commit/ca8c31f3e998da8d4a919dc1c4a7464ddfbcb45b) Tag scaffold identifier and MCP schema validation failures with stable CLI diagnostic codes. — Thanks @imjlk!
+- [5b9d23b](https://github.com/imjlk/wp-typia/commit/5b9d23b73d4daa503ed13e4f1b083508bba7b976) Split Node fallback add/create dispatchers and help rendering into focused modules. — Thanks @imjlk!
+- [5c793a8](https://github.com/imjlk/wp-typia/commit/5c793a8c8ce05d8cc69066d906eb346141d198c0) Validate explicit create template ids before entering the full scaffold flow. — Thanks @imjlk!
+- [24c81ed](https://github.com/imjlk/wp-typia/commit/24c81edc4c0125f79c6d52582a1e817ef21c2705) Tag positional alias command-contract validation failures with stable diagnostic codes. — Thanks @imjlk!
+- Updated dependencies: project-tools (npm)@0.22.8
+
 ## 0.22.7 — 2026-05-05
 
 ### Patch changes
