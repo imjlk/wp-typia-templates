@@ -127,6 +127,26 @@ describe('package version cache invalidation', () => {
     expect(result.stderr).toBe('');
   });
 
+  test('reads package manifest metadata and contents through one file descriptor', () => {
+    const packageVersionsSource = fs.readFileSync(
+      path.join(import.meta.dir, '..', 'src', 'runtime', 'package-versions.ts'),
+      'utf8',
+    );
+
+    expect(packageVersionsSource).toContain(
+      "const fileDescriptor = fs.openSync(packageJsonPath, 'r')",
+    );
+    expect(packageVersionsSource).toContain('fs.fstatSync(fileDescriptor)');
+    expect(packageVersionsSource).toContain(
+      "fs.readFileSync(fileDescriptor, 'utf8')",
+    );
+    expect(packageVersionsSource).toContain('fs.closeSync(fileDescriptor)');
+    expect(packageVersionsSource).not.toContain('fs.statSync(packageJsonPath)');
+    expect(packageVersionsSource).not.toContain(
+      "fs.readFileSync(packageJsonPath, 'utf8')",
+    );
+  });
+
   test('centralizes managed workspace dependency fallback ranges', async () => {
     const packageVersionsModuleUrl = pathToFileURL(
       path.join(import.meta.dir, '..', 'src', 'runtime', 'package-versions.ts'),
