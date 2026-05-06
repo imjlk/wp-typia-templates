@@ -43,6 +43,6 @@ test('template source cache uses crypto randomness for temporary cache entries',
 
   expect(cacheSource).toContain("import { createHash, randomUUID } from 'node:crypto'")
   expect(cacheSource).toContain('createTemporaryCacheEntryDirName')
-  expect(cacheSource).toContain('Crypto randomness keeps concurrent cache populators')
+  expect(cacheSource).toContain('randomUUID()')
   expect(cacheSource).not.toContain('Math.random()')
 })
