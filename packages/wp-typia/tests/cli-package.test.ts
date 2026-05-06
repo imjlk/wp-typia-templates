@@ -1164,17 +1164,26 @@ process.exit(0);
 
   test('packs a built dist-bunli runtime for the published CLI entrypoint', () => {
     const rootSegment = path.basename(os.homedir());
-    const packResult = runCapturedCommand(
-      'npm',
-      ['pack', '--json', '--pack-destination', packageRoot],
-      {
-        cwd: packageRoot,
-        env: {
-          ...process.env,
-          WP_TYPIA_SKIP_POSTPACK_RESTORE: '',
-        },
-      },
+    const packDestination = fs.mkdtempSync(
+      path.join(os.tmpdir(), 'wp-typia-pack-'),
     );
+    const packResult = (() => {
+      try {
+        return runCapturedCommand(
+          'npm',
+          ['pack', '--json', '--pack-destination', packDestination],
+          {
+            cwd: packageRoot,
+            env: {
+              ...process.env,
+              WP_TYPIA_SKIP_POSTPACK_RESTORE: '',
+            },
+          },
+        );
+      } finally {
+        fs.rmSync(packDestination, { force: true, recursive: true });
+      }
+    })();
 
     expect(packResult.status).toBe(0);
     const parsed = parseJsonArrayFromOutput<
@@ -1245,9 +1254,6 @@ process.exit(0);
       ),
     ).toBe(true);
 
-    if (tarball?.filename) {
-      fs.rmSync(path.join(packageRoot, tarball.filename), { force: true });
-    }
   }, 30000);
 
   test('rejects sync outside a generated project root with explicit guidance', () => {

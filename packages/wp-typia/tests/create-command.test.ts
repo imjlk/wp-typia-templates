@@ -22,7 +22,35 @@ describe("wp-typia create command bridge", () => {
 		fs.rmSync(tempRoot, { force: true, recursive: true });
 	});
 
-test("keeps ambiguous external layers fail-fast when a synthetic prompt is supplied", async () => {
+	test("rejects mistyped template ids before scaffold progress starts", async () => {
+		const progress: string[] = [];
+		const targetDir = path.join(tempRoot, "demo-early-template-validation");
+
+		const error = await executeCreateCommand({
+			cwd: tempRoot,
+			emitOutput: false,
+			flags: {
+				"no-install": true,
+				"package-manager": "npm",
+				template: "basicc",
+				yes: true,
+			},
+			interactive: false,
+			onProgress: ({ detail, title }) => {
+				progress.push(`${title}: ${detail}`);
+			},
+			projectDir: "demo-early-template-validation",
+		}).catch((error) => error);
+
+		expect(error).toBeInstanceOf(Error);
+		expect((error as Error).message).toContain(
+			'Unknown template "basicc". Did you mean "basic"?',
+		);
+		expect(progress).toEqual([]);
+		expect(fs.existsSync(targetDir)).toBe(false);
+	});
+
+	test("keeps ambiguous external layers fail-fast when a synthetic prompt is supplied", async () => {
 		const defaultPrompt = {
 			close() {},
 			select<T extends string>(
