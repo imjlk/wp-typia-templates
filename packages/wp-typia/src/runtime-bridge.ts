@@ -547,8 +547,8 @@ export async function executeTemplatesCommand(
   if (subcommand === 'list') {
     for (const template of listTemplates()) {
       printBlock(
-        [formatTemplateSummary(template), formatTemplateFeatures(template)],
         printLine,
+        [formatTemplateSummary(template), formatTemplateFeatures(template)],
       );
     }
     return;
@@ -568,7 +568,7 @@ export async function executeTemplatesCommand(
         `Unknown template "${flags.id}".`,
       );
     }
-    printBlock([formatTemplateDetails(template)], printLine);
+    printBlock(printLine, [formatTemplateDetails(template)]);
     return;
   }
 

@@ -643,22 +643,10 @@ export function buildSyncDryRunPayload(
 }
 
 /**
- * Prints a block of text lines using a shared line printer.
- *
- * @param lines Lines to print in order.
- * @param printLine Line printer to use.
- * @returns Nothing.
- */
-export function printBlock(lines: string[], printLine: PrintLine): void {
-  for (const line of lines) {
-    printLine(line);
-  }
-}
-
-/**
  * Converts external layer options into prompt-compatible select items.
  *
  * @param options External layer options returned by the block generator.
  * @returns Prompt select options with labels and hints.
  */
+export { printBlock } from './print-block';
 export { toExternalLayerPromptOptions } from './external-layer-prompt-options';
