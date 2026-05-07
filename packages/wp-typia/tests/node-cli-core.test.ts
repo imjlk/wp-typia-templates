@@ -172,6 +172,10 @@ describe('Node fallback CLI core routing', () => {
       path.join(packageRoot, 'src', 'node-fallback', 'help.ts'),
       'utf8',
     );
+    const printBlockSource = fs.readFileSync(
+      path.join(packageRoot, 'src', 'print-block.ts'),
+      'utf8',
+    );
 
     expect(nodeCliSource).toContain(
       "from './node-fallback/dispatchers/add'",
@@ -187,7 +191,14 @@ describe('Node fallback CLI core routing', () => {
     expect(createDispatcherSource).toContain(
       'export async function dispatchNodeFallbackCreate',
     );
-    expect(helpSource).toContain('export function printBlock');
+    expect(helpSource).toContain("import { printBlock } from '../print-block'");
+    expect(helpSource).not.toContain('export function printBlock');
+    expect(printBlockSource).toContain(
+      'export function printBlock(printLine: PrintLine, lines: string[])',
+    );
+    expect(printBlockSource).not.toContain(
+      'export function printBlock(lines: string[], printLine: PrintLine)',
+    );
   });
 
   test('prints human and structured version output from the fallback runtime', async () => {

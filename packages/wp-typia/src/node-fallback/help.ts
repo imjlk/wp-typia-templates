@@ -18,6 +18,7 @@ import {
   WP_TYPIA_POSITIONAL_ALIAS_USAGE,
 } from '../command-contract';
 import type { PrintLine } from '../print-line';
+import { printBlock } from '../print-block';
 import type { NodeFallbackExecutableCommandName } from './types';
 
 export const STANDALONE_GUIDANCE_LINE =
@@ -35,12 +36,6 @@ export type NodeFallbackCommandHelpConfig = {
   heading: string;
   optionMetadata: CommandOptionMetadataMap;
 };
-
-export function printBlock(printLine: PrintLine, lines: string[]) {
-  for (const line of lines) {
-    printLine(line);
-  }
-}
 
 export function renderGeneralHelp(printLine: PrintLine) {
   printBlock(printLine, [
