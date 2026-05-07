@@ -5,6 +5,10 @@ import path from 'node:path';
 import { afterEach, describe, expect, test } from 'bun:test';
 
 import packageJson from '../package.json';
+import {
+  buildMissingAddKindDetailLines,
+  buildMissingCreateProjectDirDetailLines,
+} from '../src/cli-error-messages';
 import { runNodeCli, runNodeCliEntrypoint } from '../src/node-cli';
 
 async function captureNodeCli(
@@ -168,8 +172,20 @@ describe('Node fallback CLI core routing', () => {
       ),
       'utf8',
     );
+    const createCommandSource = fs.readFileSync(
+      path.join(packageRoot, 'src', 'commands', 'create.ts'),
+      'utf8',
+    );
+    const runtimeBridgeSource = fs.readFileSync(
+      path.join(packageRoot, 'src', 'runtime-bridge.ts'),
+      'utf8',
+    );
     const helpSource = fs.readFileSync(
       path.join(packageRoot, 'src', 'node-fallback', 'help.ts'),
+      'utf8',
+    );
+    const cliErrorMessagesSource = fs.readFileSync(
+      path.join(packageRoot, 'src', 'cli-error-messages.ts'),
       'utf8',
     );
     const printBlockSource = fs.readFileSync(
@@ -188,8 +204,23 @@ describe('Node fallback CLI core routing', () => {
     expect(addDispatcherSource).toContain(
       'export async function dispatchNodeFallbackAdd',
     );
+    expect(addDispatcherSource).toContain('buildMissingAddKindDetailLines');
+    expect(addDispatcherSource).not.toContain('formatAddKindUsagePlaceholder');
     expect(createDispatcherSource).toContain(
       'export async function dispatchNodeFallbackCreate',
+    );
+    expect(createDispatcherSource).toContain(
+      'buildMissingCreateProjectDirDetailLines',
+    );
+    expect(createCommandSource).toContain(
+      'buildMissingCreateProjectDirDetailLines',
+    );
+    expect(runtimeBridgeSource).toContain('formatMissingAddKindDetailLine');
+    expect(cliErrorMessagesSource).toContain(
+      'export function formatMissingAddKindDetailLine',
+    );
+    expect(cliErrorMessagesSource).toContain(
+      'export function buildMissingCreateProjectDirDetailLines',
     );
     expect(helpSource).toContain("import { printBlock } from '../print-block'");
     expect(helpSource).not.toContain('export function printBlock');
@@ -292,7 +323,12 @@ describe('Node fallback CLI core routing', () => {
       entrypoint: true,
     });
     const parsed = JSON.parse(result.stderr) as {
-      error?: { code?: string; command?: string; kind?: string };
+      error?: {
+        code?: string;
+        command?: string;
+        detailLines?: string[];
+        kind?: string;
+      };
       ok?: boolean;
     };
 
@@ -303,6 +339,7 @@ describe('Node fallback CLI core routing', () => {
     expect(parsed.error?.kind).toBe('command-execution');
     expect(parsed.error?.command).toBe('add');
     expect(parsed.error?.code).toBe('missing-argument');
+    expect(parsed.error?.detailLines).toEqual(buildMissingAddKindDetailLines());
   });
 
   test('dispatches init structured previews from the Node fallback runtime', async () => {
@@ -654,7 +691,12 @@ describe('Node fallback CLI core routing', () => {
       entrypoint: true,
     });
     const parsed = JSON.parse(result.stderr) as {
-      error?: { code?: string; command?: string; kind?: string };
+      error?: {
+        code?: string;
+        command?: string;
+        detailLines?: string[];
+        kind?: string;
+      };
       ok?: boolean;
     };
 
@@ -665,6 +707,9 @@ describe('Node fallback CLI core routing', () => {
     expect(parsed.error?.kind).toBe('command-execution');
     expect(parsed.error?.command).toBe('create');
     expect(parsed.error?.code).toBe('missing-argument');
+    expect(parsed.error?.detailLines).toEqual(
+      buildMissingCreateProjectDirDetailLines(),
+    );
   });
 
   test('keeps Bun-only top-level commands on the unsupported-command diagnostic path', async () => {

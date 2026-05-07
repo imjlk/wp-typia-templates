@@ -9,11 +9,11 @@ import {
   type AddKindExecutionContext,
   type AddKindId,
   formatAddKindList,
-  formatAddKindUsagePlaceholder,
   getAddKindExecutionPlan,
   isAddKindId,
   supportsAddKindDryRun,
 } from './add-kind-registry';
+import { formatMissingAddKindDetailLine } from './cli-error-messages';
 import { simulateWorkspaceAddDryRun } from './runtime-bridge-add-dry-run';
 import type { AlternateBufferCompletionPayload } from './ui/alternate-buffer-lifecycle';
 import {
@@ -476,7 +476,7 @@ export async function executeAddCommand({
       }
       throw createCliDiagnosticCodeError(
         CLI_DIAGNOSTIC_CODES.MISSING_ARGUMENT,
-        `\`wp-typia add\` requires <kind>. Usage: wp-typia add ${formatAddKindUsagePlaceholder()} ...`,
+        formatMissingAddKindDetailLine(),
       );
     }
     if (!isAddKindId(kind)) {

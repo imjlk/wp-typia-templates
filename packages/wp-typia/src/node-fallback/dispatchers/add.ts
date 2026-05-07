@@ -2,7 +2,7 @@ import {
   CLI_DIAGNOSTIC_CODES,
   createCliCommandError,
 } from '@wp-typia/project-tools/cli-diagnostics';
-import { formatAddKindUsagePlaceholder } from '../../add-kind-registry';
+import { buildMissingAddKindDetailLines } from '../../cli-error-messages';
 import { executeAddCommand } from '../../runtime-bridge';
 import {
   buildStructuredCompletionSuccessPayload,
@@ -25,9 +25,7 @@ export async function dispatchNodeFallbackAdd({
     throw createCliCommandError({
       code: CLI_DIAGNOSTIC_CODES.MISSING_ARGUMENT,
       command: 'add',
-      detailLines: [
-        `\`wp-typia add\` requires <kind>. Usage: wp-typia add ${formatAddKindUsagePlaceholder()} ...`,
-      ],
+      detailLines: buildMissingAddKindDetailLines(),
     });
   }
 
