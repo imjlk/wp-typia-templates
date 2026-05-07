@@ -642,11 +642,11 @@ export function buildSyncDryRunPayload(
   };
 }
 
+export { printBlock } from './print-block';
 /**
  * Converts external layer options into prompt-compatible select items.
  *
  * @param options External layer options returned by the block generator.
  * @returns Prompt select options with labels and hints.
  */
-export { printBlock } from './print-block';
 export { toExternalLayerPromptOptions } from './external-layer-prompt-options';
