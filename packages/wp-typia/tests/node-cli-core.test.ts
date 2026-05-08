@@ -712,6 +712,54 @@ describe('Node fallback CLI core routing', () => {
     );
   });
 
+  test('emits structured sync execution diagnostics with stable codes', async () => {
+    const tempRoot = createTempRoot('wp-typia-node-sync-failure-');
+
+    try {
+      fs.mkdirSync(path.join(tempRoot, 'scripts'), { recursive: true });
+      fs.mkdirSync(path.join(tempRoot, 'node_modules'), { recursive: true });
+      writeJson(path.join(tempRoot, 'package.json'), {
+        name: 'demo-sync-failure',
+        packageManager: 'npm@10.9.0',
+        scripts: {
+          sync: 'node scripts/fail.mjs',
+        },
+      });
+      fs.writeFileSync(
+        path.join(tempRoot, 'scripts', 'fail.mjs'),
+        ['console.error("sync failed intentionally");', 'process.exit(42);'].join(
+          '\n',
+        ),
+        'utf8',
+      );
+
+      const result = await captureNodeCli(['sync', '--format', 'json'], {
+        cwd: tempRoot,
+        entrypoint: true,
+      });
+      const parsed = JSON.parse(result.stderr) as {
+        error?: {
+          code?: string;
+          command?: string;
+          detailLines?: string[];
+          kind?: string;
+        };
+        ok?: boolean;
+      };
+
+      expect(result.error).toBeUndefined();
+      expect(result.exitCode).toBe(1);
+      expect(result.stdout).toBe('');
+      expect(parsed.ok).toBe(false);
+      expect(parsed.error?.kind).toBe('command-execution');
+      expect(parsed.error?.code).toBe('command-execution');
+      expect(parsed.error?.command).toBe('sync');
+      expect(parsed.error?.detailLines).toContain('`npm run sync` failed.');
+    } finally {
+      removeTempRoot(tempRoot);
+    }
+  });
+
   test('keeps Bun-only top-level commands on the unsupported-command diagnostic path', async () => {
     const result = await captureNodeCli(['skills', 'list']);
 

@@ -1,6 +1,11 @@
 import fs from "node:fs";
 import { fileURLToPath } from "node:url";
 
+import {
+	CLI_DIAGNOSTIC_CODES,
+	createCliDiagnosticCodeError,
+} from "@wp-typia/project-tools/cli-diagnostics";
+
 export function resolveBundledModuleHref(
 	baseUrl: string,
 	candidates: string[],
@@ -19,7 +24,8 @@ export function resolveBundledModuleHref(
 		fileURLToPath(new URL(candidate, baseUrl)),
 	);
 	const label = options.moduleLabel ?? "bundled wp-typia runtime module";
-	throw new Error(
+	throw createCliDiagnosticCodeError(
+		CLI_DIAGNOSTIC_CODES.MISSING_BUILD_ARTIFACT,
 		[
 			`Missing bundled build artifacts for ${label}.`,
 			"None of the expected files were found:",

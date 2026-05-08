@@ -46,6 +46,9 @@ test("resolveBundledModuleHref reports missing bundled artifacts directly", () =
 	}
 
 	expect(error).toBeInstanceOf(Error);
+	expect((error as { code?: string } | undefined)?.code).toBe(
+		"missing-build-artifact",
+	);
 	expect(error?.message).toMatch(/Missing bundled build artifacts for the add-flow UI/);
 	expect(error?.message).toMatch(/bun run --filter wp-typia build/);
 });
