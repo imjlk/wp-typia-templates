@@ -13,7 +13,10 @@ import {
   isAddKindId,
   supportsAddKindDryRun,
 } from './add-kind-registry';
-import { formatMissingAddKindDetailLine } from './cli-error-messages';
+import {
+  formatMissingAddKindDetailLine,
+  shouldPrintMissingAddKindHelp,
+} from './cli-error-messages';
 import { simulateWorkspaceAddDryRun } from './runtime-bridge-add-dry-run';
 import type { AlternateBufferCompletionPayload } from './ui/alternate-buffer-lifecycle';
 import {
@@ -471,7 +474,7 @@ export async function executeAddCommand({
     const isInteractiveSession = interactive ?? isInteractiveTerminal();
 
     if (!kind) {
-      if (emitOutput) {
+      if (shouldPrintMissingAddKindHelp({ emitOutput })) {
         printLine(addRuntime.formatAddHelpText());
       }
       throw createCliDiagnosticCodeError(

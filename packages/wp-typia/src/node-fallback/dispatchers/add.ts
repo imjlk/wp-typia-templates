@@ -2,7 +2,10 @@ import {
   CLI_DIAGNOSTIC_CODES,
   createCliCommandError,
 } from '@wp-typia/project-tools/cli-diagnostics';
-import { buildMissingAddKindDetailLines } from '../../cli-error-messages';
+import {
+  buildMissingAddKindDetailLines,
+  shouldPrintMissingAddKindHelp,
+} from '../../cli-error-messages';
 import { executeAddCommand } from '../../runtime-bridge';
 import {
   buildStructuredCompletionSuccessPayload,
@@ -17,7 +20,7 @@ export async function dispatchNodeFallbackAdd({
   printLine,
 }: NodeFallbackDispatchContext): Promise<void> {
   if (!positionals[1]) {
-    if (mergedFlags.format !== 'json') {
+    if (shouldPrintMissingAddKindHelp({ format: mergedFlags.format })) {
       const { formatAddHelpText } =
         await import('@wp-typia/project-tools/cli-add');
       printLine(formatAddHelpText());

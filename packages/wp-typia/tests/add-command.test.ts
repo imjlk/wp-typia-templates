@@ -467,6 +467,51 @@ describe('wp-typia add command bridge', () => {
     expect(selectedPrompts).toEqual([]);
   }, 15_000);
 
+  test('aligns missing kind help output with the bridge emitOutput context', async () => {
+    const printedHumanLines: string[] = [];
+    let humanError: unknown;
+
+    try {
+      await executeAddCommand({
+        cwd: tempRoot,
+        emitOutput: true,
+        flags: {},
+        interactive: false,
+        printLine: (line) => printedHumanLines.push(line),
+      });
+    } catch (error) {
+      humanError = error;
+    }
+
+    expect(humanError).toBeInstanceOf(Error);
+    expect((humanError as { code?: string }).code).toBe(
+      CLI_DIAGNOSTIC_CODES.MISSING_ARGUMENT,
+    );
+    expect(printedHumanLines.join('\n')).toContain('Usage:');
+    expect(printedHumanLines.join('\n')).toContain('wp-typia add block <name>');
+
+    const printedStructuredLines: string[] = [];
+    let structuredError: unknown;
+
+    try {
+      await executeAddCommand({
+        cwd: tempRoot,
+        emitOutput: false,
+        flags: {},
+        interactive: false,
+        printLine: (line) => printedStructuredLines.push(line),
+      });
+    } catch (error) {
+      structuredError = error;
+    }
+
+    expect(structuredError).toBeInstanceOf(Error);
+    expect((structuredError as { code?: string }).code).toBe(
+      CLI_DIAGNOSTIC_CODES.MISSING_ARGUMENT,
+    );
+    expect(printedStructuredLines).toEqual([]);
+  });
+
   test('named add commands validate the missing name before flag-specific errors', async () => {
     const projectDir = path.join(
       tempRoot,

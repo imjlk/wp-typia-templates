@@ -205,6 +205,7 @@ describe('Node fallback CLI core routing', () => {
       'export async function dispatchNodeFallbackAdd',
     );
     expect(addDispatcherSource).toContain('buildMissingAddKindDetailLines');
+    expect(addDispatcherSource).toContain('shouldPrintMissingAddKindHelp');
     expect(addDispatcherSource).not.toContain('formatAddKindUsagePlaceholder');
     expect(createDispatcherSource).toContain(
       'export async function dispatchNodeFallbackCreate',
@@ -216,8 +217,12 @@ describe('Node fallback CLI core routing', () => {
       'buildMissingCreateProjectDirDetailLines',
     );
     expect(runtimeBridgeSource).toContain('formatMissingAddKindDetailLine');
+    expect(runtimeBridgeSource).toContain('shouldPrintMissingAddKindHelp');
     expect(cliErrorMessagesSource).toContain(
       'export function formatMissingAddKindDetailLine',
+    );
+    expect(cliErrorMessagesSource).toContain(
+      'export function shouldPrintMissingAddKindHelp',
     );
     expect(cliErrorMessagesSource).toContain(
       'export function buildMissingCreateProjectDirDetailLines',
