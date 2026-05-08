@@ -13,6 +13,7 @@ export {
 	EDITOR_PLUGIN_SLOT_IDS,
 	formatAddHelpText,
 	isAddBlockTemplateId,
+	suggestAddBlockTemplateId,
 } from "./cli-add-shared.js";
 export type {
 	AddBlockTemplateId,

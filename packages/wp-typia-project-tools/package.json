@@ -52,6 +52,11 @@
       "import": "./dist/runtime/create-template-validation.js",
       "default": "./dist/runtime/create-template-validation.js"
     },
+    "./id-suggestions": {
+      "types": "./dist/runtime/id-suggestions.d.ts",
+      "import": "./dist/runtime/id-suggestions.js",
+      "default": "./dist/runtime/id-suggestions.js"
+    },
     "./ai-artifacts": {
       "types": "./dist/runtime/ai-artifacts.d.ts",
       "import": "./dist/runtime/ai-artifacts.js",

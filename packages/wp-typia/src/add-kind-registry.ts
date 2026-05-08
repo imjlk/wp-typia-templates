@@ -244,6 +244,18 @@ function formatAddBlockTemplateIds(addRuntime: AddRuntime): string {
   return addRuntime.ADD_BLOCK_TEMPLATE_IDS.join(', ');
 }
 
+function getMistypedAddBlockTemplateMessage(
+  addRuntime: AddRuntime,
+  templateId: string,
+): string | null {
+  const suggestion = addRuntime.suggestAddBlockTemplateId(templateId);
+  if (!suggestion) {
+    return null;
+  }
+
+  return `Unknown add-block template "${templateId}". Did you mean "${suggestion}"? Use \`--template ${suggestion}\`, or run \`wp-typia templates list\` to inspect available templates.`;
+}
+
 function assertAddBlockTemplateId(
   context: AddKindExecutionContext,
   templateId: string,
@@ -256,6 +268,17 @@ function assertAddBlockTemplateId(
     throw createCliDiagnosticCodeError(
       CLI_DIAGNOSTIC_CODES.INVALID_ARGUMENT,
       '`wp-typia add block --template query-loop` is not supported. Query Loop is a create-time `core/query` variation scaffold, so use `wp-typia create <project-dir> --template query-loop` instead.',
+    );
+  }
+
+  const mistypedAddBlockTemplateMessage = getMistypedAddBlockTemplateMessage(
+    context.addRuntime,
+    templateId,
+  );
+  if (mistypedAddBlockTemplateMessage) {
+    throw createCliDiagnosticCodeError(
+      CLI_DIAGNOSTIC_CODES.UNKNOWN_TEMPLATE,
+      mistypedAddBlockTemplateMessage,
     );
   }
 

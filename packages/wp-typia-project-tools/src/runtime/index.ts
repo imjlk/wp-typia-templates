@@ -141,6 +141,8 @@ export {
 	getPackageManagerSelectOptions,
 	transformPackageManagerText,
 } from "./package-managers.js";
+export { suggestCloseId } from "./id-suggestions.js";
+export type { SuggestCloseIdOptions } from "./id-suggestions.js";
 export {
 	clearPackageVersionsCache,
 	getPackageVersions,
