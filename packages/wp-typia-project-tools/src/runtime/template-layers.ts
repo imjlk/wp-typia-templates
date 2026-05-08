@@ -1,7 +1,7 @@
-import fs from "node:fs";
 import path from "node:path";
 import { promises as fsp } from "node:fs";
 
+import { pathExists } from "./fs-async.js";
 import { isPlainObject } from "./object-utils.js";
 import {
 	getBuiltInSharedTemplateLayerDir,
@@ -119,7 +119,7 @@ export async function loadExternalTemplateLayerManifest(
 	sourceRoot: string,
 ): Promise<ExternalTemplateLayerManifest | null> {
 	const manifestPath = path.join(sourceRoot, TEMPLATE_LAYER_MANIFEST_FILENAME);
-	if (!fs.existsSync(manifestPath)) {
+	if (!(await pathExists(manifestPath))) {
 		return null;
 	}
 

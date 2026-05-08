@@ -1,4 +1,3 @@
-import fs from "node:fs";
 import { promises as fsp } from "node:fs";
 import path from "node:path";
 
@@ -33,6 +32,7 @@ import {
 	getOptionalOnboardingSteps,
 } from "./scaffold-onboarding.js";
 import { formatNonEmptyTargetDirectoryError } from "./scaffold-bootstrap.js";
+import { pathExists } from "./fs-async.js";
 import {
 	OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE,
 	isBuiltInTemplateId,
@@ -141,7 +141,7 @@ async function assertDryRunTargetDirectoryReady(
 	projectDir: string,
 	allowExistingDir: boolean,
 ): Promise<void> {
-	if (!fs.existsSync(projectDir) || allowExistingDir) {
+	if (!(await pathExists(projectDir)) || allowExistingDir) {
 		return;
 	}
 
@@ -783,7 +783,7 @@ export async function runScaffoldFlow({
 		if (!dryRun) {
 			try {
 				const parsedPackageJson = JSON.parse(
-					fs.readFileSync(path.join(projectDir, "package.json"), "utf8"),
+					await fsp.readFile(path.join(projectDir, "package.json"), "utf8"),
 				) as {
 					scripts?: unknown;
 				};

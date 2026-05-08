@@ -1922,6 +1922,23 @@ test("template-source-normalization stays as a facade over external and remote h
   );
 });
 
+test("template source copy filters use async filesystem probes", () => {
+  const runtimeDir = path.join(packageRoot, "src", "runtime");
+  const templateSourceExternal = fs.readFileSync(
+    path.join(runtimeDir, "template-source-external.ts"),
+    "utf8"
+  );
+  const templateSourceRemote = fs.readFileSync(
+    path.join(runtimeDir, "template-source-remote.ts"),
+    "utf8"
+  );
+
+  for (const source of [templateSourceExternal, templateSourceRemote]) {
+    expect(source).toContain("await pathExists(mustacheVariantPath)");
+    expect(source).not.toContain("fs.existsSync(mustacheVariantPath)");
+  }
+});
+
 test("official workspace template scaffolds through the local npm template resolver", async () => {
   const targetDir = path.join(tempRoot, "demo-workspace-template");
 
