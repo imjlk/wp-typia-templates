@@ -407,6 +407,9 @@ export function isOfficialWorkspaceTemplateSeed(seed: SeedSource): boolean {
 
 /**
  * Asynchronously identify the bundled workspace template seed.
+ *
+ * @param seed Seed source to inspect.
+ * @returns Whether the seed resolves to the official workspace template package.
  */
 export async function isOfficialWorkspaceTemplateSeedAsync(
   seed: SeedSource,
