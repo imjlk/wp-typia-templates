@@ -257,15 +257,15 @@ export function assertAddBlockTemplateId(
   context: AddKindExecutionContext,
   templateId: string,
 ): CliAddRuntime.AddBlockTemplateId {
-  if (context.addRuntime.isAddBlockTemplateId(templateId)) {
-    return templateId;
-  }
-
   if (templateId === 'query-loop') {
     throw createCliDiagnosticCodeError(
       CLI_DIAGNOSTIC_CODES.INVALID_ARGUMENT,
       '`wp-typia add block --template query-loop` is not supported. Query Loop is a create-time `core/query` variation scaffold, so use `wp-typia create <project-dir> --template query-loop` instead.',
     );
+  }
+
+  if (context.addRuntime.isAddBlockTemplateId(templateId)) {
+    return templateId;
   }
 
   const mistypedAddBlockTemplateMessage = getMistypedAddBlockTemplateMessage(
