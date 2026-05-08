@@ -1,3 +1,5 @@
+import { suggestCloseId } from "./id-suggestions.js";
+
 export { ADD_KIND_IDS } from "./cli-add-kind-ids.js";
 export type { AddKindId } from "./cli-add-kind-ids.js";
 
@@ -70,6 +72,19 @@ export const ADD_BLOCK_TEMPLATE_IDS = [
  * Union of supported built-in block template ids.
  */
 export type AddBlockTemplateId = (typeof ADD_BLOCK_TEMPLATE_IDS)[number];
+
+/**
+ * Suggest the closest supported add-block template id for typo diagnostics.
+ *
+ * @param templateId Raw `wp-typia add block --template` value.
+ * @returns The closest supported template id when it is within the shared
+ * close-id threshold, otherwise `null`.
+ */
+export function suggestAddBlockTemplateId(
+	templateId: string,
+): AddBlockTemplateId | null {
+	return suggestCloseId(templateId, ADD_BLOCK_TEMPLATE_IDS);
+}
 
 /**
  * Options for `wp-typia add variation`.

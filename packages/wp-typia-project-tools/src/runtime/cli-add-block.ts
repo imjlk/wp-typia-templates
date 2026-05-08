@@ -40,6 +40,7 @@ import {
 	rollbackWorkspaceMutation,
 	type WorkspaceMutationSnapshot,
 	snapshotWorkspaceFiles,
+	suggestAddBlockTemplateId,
 } from "./cli-add-shared.js";
 import {
 	resolveNonEmptyNormalizedBlockSlug,
@@ -175,6 +176,14 @@ async function assertWorkspaceDependenciesInstalled(workspace: {
 	);
 }
 
+function getMistypedAddBlockTemplateMessage(templateId: string): string | null {
+	const suggestion = suggestAddBlockTemplateId(templateId);
+	if (!suggestion) {
+		return null;
+	}
+
+	return `Unknown add-block template "${templateId}". Did you mean "${suggestion}"? Use \`--template ${suggestion}\`, or run \`wp-typia templates list\` to inspect available templates.`;
+}
 
 async function copyScaffoldedBlockSlice(
 	projectDir: string,
@@ -547,6 +556,12 @@ export async function runAddBlockCommand({
 		);
 	}
 	if (!isAddBlockTemplateId(templateId)) {
+		const mistypedAddBlockTemplateMessage =
+			getMistypedAddBlockTemplateMessage(templateId);
+		if (mistypedAddBlockTemplateMessage) {
+			throw new Error(mistypedAddBlockTemplateMessage);
+		}
+
 		throw new Error(
 			`Unknown add-block template "${templateId}". Expected one of: ${ADD_BLOCK_TEMPLATE_IDS.join(", ")}. Run \`wp-typia templates list\` to inspect available templates.`,
 		);

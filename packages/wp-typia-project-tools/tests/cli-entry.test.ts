@@ -1531,6 +1531,38 @@ test("node entry rejects unknown add-block templates before workspace dependency
   expect(errorMessage).not.toContain("Interactive answers require a promptText callback");
 });
 
+test("node entry suggests close add-block template ids before workspace dependency checks", async () => {
+  const targetDir = path.join(tempRoot, "node-workspace-add-template-suggestion");
+
+  await scaffoldOfficialWorkspace(targetDir);
+
+  const errorMessage = getCommandErrorMessage(() =>
+    runCli(
+      "node",
+      [
+        entryPath,
+        "add",
+        "block",
+        "counter-card",
+        "--template",
+        "basicc",
+        "--format",
+        "json",
+      ],
+      {
+        cwd: targetDir,
+        stdio: "pipe",
+      }
+    )
+  );
+
+  expect(errorMessage).toContain('"code": "unknown-template"');
+  expect(errorMessage).toContain(
+    'Unknown add-block template \\"basicc\\". Did you mean \\"basic\\"? Use `--template basic`'
+  );
+  expect(errorMessage).not.toContain("Workspace dependencies have not been installed yet.");
+});
+
 test("node entry rejects missing values for identifier override flags", () => {
   expect(() => {
     runCli(

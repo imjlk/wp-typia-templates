@@ -16,6 +16,7 @@ import {
 	isRemovedBuiltInTemplateId,
 } from "./template-defaults.js";
 import { parseNpmTemplateLocator } from "./template-source-locators.js";
+import { suggestCloseId } from "./id-suggestions.js";
 
 export const CREATE_TEMPLATE_SELECTION_HINT = `--template <${[
 	...TEMPLATE_IDS,
@@ -67,30 +68,6 @@ function looksLikeExplicitCreateExternalTemplateLocator(
 	);
 }
 
-function getEditDistance(left: string, right: string): number {
-	const previous = Array.from({ length: right.length + 1 }, (_, index) => index);
-	const current = new Array<number>(right.length + 1);
-
-	for (let leftIndex = 0; leftIndex < left.length; leftIndex += 1) {
-		current[0] = leftIndex + 1;
-
-		for (let rightIndex = 0; rightIndex < right.length; rightIndex += 1) {
-			const substitutionCost = left[leftIndex] === right[rightIndex] ? 0 : 1;
-			current[rightIndex + 1] = Math.min(
-				current[rightIndex] + 1,
-				previous[rightIndex + 1] + 1,
-				previous[rightIndex] + substitutionCost,
-			);
-		}
-
-		for (let index = 0; index < current.length; index += 1) {
-			previous[index] = current[index] as number;
-		}
-	}
-
-	return previous[right.length] as number;
-}
-
 function findMistypedBuiltInTemplateSuggestion(templateId: string): string | null {
 	const normalizedTemplateId = templateId.trim().toLowerCase();
 	if (
@@ -100,21 +77,7 @@ function findMistypedBuiltInTemplateSuggestion(templateId: string): string | nul
 		return null;
 	}
 
-	let bestCandidate: { distance: number; id: string } | null = null;
-
-	for (const candidateId of TEMPLATE_SUGGESTION_IDS) {
-		const distance = getEditDistance(normalizedTemplateId, candidateId);
-		if (bestCandidate === null || distance < bestCandidate.distance) {
-			bestCandidate = {
-				distance,
-				id: candidateId,
-			};
-		}
-	}
-
-	return bestCandidate && bestCandidate.distance <= 2
-		? bestCandidate.id
-		: null;
+	return suggestCloseId(normalizedTemplateId, TEMPLATE_SUGGESTION_IDS);
 }
 
 function getMistypedBuiltInTemplateMessage(templateId: string): string | null {
