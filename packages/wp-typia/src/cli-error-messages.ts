@@ -13,6 +13,17 @@ export function buildMissingAddKindDetailLines(): string[] {
   return [formatMissingAddKindDetailLine()];
 }
 
+export function shouldPrintMissingAddKindHelp(options: {
+  emitOutput?: boolean;
+  format?: unknown;
+}): boolean {
+  if (typeof options.emitOutput === 'boolean') {
+    return options.emitOutput;
+  }
+
+  return options.format !== 'json';
+}
+
 export function buildMissingCreateProjectDirDetailLines(): string[] {
   return [...MISSING_CREATE_PROJECT_DIR_DETAIL_LINES];
 }
