@@ -737,6 +737,16 @@ export const BLOCKS = [
   expect(() =>
     parseWorkspaceInventorySource(`
 export const BLOCKS = [
+  {},
+];
+`)
+  ).toThrow(
+    'BLOCKS[0] is missing required fields "slug", "typesFile" in scripts/block-config.ts.'
+  );
+
+  expect(() =>
+    parseWorkspaceInventorySource(`
+export const BLOCKS = [
   { slug: "counter-card", typesFile: "src/blocks/counter-card/types.ts" },
 ];
 export const BLOCK_STYLES = [ false ];

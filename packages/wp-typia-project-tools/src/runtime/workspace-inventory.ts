@@ -921,27 +921,12 @@ function getOptionalStringProperty(
 	return undefined;
 }
 
-function getRequiredStringProperty(
+function getOptionalStringArrayProperty(
 	entryName: string,
 	elementIndex: number,
 	objectLiteral: ts.ObjectLiteralExpression,
 	key: string,
-): string {
-	const value = getOptionalStringProperty(entryName, elementIndex, objectLiteral, key);
-	if (!value) {
-		throw new Error(
-			`${entryName}[${elementIndex}] is missing required "${key}" in scripts/block-config.ts.`,
-		);
-	}
-	return value;
-}
-
-function getRequiredStringArrayProperty(
-	entryName: string,
-	elementIndex: number,
-	objectLiteral: ts.ObjectLiteralExpression,
-	key: string,
-): string[] {
+): string[] | undefined {
 	for (const property of objectLiteral.properties) {
 		if (!ts.isPropertyAssignment(property)) {
 			continue;
@@ -966,9 +951,7 @@ function getRequiredStringArrayProperty(
 		});
 	}
 
-	throw new Error(
-		`${entryName}[${elementIndex}] is missing required "${key}" in scripts/block-config.ts.`,
-	);
+	return undefined;
 }
 
 function isMissingRequiredInventoryValue(
@@ -1021,25 +1004,18 @@ function parseInventoryEntries<T extends object>(
 			const kind = field.kind ?? "string";
 			const value =
 				kind === "stringArray"
-					? getRequiredStringArrayProperty(
+					? getOptionalStringArrayProperty(
 							descriptor.entryName,
 							elementIndex,
 							element,
 							field.key,
 						)
-					: field.required
-						? getRequiredStringProperty(
-								descriptor.entryName,
-								elementIndex,
-								element,
-								field.key,
-							)
-						: getOptionalStringProperty(
-								descriptor.entryName,
-								elementIndex,
-								element,
-								field.key,
-							);
+					: getOptionalStringProperty(
+							descriptor.entryName,
+							elementIndex,
+							element,
+							field.key,
+						);
 
 			field.validate?.(value, {
 				elementIndex,
