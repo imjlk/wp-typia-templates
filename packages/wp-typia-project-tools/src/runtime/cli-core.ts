@@ -11,7 +11,8 @@
  * `runAddAdminViewCommand` for DataViews-backed admin screen scaffolds,
  * `runAddAbilityCommand` for typed workflow ability scaffolds,
  * and `HOOKED_BLOCK_POSITION_IDS`,
- * `getWorkspaceBlockSelectOptions`, and `seedWorkspaceMigrationProject` for
+ * `getWorkspaceBlockSelectOptions`, `getWorkspaceBlockSelectOptionsAsync`, and
+ * `seedWorkspaceMigrationProject` for
  * explicit `wp-typia add` flows,
  * `runAddAiFeatureCommand` for server-owned WordPress AI feature scaffolds,
  * `runAddRestResourceCommand` for plugin-level REST resource scaffolds,
@@ -52,6 +53,7 @@ export {
 	EDITOR_PLUGIN_SLOT_IDS,
 	formatAddHelpText,
 	getWorkspaceBlockSelectOptions,
+	getWorkspaceBlockSelectOptionsAsync,
 	runAddAdminViewCommand,
 	runAddAbilityCommand,
 	runAddBindingSourceCommand,
@@ -73,6 +75,7 @@ export {
 export type { CompoundInnerBlocksPresetId } from "./compound-inner-blocks.js";
 export { HOOKED_BLOCK_POSITION_IDS } from "./hooked-blocks.js";
 export type { EditorPluginSlotId } from "./cli-add.js";
+export type { WorkspaceBlockSelectOption } from "./workspace-inventory.js";
 export type { HookedBlockPositionId } from "./hooked-blocks.js";
 export { formatHelpText } from "./cli-help.js";
 export {

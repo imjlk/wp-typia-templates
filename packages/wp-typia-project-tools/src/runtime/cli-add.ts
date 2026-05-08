@@ -36,4 +36,8 @@ export {
 	runAddRestResourceCommand,
 	runAddVariationCommand,
 } from "./cli-add-workspace.js";
-export { getWorkspaceBlockSelectOptions } from "./workspace-inventory.js";
+export {
+	getWorkspaceBlockSelectOptions,
+	getWorkspaceBlockSelectOptionsAsync,
+} from "./workspace-inventory.js";
+export type { WorkspaceBlockSelectOption } from "./workspace-inventory.js";

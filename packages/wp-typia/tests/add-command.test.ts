@@ -7,7 +7,10 @@ import type { ReadlinePrompt } from '@wp-typia/project-tools/cli-prompt';
 import { CLI_DIAGNOSTIC_CODES } from '@wp-typia/project-tools/cli-diagnostics';
 import { ADD_KIND_IDS, supportsAddKindDryRun } from '../src/add-kind-registry';
 import { WP_TYPIA_COMMAND_REGISTRY } from '../src/command-registry';
-import { executeAddCommand } from '../src/runtime-bridge';
+import {
+  executeAddCommand,
+  loadAddWorkspaceBlockOptions,
+} from '../src/runtime-bridge';
 import {
   linkWorkspaceNodeModules,
   scaffoldOfficialWorkspace,
@@ -74,6 +77,13 @@ describe('wp-typia add command bridge', () => {
         path.join(projectDir, 'src', 'blocks', 'promo-card', 'block.json'),
       ),
     ).toBe(true);
+    await expect(loadAddWorkspaceBlockOptions(projectDir)).resolves.toEqual([
+      {
+        description: 'src/blocks/promo-card/types.ts',
+        name: 'promo-card',
+        value: 'promo-card',
+      },
+    ]);
   });
 
   test('scaffolds interactivity block templates with typed store helpers', async () => {

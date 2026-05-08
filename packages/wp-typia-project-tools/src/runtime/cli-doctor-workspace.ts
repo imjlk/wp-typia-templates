@@ -132,6 +132,8 @@ export function getWorkspaceDoctorChecks(cwd: string): DoctorCheck[] {
 	checks.push(getWorkspacePackageMetadataCheck(workspace, workspacePackageJson));
 
 	try {
+		// Doctor checks expose a synchronous API so callers can collect a stable
+		// snapshot without mixing async inventory reads into check aggregation.
 		const inventory = readWorkspaceInventory(workspace.projectDir);
 		checks.push(
 			createDoctorCheck(

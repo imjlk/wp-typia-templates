@@ -630,8 +630,8 @@ export async function loadAddWorkspaceBlockOptions(cwd: string) {
     return [];
   }
 
-  const { getWorkspaceBlockSelectOptions } = await loadCliAddRuntime();
-  return getWorkspaceBlockSelectOptions(workspace.projectDir);
+  const { getWorkspaceBlockSelectOptionsAsync } = await loadCliAddRuntime();
+  return getWorkspaceBlockSelectOptionsAsync(workspace.projectDir);
 }
 
 export async function executeMigrateCommand({
