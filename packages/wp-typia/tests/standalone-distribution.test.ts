@@ -7,6 +7,7 @@ import {
 	detectNativeStandaloneTarget,
 	getStandaloneArchiveFilename,
 	getStandaloneBinaryFilename,
+	parseStandaloneTargets,
 	STANDALONE_CHECKSUMS_FILENAME,
 	STANDALONE_MANIFEST_FILENAME,
 	STANDALONE_TARGETS,
@@ -125,6 +126,24 @@ describe("wp-typia standalone distribution", () => {
 				"windows-x64",
 			),
 		).toBe(`wp-typia-${packageManifest.version}-windows-x64.zip`);
+	});
+
+	test("classifies unsupported standalone targets as invalid arguments", () => {
+		expect(() => parseStandaloneTargets("linux-riscv64")).toThrow(
+			/Unsupported standalone target/,
+		);
+
+		let error: Error | undefined;
+		try {
+			parseStandaloneTargets("linux-riscv64");
+		} catch (caught) {
+			error = caught as Error;
+		}
+
+		expect(error).toBeInstanceOf(Error);
+		expect((error as { code?: string } | undefined)?.code).toBe(
+			"invalid-argument",
+		);
 	});
 
 	test("declares standalone build scripts and release asset workflow", () => {

@@ -199,6 +199,34 @@ test('sync can capture executed script output for structured callers', async () 
   expect(result.executedCommands?.[0]?.stdout).toContain('ran:sync\n');
 });
 
+test('sync execution failures carry a stable command-execution code', async () => {
+  const projectDir = writeSyncFixture({
+    name: 'demo-sync-failure-code',
+    scripts: {
+      sync: 'node scripts/fail.mjs',
+    },
+    withInstallMarker: true,
+  });
+  const scriptsDir = path.join(projectDir, 'scripts');
+  fs.mkdirSync(scriptsDir, { recursive: true });
+  fs.writeFileSync(
+    path.join(scriptsDir, 'fail.mjs'),
+    ['console.error("sync failed intentionally");', 'process.exit(42);'].join(
+      '\n',
+    ),
+    'utf8',
+  );
+
+  const error = await executeSyncCommand({
+    captureOutput: true,
+    cwd: projectDir,
+  }).catch((thrown) => thrown);
+
+  expect(error).toBeInstanceOf(Error);
+  expect((error as { code?: string }).code).toBe('command-execution');
+  expect((error as Error).message).toContain('npm run sync');
+});
+
 test('legacy split sync plans include sync-ai after sync-rest when the project opts in', async () => {
   const projectDir = writeSyncFixture({
     name: 'demo-sync-with-ai',

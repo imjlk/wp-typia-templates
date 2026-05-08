@@ -1,3 +1,8 @@
+import {
+	CLI_DIAGNOSTIC_CODES,
+	createCliDiagnosticCodeError,
+} from "@wp-typia/project-tools/cli-diagnostics";
+
 export const STANDALONE_TARGETS = [
 	"darwin-arm64",
 	"darwin-x64",
@@ -46,7 +51,8 @@ export function detectNativeStandaloneTarget(
 		return "windows-x64";
 	}
 
-	throw new Error(
+	throw createCliDiagnosticCodeError(
+		CLI_DIAGNOSTIC_CODES.UNSUPPORTED_COMMAND,
 		`Unsupported native standalone target for ${platform}/${arch}. Supported standalone targets: ${STANDALONE_TARGETS.join(", ")}`,
 	);
 }
@@ -87,7 +93,8 @@ export function parseStandaloneTargets(
 		}
 
 		if (!isStandaloneTarget(candidate)) {
-			throw new Error(
+			throw createCliDiagnosticCodeError(
+				CLI_DIAGNOSTIC_CODES.INVALID_ARGUMENT,
 				`Unsupported standalone target "${candidate}". Expected one of: native, all, ${STANDALONE_TARGETS.join(", ")}`,
 			);
 		}
@@ -98,7 +105,8 @@ export function parseStandaloneTargets(
 	}
 
 	if (resolvedTargets.length === 0) {
-		throw new Error(
+		throw createCliDiagnosticCodeError(
+			CLI_DIAGNOSTIC_CODES.INVALID_ARGUMENT,
 			"At least one standalone target is required. Use `native`, `all`, or a comma-separated list of supported targets.",
 		);
 	}

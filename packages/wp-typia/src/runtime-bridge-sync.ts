@@ -338,9 +338,13 @@ function runProjectScript(
       : undefined;
 
   if (result.error || result.status !== 0) {
-    throw new Error(`\`${plannedCommand.displayCommand}\` failed.`, {
-      cause: result.error ?? (stderr ? new Error(stderr.trim()) : undefined),
-    });
+    throw createCliDiagnosticCodeError(
+      CLI_DIAGNOSTIC_CODES.COMMAND_EXECUTION,
+      `\`${plannedCommand.displayCommand}\` failed.`,
+      {
+        cause: result.error ?? (stderr ? new Error(stderr.trim()) : undefined),
+      },
+    );
   }
 
   return {
