@@ -1,9 +1,15 @@
 import packageJson from '../package.json';
 import {
+  PACKAGE_MANAGER_IDS,
   formatPackageExecCommand,
   inferPackageManagerId,
+  parsePackageManagerField,
   type PackageManagerId,
 } from '@wp-typia/project-tools/package-managers';
+import {
+  CLI_DIAGNOSTIC_CODES,
+  createCliDiagnosticCodeError,
+} from '@wp-typia/project-tools/cli-diagnostics';
 import {
   buildAddKindCompletionDetails,
   type AddKindId,
@@ -177,6 +183,20 @@ function extractPlannedFiles(
 
 const PROJECT_DIRECTORY_SUMMARY_PREFIX = 'Project directory: ';
 
+function resolveCreateCompletionPackageManager(
+  packageManager: string,
+): PackageManagerId {
+  const parsedPackageManager = parsePackageManagerField(packageManager);
+  if (parsedPackageManager) {
+    return parsedPackageManager;
+  }
+
+  throw createCliDiagnosticCodeError(
+    CLI_DIAGNOSTIC_CODES.INVALID_ARGUMENT,
+    `Unsupported package manager "${packageManager}" in create completion payload. Expected one of: ${PACKAGE_MANAGER_IDS.join(', ')}.`,
+  );
+}
+
 /**
  * Reads the normalized workspace path from a completion summary when present.
  *
@@ -320,9 +340,12 @@ export function buildCreateCompletionPayload(
   },
   markerOptions?: OutputMarkerOptions,
 ): AlternateBufferCompletionPayload {
+  const packageManager = resolveCreateCompletionPackageManager(
+    flow.packageManager,
+  );
   const verificationSteps = [
     formatPackageExecCommand(
-      flow.packageManager as 'bun' | 'npm' | 'pnpm' | 'yarn',
+      packageManager,
       `wp-typia@${packageJson.version}`,
       'doctor',
     ),

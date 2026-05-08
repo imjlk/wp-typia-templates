@@ -118,6 +118,67 @@ describe('alternate-buffer completion output helpers', () => {
     );
   });
 
+  test('create completion payload keeps package-manager doctor commands stable', () => {
+    const expectedDoctorCommands = {
+      bun: `bunx wp-typia@${packageJson.version} doctor`,
+      npm: `npx --yes wp-typia@${packageJson.version} doctor`,
+      pnpm: `pnpm dlx wp-typia@${packageJson.version} doctor`,
+      yarn: `yarn dlx wp-typia@${packageJson.version} doctor`,
+    } as const;
+
+    for (const [packageManager, expectedDoctorCommand] of Object.entries(
+      expectedDoctorCommands,
+    )) {
+      const payload = buildCreateCompletionPayload({
+        nextSteps: ['cd demo-block'],
+        optionalOnboarding: {
+          note: 'Run sync when needed.',
+          steps: [],
+        },
+        packageManager,
+        projectDir: '/tmp/demo-block',
+        result: {
+          variables: {
+            title: 'Demo Block',
+          },
+          warnings: [],
+        },
+      });
+
+      expect(payload.optionalLines?.[0]).toBe(expectedDoctorCommand);
+    }
+  });
+
+  test('create completion payload rejects unknown package managers clearly', () => {
+    let error: Error | undefined;
+    try {
+      buildCreateCompletionPayload({
+        nextSteps: ['cd demo-block'],
+        optionalOnboarding: {
+          note: 'Run sync when needed.',
+          steps: [],
+        },
+        packageManager: 'deno',
+        projectDir: '/tmp/demo-block',
+        result: {
+          variables: {
+            title: 'Demo Block',
+          },
+          warnings: [],
+        },
+      });
+    } catch (caught) {
+      error = caught as Error;
+    }
+
+    expect(error).toBeInstanceOf(Error);
+    expect((error as { code?: string } | undefined)?.code).toBe(
+      'invalid-argument',
+    );
+    expect(error?.message).toContain('Unsupported package manager "deno"');
+    expect(error?.message).toContain('Expected one of: bun, npm, pnpm, yarn');
+  });
+
   test('completion printer keeps warning and next-step ordering stable', () => {
     const printed: string[] = [];
     const warned: string[] = [];
