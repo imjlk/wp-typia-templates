@@ -1,5 +1,14 @@
 # @wp-typia/project-tools
 
+## 0.22.9 — 2026-05-08
+
+### Patch changes
+
+- [3c8fbb6](https://github.com/imjlk/wp-typia/commit/3c8fbb64f27579e82e384ed9e621d52580a9a4a0) Add async workspace block select option APIs and use them from interactive add flows. — Thanks @imjlk!
+- [2b61ed5](https://github.com/imjlk/wp-typia/commit/2b61ed5ed01250ca4ce1ee2ac364a1d882d72510) Share close-id template suggestions across create and add-block validation paths. — Thanks @imjlk!
+- [a027b9f](https://github.com/imjlk/wp-typia/commit/a027b9f556e4d48213bc306cf9ad877f41820224) Remove synchronous filesystem probes from async template-source and scaffold paths. — Thanks @imjlk!
+- [fadd8ec](https://github.com/imjlk/wp-typia/commit/fadd8ecee5bbe7a09af34f2226f794b11a5640d5) Validate descriptor-parsed workspace inventory entries before returning typed results. — Thanks @imjlk!
+
 ## 0.22.8 — 2026-05-06
 
 ### Patch changes
