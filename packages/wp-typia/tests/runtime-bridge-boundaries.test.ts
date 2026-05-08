@@ -48,8 +48,8 @@ test('runtime bridge delegates output and sync helpers to focused modules', () =
 });
 
 test('runtime bridge modules share the CLI print-line type', () => {
-  const registrySource = fs.readFileSync(
-    path.join(sourceRoot, 'add-kind-registry.ts'),
+  const registrySharedSource = fs.readFileSync(
+    path.join(sourceRoot, 'add-kind-registry-shared.ts'),
     'utf8',
   );
   const bridgeSource = fs.readFileSync(
@@ -65,7 +65,7 @@ test('runtime bridge modules share the CLI print-line type', () => {
     'utf8',
   );
 
-  for (const source of [registrySource, bridgeSource, outputSource]) {
+  for (const source of [registrySharedSource, bridgeSource, outputSource]) {
     expect(source).toContain("import type { PrintLine } from './print-line';");
     expect(source).not.toContain('type PrintLine = (line: string) => void;');
   }

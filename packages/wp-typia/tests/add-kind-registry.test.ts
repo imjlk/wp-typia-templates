@@ -152,6 +152,18 @@ test('preserves compile-time compatibility between execute and getValues for eve
   });
 });
 
+test('aggregates one registry entry for every canonical add kind', () => {
+  expect(Object.keys(ADD_KIND_REGISTRY).sort()).toEqual(
+    [...ADD_KIND_IDS].sort(),
+  );
+
+  for (const kind of ADD_KIND_IDS) {
+    const entry = ADD_KIND_REGISTRY[kind];
+    expect(entry.description.length).toBeGreaterThan(0);
+    expect(entry.usage).toContain(`wp-typia add ${kind}`);
+  }
+});
+
 test('keeps shared add-kind ids aligned with registry sort order', () => {
   expect(
     Object.entries(ADD_KIND_REGISTRY)
