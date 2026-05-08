@@ -199,18 +199,69 @@ type InventoryEntryParserDescriptor = {
 	fields: readonly InventoryEntryFieldDescriptor[];
 };
 
-type TypedInventoryEntryFieldDescriptor<T extends object> = Omit<
+type RequiredInventoryEntryKey<T extends object> = Extract<
+	{
+		[Key in keyof T]-?: undefined extends T[Key] ? never : Key;
+	}[keyof T],
+	string
+>;
+
+type TypedInventoryEntryFieldDescriptor<
+	T extends object,
+	TKey extends Extract<keyof T, string> = Extract<keyof T, string>,
+> = TKey extends Extract<keyof T, string>
+	? Omit<InventoryEntryFieldDescriptor, "key" | "required"> & {
+			key: TKey;
+		} & (TKey extends RequiredInventoryEntryKey<T>
+				? { required: true }
+				: { required?: boolean })
+	: never;
+
+type RequiredInventoryEntryFieldDescriptor<T extends object> = Omit<
 	InventoryEntryFieldDescriptor,
-	"key"
+	"key" | "required"
 > & {
-	key: Extract<keyof T, string>;
+	key: RequiredInventoryEntryKey<T>;
+	required: true;
 };
 
-function defineInventoryEntryParser<T extends object>(descriptor: {
-	entryName: string;
-	fields: readonly TypedInventoryEntryFieldDescriptor<T>[];
-}): InventoryEntryParserDescriptor {
-	return descriptor;
+type MissingRequiredInventoryEntryKeys<
+	T extends object,
+	TFields extends readonly TypedInventoryEntryFieldDescriptor<T>[],
+> = Exclude<RequiredInventoryEntryKey<T>, TFields[number]["key"]>;
+
+type RequiredInventoryEntryFieldsPresent<
+	T extends object,
+	TFields extends readonly TypedInventoryEntryFieldDescriptor<T>[],
+> = MissingRequiredInventoryEntryKeys<T, TFields> extends never
+	? unknown
+	: {
+			missingRequiredInventoryEntryFields: MissingRequiredInventoryEntryKeys<T, TFields>;
+		};
+
+type RequiredInventoryEntryFieldsMarkedRequired<
+	T extends object,
+	TFields extends readonly TypedInventoryEntryFieldDescriptor<T>[],
+> = Extract<
+	TFields[number],
+	{ key: RequiredInventoryEntryKey<T> }
+> extends RequiredInventoryEntryFieldDescriptor<T>
+	? unknown
+	: {
+			requiredInventoryEntryFieldsMustSetRequiredTrue: RequiredInventoryEntryKey<T>;
+		};
+
+function defineInventoryEntryParser<T extends object>() {
+	return <
+		const TFields extends readonly TypedInventoryEntryFieldDescriptor<T>[],
+	>(descriptor: {
+		entryName: string;
+		fields: TFields;
+	} & RequiredInventoryEntryFieldsPresent<T, TFields> &
+		RequiredInventoryEntryFieldsMarkedRequired<
+			T,
+			TFields
+		>): InventoryEntryParserDescriptor => descriptor;
 }
 
 export const BLOCK_CONFIG_ENTRY_MARKER = "\t// wp-typia add block entries";
@@ -486,7 +537,7 @@ const BLOCK_INVENTORY_SECTION: InventorySectionDescriptor = {
 	},
 	parse: {
 		entriesKey: "blocks",
-		entry: defineInventoryEntryParser<WorkspaceBlockInventoryEntry>({
+		entry: defineInventoryEntryParser<WorkspaceBlockInventoryEntry>()({
 			entryName: "BLOCKS",
 			fields: [
 				{ key: "apiTypesFile" },
@@ -513,7 +564,7 @@ const INVENTORY_SECTIONS: readonly InventorySectionDescriptor[] = [
 		},
 		parse: {
 			entriesKey: "variations",
-			entry: defineInventoryEntryParser<WorkspaceVariationInventoryEntry>({
+			entry: defineInventoryEntryParser<WorkspaceVariationInventoryEntry>()({
 				entryName: "VARIATIONS",
 				fields: [
 					{ key: "block", required: true },
@@ -539,7 +590,7 @@ const INVENTORY_SECTIONS: readonly InventorySectionDescriptor[] = [
 		},
 		parse: {
 			entriesKey: "blockStyles",
-			entry: defineInventoryEntryParser<WorkspaceBlockStyleInventoryEntry>({
+			entry: defineInventoryEntryParser<WorkspaceBlockStyleInventoryEntry>()({
 				entryName: "BLOCK_STYLES",
 				fields: [
 					{ key: "block", required: true },
@@ -565,7 +616,7 @@ const INVENTORY_SECTIONS: readonly InventorySectionDescriptor[] = [
 		},
 		parse: {
 			entriesKey: "blockTransforms",
-			entry: defineInventoryEntryParser<WorkspaceBlockTransformInventoryEntry>({
+			entry: defineInventoryEntryParser<WorkspaceBlockTransformInventoryEntry>()({
 				entryName: "BLOCK_TRANSFORMS",
 				fields: [
 					{ key: "block", required: true },
@@ -593,7 +644,7 @@ const INVENTORY_SECTIONS: readonly InventorySectionDescriptor[] = [
 		},
 		parse: {
 			entriesKey: "patterns",
-			entry: defineInventoryEntryParser<WorkspacePatternInventoryEntry>({
+			entry: defineInventoryEntryParser<WorkspacePatternInventoryEntry>()({
 				entryName: "PATTERNS",
 				fields: [
 					{ key: "file", required: true },
@@ -618,7 +669,7 @@ const INVENTORY_SECTIONS: readonly InventorySectionDescriptor[] = [
 		},
 		parse: {
 			entriesKey: "bindingSources",
-			entry: defineInventoryEntryParser<WorkspaceBindingSourceInventoryEntry>({
+			entry: defineInventoryEntryParser<WorkspaceBindingSourceInventoryEntry>()({
 				entryName: "BINDING_SOURCES",
 				fields: [
 					{ key: "attribute" },
@@ -646,7 +697,7 @@ const INVENTORY_SECTIONS: readonly InventorySectionDescriptor[] = [
 		},
 		parse: {
 			entriesKey: "restResources",
-			entry: defineInventoryEntryParser<WorkspaceRestResourceInventoryEntry>({
+			entry: defineInventoryEntryParser<WorkspaceRestResourceInventoryEntry>()({
 				entryName: "REST_RESOURCES",
 				fields: [
 					{ key: "apiFile", required: true },
@@ -695,7 +746,7 @@ const INVENTORY_SECTIONS: readonly InventorySectionDescriptor[] = [
 		},
 		parse: {
 			entriesKey: "abilities",
-			entry: defineInventoryEntryParser<WorkspaceAbilityInventoryEntry>({
+			entry: defineInventoryEntryParser<WorkspaceAbilityInventoryEntry>()({
 				entryName: "ABILITIES",
 				fields: [
 					{ key: "clientFile", required: true },
@@ -728,7 +779,7 @@ const INVENTORY_SECTIONS: readonly InventorySectionDescriptor[] = [
 		},
 		parse: {
 			entriesKey: "aiFeatures",
-			entry: defineInventoryEntryParser<WorkspaceAiFeatureInventoryEntry>({
+			entry: defineInventoryEntryParser<WorkspaceAiFeatureInventoryEntry>()({
 				entryName: "AI_FEATURES",
 				fields: [
 					{ key: "aiSchemaFile", required: true },
@@ -761,7 +812,7 @@ const INVENTORY_SECTIONS: readonly InventorySectionDescriptor[] = [
 		},
 		parse: {
 			entriesKey: "adminViews",
-			entry: defineInventoryEntryParser<WorkspaceAdminViewInventoryEntry>({
+			entry: defineInventoryEntryParser<WorkspaceAdminViewInventoryEntry>()({
 				entryName: "ADMIN_VIEWS",
 				fields: [
 					{ key: "file", required: true },
@@ -788,7 +839,7 @@ const INVENTORY_SECTIONS: readonly InventorySectionDescriptor[] = [
 		},
 		parse: {
 			entriesKey: "editorPlugins",
-			entry: defineInventoryEntryParser<WorkspaceEditorPluginInventoryEntry>({
+			entry: defineInventoryEntryParser<WorkspaceEditorPluginInventoryEntry>()({
 				entryName: "EDITOR_PLUGINS",
 				fields: [
 					{ key: "file", required: true },
@@ -870,27 +921,12 @@ function getOptionalStringProperty(
 	return undefined;
 }
 
-function getRequiredStringProperty(
+function getOptionalStringArrayProperty(
 	entryName: string,
 	elementIndex: number,
 	objectLiteral: ts.ObjectLiteralExpression,
 	key: string,
-): string {
-	const value = getOptionalStringProperty(entryName, elementIndex, objectLiteral, key);
-	if (!value) {
-		throw new Error(
-			`${entryName}[${elementIndex}] is missing required "${key}" in scripts/block-config.ts.`,
-		);
-	}
-	return value;
-}
-
-function getRequiredStringArrayProperty(
-	entryName: string,
-	elementIndex: number,
-	objectLiteral: ts.ObjectLiteralExpression,
-	key: string,
-): string[] {
+): string[] | undefined {
 	for (const property of objectLiteral.properties) {
 		if (!ts.isPropertyAssignment(property)) {
 			continue;
@@ -915,9 +951,41 @@ function getRequiredStringArrayProperty(
 		});
 	}
 
-	throw new Error(
-		`${entryName}[${elementIndex}] is missing required "${key}" in scripts/block-config.ts.`,
-	);
+	return undefined;
+}
+
+function isMissingRequiredInventoryValue(
+	value: string | string[] | undefined,
+): boolean {
+	return value === undefined || (typeof value === "string" && value.length === 0);
+}
+
+function formatMissingRequiredInventoryFields(
+	keys: readonly string[],
+): string {
+	return keys.length === 1
+		? `required "${keys[0]}"`
+		: `required fields ${keys.map((key) => `"${key}"`).join(", ")}`;
+}
+
+function assertParsedInventoryEntry<T extends object>(
+	entry: Record<string, string | string[] | undefined>,
+	descriptor: InventoryEntryParserDescriptor,
+	elementIndex: number,
+): asserts entry is Record<string, string | string[] | undefined> & T {
+	const missingRequiredKeys = descriptor.fields
+		.filter(
+			(field) =>
+				field.required === true &&
+				isMissingRequiredInventoryValue(entry[field.key]),
+		)
+		.map((field) => field.key);
+
+	if (missingRequiredKeys.length > 0) {
+		throw new Error(
+			`${descriptor.entryName}[${elementIndex}] is missing ${formatMissingRequiredInventoryFields(missingRequiredKeys)} in scripts/block-config.ts.`,
+		);
+	}
 }
 
 function parseInventoryEntries<T extends object>(
@@ -936,25 +1004,18 @@ function parseInventoryEntries<T extends object>(
 			const kind = field.kind ?? "string";
 			const value =
 				kind === "stringArray"
-					? getRequiredStringArrayProperty(
+					? getOptionalStringArrayProperty(
 							descriptor.entryName,
 							elementIndex,
 							element,
 							field.key,
 						)
-					: field.required
-						? getRequiredStringProperty(
-								descriptor.entryName,
-								elementIndex,
-								element,
-								field.key,
-							)
-						: getOptionalStringProperty(
-								descriptor.entryName,
-								elementIndex,
-								element,
-								field.key,
-							);
+					: getOptionalStringProperty(
+							descriptor.entryName,
+							elementIndex,
+							element,
+							field.key,
+						);
 
 			field.validate?.(value, {
 				elementIndex,
@@ -964,7 +1025,8 @@ function parseInventoryEntries<T extends object>(
 			entry[field.key] = value;
 		}
 
-		return entry as T;
+		assertParsedInventoryEntry<T>(entry, descriptor, elementIndex);
+		return entry;
 	});
 }
 
