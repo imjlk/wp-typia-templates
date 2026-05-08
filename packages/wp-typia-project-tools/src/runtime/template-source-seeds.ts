@@ -25,6 +25,7 @@ import {
   CLI_DIAGNOSTIC_CODES,
   createCliDiagnosticCodeError,
 } from './cli-diagnostics.js'
+import { pathExists } from './fs-async.js'
 import {
   OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE,
   OFFICIAL_WORKSPACE_TEMPLATE_ALIAS,
@@ -300,7 +301,9 @@ async function fetchNpmTemplateSource(
  * Resolve a locally installed npm template package from the caller workspace.
  *
  * Bare package ids are preferred here so monorepo and offline workflows can
- * use an already-installed template without forcing a registry fetch.
+ * use an already-installed template without forcing a registry fetch. This
+ * path intentionally keeps Node's synchronous `require.resolve` semantics
+ * because the module resolver itself has no async equivalent.
  */
 function resolveInstalledNpmTemplateSource(
   locator: NpmTemplateLocator,
@@ -380,6 +383,12 @@ function resolveInstalledNpmTemplateSource(
   }
 }
 
+/**
+ * Synchronously identify the bundled workspace template seed.
+ *
+ * This remains sync-only for compatibility callers. Async template resolution
+ * paths should use `isOfficialWorkspaceTemplateSeedAsync()`.
+ */
 export function isOfficialWorkspaceTemplateSeed(seed: SeedSource): boolean {
   const packageJsonPath = path.join(seed.rootDir, 'package.json')
   if (!fs.existsSync(packageJsonPath)) {
@@ -389,6 +398,27 @@ export function isOfficialWorkspaceTemplateSeed(seed: SeedSource): boolean {
   try {
     const packageJson = JSON.parse(
       fs.readFileSync(packageJsonPath, 'utf8'),
+    ) as { name?: string }
+    return packageJson.name === OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE
+  } catch {
+    return false
+  }
+}
+
+/**
+ * Asynchronously identify the bundled workspace template seed.
+ */
+export async function isOfficialWorkspaceTemplateSeedAsync(
+  seed: SeedSource,
+): Promise<boolean> {
+  const packageJsonPath = path.join(seed.rootDir, 'package.json')
+  if (!(await pathExists(packageJsonPath))) {
+    return false
+  }
+
+  try {
+    const packageJson = JSON.parse(
+      await fsp.readFile(packageJsonPath, 'utf8'),
     ) as { name?: string }
     return packageJson.name === OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE
   } catch {
@@ -452,16 +482,16 @@ function getGitHubTemplateRepositoryUrl(locator: GitHubTemplateLocator): string 
   return `https://github.com/${locator.owner}/${locator.repo}.git`
 }
 
-function resolveGitHubTemplateDirectory(
+async function resolveGitHubTemplateDirectory(
   checkoutDir: string,
   locator: GitHubTemplateLocator,
-): string {
+): Promise<string> {
   const sourceDir = path.resolve(checkoutDir, locator.sourcePath)
   const relativeSourceDir = path.relative(checkoutDir, sourceDir)
   if (relativeSourceDir.startsWith('..') || path.isAbsolute(relativeSourceDir)) {
     throw new Error('GitHub template path must stay within the cloned repository.')
   }
-  if (!fs.existsSync(sourceDir)) {
+  if (!(await pathExists(sourceDir))) {
     throw new Error(`GitHub template path does not exist: ${locator.sourcePath}`)
   }
   return sourceDir
@@ -675,7 +705,7 @@ async function reuseGitHubTemplateCacheByMetadata(
     return null
   }
 
-  const sourceDir = resolveGitHubTemplateDirectory(
+  const sourceDir = await resolveGitHubTemplateDirectory(
     cachedSource.sourceDir,
     locator,
   )
@@ -729,7 +759,7 @@ async function resolveGitHubTemplateSource(
         },
         async (checkoutDir) => {
           cloneGitHubTemplateSource(locator, checkoutDir)
-          const sourceDir = resolveGitHubTemplateDirectory(checkoutDir, locator)
+          const sourceDir = await resolveGitHubTemplateDirectory(checkoutDir, locator)
           await assertNoSymlinks(sourceDir)
           pinGitHubTemplateCacheRevision(
             locator,
@@ -739,7 +769,7 @@ async function resolveGitHubTemplateSource(
         },
       )
       if (cachedSource) {
-        const sourceDir = resolveGitHubTemplateDirectory(
+        const sourceDir = await resolveGitHubTemplateDirectory(
           cachedSource.sourceDir,
           locator,
         )
@@ -764,7 +794,7 @@ async function resolveGitHubTemplateSource(
 
   try {
     cloneGitHubTemplateSource(locator, checkoutDir)
-    const sourceDir = resolveGitHubTemplateDirectory(checkoutDir, locator)
+    const sourceDir = await resolveGitHubTemplateDirectory(checkoutDir, locator)
     await assertNoSymlinks(sourceDir)
 
     return {
@@ -792,7 +822,7 @@ export async function resolveTemplateSeed(
 ): Promise<SeedSource> {
   if (locator.kind === 'path') {
     const sourceDir = path.resolve(cwd, locator.templatePath)
-    if (!fs.existsSync(sourceDir)) {
+    if (!(await pathExists(sourceDir))) {
       throw new Error(`Template path does not exist: ${sourceDir}`)
     }
     await assertNoSymlinks(sourceDir)

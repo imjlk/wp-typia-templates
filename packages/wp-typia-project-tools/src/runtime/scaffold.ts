@@ -1,4 +1,3 @@
-import fs from "node:fs";
 import { promises as fsp } from "node:fs";
 import path from "node:path";
 
@@ -46,6 +45,7 @@ import type {
 import {
 	assertExternalLayerCompositionOptions,
 } from "./cli-validation.js";
+import { pathExists } from "./fs-async.js";
 
 /**
  * User-facing scaffold answers before template rendering.
@@ -442,7 +442,7 @@ export async function scaffoldProject({
 		title: "Finalizing scaffold output",
 	});
 	const readmePath = path.join(projectDir, "README.md");
-	if (!fs.existsSync(readmePath)) {
+	if (!(await pathExists(readmePath))) {
 		await fsp.writeFile(
 			readmePath,
 			buildReadme(resolvedTemplateId, variables, resolvedPackageManager, {
@@ -455,7 +455,7 @@ export async function scaffoldProject({
 		);
 	}
 	const gitignorePath = path.join(projectDir, ".gitignore");
-	const existingGitignore = fs.existsSync(gitignorePath)
+	const existingGitignore = (await pathExists(gitignorePath))
 		? await fsp.readFile(gitignorePath, "utf8")
 		: "";
 	await fsp.writeFile(

@@ -92,6 +92,9 @@ async function readRemoteBlockJsonAsync(
 /**
  * Read a remote block source and return its default block category.
  *
+ * @deprecated Use `getDefaultCategoryAsync()` from async template-source paths.
+ * This synchronous helper remains only for compatibility callers.
+ *
  * @param sourceDir Block source directory that may contain a block.json file.
  * @returns The declared block category, or "widgets" when detection fails.
  */
@@ -196,6 +199,9 @@ async function readTemplatePackageJsonAsync(
 /**
  * Read `wpTypia.projectType` from a rendered or source template package
  * manifest and return it when present.
+ *
+ * @deprecated Use `getTemplateProjectTypeAsync()` from async template-source
+ * paths. This synchronous helper remains only for compatibility callers.
  */
 export function getTemplateProjectType(sourceDir: string): string | null {
   const packageJsonEntry = readTemplatePackageJson(sourceDir)
@@ -258,7 +264,7 @@ export async function normalizeWpTypiaTemplateSeed(
   const normalizedDir = path.join(tempRoot, 'template')
   try {
     await copyRawDirectory(seed.blockDir, normalizedDir, {
-      filter: (sourcePath, _targetPath, entry) => {
+      filter: async (sourcePath, _targetPath, entry) => {
         const mustacheVariantPath = path.join(
           path.dirname(sourcePath),
           `${entry.name}.mustache`,
@@ -266,7 +272,7 @@ export async function normalizeWpTypiaTemplateSeed(
         return !(
           entry.isFile() &&
           (entry.name === 'package.json' || entry.name === 'README.md') &&
-          fs.existsSync(mustacheVariantPath)
+          (await pathExists(mustacheVariantPath))
         )
       },
     })

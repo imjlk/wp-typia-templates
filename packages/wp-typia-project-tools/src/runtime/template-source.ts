@@ -20,7 +20,7 @@ import {
   renderCreateBlockExternalTemplate,
 } from './template-source-normalization.js'
 import {
-  isOfficialWorkspaceTemplateSeed,
+  isOfficialWorkspaceTemplateSeedAsync,
   resolveTemplateSeed,
 } from './template-source-seeds.js'
 import {
@@ -73,7 +73,7 @@ export async function resolveTemplateSource(
   const seed = await resolveTemplateSeed(locator, cwd)
   const isOfficialWorkspaceTemplate =
     templateId === OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE ||
-    isOfficialWorkspaceTemplateSeed(seed)
+    (await isOfficialWorkspaceTemplateSeedAsync(seed))
   let normalizedSeed: SeedSource | null = null
 
   try {

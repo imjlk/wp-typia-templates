@@ -52,6 +52,9 @@ function resolveSourceSubpath(sourceDir: string, relativePath: string): string {
 /**
  * Search a source directory for the first supported external template entry.
  *
+ * @deprecated Use `findExternalTemplateEntry()` from async template-source
+ * paths. This synchronous helper remains only for compatibility callers.
+ *
  * @param sourceDir Directory that may contain an external template config entry.
  * @returns The first matching entry path, or null when no supported entry exists.
  */
@@ -322,7 +325,7 @@ export async function renderCreateBlockExternalTemplate(
     )
     const blockTemplateDir = resolveSourceSubpath(sourceDir, templatePath)
     await copyRenderedDirectory(blockTemplateDir, blockDir, view, {
-      filter: (sourcePath, _destinationPath, entry) => {
+      filter: async (sourcePath, _destinationPath, entry) => {
         const mustacheVariantPath = path.join(
           path.dirname(sourcePath),
           `${entry.name}.mustache`,
@@ -330,7 +333,7 @@ export async function renderCreateBlockExternalTemplate(
         return !(
           entry.isFile() &&
           (entry.name === 'package.json' || entry.name === 'README.md') &&
-          fs.existsSync(mustacheVariantPath)
+          (await pathExists(mustacheVariantPath))
         )
       },
     })

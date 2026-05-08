@@ -1,7 +1,7 @@
-import fs from "node:fs";
 import path from "node:path";
 import { promises as fsp } from "node:fs";
 
+import { pathExists } from "./fs-async.js";
 import { createManagedTempRoot } from "./temp-roots.js";
 import {
 	getTemplateById,
@@ -225,21 +225,24 @@ export function isOmittableBuiltInTemplateLayerDir(
 	);
 }
 
-function resolveMaterializedTemplateLayerDirs(
+async function resolveMaterializedTemplateLayerDirs(
 	templateId: BuiltInTemplateId,
 	layerDirs: readonly string[],
-): string[] {
-	return layerDirs.flatMap((layerDir) => {
-		if (fs.existsSync(layerDir)) {
-			return [layerDir];
+): Promise<string[]> {
+	const materializedLayerDirs: string[] = [];
+	for (const layerDir of layerDirs) {
+		if (await pathExists(layerDir)) {
+			materializedLayerDirs.push(layerDir);
+			continue;
 		}
 
 		if (isOmittableBuiltInTemplateLayerDir(templateId, layerDir)) {
-			return [];
+			continue;
 		}
 
 		throw new Error(`Built-in template layer is missing: ${layerDir}`);
-	});
+	}
+	return materializedLayerDirs;
 }
 
 async function materializeBuiltInTemplateSource(
@@ -247,7 +250,7 @@ async function materializeBuiltInTemplateSource(
 	layerDirs: readonly string[],
 ): Promise<MaterializedBuiltInTemplateSource> {
 	const template = getTemplateById(templateId);
-	const materializedLayerDirs = resolveMaterializedTemplateLayerDirs(
+	const materializedLayerDirs = await resolveMaterializedTemplateLayerDirs(
 		templateId,
 		layerDirs,
 	);
