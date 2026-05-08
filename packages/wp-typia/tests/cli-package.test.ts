@@ -1,5 +1,4 @@
 import { describe, expect, test } from 'bun:test';
-import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
@@ -8,15 +7,6 @@ import {
   WP_TYPIA_NODE_FALLBACK_TOP_LEVEL_COMMAND_NAMES,
   WP_TYPIA_TOP_LEVEL_COMMAND_NAMES,
 } from '../src/command-contract';
-import { formatAddKindUsagePlaceholder } from '../src/add-kind-registry';
-import {
-  fullRuntimeCommands,
-  interactiveRuntimeCommands,
-  longValueOptions,
-  reservedCommands,
-  shortValueOptions,
-} from '../bin/routing-metadata.generated.js';
-import { shouldRouteToFullRuntime } from '../bin/runtime-routing.js';
 import {
   hasFlagBeforeTerminator,
   parseGlobalFlags,
@@ -25,13 +15,17 @@ import {
 
 import { runUtf8Command } from '../../../tests/helpers/process-utils';
 import {
-  createBlockExternalFixturePath,
-  linkWorkspaceNodeModules,
-  scaffoldOfficialWorkspace,
-} from '../../wp-typia-project-tools/tests/helpers/scaffold-test-harness.js';
+  entryPath,
+  fullRuntimeEntrypoint,
+  packageRoot,
+  parseJsonArrayFromOutput,
+  parseJsonObjectFromOutput,
+  runCapturedCommand,
+  shouldRouteTestInvocationToFullRuntime,
+  withoutAIAgentEnv,
+  withoutLocalBunEnv,
+} from './cli-package-test-helpers';
 
-const packageRoot = path.resolve(import.meta.dir, '..');
-const entryPath = path.join(packageRoot, 'bin', 'wp-typia.js');
 const packageManifest = JSON.parse(
   fs.readFileSync(path.join(packageRoot, 'package.json'), 'utf8'),
 );
@@ -89,7 +83,6 @@ const cliSource = fs.readFileSync(
   path.join(packageRoot, 'src', 'cli.ts'),
   'utf8',
 );
-const fullRuntimeEntrypoint = path.join(packageRoot, 'dist-bunli', 'cli.js');
 const addFlowSource = fs.readFileSync(
   path.join(packageRoot, 'src', 'ui', 'add-flow.tsx'),
   'utf8',
@@ -98,65 +91,6 @@ const createFlowSource = fs.readFileSync(
   path.join(packageRoot, 'src', 'ui', 'create-flow.tsx'),
   'utf8',
 );
-
-function runCapturedCommand(
-  command: string,
-  args: string[],
-  options: Parameters<typeof spawnSync>[2] = {},
-) {
-  return spawnSync(command, args, {
-    ...options,
-    encoding: 'utf8',
-  });
-}
-
-function withoutAIAgentEnv(): NodeJS.ProcessEnv {
-  return {
-    ...process.env,
-    AGENT: '',
-    AMP_CURRENT_THREAD_ID: '',
-    CLAUDECODE: '',
-    CLAUDE_CODE: '',
-    CODEX_CI: '',
-    CODEX_SANDBOX: '',
-    CODEX_THREAD_ID: '',
-    CURSOR_AGENT: '',
-    GEMINI_CLI: '',
-    OPENCODE: '',
-  };
-}
-
-function withoutLocalBunEnv(): NodeJS.ProcessEnv {
-  return {
-    ...withoutAIAgentEnv(),
-    BUN_BIN: path.join(os.tmpdir(), 'wp-typia-missing-bun'),
-    PATH: path.dirname(process.execPath),
-  };
-}
-
-function shouldRouteTestInvocationToFullRuntime(
-  argv: string[],
-  options: {
-    hasBuiltRuntime?: boolean;
-    hasWorkingBun?: boolean;
-    isTTY?: boolean;
-    term?: string;
-  } = {},
-): boolean {
-  return shouldRouteToFullRuntime({
-    argv,
-    fullRuntimeCommands,
-    hasBuiltRuntime: options.hasBuiltRuntime ?? true,
-    hasWorkingBun: options.hasWorkingBun ?? true,
-    interactiveRuntimeCommands,
-    longValueOptions,
-    reservedCommands,
-    shortValueOptions,
-    stdin: { isTTY: options.isTTY ?? true },
-    stdout: { isTTY: options.isTTY ?? true },
-    term: options.term ?? 'xterm-256color',
-  });
-}
 
 function createSyncFixture(options: {
   packageManager?: string | null;
@@ -272,28 +206,6 @@ function readSyncLog(
     .split('\n')
     .filter(Boolean)
     .map((line) => JSON.parse(line) as { args: string[]; label: string });
-}
-
-function parseJsonObjectFromOutput<T>(output: string): T {
-  const trimmed = output.trim();
-  const jsonStart = trimmed.startsWith('{') ? 0 : trimmed.lastIndexOf('\n{');
-  const jsonSource = (
-    jsonStart >= 0
-      ? trimmed.slice(jsonStart === 0 ? 0 : jsonStart + 1)
-      : trimmed
-  ).trim();
-  return JSON.parse(jsonSource) as T;
-}
-
-function parseJsonArrayFromOutput<T>(output: string): T {
-  const trimmed = output.trim();
-  const jsonStart = trimmed.startsWith('[') ? 0 : trimmed.lastIndexOf('\n[');
-  const jsonSource = (
-    jsonStart >= 0
-      ? trimmed.slice(jsonStart === 0 ? 0 : jsonStart + 1)
-      : trimmed
-  ).trim();
-  return JSON.parse(jsonSource) as T;
 }
 
 describe('wp-typia package', () => {
@@ -667,138 +579,10 @@ describe('wp-typia package', () => {
     }
   });
 
-  test('emits structured create completion output in Node fallback JSON mode', () => {
-    const tempRoot = fs.mkdtempSync(
-      path.join(os.tmpdir(), 'wp-typia-create-json-'),
-    );
-
-    try {
-      const result = runCapturedCommand(
-        process.execPath,
-        [
-          entryPath,
-          'create',
-          'demo-json',
-          '--template',
-          'basic',
-          '--package-manager',
-          'npm',
-          '--yes',
-          '--dry-run',
-          '--no-install',
-          '--format',
-          'json',
-        ],
-        {
-          cwd: tempRoot,
-          env: withoutLocalBunEnv(),
-        },
-      );
-      const parsed = parseJsonObjectFromOutput<{
-        data?: {
-          command?: string;
-          completion?: {
-            title?: string;
-          };
-          dryRun?: boolean;
-          files?: string[];
-          projectDir?: string;
-          template?: string;
-        };
-        ok?: boolean;
-      }>(result.stdout);
-      const serialized = JSON.stringify(parsed);
-
-      expect(result.status).toBe(0);
-      expect(result.stderr).toBe('');
-      expect(parsed.ok).toBe(true);
-      expect(parsed.data?.command).toBe('create');
-      expect(parsed.data?.dryRun).toBe(true);
-      expect(parsed.data?.projectDir).toBe(
-        path.join(fs.realpathSync(tempRoot), 'demo-json'),
-      );
-      expect(parsed.data?.template).toBe('basic');
-      expect(parsed.data?.completion?.title).toContain('Dry run for Demo Json');
-      expect(parsed.data).not.toHaveProperty('title');
-      expect(parsed.data?.files).toContain('package.json');
-      expect(parsed.data?.files).toContain('src/index.tsx');
-      expect(serialized).not.toMatch(/[✅🧪⏳⚠]/u);
-    } finally {
-      fs.rmSync(tempRoot, { force: true, recursive: true });
-    }
-  });
-
   test('renders a human-readable version line through the canonical bin', () => {
     const output = runUtf8Command('node', [entryPath, '--version']);
 
     expect(output.trim()).toBe(`wp-typia ${packageManifest.version}`);
-  });
-
-  test('honors NO_COLOR for ASCII-safe status markers through the Node fallback bin', () => {
-    const tempRoot = fs.mkdtempSync(
-      path.join(os.tmpdir(), 'wp-typia-no-color-markers-'),
-    );
-
-    try {
-      const asciiOutput = runUtf8Command(
-        process.execPath,
-        [
-          entryPath,
-          'create',
-          'demo-no-color',
-          '--template',
-          'basic',
-          '--package-manager',
-          'npm',
-          '--yes',
-          '--dry-run',
-          '--no-install',
-        ],
-        {
-          cwd: tempRoot,
-          env: {
-            ...withoutLocalBunEnv(),
-            LANG: 'en_US.UTF-8',
-            LC_ALL: 'en_US.UTF-8',
-            NO_COLOR: '1',
-          },
-        },
-      );
-      const unicodeOutput = runUtf8Command(
-        process.execPath,
-        [
-          entryPath,
-          'create',
-          'demo-unicode',
-          '--template',
-          'basic',
-          '--package-manager',
-          'npm',
-          '--yes',
-          '--dry-run',
-          '--no-install',
-        ],
-        {
-          cwd: tempRoot,
-          env: {
-            ...withoutLocalBunEnv(),
-            LANG: 'en_US.UTF-8',
-            LC_ALL: 'en_US.UTF-8',
-            NO_COLOR: '1',
-            WP_TYPIA_ASCII: '0',
-          },
-        },
-      );
-
-      expect(asciiOutput).toContain('[...]');
-      expect(asciiOutput).toContain('[dry-run]');
-      expect(asciiOutput).not.toContain('⏳');
-      expect(asciiOutput).not.toContain('🧪');
-      expect(unicodeOutput).toContain('⏳');
-      expect(unicodeOutput).toContain('🧪');
-    } finally {
-      fs.rmSync(tempRoot, { force: true, recursive: true });
-    }
   });
 
   test('keeps structured version output opt-in through --format json', () => {
@@ -1595,368 +1379,6 @@ process.exit(0);
     ).toThrow(/removed in favor of `wp-typia migrate`/);
   });
 
-  test('requires --block for add variation', () => {
-    expect(() =>
-      runUtf8Command('node', [entryPath, 'add', 'variation', 'promo-card']),
-    ).toThrow('`wp-typia add variation` requires --block <block-slug>.');
-  });
-
-  test('requires style and transform target flags', () => {
-    expect(() =>
-      runUtf8Command('node', [entryPath, 'add', 'style', 'callout-emphasis']),
-    ).toThrow('`wp-typia add style` requires --block <block-slug>.');
-    expect(() =>
-      runUtf8Command('node', [entryPath, 'add', 'transform', 'quote-to-card']),
-    ).toThrow('`wp-typia add transform` requires --from <namespace/block>.');
-    expect(() =>
-      runUtf8Command('node', [
-        entryPath,
-        'add',
-        'transform',
-        'quote-to-card',
-        '--from',
-        'core/quote',
-      ]),
-    ).toThrow(
-      '`wp-typia add transform` requires --to <block-slug|namespace/block-slug>.',
-    );
-  });
-
-  test('requires --anchor and --position for add hooked-block', () => {
-    expect(() =>
-      runUtf8Command('node', [entryPath, 'add', 'hooked-block', 'promo-card']),
-    ).toThrow(
-      '`wp-typia add hooked-block` requires --anchor <anchor-block-name>.',
-    );
-    expect(() =>
-      runUtf8Command('node', [
-        entryPath,
-        'add',
-        'hooked-block',
-        'promo-card',
-        '--anchor',
-        'core/post-content',
-      ]),
-    ).toThrow(
-      '`wp-typia add hooked-block` requires --position <before|after|firstChild|lastChild>.',
-    );
-  });
-
-  test('requires a project directory for the explicit create command', () => {
-    expect(() => runUtf8Command('node', [entryPath, 'create'])).toThrow(
-      '`wp-typia create` requires <project-dir>.',
-    );
-    expect(() =>
-      runUtf8Command('node', [entryPath, 'create', '--dry-run']),
-    ).toThrow(/`--dry-run` still needs a logical project directory name/);
-  });
-
-  test('surfaces external template timeout codes in structured create failures', () => {
-    const fixtureRoot = fs.mkdtempSync(
-      path.join(os.tmpdir(), 'wp-typia-create-timeout-template-'),
-    );
-    const targetDir = fs.mkdtempSync(
-      path.join(os.tmpdir(), 'wp-typia-create-timeout-output-'),
-    );
-    fs.rmSync(targetDir, { force: true, recursive: true });
-    fs.cpSync(createBlockExternalFixturePath, fixtureRoot, { recursive: true });
-    fs.rmSync(path.join(fixtureRoot, 'index.cjs'));
-    fs.writeFileSync(
-      path.join(fixtureRoot, 'index.mjs'),
-      [
-        'await new Promise((resolve) => setTimeout(resolve, 200));',
-        'export default {',
-        '  blockTemplatesPath: "block-templates",',
-        '  assetsPath: "assets",',
-        '};',
-        '',
-      ].join('\n'),
-      'utf8',
-    );
-
-    const previousTimeout = process.env.WP_TYPIA_EXTERNAL_TEMPLATE_TIMEOUT_MS;
-    process.env.WP_TYPIA_EXTERNAL_TEMPLATE_TIMEOUT_MS = '25';
-
-    try {
-      const result = runCapturedCommand(
-        process.execPath,
-        [
-          entryPath,
-          'create',
-          targetDir,
-          '--template',
-          fixtureRoot,
-          '--package-manager',
-          'npm',
-          '--yes',
-          '--no-install',
-          '--format',
-          'json',
-        ],
-        {
-          env: {
-            ...withoutLocalBunEnv(),
-            WP_TYPIA_EXTERNAL_TEMPLATE_TIMEOUT_MS: '25',
-          },
-        },
-      );
-      const parsed = parseJsonObjectFromOutput<{
-        error?: { code?: string; message?: string };
-        ok?: boolean;
-      }>(result.stderr);
-
-      expect(result.status).toBe(1);
-      expect(result.stdout).toBe('');
-      expect(parsed.ok).toBe(false);
-      expect(parsed.error?.code).toBe('template-source-timeout');
-      expect(parsed.error?.message).toContain(
-        'Timed out while loading external template config',
-      );
-    } finally {
-      if (previousTimeout === undefined) {
-        delete process.env.WP_TYPIA_EXTERNAL_TEMPLATE_TIMEOUT_MS;
-      } else {
-        process.env.WP_TYPIA_EXTERNAL_TEMPLATE_TIMEOUT_MS = previousTimeout;
-      }
-      fs.rmSync(fixtureRoot, { force: true, recursive: true });
-      fs.rmSync(targetDir, { force: true, recursive: true });
-    }
-  });
-
-  test('rejects typo-like positional alias invocations with extra arguments', () => {
-    const result = runCapturedCommand('node', [entryPath, 'temlates', 'list'], {
-      env: withoutAIAgentEnv(),
-    });
-
-    expect(result.status).toBe(1);
-    expect(result.stderr).toContain(
-      'The positional alias only accepts a single project directory.',
-    );
-    expect(result.stderr).toContain('`wp-typia create <project-dir>`');
-    expect(result.stderr).toContain('check the command spelling');
-    expect(result.stderr).toContain('`list`');
-  });
-
-  test('formats create failures with a shared non-interactive diagnostic block', () => {
-    const result = runCapturedCommand('node', [entryPath, 'create']);
-
-    expect(result.status).toBe(1);
-    expect(result.stderr).toContain('Error: wp-typia create failed');
-    expect(result.stderr).toContain(
-      'Summary: Unable to complete the requested create workflow.',
-    );
-    expect(result.stderr).toContain(
-      '- `wp-typia create` requires <project-dir>.',
-    );
-    expect(result.stderr).toContain(
-      '`--dry-run` still needs a logical project directory name',
-    );
-  });
-
-  test('emits a machine-readable missing-argument error code for create in Node fallback JSON mode', () => {
-    const result = runCapturedCommand(
-      process.execPath,
-      [entryPath, 'create', '--format', 'json'],
-      {
-        env: withoutLocalBunEnv(),
-      },
-    );
-    const parsed = parseJsonObjectFromOutput<{
-      error?: { code?: string; command?: string; kind?: string };
-      ok?: boolean;
-    }>(result.stderr);
-
-    expect(result.status).toBe(1);
-    expect(result.stdout).toBe('');
-    expect(parsed.ok).toBe(false);
-    expect(parsed.error?.kind).toBe('command-execution');
-    expect(parsed.error?.command).toBe('create');
-    expect(parsed.error?.code).toBe('missing-argument');
-  });
-
-  test('emits a machine-readable invalid-argument error code for create variant failures', () => {
-    const targetDir = fs.mkdtempSync(
-      path.join(os.tmpdir(), 'wp-typia-create-invalid-variant-'),
-    );
-    fs.rmSync(targetDir, { force: true, recursive: true });
-
-    try {
-      const result = runCapturedCommand(
-        process.execPath,
-        [
-          entryPath,
-          'create',
-          targetDir,
-          '--template',
-          'basic',
-          '--variant',
-          'hero',
-          '--yes',
-          '--no-install',
-          '--format',
-          'json',
-        ],
-        {
-          env: withoutLocalBunEnv(),
-        },
-      );
-      const parsed = parseJsonObjectFromOutput<{
-        error?: { code?: string; command?: string; message?: string };
-        ok?: boolean;
-      }>(result.stderr);
-
-      expect(result.status).toBe(1);
-      expect(result.stdout).toBe('');
-      expect(parsed.ok).toBe(false);
-      expect(parsed.error?.command).toBe('create');
-      expect(parsed.error?.code).toBe('invalid-argument');
-      expect(parsed.error?.message).toContain(
-        '--variant is only supported for official external template configs',
-      );
-    } finally {
-      fs.rmSync(targetDir, { force: true, recursive: true });
-    }
-  });
-
-  test('emits a machine-readable unknown-template error code for removed built-in template ids', () => {
-    const targetDir = fs.mkdtempSync(
-      path.join(os.tmpdir(), 'wp-typia-create-removed-template-'),
-    );
-    fs.rmSync(targetDir, { force: true, recursive: true });
-
-    try {
-      const result = runCapturedCommand(
-        process.execPath,
-        [
-          entryPath,
-          'create',
-          targetDir,
-          '--template',
-          'data',
-          '--yes',
-          '--no-install',
-          '--format',
-          'json',
-        ],
-        {
-          env: withoutLocalBunEnv(),
-        },
-      );
-      const parsed = parseJsonObjectFromOutput<{
-        error?: { code?: string; command?: string; message?: string };
-        ok?: boolean;
-      }>(result.stderr);
-
-      expect(result.status).toBe(1);
-      expect(result.stdout).toBe('');
-      expect(parsed.ok).toBe(false);
-      expect(parsed.error?.command).toBe('create');
-      expect(parsed.error?.code).toBe('unknown-template');
-      expect(parsed.error?.message).toContain(
-        'Built-in template "data" was removed.',
-      );
-    } finally {
-      fs.rmSync(targetDir, { force: true, recursive: true });
-    }
-  });
-
-  test('formats add failures with a shared non-interactive diagnostic block', () => {
-    const result = runCapturedCommand('node', [
-      entryPath,
-      'add',
-      'variation',
-      'promo-card',
-    ]);
-
-    expect(result.status).toBe(1);
-    expect(result.stderr).toContain('Error: wp-typia add failed');
-    expect(result.stderr).toContain(
-      'Summary: Unable to complete the requested add workflow.',
-    );
-    expect(result.stderr).toContain(
-      '- `wp-typia add variation` requires --block <block-slug>.',
-    );
-  });
-
-  test('emits structured add completion output in Node fallback JSON mode', async () => {
-    const projectDir = fs.mkdtempSync(
-      path.join(os.tmpdir(), 'wp-typia-add-json-'),
-    );
-
-    try {
-      await scaffoldOfficialWorkspace(projectDir);
-      linkWorkspaceNodeModules(projectDir);
-      const nestedCwd = path.join(projectDir, 'src', 'nested-cwd');
-      fs.mkdirSync(nestedCwd, { recursive: true });
-
-      const result = runCapturedCommand(
-        process.execPath,
-        [entryPath, 'add', 'block', 'promo-card', '--format', 'json'],
-        {
-          cwd: nestedCwd,
-          env: withoutLocalBunEnv(),
-        },
-      );
-      const parsed = parseJsonObjectFromOutput<{
-        data?: {
-          command?: string;
-          completion?: {
-            summaryLines?: string[];
-            title?: string;
-          };
-          kind?: string;
-          name?: string;
-          projectDir?: string;
-        };
-        ok?: boolean;
-      }>(result.stdout);
-      const serialized = JSON.stringify(parsed);
-
-      expect(result.status).toBe(0);
-      expect(result.stderr).toBe('');
-      expect(parsed.ok).toBe(true);
-      expect(parsed.data?.command).toBe('add');
-      expect(parsed.data?.kind).toBe('block');
-      expect(parsed.data?.name).toBe('promo-card');
-      expect(parsed.data?.projectDir).toBe(fs.realpathSync(projectDir));
-      expect(parsed.data?.completion?.title).toContain('Added workspace block');
-      expect(parsed.data?.completion?.summaryLines).toContain(
-        'Template family: basic',
-      );
-      expect(parsed.data).not.toHaveProperty('title');
-      expect(parsed.data).not.toHaveProperty('summaryLines');
-      expect(serialized).not.toMatch(/[✅🧪⏳⚠]/u);
-      expect(
-        fs.existsSync(
-          path.join(projectDir, 'src', 'blocks', 'promo-card', 'block.json'),
-        ),
-      ).toBe(true);
-    } finally {
-      fs.rmSync(projectDir, { force: true, recursive: true });
-    }
-  });
-
-  test('preserves add diagnostic metadata in Node fallback JSON mode on failure', () => {
-    const result = runCapturedCommand(
-      process.execPath,
-      [entryPath, 'add', 'variation', 'promo-card', '--format', 'json'],
-      {
-        env: withoutLocalBunEnv(),
-      },
-    );
-    const parsed = parseJsonObjectFromOutput<{
-      error?: { code?: string; command?: string; kind?: string };
-      ok?: boolean;
-    }>(result.stderr);
-
-    expect(result.status).toBe(1);
-    expect(result.stdout).toBe('');
-    expect(parsed.ok).toBe(false);
-    expect(parsed.error?.kind).toBe('command-execution');
-    expect(parsed.error?.command).toBe('add');
-    expect(parsed.error?.code).toBe('missing-argument');
-  });
-
   test('emits a machine-readable outside-project-root error code for sync in Node fallback JSON mode', () => {
     const tempRoot = fs.mkdtempSync(
       path.join(os.tmpdir(), 'wp-typia-sync-json-'),
@@ -2037,58 +1459,6 @@ process.exit(0);
       code: 'invalid-command',
       command: 'templates',
     });
-  });
-
-  test('treats missing add kinds as an error while still printing help text', () => {
-    const result = runCapturedCommand('node', [entryPath, 'add'], {
-      env: withoutAIAgentEnv(),
-    });
-
-    expect(result.status).toBe(1);
-    expect(result.stdout).toContain('Usage:');
-    expect(result.stdout).toContain('wp-typia add admin-view <name>');
-    expect(result.stdout).toContain(
-      'wp-typia add block <name> [--template <basic|interactivity|persistence|compound>]',
-    );
-    expect(result.stdout).toContain('wp-typia add style <name>');
-    expect(result.stdout).toContain('wp-typia add transform <name>');
-    expect(result.stderr).toContain(
-      `\`wp-typia add\` requires <kind>. Usage: wp-typia add ${formatAddKindUsagePlaceholder()} ...`,
-    );
-  });
-
-  test('node fallback source entry treats missing add kinds as an error while printing add help', async () => {
-    const originalLog = console.log;
-    const capturedStdout: string[] = [];
-    console.log = (line = '') => {
-      capturedStdout.push(String(line));
-    };
-
-    try {
-      await expect(runNodeCli(['add'])).rejects.toThrow('wp-typia add failed');
-      expect(capturedStdout.join('\n')).toContain('Usage:');
-      expect(capturedStdout.join('\n')).toContain(
-        'wp-typia add admin-view <name>',
-      );
-      expect(capturedStdout.join('\n')).toContain(
-        'wp-typia add block <name> [--template <basic|interactivity|persistence|compound>]',
-      );
-      expect(capturedStdout.join('\n')).toContain(
-        'wp-typia add ability <name>',
-      );
-      expect(capturedStdout.join('\n')).toContain(
-        'wp-typia add ai-feature <name>',
-      );
-      expect(capturedStdout.join('\n')).toContain('wp-typia add style <name>');
-      expect(capturedStdout.join('\n')).toContain(
-        'wp-typia add transform <name>',
-      );
-      expect(capturedStdout.join('\n')).toContain(
-        'wp-typia add editor-plugin <name>',
-      );
-    } finally {
-      console.log = originalLog;
-    }
   });
 
   test('formats migrate failures with a shared non-interactive diagnostic block', () => {
@@ -2332,27 +1702,6 @@ process.exit(0);
     }
   });
 
-  test('emits a machine-readable missing-argument error code for create in Bun runtime JSON mode', () => {
-    const result = runCapturedCommand(
-      'bun',
-      [fullRuntimeEntrypoint, 'create', '--format', 'json'],
-      {
-        env: withoutAIAgentEnv(),
-      },
-    );
-    const parsed = JSON.parse(result.stderr.trim()) as {
-      error?: { code?: string; command?: string; kind?: string };
-      ok?: boolean;
-    };
-
-    expect(result.status).toBe(1);
-    expect(result.stdout).toBe('');
-    expect(parsed.ok).toBe(false);
-    expect(parsed.error?.kind).toBe('command-execution');
-    expect(parsed.error?.command).toBe('create');
-    expect(parsed.error?.code).toBe('missing-argument');
-  });
-
   test('emits a machine-readable outside-project-root error code for sync in Bun runtime JSON mode', () => {
     const tempRoot = fs.mkdtempSync(
       path.join(os.tmpdir(), 'wp-typia-bun-sync-json-'),
@@ -2524,54 +1873,6 @@ process.exit(0);
           tools: ['ping'],
         },
       ]);
-    } finally {
-      fs.rmSync(tempRoot, { force: true, recursive: true });
-    }
-  });
-
-  test('loads baseline create defaults from package.json#wp-typia in the Node fallback', () => {
-    const tempRoot = fs.mkdtempSync(
-      path.join(os.tmpdir(), 'wp-typia-node-config-defaults-'),
-    );
-    const targetDir = path.join(tempRoot, 'demo-config-defaults');
-
-    try {
-      fs.writeFileSync(
-        path.join(tempRoot, 'package.json'),
-        `${JSON.stringify(
-          {
-            name: 'node-config-defaults',
-            private: true,
-            'wp-typia': {
-              create: {
-                'package-manager': 'npm',
-                template: 'basic',
-                yes: true,
-                'no-install': true,
-              },
-            },
-          },
-          null,
-          2,
-        )}\n`,
-        'utf8',
-      );
-
-      const result = runCapturedCommand(
-        process.execPath,
-        [entryPath, 'create', targetDir],
-        {
-          cwd: tempRoot,
-          env: withoutLocalBunEnv(),
-        },
-      );
-
-      expect(result.status).toBe(0);
-      expect(result.stderr).toBe('');
-      expect(fs.existsSync(path.join(targetDir, 'package.json'))).toBe(true);
-      expect(fs.existsSync(path.join(targetDir, 'src', 'block.json'))).toBe(
-        true,
-      );
     } finally {
       fs.rmSync(tempRoot, { force: true, recursive: true });
     }
