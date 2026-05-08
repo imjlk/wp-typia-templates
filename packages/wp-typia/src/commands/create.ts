@@ -12,6 +12,7 @@ import {
 	emitCliDiagnosticFailure,
 	prefersStructuredCliOutput,
 } from "../cli-diagnostic-output";
+import { buildMissingCreateProjectDirDetailLines } from "../cli-error-messages";
 import { getCreateDefaults } from "../config";
 import { resolveBundledModuleHref } from "../render-loader";
 import { executeCreateCommand } from "../runtime-bridge";
@@ -47,10 +48,7 @@ export const createCommand = defineCommand({
 			emitCliDiagnosticFailure(args, {
 				code: CLI_DIAGNOSTIC_CODES.MISSING_ARGUMENT,
 				command: "create",
-				detailLines: [
-					"`wp-typia create` requires <project-dir>.",
-					"`--dry-run` still needs a logical project directory name because wp-typia derives slugs, package names, and planned file paths from it.",
-				],
+				detailLines: buildMissingCreateProjectDirDetailLines(),
 			});
 			return;
 		}
