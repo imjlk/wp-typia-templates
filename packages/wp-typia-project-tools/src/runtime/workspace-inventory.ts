@@ -164,6 +164,12 @@ export interface WorkspaceInventory {
 	variations: WorkspaceVariationInventoryEntry[];
 }
 
+export type WorkspaceBlockSelectOption = {
+	description: string;
+	name: string;
+	value: string;
+};
+
 type WorkspaceInventoryParseResult = Omit<WorkspaceInventory, "blockConfigPath">;
 
 type WorkspaceInventoryEntriesKey = {
@@ -1203,25 +1209,49 @@ export async function readWorkspaceInventoryAsync(
 	};
 }
 
-/**
- * Return select options for the current workspace block inventory.
- *
- * The `description` field mirrors `block.typesFile`, while `name` and `value`
- * both map to the block slug for use in interactive add flows.
- *
- * @param projectDir Workspace root directory.
- * @returns Block options for variation-target selection.
- */
-export function getWorkspaceBlockSelectOptions(projectDir: string): Array<{
-	description: string;
-	name: string;
-	value: string;
-}> {
-	return readWorkspaceInventory(projectDir).blocks.map((block) => ({
+function toWorkspaceBlockSelectOptions(
+	blocks: readonly WorkspaceBlockInventoryEntry[],
+): WorkspaceBlockSelectOption[] {
+	return blocks.map((block) => ({
 		description: block.typesFile,
 		name: block.slug,
 		value: block.slug,
 	}));
+}
+
+/**
+ * Synchronously return select options for the current workspace block inventory.
+ *
+ * The `description` field mirrors `block.typesFile`, while `name` and `value`
+ * both map to the block slug for use in interactive add flows.
+ *
+ * @deprecated Use `getWorkspaceBlockSelectOptionsAsync()` from async command
+ * paths. This helper intentionally remains sync-only for compatibility callers.
+ *
+ * @param projectDir Workspace root directory.
+ * @returns Block options for variation-target selection.
+ */
+export function getWorkspaceBlockSelectOptions(
+	projectDir: string,
+): WorkspaceBlockSelectOption[] {
+	return toWorkspaceBlockSelectOptions(readWorkspaceInventory(projectDir).blocks);
+}
+
+/**
+ * Asynchronously return select options for the current workspace block inventory.
+ *
+ * The returned option shape matches `getWorkspaceBlockSelectOptions()` while
+ * avoiding synchronous inventory reads in interactive or async command paths.
+ *
+ * @param projectDir Workspace root directory.
+ * @returns Block options for variation-target selection.
+ */
+export async function getWorkspaceBlockSelectOptionsAsync(
+	projectDir: string,
+): Promise<WorkspaceBlockSelectOption[]> {
+	return toWorkspaceBlockSelectOptions(
+		(await readWorkspaceInventoryAsync(projectDir)).blocks,
+	);
 }
 
 function ensureWorkspaceInventorySections(source: string): string {

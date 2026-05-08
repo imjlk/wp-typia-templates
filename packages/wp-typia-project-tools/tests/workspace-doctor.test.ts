@@ -5,6 +5,8 @@ import { cleanupScaffoldTempRoot, createScaffoldTempRoot, entryPath, getCommandE
 import { scaffoldProject } from "../src/runtime/index.js";
 import { getDoctorChecks } from "../src/runtime/cli-core.js";
 import {
+  getWorkspaceBlockSelectOptions,
+  getWorkspaceBlockSelectOptionsAsync,
   parseWorkspaceInventorySource,
   readWorkspaceInventory,
   readWorkspaceInventoryAsync,
@@ -785,6 +787,16 @@ test("async workspace inventory reader matches the sync compatibility reader", a
 
   await expect(readWorkspaceInventoryAsync(projectDir)).resolves.toEqual(
     readWorkspaceInventory(projectDir)
+  );
+  await expect(getWorkspaceBlockSelectOptionsAsync(projectDir)).resolves.toEqual([
+    {
+      description: "src/blocks/counter-card/types.ts",
+      name: "counter-card",
+      value: "counter-card",
+    },
+  ]);
+  await expect(getWorkspaceBlockSelectOptionsAsync(projectDir)).resolves.toEqual(
+    getWorkspaceBlockSelectOptions(projectDir)
   );
 });
 

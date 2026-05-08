@@ -156,6 +156,8 @@ function recordWorkspaceMigrationTargetAlignment(
   }
 
   try {
+    // Maintenance verification is intentionally synchronous so it can compare
+    // migration state against a single inventory snapshot.
     const inventory = readWorkspaceInventory(workspace.projectDir)
     const expectedTargets = inventory.blocks.map(
       (block) => `${workspace.workspace.namespace}/${block.slug}`,

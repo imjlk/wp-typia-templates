@@ -5,6 +5,7 @@
  * CLI while keeping reusable project logic out of the CLI package itself.
  * Consumers should prefer these exports for scaffold, add, migrate, doctor,
  * and workspace-aware helpers such as `getWorkspaceBlockSelectOptions`,
+ * `getWorkspaceBlockSelectOptionsAsync`,
  * `runAddBlockCommand`, `runAddBlockStyleCommand`,
  * `runAddBlockTransformCommand`, `runAddVariationCommand`,
  * `runAddPatternCommand`, `runAddBindingSourceCommand`,
@@ -189,6 +190,7 @@ export {
 	getNextSteps,
 	getOptionalOnboarding,
 	getWorkspaceBlockSelectOptions,
+	getWorkspaceBlockSelectOptionsAsync,
 	HOOKED_BLOCK_POSITION_IDS,
 	EDITOR_PLUGIN_SLOT_IDS,
 	isCliDiagnosticError,
@@ -214,4 +216,5 @@ export type {
 	EditorPluginSlotId,
 	HookedBlockPositionId,
 	ReadlinePrompt,
+	WorkspaceBlockSelectOption,
 } from "./cli-core.js";
