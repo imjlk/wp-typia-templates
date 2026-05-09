@@ -1,5 +1,20 @@
 # wp-typia
 
+## 0.22.9 — 2026-05-08
+
+### Patch changes
+
+- [3c8fbb6](https://github.com/imjlk/wp-typia/commit/3c8fbb64f27579e82e384ed9e621d52580a9a4a0) Add async workspace block select option APIs and use them from interactive add flows. — Thanks @imjlk!
+- [48a2f9e](https://github.com/imjlk/wp-typia/commit/48a2f9e99af606a4cb7150c893b9294af1744917) Split create and add package-level CLI tests into command-family files with shared helpers. — Thanks @imjlk!
+- [2f06395](https://github.com/imjlk/wp-typia/commit/2f0639505f1def124fe6753b14357abb9dfc68d7) Share the CLI printBlock helper between runtime bridge and Node fallback help output. — Thanks @imjlk!
+- [ea7489e](https://github.com/imjlk/wp-typia/commit/ea7489eb183f06e51397f3bbee89bfc839b984b4) Align add missing-kind help output between Bunli bridge and Node fallback paths. — Thanks @imjlk!
+- [063e4f3](https://github.com/imjlk/wp-typia/commit/063e4f3a6d8d75ba6f9e84838e263717b1d8bfd1) Centralize shared CLI missing-argument messages across Bunli and Node fallback paths. — Thanks @imjlk!
+- [0f2c930](https://github.com/imjlk/wp-typia/commit/0f2c930cd2352e8b490df582cb154371c37af99d) Split add-kind registry entries into focused per-kind modules while preserving the public aggregation point. — Thanks @imjlk!
+- [2b61ed5](https://github.com/imjlk/wp-typia/commit/2b61ed5ed01250ca4ce1ee2ac364a1d882d72510) Share close-id template suggestions across create and add-block validation paths. — Thanks @imjlk!
+- [21b3221](https://github.com/imjlk/wp-typia/commit/21b322179a51df252fdc568d61be4c2555815337) Tag remaining CLI-layer artifact, sync execution, and standalone target failures with stable diagnostic codes. — Thanks @imjlk!
+- [76d703e](https://github.com/imjlk/wp-typia/commit/76d703edfa5fa4dc106d66a71770a81eae7dc461) Guard create completion package-manager formatting before building next-step commands. — Thanks @imjlk!
+- Updated dependencies: project-tools (npm)@0.22.9
+
 ## 0.22.8 — 2026-05-06
 
 ### Patch changes
