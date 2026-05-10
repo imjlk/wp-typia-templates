@@ -4,6 +4,7 @@ import path from "node:path";
 import type {
 	WorkspaceMutationSnapshot,
 } from "./cli-add-types.js";
+import { readOptionalUtf8File } from "./fs-async.js";
 import type {
 	WorkspaceProject,
 } from "./workspace-project.js";
@@ -37,14 +38,7 @@ export async function patchFile(
  * Read a file when it exists and otherwise return `null`.
  */
 export async function readOptionalFile(filePath: string): Promise<string | null> {
-	try {
-		return await fsp.readFile(filePath, "utf8");
-	} catch (error) {
-		if (isFileNotFoundError(error)) {
-			return null;
-		}
-		throw error;
-	}
+	return readOptionalUtf8File(filePath);
 }
 
 /**
@@ -88,13 +82,4 @@ export async function rollbackWorkspaceMutation(snapshot: WorkspaceMutationSnaps
 	for (const { filePath, source } of snapshot.fileSources) {
 		await restoreOptionalFile(filePath, source);
 	}
-}
-
-function isFileNotFoundError(error: unknown): boolean {
-	return (
-		typeof error === "object" &&
-		error !== null &&
-		"code" in error &&
-		(error as { code?: unknown }).code === "ENOENT"
-	);
 }

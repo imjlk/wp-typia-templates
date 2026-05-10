@@ -10,6 +10,7 @@ import {
 } from "@wp-typia/block-runtime/metadata-core";
 
 import { projectWordPressAiSchema } from "./ai-artifacts.js";
+import { isFileNotFoundError } from "./fs-async.js";
 import type { JsonSchemaDocument } from "./schema-core.js";
 
 interface AiFeatureTemplateVariablesLike {
@@ -78,11 +79,7 @@ async function reconcileGeneratedArtifact(options: {
 			);
 		}
 	} catch (error) {
-		const code =
-			error && typeof error === "object" && "code" in error
-				? (error as { code?: string }).code
-				: undefined;
-		if (code === "ENOENT") {
+		if (isFileNotFoundError(error)) {
 			throw new Error(
 				`Generated AI feature artifact is missing: ${options.label} (${options.filePath}).`,
 			);
