@@ -203,13 +203,27 @@ describe('wp-typia add command bridge', () => {
   });
 
   test('suggests close add block template ids before workspace mutation', async () => {
-    await expectRejectedAddBlockTemplate({
-      code: CLI_DIAGNOSTIC_CODES.UNKNOWN_TEMPLATE,
-      interactive: false,
-      message:
-        'Unknown add-block template "basicc". Did you mean "basic"? Use `--template basic`',
-      template: 'basicc',
-    });
+    const cases = [
+      {
+        message:
+          'Unknown add-block template "basicc". Did you mean "basic"? Use `--template basic`',
+        template: 'basicc',
+      },
+      {
+        message:
+          'Unknown add-block template "interactiv". Did you mean "interactivity"? Use `--template interactivity`',
+        template: 'interactiv',
+      },
+    ];
+
+    for (const { message, template } of cases) {
+      await expectRejectedAddBlockTemplate({
+        code: CLI_DIAGNOSTIC_CODES.UNKNOWN_TEMPLATE,
+        interactive: false,
+        message,
+        template,
+      });
+    }
   });
 
   test('rejects query-loop add block templates with create-time guidance', async () => {
