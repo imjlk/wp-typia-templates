@@ -9,7 +9,13 @@ import {
   resolveWorkspaceBlockTargetName,
   resolveWorkspaceTargetBlockName,
 } from '../src/runtime/block-targets.js';
-import { getNodeErrorCode, pathExists } from '../src/runtime/fs-async.js';
+import {
+  getNodeErrorCode,
+  getOptionalNodeErrorCode,
+  isFileNotFoundError,
+  pathExists,
+  readOptionalUtf8File,
+} from '../src/runtime/fs-async.js';
 import { getPropertyNameText } from '../src/runtime/ts-property-names.js';
 
 const runtimeRoot = path.join(import.meta.dir, '..', 'src', 'runtime');
@@ -53,10 +59,22 @@ test('shared async filesystem helpers expose path existence and node error codes
 
   await expect(pathExists(existingPath)).resolves.toBe(true);
   await expect(pathExists(path.join(tempRoot, 'missing.txt'))).resolves.toBe(false);
+  await expect(readOptionalUtf8File(existingPath)).resolves.toBe('ok');
+  await expect(
+    readOptionalUtf8File(path.join(tempRoot, 'missing.txt')),
+  ).resolves.toBeNull();
   expect(getNodeErrorCode(Object.assign(new Error('denied'), { code: 'EACCES' }))).toBe(
     'EACCES',
   );
+  expect(getOptionalNodeErrorCode(Object.assign(new Error('denied'), { code: 'EACCES' }))).toBe(
+    'EACCES',
+  );
+  expect(getOptionalNodeErrorCode(new Error('plain'))).toBeUndefined();
   expect(getNodeErrorCode(new Error('plain'))).toBe('');
+  expect(isFileNotFoundError(Object.assign(new Error('missing'), { code: 'ENOENT' }))).toBe(
+    true,
+  );
+  expect(isFileNotFoundError(new Error('plain'))).toBe(false);
 });
 
 test('shared TypeScript property-name helper aligns literal property support', () => {

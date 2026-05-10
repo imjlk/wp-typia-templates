@@ -2,6 +2,7 @@ import fs from "node:fs";
 import { createRequire } from "node:module";
 import path from "node:path";
 
+import { getOptionalNodeErrorCode } from "./fs-async.js";
 import { PROJECT_TOOLS_PACKAGE_ROOT } from "./template-registry.js";
 
 interface RepositoryPackageManifest {
@@ -21,12 +22,6 @@ const require = createRequire(import.meta.url);
  */
 export const DEFAULT_SCAFFOLD_REPOSITORY_REFERENCE = "imjlk/wp-typia";
 
-function getErrorCode(error: unknown): string | undefined {
-	return typeof error === "object" && error !== null && "code" in error
-		? String((error as { code: unknown }).code)
-		: undefined;
-}
-
 function readRepositoryPackageManifest(
 	packageJsonPath: string,
 ): RepositoryPackageManifest | null {
@@ -35,7 +30,7 @@ function readRepositoryPackageManifest(
 			fs.readFileSync(packageJsonPath, "utf8"),
 		) as RepositoryPackageManifest;
 	} catch (error) {
-		if (getErrorCode(error) === "ENOENT") {
+		if (getOptionalNodeErrorCode(error) === "ENOENT") {
 			return null;
 		}
 
@@ -49,7 +44,7 @@ function resolveInstalledPackageManifestPath(
 	try {
 		return require.resolve(`${packageName}/package.json`);
 	} catch (error) {
-		if (getErrorCode(error) === "MODULE_NOT_FOUND") {
+		if (getOptionalNodeErrorCode(error) === "MODULE_NOT_FOUND") {
 			return null;
 		}
 

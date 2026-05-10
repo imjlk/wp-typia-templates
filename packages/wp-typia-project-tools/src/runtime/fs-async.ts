@@ -39,9 +39,19 @@ export async function readOptionalUtf8File(filePath: string): Promise<string | n
  * @returns The string error code, or an empty string when unavailable.
  */
 export function getNodeErrorCode(error: unknown): string {
+	return getOptionalNodeErrorCode(error) ?? "";
+}
+
+/**
+ * Extract a Node.js error code from an unknown thrown value when available.
+ *
+ * @param error Unknown error value.
+ * @returns The string error code, or `undefined` when unavailable.
+ */
+export function getOptionalNodeErrorCode(error: unknown): string | undefined {
 	return typeof error === "object" && error !== null && "code" in error
 		? String((error as { code: unknown }).code)
-		: "";
+		: undefined;
 }
 
 /**
@@ -51,5 +61,5 @@ export function getNodeErrorCode(error: unknown): string {
  * @returns `true` when the error has Node.js code `ENOENT`.
  */
 export function isFileNotFoundError(error: unknown): boolean {
-	return getNodeErrorCode(error) === "ENOENT";
+	return getOptionalNodeErrorCode(error) === "ENOENT";
 }

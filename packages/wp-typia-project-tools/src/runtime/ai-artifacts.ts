@@ -7,6 +7,10 @@ import {
   buildWordPressAiArtifacts,
   type ProjectedWordPressAbilitiesDocument,
 } from './wordpress-ai.js';
+import {
+  getOptionalNodeErrorCode,
+  isFileNotFoundError,
+} from './fs-async.js';
 
 export {
   buildWordPressAiArtifacts,
@@ -94,16 +98,12 @@ async function reconcileGeneratedAiArtifacts(
         issues.push(`- ${artifact.filePath} (stale)`);
       }
     } catch (error) {
-      const code =
-        error && typeof error === 'object' && 'code' in error
-          ? (error as { code?: string }).code
-          : undefined;
-
-      if (code === 'ENOENT') {
+      if (isFileNotFoundError(error)) {
         issues.push(`- ${artifact.filePath} (missing)`);
         continue;
       }
 
+      const code = getOptionalNodeErrorCode(error);
       issues.push(
         `- ${artifact.filePath} (unreadable: ${error instanceof Error ? error.message : code ?? 'unknown'})`,
       );

@@ -16,6 +16,13 @@ const PACKAGE_VERSIONS_SOURCE = fs.readFileSync(
 	),
 	"utf8",
 );
+const FS_ASYNC_SOURCE = fs.readFileSync(
+	path.resolve(
+		import.meta.dir,
+		"../../packages/wp-typia-project-tools/src/runtime/fs-async.ts",
+	),
+	"utf8",
+);
 
 async function importPackageVersionsModule(options: {
 	createPackageRoot: string;
@@ -44,6 +51,7 @@ async function importPackageVersionsModule(options: {
 		path.join(runtimeDir, "package-versions.ts"),
 		PACKAGE_VERSIONS_SOURCE,
 	);
+	writeTextFile(path.join(runtimeDir, "fs-async.ts"), FS_ASYNC_SOURCE);
 	writeTextFile(
 		path.join(runtimeDir, "template-registry.js"),
 		`export const PROJECT_TOOLS_PACKAGE_ROOT = ${JSON.stringify(options.createPackageRoot)};\n`,

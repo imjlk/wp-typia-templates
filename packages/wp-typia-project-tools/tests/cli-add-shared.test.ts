@@ -113,6 +113,7 @@ test('focused add runtime modules own their helper categories', () => {
   expect(validationSource).toContain('export function assertValidEditorPluginSlot');
   expect(filesystemSource).toContain('export async function snapshotWorkspaceFiles');
   expect(filesystemSource).toContain('export async function rollbackWorkspaceMutation');
+  expect(filesystemSource).not.toContain('function isFileNotFoundError');
   expect(blockJsonSource).toContain('export async function readWorkspaceBlockJson');
   expect(blockJsonSource).toContain('export function getMutableBlockHooks');
   expect(collisionSource).toContain('function assertAddKindScaffoldDoesNotExist');

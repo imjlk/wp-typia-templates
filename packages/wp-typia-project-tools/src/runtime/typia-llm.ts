@@ -7,6 +7,10 @@ import type {
   EndpointManifestEndpointDefinition,
 } from '@wp-typia/block-runtime/metadata-core';
 import type { ILlmFunction, ILlmSchema, ILlmStructuredOutput } from 'typia';
+import {
+  getOptionalNodeErrorCode,
+  isFileNotFoundError,
+} from './fs-async.js';
 import { cloneJsonValue } from './json-utils.js';
 import {
   normalizeEndpointAuthDefinition,
@@ -860,16 +864,12 @@ async function reconcileGeneratedTypiaLlmArtifacts(
         issues.push(`- ${artifact.filePath} (stale)`);
       }
     } catch (error) {
-      const code =
-        error && typeof error === 'object' && 'code' in error
-          ? (error as { code?: string }).code
-          : undefined;
-
-      if (code === 'ENOENT') {
+      if (isFileNotFoundError(error)) {
         issues.push(`- ${artifact.filePath} (missing)`);
         continue;
       }
 
+      const code = getOptionalNodeErrorCode(error);
       issues.push(
         `- ${artifact.filePath} (unreadable: ${error instanceof Error ? error.message : code ?? 'unknown'})`,
       );

@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import { createRequire } from 'node:module';
 import path from 'node:path';
 
+import { getOptionalNodeErrorCode } from './fs-async.js';
 import { PROJECT_TOOLS_PACKAGE_ROOT } from './template-registry.js';
 
 interface PackageManifest {
@@ -53,12 +54,6 @@ let cachedPackageVersions: {
   cacheKey: string;
   versions: PackageVersions;
 } | null = null;
-
-function getErrorCode(error: unknown): string | undefined {
-  return typeof error === 'object' && error !== null && 'code' in error
-    ? String((error as { code: unknown }).code)
-    : undefined;
-}
 
 function normalizeVersionRange(value: string | undefined): string {
   const trimmed = value?.trim();
@@ -129,7 +124,7 @@ function resolvePackageManifestLocation(
       source,
     };
   } catch (error) {
-    if (getErrorCode(error) === 'ENOENT') {
+    if (getOptionalNodeErrorCode(error) === 'ENOENT') {
       return {
         cacheKey: `missing-file:${packageJsonPath}`,
         packageJsonPath: null,
@@ -172,7 +167,7 @@ function resolveInstalledPackageManifestLocation(
       require.resolve(`${packageName}/package.json`),
     );
   } catch (error) {
-    if (getErrorCode(error) === 'MODULE_NOT_FOUND') {
+    if (getOptionalNodeErrorCode(error) === 'MODULE_NOT_FOUND') {
       return {
         cacheKey: `missing-module:${packageName}`,
         packageJsonPath: null,

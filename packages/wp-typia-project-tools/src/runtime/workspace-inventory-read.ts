@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { readFile } from "node:fs/promises";
 
+import { isFileNotFoundError } from "./fs-async.js";
 import { parseWorkspaceInventorySource } from "./workspace-inventory-parser.js";
 import type {
 	WorkspaceBlockInventoryEntry,
@@ -26,12 +27,7 @@ export function readWorkspaceInventory(projectDir: string): WorkspaceInventory {
 	try {
 		source = readFileSync(blockConfigPath, "utf8");
 	} catch (error) {
-		if (
-			typeof error === "object" &&
-			error !== null &&
-			"code" in error &&
-			error.code === "ENOENT"
-		) {
+		if (isFileNotFoundError(error)) {
 			throw new Error(
 				`Workspace inventory file is missing at ${blockConfigPath}. Expected scripts/block-config.ts to exist.`,
 			);
@@ -60,12 +56,7 @@ export async function readWorkspaceInventoryAsync(
 	try {
 		source = await readFile(blockConfigPath, "utf8");
 	} catch (error) {
-		if (
-			typeof error === "object" &&
-			error !== null &&
-			"code" in error &&
-			error.code === "ENOENT"
-		) {
+		if (isFileNotFoundError(error)) {
 			throw new Error(
 				`Workspace inventory file is missing at ${blockConfigPath}. Expected scripts/block-config.ts to exist.`,
 			);
