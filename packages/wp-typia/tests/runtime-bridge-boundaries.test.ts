@@ -34,6 +34,34 @@ test('runtime bridge delegates command, output, and sync helpers to focused modu
     path.join(sourceRoot, 'runtime-bridge-output.ts'),
     'utf8',
   );
+  const outputAddSource = fs.readFileSync(
+    path.join(sourceRoot, 'runtime-output', 'add.ts'),
+    'utf8',
+  );
+  const outputCreateSource = fs.readFileSync(
+    path.join(sourceRoot, 'runtime-output', 'create.ts'),
+    'utf8',
+  );
+  const outputInitSource = fs.readFileSync(
+    path.join(sourceRoot, 'runtime-output', 'init.ts'),
+    'utf8',
+  );
+  const outputMigrateSource = fs.readFileSync(
+    path.join(sourceRoot, 'runtime-output', 'migrate.ts'),
+    'utf8',
+  );
+  const outputPrintSource = fs.readFileSync(
+    path.join(sourceRoot, 'runtime-output', 'print.ts'),
+    'utf8',
+  );
+  const outputStructuredSource = fs.readFileSync(
+    path.join(sourceRoot, 'runtime-output', 'structured.ts'),
+    'utf8',
+  );
+  const outputSyncSource = fs.readFileSync(
+    path.join(sourceRoot, 'runtime-output', 'sync.ts'),
+    'utf8',
+  );
   const sharedSource = fs.readFileSync(
     path.join(sourceRoot, 'runtime-bridge-shared.ts'),
     'utf8',
@@ -85,12 +113,42 @@ test('runtime bridge delegates command, output, and sync helpers to focused modu
   expect(templatesSource).toContain(
     'export async function executeTemplatesCommand(',
   );
-  expect(outputSource).toContain('export function printCompletionPayload(');
-  expect(outputSource).toContain(
+  expect(outputSource).toMatch(/from ['"]\.\/runtime-output\/types['"]/);
+  expect(outputSource).toMatch(/from ['"]\.\/runtime-output\/structured['"]/);
+  expect(outputSource).toMatch(/from ['"]\.\/runtime-output\/create['"]/);
+  expect(outputSource).toMatch(/from ['"]\.\/runtime-output\/add['"]/);
+  expect(outputSource).toMatch(/from ['"]\.\/runtime-output\/init['"]/);
+  expect(outputSource).toMatch(/from ['"]\.\/runtime-output\/migrate['"]/);
+  expect(outputSource).toMatch(/from ['"]\.\/runtime-output\/sync['"]/);
+  expect(outputSource).toMatch(/from ['"]\.\/runtime-output\/print['"]/);
+  expect(outputSource).not.toContain('export function printCompletionPayload(');
+  expect(outputSource).not.toContain(
     'export function buildCreateCompletionPayload(',
   );
-  expect(outputSource).toContain(
+  expect(outputSource).not.toContain('function buildAddCompletionPayload(');
+  expect(outputPrintSource).toContain(
+    'export function printCompletionPayload(',
+  );
+  expect(outputPrintSource).toContain(
+    "export { printBlock } from '../print-block';",
+  );
+  expect(outputCreateSource).toContain(
+    'export function buildCreateCompletionPayload(',
+  );
+  expect(outputCreateSource).toContain(
+    'export function buildCreateDryRunPayload(',
+  );
+  expect(outputAddSource).toContain('export function buildAddCompletionPayload(');
+  expect(outputAddSource).toContain('export function buildAddDryRunPayload(');
+  expect(outputInitSource).toContain(
+    'export function buildInitCompletionPayload(',
+  );
+  expect(outputMigrateSource).toContain(
     'export function buildMigrationCompletionPayload(',
+  );
+  expect(outputSyncSource).toContain('export function buildSyncDryRunPayload(');
+  expect(outputStructuredSource).toContain(
+    'export function buildStructuredCompletionSuccessPayload(',
   );
   expect(syncSource).toContain('export async function executeSyncCommand(');
   expect(syncSource).toContain('function resolveSyncProjectContext(');
@@ -103,6 +161,10 @@ test('runtime bridge modules share the CLI print-line type', () => {
   );
   const outputSource = fs.readFileSync(
     path.join(sourceRoot, 'runtime-bridge-output.ts'),
+    'utf8',
+  );
+  const outputPrintSource = fs.readFileSync(
+    path.join(sourceRoot, 'runtime-output', 'print.ts'),
     'utf8',
   );
   const addSource = fs.readFileSync(
@@ -132,7 +194,6 @@ test('runtime bridge modules share the CLI print-line type', () => {
 
   for (const source of [
     registrySharedSource,
-    outputSource,
     addSource,
     createSource,
     initSource,
@@ -142,6 +203,15 @@ test('runtime bridge modules share the CLI print-line type', () => {
     expect(source).toContain("import type { PrintLine } from './print-line';");
     expect(source).not.toContain('type PrintLine = (line: string) => void;');
   }
+  expect(outputSource).not.toContain(
+    "import type { PrintLine } from './print-line';",
+  );
+  expect(outputPrintSource).toContain(
+    "import type { PrintLine } from '../print-line';",
+  );
+  expect(outputPrintSource).not.toContain(
+    'type PrintLine = (line: string) => void;',
+  );
   expect(printLineSource).toContain(
     'export type PrintLine = (line: string) => void;',
   );
