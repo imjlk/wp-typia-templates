@@ -11,6 +11,7 @@ import {
   executeAddCommand,
   loadAddWorkspaceBlockOptions,
 } from '../src/runtime-bridge';
+import { ensureWorkspaceInstallMarker } from '../src/runtime-bridge-add-dry-run';
 import {
   linkWorkspaceNodeModules,
   scaffoldOfficialWorkspace,
@@ -602,6 +603,48 @@ describe('wp-typia add command bridge', () => {
     expect(ADD_KIND_IDS.every((kind) => supportsAddKindDryRun(kind))).toBe(
       true,
     );
+  });
+
+  test('reports install marker setup context when every dry-run fallback fails', () => {
+    const calls: string[] = [];
+    const sourceMarker = path.join(tempRoot, 'demo-marker-source', '.pnp.cjs');
+    const targetMarker = path.join(tempRoot, 'demo-marker-target', '.pnp.cjs');
+    const fsAdapter = {
+      copyFileSync() {
+        calls.push('copy');
+        throw new Error('copy denied');
+      },
+      linkSync() {
+        calls.push('hard link');
+        throw new Error('hard link denied');
+      },
+      symlinkSync() {
+        calls.push('symlink');
+        throw new Error('symlink denied');
+      },
+    } satisfies Parameters<typeof ensureWorkspaceInstallMarker>[0]['fsAdapter'];
+
+    let error: unknown;
+
+    try {
+      ensureWorkspaceInstallMarker({
+        fsAdapter,
+        sourceMarker,
+        targetMarker,
+      });
+    } catch (caughtError) {
+      error = caughtError;
+    }
+
+    expect(error).toBeInstanceOf(Error);
+    const message = (error as Error).message;
+    expect(message).toContain('Failed to prepare dry-run install marker.');
+    expect(message).toContain(`Source: ${sourceMarker}`);
+    expect(message).toContain(`Target: ${targetMarker}`);
+    expect(message).toContain('symlink: symlink denied');
+    expect(message).toContain('hard link: hard link denied');
+    expect(message).toContain('copy: copy denied');
+    expect(calls).toEqual(['symlink', 'hard link', 'copy']);
   });
 
   test('keeps the canonical add kind order stable', () => {
