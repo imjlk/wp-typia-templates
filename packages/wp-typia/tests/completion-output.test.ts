@@ -21,6 +21,7 @@ import {
   buildSyncDryRunPayload,
   type CreateProgressPayload as OutputCreateProgressPayload,
 } from '../src/runtime-bridge-output';
+import { buildCreateCompletionPayload as buildFocusedCreateCompletionPayload } from '../src/runtime-output/create';
 
 type ExpectTrue<TValue extends true> = TValue;
 type IsEqual<TLeft, TRight> =
@@ -117,6 +118,28 @@ describe('alternate-buffer completion output helpers', () => {
     expect(payload.optionalNote).toContain(
       'Skip npm run sync during normal npm run dev work.',
     );
+  });
+
+  test('focused create output builder preserves the public facade payload shape', () => {
+    const flow = {
+      nextSteps: ['cd demo-block', 'npm install --no-audit', 'npm run dev'],
+      optionalOnboarding: {
+        note: 'Run npm run sync before your first commit if you edited types.',
+        steps: ['npm run sync'],
+      },
+      packageManager: 'npm',
+      projectDir: '/tmp/demo-block',
+      result: {
+        selectedVariant: 'hero',
+        variables: {
+          title: 'Demo Block',
+        },
+        warnings: ['This template enables optional migration UI.'],
+      },
+    };
+
+    expect(buildFocusedCreateCompletionPayload(flow, UNICODE_MARKER_OPTIONS))
+      .toEqual(buildCreateCompletionPayload(flow, UNICODE_MARKER_OPTIONS));
   });
 
   test('create completion payload keeps package-manager doctor commands stable', () => {
