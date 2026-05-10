@@ -5,6 +5,11 @@ import path from "node:path";
 import { createManagedTempRoot } from "@wp-typia/project-tools/temp-roots";
 
 type WorkspaceFileOperation = `delete ${string}` | `update ${string}` | `write ${string}`;
+type InstallMarkerFs = Pick<typeof fs, "copyFileSync" | "linkSync" | "symlinkSync">;
+type InstallMarkerFailure = {
+	operation: "copy" | "hard link" | "symlink";
+	reason: string;
+};
 
 const SKIPPED_COPY_ROOT_ENTRIES = new Set([".git", "node_modules"]);
 const SKIPPED_COMPARE_ROOT_ENTRIES = new Set([
@@ -29,6 +34,71 @@ async function copyWorkspaceProject(sourceDir: string, targetDir: string): Promi
 	});
 }
 
+function formatInstallMarkerError(error: unknown): string {
+	if (error instanceof Error) {
+		return error.message;
+	}
+
+	return String(error);
+}
+
+function formatInstallMarkerFailures(failures: InstallMarkerFailure[]): string {
+	return failures
+		.map((failure) => `${failure.operation}: ${failure.reason}`)
+		.join("; ");
+}
+
+export function ensureWorkspaceInstallMarker({
+	fsAdapter = fs,
+	sourceMarker,
+	targetMarker,
+}: {
+	fsAdapter?: InstallMarkerFs;
+	sourceMarker: string;
+	targetMarker: string;
+}): void {
+	const failures: InstallMarkerFailure[] = [];
+
+	try {
+		fsAdapter.symlinkSync(sourceMarker, targetMarker);
+		return;
+	} catch (error) {
+		failures.push({
+			operation: "symlink",
+			reason: formatInstallMarkerError(error),
+		});
+	}
+
+	try {
+		fsAdapter.linkSync(sourceMarker, targetMarker);
+		return;
+	} catch (error) {
+		failures.push({
+			operation: "hard link",
+			reason: formatInstallMarkerError(error),
+		});
+	}
+
+	try {
+		fsAdapter.copyFileSync(sourceMarker, targetMarker);
+		return;
+	} catch (error) {
+		failures.push({
+			operation: "copy",
+			reason: formatInstallMarkerError(error),
+		});
+	}
+
+	throw new Error(
+		[
+			"Failed to prepare dry-run install marker.",
+			`Source: ${sourceMarker}`,
+			`Target: ${targetMarker}`,
+			`Fallback failures: ${formatInstallMarkerFailures(failures)}`,
+		].join(" "),
+	);
+}
+
 function ensureWorkspaceInstallMarkers(sourceDir: string, targetDir: string): void {
 	const sourceNodeModules = path.join(sourceDir, "node_modules");
 	if (fs.existsSync(sourceNodeModules)) {
@@ -42,15 +112,7 @@ function ensureWorkspaceInstallMarkers(sourceDir: string, targetDir: string): vo
 		}
 
 		const targetMarker = path.join(targetDir, marker);
-		try {
-			fs.symlinkSync(sourceMarker, targetMarker);
-		} catch {
-			try {
-				fs.linkSync(sourceMarker, targetMarker);
-			} catch {
-				fs.copyFileSync(sourceMarker, targetMarker);
-			}
-		}
+		ensureWorkspaceInstallMarker({ sourceMarker, targetMarker });
 	}
 }
 
