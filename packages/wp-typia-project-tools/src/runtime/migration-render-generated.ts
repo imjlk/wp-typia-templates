@@ -295,6 +295,10 @@ export function renderPhpMigrationRegistryFile(
 	return `<?php
 declare(strict_types=1);
 
+if ( ! defined( 'ABSPATH' ) ) {
+\texit;
+}
+
 /**
  * Generated from advanced migration snapshots. Do not edit manually.
  */

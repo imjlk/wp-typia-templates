@@ -46,6 +46,10 @@ export function renderPhpValidator(manifest: ManifestDocument): {
 		source: `<?php
 declare(strict_types=1);
 
+if ( ! defined( 'ABSPATH' ) ) {
+\texit;
+}
+
 /**
  * Generated from typia.manifest.json. Do not edit manually.
  */
