@@ -19,6 +19,21 @@ const commandOptionMetadataModulePath = path.join(
   'src',
   'command-option-metadata.ts',
 );
+const commandOptionMetadataSiblingModulePaths = [
+  'index.ts',
+  'types.ts',
+  'add.ts',
+  'create.ts',
+  'doctor.ts',
+  'global.ts',
+  'init.ts',
+  'mcp.ts',
+  'migrate.ts',
+  'sync.ts',
+  'templates.ts',
+].map((fileName) =>
+  path.join(packageRoot, 'src', 'command-options', fileName),
+);
 const commandRegistryModulePath = path.join(
   packageRoot,
   'src',
@@ -163,6 +178,13 @@ async function importTranspiledTypeScriptModule(
     tempDir,
     path.basename(modulePath).replace(/\.ts$/u, '.js'),
   );
+  const resolveSiblingTempFile = (siblingPath) =>
+    path.join(
+      tempDir,
+      path
+        .relative(path.dirname(modulePath), siblingPath)
+        .replace(/\.ts$/u, '.js'),
+    );
 
   await Promise.all([
     fs.writeFile(
@@ -171,9 +193,12 @@ async function importTranspiledTypeScriptModule(
       'utf8',
     ),
     fs.writeFile(tempFile, transpiled.outputText, 'utf8'),
-    ...siblingModules.map((siblingPath, index) =>
-      fs.writeFile(
-        path.join(tempDir, path.basename(siblingPath).replace(/\.ts$/u, '.js')),
+    ...siblingModules.map(async (siblingPath, index) => {
+      const siblingTempFile = resolveSiblingTempFile(siblingPath);
+
+      await fs.mkdir(path.dirname(siblingTempFile), { recursive: true });
+      await fs.writeFile(
+        siblingTempFile,
         ts.transpileModule(siblingSources[index], {
           compilerOptions: {
             module: ts.ModuleKind.CommonJS,
@@ -182,8 +207,8 @@ async function importTranspiledTypeScriptModule(
           fileName: siblingPath,
         }).outputText,
         'utf8',
-      ),
-    ),
+      );
+    }),
     ...externalModules.map(async (externalModule, index) => {
       const parts = externalModule.specifier.split('/');
       const packageName = externalModule.specifier.startsWith('@')
@@ -297,7 +322,10 @@ const [
   { COMMAND_ROUTING_METADATA },
   projectToolsAddKindIdsExternalModule,
 ] = await Promise.all([
-  importTranspiledTypeScriptModule(commandOptionMetadataModulePath),
+  importTranspiledTypeScriptModule(
+    commandOptionMetadataModulePath,
+    commandOptionMetadataSiblingModulePaths,
+  ),
   resolveProjectToolsAddKindIdsExternalModule(),
 ]);
 

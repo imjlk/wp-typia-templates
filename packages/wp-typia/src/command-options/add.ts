@@ -1,0 +1,93 @@
+import type { CommandOptionMetadataMap } from './types';
+
+/**
+ * Shared `wp-typia add` option metadata used by both runtime entry paths.
+ */
+export const ADD_OPTION_METADATA = {
+  'alternate-render-targets': {
+    description:
+      'Comma-separated alternate render targets for dynamic block scaffolds (email,mjml,plain-text).',
+    type: 'string',
+  },
+  anchor: {
+    description: 'Anchor block name for hooked-block workflows.',
+    type: 'string',
+  },
+  attribute: {
+    description:
+      'Target block attribute for end-to-end binding-source workflows.',
+    type: 'string',
+  },
+  block: {
+    description:
+      'Target block slug for variation, style, and end-to-end binding-source workflows.',
+    type: 'string',
+  },
+  'data-storage': {
+    description: 'Persistence storage mode for persistence-capable templates.',
+    type: 'string',
+  },
+  'dry-run': {
+    argumentKind: 'flag',
+    description:
+      'Preview workspace file updates and completion guidance without writing them.',
+    type: 'boolean',
+  },
+  'external-layer-id': {
+    description:
+      'Explicit layer id when an external layer package exposes multiple selectable layers.',
+    type: 'string',
+  },
+  'external-layer-source': {
+    description:
+      'Local path, GitHub locator, or npm package that exposes wp-typia.layers.json for built-in block templates.',
+    type: 'string',
+  },
+  from: {
+    description:
+      'Source full block name (namespace/block) for transform workflows.',
+    type: 'string',
+  },
+  'inner-blocks-preset': {
+    description:
+      'Compound-only InnerBlocks preset (freeform, ordered, horizontal, locked-structure).',
+    type: 'string',
+  },
+  methods: {
+    description:
+      'Comma-separated REST resource methods for rest-resource workflows.',
+    type: 'string',
+  },
+  namespace: {
+    description: 'REST namespace for rest-resource and ai-feature workflows.',
+    type: 'string',
+  },
+  'persistence-policy': {
+    description: 'Persistence write policy for persistence-capable templates.',
+    type: 'string',
+  },
+  position: {
+    description: 'Hook position for hooked-block workflows.',
+    type: 'string',
+  },
+  slot: {
+    description:
+      'Document editor shell slot for editor-plugin workflows (sidebar or document-setting-panel).',
+    type: 'string',
+  },
+  source: {
+    description:
+      'Optional data source locator for admin-view workflows, such as rest-resource:products or core-data:postType/post.',
+    type: 'string',
+  },
+  template: {
+    description:
+      'Optional built-in block family for the new block; interactive flows let you choose it when omitted and non-interactive runs default to basic.',
+    type: 'string',
+  },
+  to: {
+    description:
+      'Target workspace block slug or full block name for transform workflows.',
+    type: 'string',
+  },
+} as const satisfies CommandOptionMetadataMap;

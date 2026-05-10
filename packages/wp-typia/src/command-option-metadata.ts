@@ -3,355 +3,45 @@ import {
   CLI_DIAGNOSTIC_CODES,
   createCliDiagnosticCodeError,
 } from '@wp-typia/project-tools/cli-diagnostics';
+import {
+  ADD_OPTION_METADATA,
+  CREATE_OPTION_METADATA,
+  DOCTOR_OPTION_METADATA,
+  GLOBAL_OPTION_METADATA,
+  INIT_OPTION_METADATA,
+  MCP_OPTION_METADATA,
+  MIGRATE_OPTION_METADATA,
+  SYNC_OPTION_METADATA,
+  TEMPLATES_OPTION_METADATA,
+} from './command-options';
+import type {
+  CommandOptionGroupName,
+  CommandOptionMetadata,
+  CommandOptionMetadataMap,
+  CommandOptionParser,
+  ParsedCommandArgv,
+  ShortOptionDescriptor,
+} from './command-options/types';
 
-export type CommandOptionMetadata = {
-  argumentKind?: 'flag';
-  description: string;
-  short?: string;
-  type: 'boolean' | 'string';
-};
-
-export type CommandOptionMetadataMap = Record<string, CommandOptionMetadata>;
-export type ParsedCommandArgv = {
-  flags: Record<string, unknown>;
-  positionals: string[];
-};
-export type ShortOptionDescriptor = {
-  name: string;
-  type: CommandOptionMetadata['type'];
-};
-export type CommandOptionParser = {
-  booleanOptionNames: Set<string>;
-  shortFlagMap: Map<string, ShortOptionDescriptor>;
-  stringOptionNames: Set<string>;
-};
-export type CommandOptionGroupName =
-  | 'global'
-  | 'create'
-  | 'add'
-  | 'init'
-  | 'migrate'
-  | 'mcp'
-  | 'sync'
-  | 'doctor'
-  | 'templates';
-
-/**
- * Shared `wp-typia create` option metadata used by both the Bunli command
- * definitions and the Node fallback parser/help surface.
- */
-export const CREATE_OPTION_METADATA = {
-  'alternate-render-targets': {
-    description:
-      'Comma-separated alternate render targets for dynamic block scaffolds (email,mjml,plain-text).',
-    type: 'string',
-  },
-  'data-storage': {
-    description: 'Persistence storage mode for persistence-capable templates.',
-    type: 'string',
-  },
-  'dry-run': {
-    argumentKind: 'flag',
-    description:
-      'Preview scaffold output for a logical <project-dir> without writing files to the target directory.',
-    type: 'boolean',
-  },
-  'external-layer-id': {
-    description:
-      'Explicit layer id when an external layer package exposes multiple selectable layers.',
-    type: 'string',
-  },
-  'external-layer-source': {
-    description:
-      'Local path, GitHub locator, or npm package that exposes wp-typia.layers.json for built-in templates.',
-    type: 'string',
-  },
-  'inner-blocks-preset': {
-    description:
-      'Compound-only InnerBlocks preset (freeform, ordered, horizontal, locked-structure).',
-    type: 'string',
-  },
-  namespace: {
-    description: 'Override the default block namespace.',
-    type: 'string',
-  },
-  'no-install': {
-    argumentKind: 'flag',
-    description: 'Skip dependency installation after scaffold.',
-    type: 'boolean',
-  },
-  'package-manager': {
-    description: 'Package manager to use for install and scripts.',
-    short: 'p',
-    type: 'string',
-  },
-  'persistence-policy': {
-    description:
-      'Authenticated or public write policy for persistence-capable templates.',
-    type: 'string',
-  },
-  'php-prefix': {
-    description: 'Custom PHP symbol prefix.',
-    type: 'string',
-  },
-  'query-post-type': {
-    description:
-      'Default post type assigned to Query Loop variation scaffolds.',
-    type: 'string',
-  },
-  template: {
-    description: 'Template id or external template package.',
-    short: 't',
-    type: 'string',
-  },
-  'text-domain': {
-    description: 'Custom text domain for the generated project.',
-    type: 'string',
-  },
-  variant: {
-    description: 'Optional template variant identifier.',
-    type: 'string',
-  },
-  'with-migration-ui': {
-    argumentKind: 'flag',
-    description: 'Enable migration UI support when the template supports it.',
-    type: 'boolean',
-  },
-  'with-test-preset': {
-    argumentKind: 'flag',
-    description: 'Include the Playwright smoke-test preset.',
-    type: 'boolean',
-  },
-  'with-wp-env': {
-    argumentKind: 'flag',
-    description: 'Include a local wp-env preset.',
-    type: 'boolean',
-  },
-  yes: {
-    argumentKind: 'flag',
-    description: 'Accept defaults without prompt fallbacks.',
-    short: 'y',
-    type: 'boolean',
-  },
-} as const satisfies CommandOptionMetadataMap;
-
-/**
- * Shared `wp-typia add` option metadata used by both runtime entry paths.
- */
-export const ADD_OPTION_METADATA = {
-  'alternate-render-targets': {
-    description:
-      'Comma-separated alternate render targets for dynamic block scaffolds (email,mjml,plain-text).',
-    type: 'string',
-  },
-  anchor: {
-    description: 'Anchor block name for hooked-block workflows.',
-    type: 'string',
-  },
-  attribute: {
-    description:
-      'Target block attribute for end-to-end binding-source workflows.',
-    type: 'string',
-  },
-  block: {
-    description:
-      'Target block slug for variation, style, and end-to-end binding-source workflows.',
-    type: 'string',
-  },
-  'data-storage': {
-    description: 'Persistence storage mode for persistence-capable templates.',
-    type: 'string',
-  },
-  'dry-run': {
-    argumentKind: 'flag',
-    description:
-      'Preview workspace file updates and completion guidance without writing them.',
-    type: 'boolean',
-  },
-  'external-layer-id': {
-    description:
-      'Explicit layer id when an external layer package exposes multiple selectable layers.',
-    type: 'string',
-  },
-  'external-layer-source': {
-    description:
-      'Local path, GitHub locator, or npm package that exposes wp-typia.layers.json for built-in block templates.',
-    type: 'string',
-  },
-  from: {
-    description:
-      'Source full block name (namespace/block) for transform workflows.',
-    type: 'string',
-  },
-  'inner-blocks-preset': {
-    description:
-      'Compound-only InnerBlocks preset (freeform, ordered, horizontal, locked-structure).',
-    type: 'string',
-  },
-  methods: {
-    description:
-      'Comma-separated REST resource methods for rest-resource workflows.',
-    type: 'string',
-  },
-  namespace: {
-    description: 'REST namespace for rest-resource and ai-feature workflows.',
-    type: 'string',
-  },
-  'persistence-policy': {
-    description: 'Persistence write policy for persistence-capable templates.',
-    type: 'string',
-  },
-  position: {
-    description: 'Hook position for hooked-block workflows.',
-    type: 'string',
-  },
-  slot: {
-    description:
-      'Document editor shell slot for editor-plugin workflows (sidebar or document-setting-panel).',
-    type: 'string',
-  },
-  source: {
-    description:
-      'Optional data source locator for admin-view workflows, such as rest-resource:products or core-data:postType/post.',
-    type: 'string',
-  },
-  template: {
-    description:
-      'Optional built-in block family for the new block; interactive flows let you choose it when omitted and non-interactive runs default to basic.',
-    type: 'string',
-  },
-  to: {
-    description:
-      'Target workspace block slug or full block name for transform workflows.',
-    type: 'string',
-  },
-} as const satisfies CommandOptionMetadataMap;
-
-/**
- * Shared `wp-typia init` option metadata used by both runtime entry paths.
- */
-export const INIT_OPTION_METADATA = {
-  apply: {
-    argumentKind: 'flag',
-    description:
-      'Write the planned package.json updates and retrofit helper files instead of previewing only.',
-    type: 'boolean',
-  },
-  'package-manager': {
-    description: 'Package manager to use for emitted scripts and next steps.',
-    short: 'p',
-    type: 'string',
-  },
-} as const satisfies CommandOptionMetadataMap;
-
-/**
- * Shared `wp-typia migrate` option metadata used by both runtime entry paths.
- */
-export const MIGRATE_OPTION_METADATA = {
-  all: {
-    argumentKind: 'flag',
-    description:
-      'Run across every configured migration version and block target.',
-    type: 'boolean',
-  },
-  'current-migration-version': {
-    description: 'Current migration version label for `migrate init`.',
-    type: 'string',
-  },
-  force: {
-    argumentKind: 'flag',
-    description: 'Force overwrite behavior where supported.',
-    type: 'boolean',
-  },
-  'from-migration-version': {
-    description: 'Source migration version label.',
-    type: 'string',
-  },
-  iterations: {
-    description: 'Iteration count for `migrate fuzz`.',
-    type: 'string',
-  },
-  'migration-version': {
-    description: 'Version label to capture with `migrate snapshot`.',
-    type: 'string',
-  },
-  seed: {
-    description: 'Deterministic fuzz seed.',
-    type: 'string',
-  },
-  'to-migration-version': {
-    description: 'Target migration version label.',
-    type: 'string',
-  },
-} as const satisfies CommandOptionMetadataMap;
-
-/**
- * Shared `wp-typia mcp` option metadata.
- */
-export const MCP_OPTION_METADATA = {
-  'output-dir': {
-    description: 'Output directory for generated MCP metadata.',
-    type: 'string',
-  },
-} as const satisfies CommandOptionMetadataMap;
-
-/**
- * Shared `wp-typia sync` option metadata used by both runtime entry paths.
- */
-export const SYNC_OPTION_METADATA = {
-  check: {
-    argumentKind: 'flag',
-    description:
-      'Check generated artifacts without writing changes. Advanced sync-types-only flags stay on sync-types.',
-    type: 'boolean',
-  },
-  'dry-run': {
-    argumentKind: 'flag',
-    description:
-      'Preview the generated sync commands that would run without executing them.',
-    type: 'boolean',
-  },
-} as const satisfies CommandOptionMetadataMap;
-
-/**
- * Shared `wp-typia doctor` option metadata.
- */
-export const DOCTOR_OPTION_METADATA = {
-  format: {
-    description:
-      'Use `json` for machine-readable doctor check output or `text` for human-readable output.',
-    type: 'string',
-  },
-} as const satisfies CommandOptionMetadataMap;
-
-/**
- * Shared `wp-typia templates` option metadata.
- */
-export const TEMPLATES_OPTION_METADATA = {
-  id: {
-    description: 'Template id for `templates inspect`.',
-    type: 'string',
-  },
-} as const satisfies CommandOptionMetadataMap;
-
-/**
- * Global option metadata used by Node fallback parsing before command dispatch.
- */
-export const GLOBAL_OPTION_METADATA = {
-  config: {
-    description: 'Config override file path.',
-    short: 'c',
-    type: 'string',
-  },
-  format: {
-    description: 'Output format for supported commands (`json` or `text`).',
-    type: 'string',
-  },
-  id: {
-    description: 'Template id for top-level `templates inspect` convenience.',
-    type: 'string',
-  },
-} as const satisfies CommandOptionMetadataMap;
+export type {
+  CommandOptionGroupName,
+  CommandOptionMetadata,
+  CommandOptionMetadataMap,
+  CommandOptionParser,
+  ParsedCommandArgv,
+  ShortOptionDescriptor,
+} from './command-options/types';
+export {
+  ADD_OPTION_METADATA,
+  CREATE_OPTION_METADATA,
+  DOCTOR_OPTION_METADATA,
+  GLOBAL_OPTION_METADATA,
+  INIT_OPTION_METADATA,
+  MCP_OPTION_METADATA,
+  MIGRATE_OPTION_METADATA,
+  SYNC_OPTION_METADATA,
+  TEMPLATES_OPTION_METADATA,
+} from './command-options';
 
 export const COMMAND_OPTION_METADATA_BY_GROUP = {
   add: ADD_OPTION_METADATA,
