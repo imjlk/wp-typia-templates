@@ -173,6 +173,28 @@ describe('alternate-buffer completion output helpers', () => {
     }
   });
 
+  test('create completion payload normalizes recognizable package-manager metadata', () => {
+    const payload = buildCreateCompletionPayload({
+      nextSteps: ['cd demo-block'],
+      optionalOnboarding: {
+        note: 'Run sync when needed.',
+        steps: [],
+      },
+      packageManager: 'corepack pnpm@9.12.3 workspace-root',
+      projectDir: '/tmp/demo-block',
+      result: {
+        variables: {
+          title: 'Demo Block',
+        },
+        warnings: [],
+      },
+    });
+
+    expect(payload.optionalLines?.[0]).toBe(
+      `pnpm dlx wp-typia@${packageJson.version} doctor`,
+    );
+  });
+
   test('create completion payload rejects unknown package managers clearly', () => {
     let error: Error | undefined;
     try {
