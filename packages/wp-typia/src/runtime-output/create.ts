@@ -16,8 +16,14 @@ import {
 } from '../output-markers';
 import type { CreateProgressPayload } from './types';
 
-const LOOSE_CREATE_COMPLETION_PACKAGE_MANAGER_PATTERN =
-  /^(?:corepack\s+)?(bun|npm|pnpm|yarn)(?=$|[@:/+\s])/iu;
+function escapeRegExp(source: string): string {
+  return source.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&');
+}
+
+const LOOSE_CREATE_COMPLETION_PACKAGE_MANAGER_PATTERN = new RegExp(
+  `^(?:corepack\\s+)?(${PACKAGE_MANAGER_IDS.map(escapeRegExp).join('|')})(?=$|[@:/+\\s])`,
+  'iu',
+);
 
 function parseCreateCompletionPackageManager(
   packageManager: string,
