@@ -19,6 +19,10 @@ import type {
 
 export { ADD_KIND_IDS } from './add-kind-ids';
 export type { AddKindId } from './add-kind-ids';
+export {
+  formatAddKindList,
+  formatAddKindUsagePlaceholder,
+} from './add-kind-ids';
 export { isAddPersistenceTemplate } from './add-kind-registry-shared';
 export type {
   AddFieldName,
@@ -76,14 +80,6 @@ export function buildAddKindCompletionDetails(
     summaryLines: descriptor.summaryLines(options.values, options.projectDir),
     title: descriptor.title,
   };
-}
-
-export function formatAddKindList(): string {
-  return ADD_KIND_IDS.join(', ');
-}
-
-export function formatAddKindUsagePlaceholder(): string {
-  return `<${ADD_KIND_IDS.join('|')}>`;
 }
 
 export function getAddKindUsage(kind: AddKindId): string {

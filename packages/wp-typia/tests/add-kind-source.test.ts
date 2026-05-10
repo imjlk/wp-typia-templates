@@ -69,3 +69,40 @@ test('single-sources add-kind missing-name messages inside kind modules', () => 
 
   expect(offenders).toEqual([]);
 });
+
+test('keeps add-kind formatting helpers below the execution registry', () => {
+  const leafSource = fs.readFileSync(
+    path.join(packageRoot, 'src', 'add-kind-ids.ts'),
+    'utf8',
+  );
+  const registrySource = fs.readFileSync(
+    path.join(packageRoot, 'src', 'add-kind-registry.ts'),
+    'utf8',
+  );
+  const cliErrorMessagesSource = fs.readFileSync(
+    path.join(packageRoot, 'src', 'cli-error-messages.ts'),
+    'utf8',
+  );
+  const nodeFallbackHelpSource = fs.readFileSync(
+    path.join(packageRoot, 'src', 'node-fallback', 'help.ts'),
+    'utf8',
+  );
+
+  expect(leafSource).toContain('export function formatAddKindList');
+  expect(leafSource).toContain('export function formatAddKindUsagePlaceholder');
+  expect(registrySource).toContain("} from './add-kind-ids';");
+  expect(registrySource).not.toContain('export function formatAddKindList');
+  expect(registrySource).not.toContain(
+    'export function formatAddKindUsagePlaceholder',
+  );
+  expect(cliErrorMessagesSource).toContain(
+    "from './add-kind-ids'",
+  );
+  expect(cliErrorMessagesSource).not.toContain(
+    "from './add-kind-registry'",
+  );
+  expect(nodeFallbackHelpSource).toContain("from '../add-kind-ids'");
+  expect(nodeFallbackHelpSource).not.toContain(
+    "from '../add-kind-registry'",
+  );
+});
