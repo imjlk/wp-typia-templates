@@ -1409,6 +1409,50 @@ process.exit(0);
     }
   });
 
+  test('emits a machine-readable malformed package JSON code for sync in Node fallback JSON mode', () => {
+    const tempRoot = fs.mkdtempSync(
+      path.join(os.tmpdir(), 'wp-typia-sync-malformed-json-'),
+    );
+    const packageJsonPath = path.join(tempRoot, 'package.json');
+
+    try {
+      fs.writeFileSync(packageJsonPath, '{\n', 'utf8');
+
+      const result = runCapturedCommand(
+        'node',
+        [entryPath, 'sync', '--format', 'json'],
+        {
+          cwd: tempRoot,
+          env: {
+            ...withoutAIAgentEnv(),
+            BUN_BIN: path.join(os.tmpdir(), 'wp-typia-missing-bun'),
+          },
+        },
+      );
+      const parsed = parseJsonObjectFromOutput<{
+        error?: {
+          code?: string;
+          command?: string;
+          detailLines?: string[];
+          kind?: string;
+        };
+        ok?: boolean;
+      }>(result.stderr);
+
+      expect(result.status).toBe(1);
+      expect(result.stdout).toBe('');
+      expect(parsed.ok).toBe(false);
+      expect(parsed.error?.kind).toBe('command-execution');
+      expect(parsed.error?.command).toBe('sync');
+      expect(parsed.error?.code).toBe('invalid-argument');
+      expect(parsed.error?.detailLines?.join('\n')).toContain(
+        `Unable to parse ${fs.realpathSync(packageJsonPath)}`,
+      );
+    } finally {
+      fs.rmSync(tempRoot, { force: true, recursive: true });
+    }
+  });
+
   test('emits a machine-readable invalid-command error code for sync subcommands in Node fallback JSON mode', () => {
     const result = runCapturedCommand(
       process.execPath,

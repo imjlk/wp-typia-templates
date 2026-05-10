@@ -66,6 +66,21 @@ test('sync fails early with install guidance when local dependencies are missing
   expect((error as Error).message).toContain('tsx');
 });
 
+test('malformed package JSON carries a stable invalid-argument code', async () => {
+  const projectDir = path.join(tempRoot, 'demo-sync-invalid-package-json');
+  const packageJsonPath = path.join(projectDir, 'package.json');
+  fs.mkdirSync(projectDir, { recursive: true });
+  fs.writeFileSync(packageJsonPath, '{\n', 'utf8');
+
+  const error = await executeSyncCommand({ cwd: projectDir }).catch(
+    (thrown) => thrown,
+  );
+
+  expect(error).toBeInstanceOf(Error);
+  expect((error as { code?: string }).code).toBe('invalid-argument');
+  expect((error as Error).message).toContain(`Unable to parse ${packageJsonPath}`);
+});
+
 test('dry-run sync previews commands without requiring installed dependencies', async () => {
   const projectDir = writeSyncFixture({
     name: 'demo-sync-dry-run-preview',
