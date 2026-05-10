@@ -4,6 +4,7 @@ import {
   ADD_KIND_IDS,
   ADD_KIND_REGISTRY,
   type AddKindId,
+  type AddKindExecutionContext,
   type AddKindExecutionPlanFor,
   getAddVisibleFieldNames,
 } from '../src/add-kind-registry';
@@ -214,4 +215,28 @@ test('keeps shared visible-field groups aligned for refactored add kinds', () =>
     'data-storage',
     'persistence-policy',
   ]);
+});
+
+test('passes the warning line printer through the pattern execution plan', async () => {
+  const warnLine = () => {};
+  const context = {
+    addRuntime: {
+      runAddPatternCommand: async ({ cwd, patternName }) => ({
+        patternSlug: patternName,
+        projectDir: cwd,
+      }),
+    } as AddKindExecutionContext['addRuntime'],
+    cwd: '/tmp/wp-typia-pattern-test',
+    flags: {},
+    getOrCreatePrompt: async () => {
+      throw new Error('pattern add-kind should not prompt in this test');
+    },
+    isInteractiveSession: false,
+    name: 'sample-pattern',
+    warnLine,
+  } satisfies AddKindExecutionContext;
+
+  const plan = await ADD_KIND_REGISTRY.pattern.prepareExecution(context);
+
+  expect(plan.warnLine).toBe(warnLine);
 });
