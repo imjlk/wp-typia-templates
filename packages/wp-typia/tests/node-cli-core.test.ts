@@ -180,6 +180,10 @@ describe('Node fallback CLI core routing', () => {
       path.join(packageRoot, 'src', 'runtime-bridge.ts'),
       'utf8',
     );
+    const runtimeBridgeAddSource = fs.readFileSync(
+      path.join(packageRoot, 'src', 'runtime-bridge-add.ts'),
+      'utf8',
+    );
     const helpSource = fs.readFileSync(
       path.join(packageRoot, 'src', 'node-fallback', 'help.ts'),
       'utf8',
@@ -216,8 +220,9 @@ describe('Node fallback CLI core routing', () => {
     expect(createCommandSource).toContain(
       'buildMissingCreateProjectDirDetailLines',
     );
-    expect(runtimeBridgeSource).toContain('formatMissingAddKindDetailLine');
-    expect(runtimeBridgeSource).toContain('shouldPrintMissingAddKindHelp');
+    expect(runtimeBridgeSource).toContain("from './runtime-bridge-add'");
+    expect(runtimeBridgeAddSource).toContain('formatMissingAddKindDetailLine');
+    expect(runtimeBridgeAddSource).toContain('shouldPrintMissingAddKindHelp');
     expect(cliErrorMessagesSource).toContain(
       'export function formatMissingAddKindDetailLine',
     );

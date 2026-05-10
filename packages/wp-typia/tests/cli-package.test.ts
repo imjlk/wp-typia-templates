@@ -39,6 +39,20 @@ const runtimeBridgeSource = fs.readFileSync(
   path.join(packageRoot, 'src', 'runtime-bridge.ts'),
   'utf8',
 );
+const runtimeBridgeStartupSources = [
+  runtimeBridgeSource,
+  ...[
+    'runtime-bridge-add.ts',
+    'runtime-bridge-create.ts',
+    'runtime-bridge-doctor.ts',
+    'runtime-bridge-init.ts',
+    'runtime-bridge-migrate.ts',
+    'runtime-bridge-shared.ts',
+    'runtime-bridge-templates.ts',
+  ].map((fileName) =>
+    fs.readFileSync(path.join(packageRoot, 'src', fileName), 'utf8'),
+  ),
+];
 const doctorCommandSource = fs.readFileSync(
   path.join(packageRoot, 'src', 'commands', 'doctor.ts'),
   'utf8',
@@ -255,9 +269,9 @@ describe('wp-typia package', () => {
   });
 
   test('avoids eager project-tools root imports on CLI startup paths', () => {
-    expect(runtimeBridgeSource).not.toMatch(
-      /from ["']@wp-typia\/project-tools["']/,
-    );
+    for (const source of runtimeBridgeStartupSources) {
+      expect(source).not.toMatch(/from ["']@wp-typia\/project-tools["']/);
+    }
     expect(doctorCommandSource).not.toMatch(
       /from ["']@wp-typia\/project-tools["']/,
     );
