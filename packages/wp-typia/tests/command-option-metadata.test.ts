@@ -65,6 +65,27 @@ describe('command option metadata helpers', () => {
     expect(COMMAND_OPTION_METADATA_BY_GROUP.add).toBe(
       FOCUSED_ADD_OPTION_METADATA,
     );
+    expect(COMMAND_OPTION_METADATA_BY_GROUP.init).toBe(
+      FOCUSED_INIT_OPTION_METADATA,
+    );
+    expect(COMMAND_OPTION_METADATA_BY_GROUP.sync).toBe(
+      FOCUSED_SYNC_OPTION_METADATA,
+    );
+    expect(COMMAND_OPTION_METADATA_BY_GROUP.doctor).toBe(
+      FOCUSED_DOCTOR_OPTION_METADATA,
+    );
+    expect(COMMAND_OPTION_METADATA_BY_GROUP.migrate).toBe(
+      FOCUSED_MIGRATE_OPTION_METADATA,
+    );
+    expect(COMMAND_OPTION_METADATA_BY_GROUP.mcp).toBe(
+      FOCUSED_MCP_OPTION_METADATA,
+    );
+    expect(COMMAND_OPTION_METADATA_BY_GROUP.global).toBe(
+      FOCUSED_GLOBAL_OPTION_METADATA,
+    );
+    expect(COMMAND_OPTION_METADATA_BY_GROUP.templates).toBe(
+      FOCUSED_TEMPLATES_OPTION_METADATA,
+    );
   });
 
   test('parses string and boolean flags from shared metadata', () => {
