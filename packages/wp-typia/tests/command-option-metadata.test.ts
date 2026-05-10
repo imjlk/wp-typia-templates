@@ -14,10 +14,21 @@ import {
   GLOBAL_OPTION_METADATA,
   INIT_OPTION_METADATA,
   MCP_OPTION_METADATA,
+  MIGRATE_OPTION_METADATA,
   parseCommandArgvWithMetadata,
   resolveCommandOptionValues,
   SYNC_OPTION_METADATA,
+  TEMPLATES_OPTION_METADATA,
 } from '../src/command-option-metadata';
+import { ADD_OPTION_METADATA as FOCUSED_ADD_OPTION_METADATA } from '../src/command-options/add';
+import { CREATE_OPTION_METADATA as FOCUSED_CREATE_OPTION_METADATA } from '../src/command-options/create';
+import { DOCTOR_OPTION_METADATA as FOCUSED_DOCTOR_OPTION_METADATA } from '../src/command-options/doctor';
+import { GLOBAL_OPTION_METADATA as FOCUSED_GLOBAL_OPTION_METADATA } from '../src/command-options/global';
+import { INIT_OPTION_METADATA as FOCUSED_INIT_OPTION_METADATA } from '../src/command-options/init';
+import { MCP_OPTION_METADATA as FOCUSED_MCP_OPTION_METADATA } from '../src/command-options/mcp';
+import { MIGRATE_OPTION_METADATA as FOCUSED_MIGRATE_OPTION_METADATA } from '../src/command-options/migrate';
+import { SYNC_OPTION_METADATA as FOCUSED_SYNC_OPTION_METADATA } from '../src/command-options/sync';
+import { TEMPLATES_OPTION_METADATA as FOCUSED_TEMPLATES_OPTION_METADATA } from '../src/command-options/templates';
 
 describe('command option metadata helpers', () => {
   function expectDiagnosticCode(
@@ -37,6 +48,45 @@ describe('command option metadata helpers', () => {
       message,
     });
   }
+
+  test('keeps command option declarations single-sourced in focused modules', () => {
+    expect(CREATE_OPTION_METADATA).toBe(FOCUSED_CREATE_OPTION_METADATA);
+    expect(ADD_OPTION_METADATA).toBe(FOCUSED_ADD_OPTION_METADATA);
+    expect(INIT_OPTION_METADATA).toBe(FOCUSED_INIT_OPTION_METADATA);
+    expect(SYNC_OPTION_METADATA).toBe(FOCUSED_SYNC_OPTION_METADATA);
+    expect(DOCTOR_OPTION_METADATA).toBe(FOCUSED_DOCTOR_OPTION_METADATA);
+    expect(MIGRATE_OPTION_METADATA).toBe(FOCUSED_MIGRATE_OPTION_METADATA);
+    expect(MCP_OPTION_METADATA).toBe(FOCUSED_MCP_OPTION_METADATA);
+    expect(GLOBAL_OPTION_METADATA).toBe(FOCUSED_GLOBAL_OPTION_METADATA);
+    expect(TEMPLATES_OPTION_METADATA).toBe(FOCUSED_TEMPLATES_OPTION_METADATA);
+    expect(COMMAND_OPTION_METADATA_BY_GROUP.create).toBe(
+      FOCUSED_CREATE_OPTION_METADATA,
+    );
+    expect(COMMAND_OPTION_METADATA_BY_GROUP.add).toBe(
+      FOCUSED_ADD_OPTION_METADATA,
+    );
+    expect(COMMAND_OPTION_METADATA_BY_GROUP.init).toBe(
+      FOCUSED_INIT_OPTION_METADATA,
+    );
+    expect(COMMAND_OPTION_METADATA_BY_GROUP.sync).toBe(
+      FOCUSED_SYNC_OPTION_METADATA,
+    );
+    expect(COMMAND_OPTION_METADATA_BY_GROUP.doctor).toBe(
+      FOCUSED_DOCTOR_OPTION_METADATA,
+    );
+    expect(COMMAND_OPTION_METADATA_BY_GROUP.migrate).toBe(
+      FOCUSED_MIGRATE_OPTION_METADATA,
+    );
+    expect(COMMAND_OPTION_METADATA_BY_GROUP.mcp).toBe(
+      FOCUSED_MCP_OPTION_METADATA,
+    );
+    expect(COMMAND_OPTION_METADATA_BY_GROUP.global).toBe(
+      FOCUSED_GLOBAL_OPTION_METADATA,
+    );
+    expect(COMMAND_OPTION_METADATA_BY_GROUP.templates).toBe(
+      FOCUSED_TEMPLATES_OPTION_METADATA,
+    );
+  });
 
   test('parses string and boolean flags from shared metadata', () => {
     const parsed = parseCommandArgvWithMetadata(
