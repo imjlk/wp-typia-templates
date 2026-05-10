@@ -7,6 +7,9 @@ import {
   type AddBlockTransformResult,
 } from '../add-kind-registry-shared';
 
+const TRANSFORM_MISSING_NAME_MESSAGE =
+  '`wp-typia add transform` requires <name>. Usage: wp-typia add transform <name> --from <namespace/block> --to <block-slug|namespace/block-slug>.';
+
 export const transformAddKindEntry =
   defineAddKindRegistryEntry<AddBlockTransformResult>({
     completion: {
@@ -27,7 +30,7 @@ export const transformAddKindEntry =
     async prepareExecution(context) {
       const name = requireAddKindName(
         context,
-        '`wp-typia add transform` requires <name>. Usage: wp-typia add transform <name> --from <namespace/block> --to <block-slug|namespace/block-slug>.',
+        TRANSFORM_MISSING_NAME_MESSAGE,
       );
       const fromBlockName = requireStrictStringFlag(
         context.flags,
@@ -54,8 +57,7 @@ export const transformAddKindEntry =
           toBlockName: result.toBlockName,
           transformSlug: result.transformSlug,
         }),
-        missingNameMessage:
-          '`wp-typia add transform` requires <name>. Usage: wp-typia add transform <name> --from <namespace/block> --to <block-slug|namespace/block-slug>.',
+        missingNameMessage: TRANSFORM_MISSING_NAME_MESSAGE,
         name,
       });
     },

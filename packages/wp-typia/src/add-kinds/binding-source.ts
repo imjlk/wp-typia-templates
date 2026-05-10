@@ -7,6 +7,9 @@ import {
   type AddBindingSourceResult,
 } from '../add-kind-registry-shared';
 
+const BINDING_SOURCE_MISSING_NAME_MESSAGE =
+  '`wp-typia add binding-source` requires <name>. Usage: wp-typia add binding-source <name> [--block <block-slug|namespace/block-slug> --attribute <attribute>].';
+
 export const bindingSourceAddKindEntry =
   defineAddKindRegistryEntry<AddBindingSourceResult>({
     completion: {
@@ -33,7 +36,7 @@ export const bindingSourceAddKindEntry =
     async prepareExecution(context) {
       const name = requireAddKindName(
         context,
-        '`wp-typia add binding-source` requires <name>. Usage: wp-typia add binding-source <name> [--block <block-slug|namespace/block-slug> --attribute <attribute>].',
+        BINDING_SOURCE_MISSING_NAME_MESSAGE,
       );
       const [blockName, attributeName] = readOptionalPairedStrictStringFlags(
         context.flags,
@@ -57,8 +60,7 @@ export const bindingSourceAddKindEntry =
           ...(result.blockSlug ? { blockSlug: result.blockSlug } : {}),
           bindingSourceSlug: result.bindingSourceSlug,
         }),
-        missingNameMessage:
-          '`wp-typia add binding-source` requires <name>. Usage: wp-typia add binding-source <name> [--block <block-slug|namespace/block-slug> --attribute <attribute>].',
+        missingNameMessage: BINDING_SOURCE_MISSING_NAME_MESSAGE,
         name,
       });
     },
