@@ -1,4 +1,4 @@
-import { formatAddKindUsagePlaceholder } from './add-kind-registry';
+import { formatAddKindUsagePlaceholder } from './add-kind-ids';
 
 const MISSING_CREATE_PROJECT_DIR_DETAIL_LINES = [
   '`wp-typia create` requires <project-dir>.',

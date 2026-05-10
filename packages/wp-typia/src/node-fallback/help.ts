@@ -1,5 +1,5 @@
 import packageJson from '../../package.json';
-import { formatAddKindList } from '../add-kind-registry';
+import { formatAddKindList } from '../add-kind-ids';
 import {
   ADD_OPTION_METADATA,
   CREATE_OPTION_METADATA,
