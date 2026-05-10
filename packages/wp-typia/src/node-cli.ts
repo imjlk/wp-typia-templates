@@ -55,6 +55,7 @@ import {
   NODE_FALLBACK_HELP_RENDERERS,
   STANDALONE_GUIDANCE_LINE,
   renderGeneralHelp,
+  renderNoCommandHelp,
 } from './node-fallback/help';
 import type {
   NodeFallbackCommandDispatcher,
@@ -428,7 +429,7 @@ export async function runNodeCli(argv = process.argv.slice(2)): Promise<void> {
     hasFlagBeforeTerminator(cliArgv, '--version') || command === 'version';
 
   if (cliArgv.length === 0) {
-    renderGeneralHelp(printLine);
+    renderNoCommandHelp(printLine);
     process.exitCode = 1;
     return;
   }

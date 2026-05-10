@@ -791,9 +791,13 @@ process.exit(0);
     expect(noCommandResult.stdout).toContain(
       'Canonical CLI package for wp-typia scaffolding',
     );
+    expect(noCommandResult.stdout).toContain(
+      'No command provided. Run wp-typia --help for usage information.',
+    );
     expect(noCommandResult.stdout).toContain('Runtime: Node fallback');
     expect(helpResult.status).toBe(0);
     expect(helpResult.stderr).toBe('');
+    expect(helpResult.stdout).not.toContain('No command provided.');
     expect(helpResult.stdout).toContain(
       'Canonical CLI package for wp-typia scaffolding',
     );

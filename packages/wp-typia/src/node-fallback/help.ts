@@ -31,6 +31,9 @@ export const NODE_FALLBACK_RUNTIME_SUMMARY_LINES = [
   'Output markers: WP_TYPIA_ASCII=1 forces ASCII markers, WP_TYPIA_ASCII=0 opts back into Unicode markers, and non-empty NO_COLOR requests ASCII markers when WP_TYPIA_ASCII is unset.',
 ];
 
+export const NODE_FALLBACK_NO_COMMAND_REASON_LINE =
+  'No command provided. Run wp-typia --help for usage information.';
+
 export type NodeFallbackCommandHelpConfig = {
   bodyLines?: string[];
   heading: string;
@@ -56,6 +59,11 @@ export function renderGeneralHelp(printLine: PrintLine) {
     `- ${WP_TYPIA_CANONICAL_MIGRATE_USAGE}`,
     `- ${WP_TYPIA_POSITIONAL_ALIAS_USAGE}`,
   ]);
+}
+
+export function renderNoCommandHelp(printLine: PrintLine) {
+  printBlock(printLine, [NODE_FALLBACK_NO_COMMAND_REASON_LINE, '']);
+  renderGeneralHelp(printLine);
 }
 
 export function renderNodeFallbackCommandHelp(

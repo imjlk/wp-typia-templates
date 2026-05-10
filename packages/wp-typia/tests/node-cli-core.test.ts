@@ -107,6 +107,9 @@ describe('Node fallback CLI core routing', () => {
 
     expect(result.error).toBeUndefined();
     expect(result.exitCode).toBe(1);
+    expect(result.stdout).toContain(
+      'No command provided. Run wp-typia --help for usage information.',
+    );
     expect(result.stdout).toContain(`wp-typia ${packageJson.version}`);
     expect(result.stdout).toContain(
       'Canonical CLI package for wp-typia scaffolding',
@@ -124,6 +127,7 @@ describe('Node fallback CLI core routing', () => {
     expect(generalHelp.exitCode).toBe(0);
     expect(generalHelp.stdout).toContain('Commands:');
     expect(generalHelp.stdout).toContain('standalone wp-typia binary');
+    expect(generalHelp.stdout).not.toContain('No command provided.');
 
     expect(createHelp.error).toBeUndefined();
     expect(createHelp.exitCode).toBe(0);
