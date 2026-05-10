@@ -83,7 +83,9 @@ export type AddBlockTemplateId = (typeof ADD_BLOCK_TEMPLATE_IDS)[number];
 export function suggestAddBlockTemplateId(
 	templateId: string,
 ): AddBlockTemplateId | null {
-	return suggestCloseId(templateId, ADD_BLOCK_TEMPLATE_IDS);
+	return suggestCloseId(templateId, ADD_BLOCK_TEMPLATE_IDS, {
+		maxDistance: 3,
+	});
 }
 
 /**

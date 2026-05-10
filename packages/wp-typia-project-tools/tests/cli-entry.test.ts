@@ -1545,7 +1545,7 @@ test("node entry suggests close add-block template ids before workspace dependen
         "block",
         "counter-card",
         "--template",
-        "basicc",
+        "interactiv",
         "--format",
         "json",
       ],
@@ -1558,7 +1558,7 @@ test("node entry suggests close add-block template ids before workspace dependen
 
   expect(errorMessage).toContain('"code": "unknown-template"');
   expect(errorMessage).toContain(
-    'Unknown add-block template \\"basicc\\". Did you mean \\"basic\\"? Use `--template basic`'
+    'Unknown add-block template \\"interactiv\\". Did you mean \\"interactivity\\"? Use `--template interactivity`'
   );
   expect(errorMessage).not.toContain("Workspace dependencies have not been installed yet.");
 });
