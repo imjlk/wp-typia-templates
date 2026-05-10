@@ -280,6 +280,8 @@ describe('wp-typia package', () => {
     expect(migrateCommandSource).toContain('resolveCommandOptionValues');
     expect(mcpCommandSource).toContain('buildCommandOptions');
     expect(mcpCommandSource).toContain('MCP_OPTION_METADATA');
+    expect(mcpCommandSource).toContain('printMcpToolGroupSummary');
+    expect(mcpCommandSource).not.toContain('console.log');
     expect(mcpCommandSource).not.toContain('schema: z.string().optional()');
   });
 
