@@ -32,7 +32,7 @@ export const TYPESCRIPT_RUNTIME_PACKAGE_POLICIES = [
 			"src/runtime/cli-add-workspace-assets.ts",
 			"src/runtime/cli-init-plan.ts",
 			"src/runtime/ts-property-names.ts",
-			"src/runtime/workspace-inventory.ts",
+			"src/runtime/workspace-inventory-parser.ts",
 		],
 		runtimeSourceRoots: ["src/runtime"],
 		typescriptPlacement: TYPESCRIPT_DEPENDENCY_POLICY.dependency,
