@@ -55,7 +55,8 @@ function appendEntriesAtMarker(
 		);
 	}
 
-	return source.replace(marker, `${entries.join("\n")}\n${marker}`);
+	const replacement = `${entries.join("\n")}\n${marker}`;
+	return source.replace(marker, () => replacement);
 }
 
 function appendInventorySectionEntries(

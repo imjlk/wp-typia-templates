@@ -605,6 +605,7 @@ export const BLOCKS: WorkspaceBlockConfig[] = [
       ],
       blockEntries: [
         '\t{ slug: "alert-card", typesFile: "src/blocks/alert-card/types.ts" },',
+        '\t{ slug: "price-$&-card", typesFile: "src/blocks/price-$&-card/types.ts" },',
       ],
       blockStyleEntries: [
         '\t{ block: "alert-card", file: "src/blocks/alert-card/styles/outline.ts", slug: "outline" },',
@@ -616,7 +617,10 @@ export const BLOCKS: WorkspaceBlockConfig[] = [
   );
 
   expect(updatedSource).toContain(
-    '\t{ slug: "alert-card", typesFile: "src/blocks/alert-card/types.ts" },\n\t// wp-typia add block entries'
+    '\t{ slug: "alert-card", typesFile: "src/blocks/alert-card/types.ts" },\n\t{ slug: "price-$&-card", typesFile: "src/blocks/price-$&-card/types.ts" },\n\t// wp-typia add block entries'
+  );
+  expect(updatedSource).toContain(
+    '\t{ slug: "price-$&-card", typesFile: "src/blocks/price-$&-card/types.ts" },'
   );
   expect(updatedSource).toContain(
     '\t{ block: "alert-card", file: "src/blocks/alert-card/styles/outline.ts", slug: "outline" },\n\t// wp-typia add style entries'
