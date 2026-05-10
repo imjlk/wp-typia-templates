@@ -7,6 +7,9 @@ import {
   type AddVariationResult,
 } from '../add-kind-registry-shared';
 
+const VARIATION_MISSING_NAME_MESSAGE =
+  '`wp-typia add variation` requires <name>. Usage: wp-typia add variation <name> --block <block-slug>';
+
 export const variationAddKindEntry =
   defineAddKindRegistryEntry<AddVariationResult>({
     completion: {
@@ -26,7 +29,7 @@ export const variationAddKindEntry =
     async prepareExecution(context) {
       const name = requireAddKindName(
         context,
-        '`wp-typia add variation` requires <name>. Usage: wp-typia add variation <name> --block <block-slug>',
+        VARIATION_MISSING_NAME_MESSAGE,
       );
       const blockSlug = requireStrictStringFlag(
         context.flags,
@@ -45,8 +48,7 @@ export const variationAddKindEntry =
           blockSlug: result.blockSlug,
           variationSlug: result.variationSlug,
         }),
-        missingNameMessage:
-          '`wp-typia add variation` requires <name>. Usage: wp-typia add variation <name> --block <block-slug>',
+        missingNameMessage: VARIATION_MISSING_NAME_MESSAGE,
         name,
       });
     },

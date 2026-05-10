@@ -7,6 +7,9 @@ import {
   type AddHookedBlockResult,
 } from '../add-kind-registry-shared';
 
+const HOOKED_BLOCK_MISSING_NAME_MESSAGE =
+  '`wp-typia add hooked-block` requires <block-slug>. Usage: wp-typia add hooked-block <block-slug> --anchor <anchor-block-name> --position <before|after|firstChild|lastChild>.';
+
 export const hookedBlockAddKindEntry =
   defineAddKindRegistryEntry<AddHookedBlockResult>({
     completion: {
@@ -27,7 +30,7 @@ export const hookedBlockAddKindEntry =
     async prepareExecution(context) {
       const name = requireAddKindName(
         context,
-        '`wp-typia add hooked-block` requires <block-slug>. Usage: wp-typia add hooked-block <block-slug> --anchor <anchor-block-name> --position <before|after|firstChild|lastChild>.',
+        HOOKED_BLOCK_MISSING_NAME_MESSAGE,
       );
       const anchorBlockName = requireStrictStringFlag(
         context.flags,
@@ -53,8 +56,7 @@ export const hookedBlockAddKindEntry =
           blockSlug: result.blockSlug,
           position: result.position,
         }),
-        missingNameMessage:
-          '`wp-typia add hooked-block` requires <block-slug>. Usage: wp-typia add hooked-block <block-slug> --anchor <anchor-block-name> --position <before|after|firstChild|lastChild>.',
+        missingNameMessage: HOOKED_BLOCK_MISSING_NAME_MESSAGE,
         name,
       });
     },

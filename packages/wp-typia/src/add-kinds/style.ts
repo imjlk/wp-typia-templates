@@ -7,6 +7,9 @@ import {
   type AddBlockStyleResult,
 } from '../add-kind-registry-shared';
 
+const STYLE_MISSING_NAME_MESSAGE =
+  '`wp-typia add style` requires <name>. Usage: wp-typia add style <name> --block <block-slug>.';
+
 export const styleAddKindEntry =
   defineAddKindRegistryEntry<AddBlockStyleResult>({
     completion: {
@@ -26,7 +29,7 @@ export const styleAddKindEntry =
     async prepareExecution(context) {
       const name = requireAddKindName(
         context,
-        '`wp-typia add style` requires <name>. Usage: wp-typia add style <name> --block <block-slug>.',
+        STYLE_MISSING_NAME_MESSAGE,
       );
       const blockSlug = requireStrictStringFlag(
         context.flags,
@@ -45,8 +48,7 @@ export const styleAddKindEntry =
           blockSlug: result.blockSlug,
           styleSlug: result.styleSlug,
         }),
-        missingNameMessage:
-          '`wp-typia add style` requires <name>. Usage: wp-typia add style <name> --block <block-slug>.',
+        missingNameMessage: STYLE_MISSING_NAME_MESSAGE,
         name,
       });
     },

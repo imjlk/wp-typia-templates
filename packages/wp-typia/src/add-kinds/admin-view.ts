@@ -7,6 +7,9 @@ import {
   type AddAdminViewResult,
 } from '../add-kind-registry-shared';
 
+const ADMIN_VIEW_MISSING_NAME_MESSAGE =
+  '`wp-typia add admin-view` requires <name>. Usage: wp-typia add admin-view <name> [--source <rest-resource:slug|core-data:kind/name>].';
+
 export const adminViewAddKindEntry =
   defineAddKindRegistryEntry<AddAdminViewResult>({
     completion: {
@@ -26,7 +29,7 @@ export const adminViewAddKindEntry =
     async prepareExecution(context) {
       const name = requireAddKindName(
         context,
-        '`wp-typia add admin-view` requires <name>. Usage: wp-typia add admin-view <name> [--source <rest-resource:slug|core-data:kind/name>].',
+        ADMIN_VIEW_MISSING_NAME_MESSAGE,
       );
       const source = readOptionalStrictStringFlag(context.flags, 'source');
 
@@ -41,8 +44,7 @@ export const adminViewAddKindEntry =
           adminViewSlug: result.adminViewSlug,
           ...(result.source ? { source: result.source } : {}),
         }),
-        missingNameMessage:
-          '`wp-typia add admin-view` requires <name>. Usage: wp-typia add admin-view <name> [--source <rest-resource:slug|core-data:kind/name>].',
+        missingNameMessage: ADMIN_VIEW_MISSING_NAME_MESSAGE,
         name,
       });
     },

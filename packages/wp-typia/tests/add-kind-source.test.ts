@@ -24,3 +24,48 @@ test('single-sources add-kind ids from project-tools metadata', () => {
   expect(ADD_KIND_IDS).toEqual([...PROJECT_TOOLS_ADD_KIND_IDS]);
   expect(addCommand?.subcommands).toEqual([...PROJECT_TOOLS_ADD_KIND_IDS]);
 });
+
+test('single-sources add-kind missing-name messages inside kind modules', () => {
+  const addKindSourceDir = path.join(packageRoot, 'src', 'add-kinds');
+  const offenders: string[] = [];
+
+  for (const filename of fs
+    .readdirSync(addKindSourceDir)
+    .filter((name) => name.endsWith('.ts'))) {
+    const source = fs.readFileSync(
+      path.join(addKindSourceDir, filename),
+      'utf8',
+    );
+    if (!source.includes('missingNameMessage')) {
+      continue;
+    }
+
+    const definitions = [
+      ...source.matchAll(/const\s+([A-Z0-9_]+_MISSING_NAME_MESSAGE)\s*=/g),
+    ].map((match) => match[1]);
+    const [constantName] = definitions;
+    const hasInlinePlanMessage = /missingNameMessage:\s*['"`]/.test(source);
+    const requireAddKindNameArguments = [
+      ...source.matchAll(/requireAddKindName\(\s*[^,]+,\s*([^),]+)\s*[),]/gs),
+    ].map((match) => match[1]?.trim());
+    const hasInlineRequireMessage = requireAddKindNameArguments.some(
+      (argument) => /^['"`]/.test(argument ?? ''),
+    );
+    const hasMismatchedRequireMessage = requireAddKindNameArguments.some(
+      (argument) => argument !== constantName,
+    );
+
+    if (
+      definitions.length !== 1 ||
+      !constantName ||
+      !source.includes(`missingNameMessage: ${constantName}`) ||
+      hasInlinePlanMessage ||
+      hasInlineRequireMessage ||
+      hasMismatchedRequireMessage
+    ) {
+      offenders.push(filename);
+    }
+  }
+
+  expect(offenders).toEqual([]);
+});

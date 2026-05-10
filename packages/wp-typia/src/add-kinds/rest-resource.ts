@@ -7,6 +7,9 @@ import {
   type AddRestResourceResult,
 } from '../add-kind-registry-shared';
 
+const REST_RESOURCE_MISSING_NAME_MESSAGE =
+  '`wp-typia add rest-resource` requires <name>. Usage: wp-typia add rest-resource <name> [--namespace <vendor/v1>] [--methods <list,read,create,update,delete>].';
+
 export const restResourceAddKindEntry =
   defineAddKindRegistryEntry<AddRestResourceResult>({
     completion: {
@@ -27,7 +30,7 @@ export const restResourceAddKindEntry =
     async prepareExecution(context) {
       const name = requireAddKindName(
         context,
-        '`wp-typia add rest-resource` requires <name>. Usage: wp-typia add rest-resource <name> [--namespace <vendor/v1>] [--methods <list,read,create,update,delete>].',
+        REST_RESOURCE_MISSING_NAME_MESSAGE,
       );
       const methods = readOptionalStrictStringFlag(context.flags, 'methods');
       const namespace = readOptionalStrictStringFlag(context.flags, 'namespace');
@@ -45,8 +48,7 @@ export const restResourceAddKindEntry =
           namespace: result.namespace,
           restResourceSlug: result.restResourceSlug,
         }),
-        missingNameMessage:
-          '`wp-typia add rest-resource` requires <name>. Usage: wp-typia add rest-resource <name> [--namespace <vendor/v1>] [--methods <list,read,create,update,delete>].',
+        missingNameMessage: REST_RESOURCE_MISSING_NAME_MESSAGE,
         name,
       });
     },

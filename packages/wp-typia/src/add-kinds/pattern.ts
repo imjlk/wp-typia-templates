@@ -5,6 +5,9 @@ import {
   type AddPatternResult,
 } from '../add-kind-registry-shared';
 
+const PATTERN_MISSING_NAME_MESSAGE =
+  '`wp-typia add pattern` requires <name>. Usage: wp-typia add pattern <name>.';
+
 export const patternAddKindEntry =
   defineAddKindRegistryEntry<AddPatternResult>({
     completion: {
@@ -30,8 +33,7 @@ export const patternAddKindEntry =
         getValues: (result) => ({
           patternSlug: result.patternSlug,
         }),
-        missingNameMessage:
-          '`wp-typia add pattern` requires <name>. Usage: wp-typia add pattern <name>.',
+        missingNameMessage: PATTERN_MISSING_NAME_MESSAGE,
       });
     },
     sortOrder: 60,

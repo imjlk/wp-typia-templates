@@ -5,6 +5,9 @@ import {
   type AddAbilityResult,
 } from '../add-kind-registry-shared';
 
+const ABILITY_MISSING_NAME_MESSAGE =
+  '`wp-typia add ability` requires <name>. Usage: wp-typia add ability <name>.';
+
 export const abilityAddKindEntry =
   defineAddKindRegistryEntry<AddAbilityResult>({
     completion: {
@@ -31,8 +34,7 @@ export const abilityAddKindEntry =
           abilitySlug: result.abilitySlug,
         }),
         getWarnings: (result) => result.warnings,
-        missingNameMessage:
-          '`wp-typia add ability` requires <name>. Usage: wp-typia add ability <name>.',
+        missingNameMessage: ABILITY_MISSING_NAME_MESSAGE,
         warnLine: context.warnLine,
       });
     },

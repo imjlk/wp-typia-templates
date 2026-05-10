@@ -7,6 +7,9 @@ import {
   type AddAiFeatureResult,
 } from '../add-kind-registry-shared';
 
+const AI_FEATURE_MISSING_NAME_MESSAGE =
+  '`wp-typia add ai-feature` requires <name>. Usage: wp-typia add ai-feature <name> [--namespace <vendor/v1>].';
+
 export const aiFeatureAddKindEntry =
   defineAddKindRegistryEntry<AddAiFeatureResult>({
     completion: {
@@ -26,7 +29,7 @@ export const aiFeatureAddKindEntry =
     async prepareExecution(context) {
       const name = requireAddKindName(
         context,
-        '`wp-typia add ai-feature` requires <name>. Usage: wp-typia add ai-feature <name> [--namespace <vendor/v1>].',
+        AI_FEATURE_MISSING_NAME_MESSAGE,
       );
       const namespace = readOptionalStrictStringFlag(context.flags, 'namespace');
 
@@ -42,8 +45,7 @@ export const aiFeatureAddKindEntry =
           namespace: result.namespace,
         }),
         getWarnings: (result) => result.warnings,
-        missingNameMessage:
-          '`wp-typia add ai-feature` requires <name>. Usage: wp-typia add ai-feature <name> [--namespace <vendor/v1>].',
+        missingNameMessage: AI_FEATURE_MISSING_NAME_MESSAGE,
         name,
         warnLine: context.warnLine,
       });

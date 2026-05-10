@@ -12,6 +12,9 @@ import {
   type AddBlockResult,
 } from '../add-kind-registry-shared';
 
+const BLOCK_MISSING_NAME_MESSAGE =
+  '`wp-typia add block` requires <name>. Usage: wp-typia add block <name> [--template <basic|interactivity|persistence|compound>]';
+
 export const blockAddKindEntry = defineAddKindRegistryEntry<AddBlockResult>({
   completion: {
     nextSteps: () => [
@@ -31,7 +34,7 @@ export const blockAddKindEntry = defineAddKindRegistryEntry<AddBlockResult>({
   async prepareExecution(context) {
     const name = requireAddKindName(
       context,
-      '`wp-typia add block` requires <name>. Usage: wp-typia add block <name> [--template <basic|interactivity|persistence|compound>]',
+      BLOCK_MISSING_NAME_MESSAGE,
     );
     const externalLayerId = readOptionalStrictStringFlag(
       context.flags,
@@ -111,8 +114,7 @@ export const blockAddKindEntry = defineAddKindRegistryEntry<AddBlockResult>({
         templateId: result.templateId,
       }),
       getWarnings: (result) => result.warnings,
-      missingNameMessage:
-        '`wp-typia add block` requires <name>. Usage: wp-typia add block <name> [--template <basic|interactivity|persistence|compound>]',
+      missingNameMessage: BLOCK_MISSING_NAME_MESSAGE,
       name,
       warnLine: context.warnLine,
     });

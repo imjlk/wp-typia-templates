@@ -7,6 +7,9 @@ import {
   type AddEditorPluginResult,
 } from '../add-kind-registry-shared';
 
+const EDITOR_PLUGIN_MISSING_NAME_MESSAGE =
+  '`wp-typia add editor-plugin` requires <name>. Usage: wp-typia add editor-plugin <name> [--slot <sidebar|document-setting-panel>].';
+
 export const editorPluginAddKindEntry =
   defineAddKindRegistryEntry<AddEditorPluginResult>({
     completion: {
@@ -26,7 +29,7 @@ export const editorPluginAddKindEntry =
     async prepareExecution(context) {
       const name = requireAddKindName(
         context,
-        '`wp-typia add editor-plugin` requires <name>. Usage: wp-typia add editor-plugin <name> [--slot <sidebar|document-setting-panel>].',
+        EDITOR_PLUGIN_MISSING_NAME_MESSAGE,
       );
       const slot = readOptionalStrictStringFlag(context.flags, 'slot');
 
@@ -41,8 +44,7 @@ export const editorPluginAddKindEntry =
           editorPluginSlug: result.editorPluginSlug,
           slot: result.slot,
         }),
-        missingNameMessage:
-          '`wp-typia add editor-plugin` requires <name>. Usage: wp-typia add editor-plugin <name> [--slot <sidebar|document-setting-panel>].',
+        missingNameMessage: EDITOR_PLUGIN_MISSING_NAME_MESSAGE,
         name,
       });
     },
