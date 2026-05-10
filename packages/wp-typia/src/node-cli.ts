@@ -70,6 +70,9 @@ const NODE_FALLBACK_BOOLEAN_OPTION_NAMES = ['help', 'version'] as const;
 const printLine: PrintLine = (line) => {
   console.log(line);
 };
+const warnLine: PrintLine = (line) => {
+  console.warn(line);
+};
 
 export function hasFlagBeforeTerminator(argv: string[], flag: string): boolean {
   for (const arg of argv) {
@@ -275,6 +278,8 @@ const NODE_FALLBACK_COMMAND_DISPATCHERS = {
     cwd,
     mergedFlags,
     positionals,
+    printLine,
+    warnLine,
   }: NodeFallbackDispatchContext) => {
     const plan = await executeInitCommand(
       {
@@ -288,6 +293,8 @@ const NODE_FALLBACK_COMMAND_DISPATCHERS = {
       },
       {
         emitOutput: mergedFlags.format !== 'json',
+        printLine,
+        warnLine,
       },
     );
     if (mergedFlags.format === 'json') {
@@ -311,6 +318,8 @@ const NODE_FALLBACK_COMMAND_DISPATCHERS = {
     cwd,
     mergedFlags,
     positionals,
+    printLine,
+    warnLine,
   }: NodeFallbackDispatchContext) => {
     try {
       const syncTarget = resolveSyncExecutionTarget(positionals[1]);
@@ -343,6 +352,10 @@ const NODE_FALLBACK_COMMAND_DISPATCHERS = {
             projectDir: sync.projectDir,
             target: sync.target,
           }),
+          {
+            printLine,
+            warnLine,
+          },
         );
       }
     } catch (error) {
@@ -471,6 +484,7 @@ export async function runNodeCli(argv = process.argv.slice(2)): Promise<void> {
       mergedFlags,
       positionals,
       printLine,
+      warnLine,
     });
     return;
   }

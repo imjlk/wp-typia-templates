@@ -21,6 +21,8 @@ export function printCompletionPayload(
   } = {},
 ): void {
   const printLine = options.printLine ?? (console.log as PrintLine);
+  // Callers that only provide stdout intentionally keep warnings on stdout.
+  // Runtime entrypoints with distinct warning channels should pass warnLine.
   const warnLine = options.warnLine ?? printLine;
 
   for (const line of payload.preambleLines ?? []) {

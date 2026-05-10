@@ -18,6 +18,7 @@ export async function dispatchNodeFallbackAdd({
   mergedFlags,
   positionals,
   printLine,
+  warnLine,
 }: NodeFallbackDispatchContext): Promise<void> {
   if (!positionals[1]) {
     if (shouldPrintMissingAddKindHelp({ format: mergedFlags.format })) {
@@ -44,6 +45,8 @@ export async function dispatchNodeFallbackAdd({
         interactive: false,
         kind: positionals[1],
         name: positionals[2],
+        printLine,
+        warnLine,
       });
     } catch (error) {
       throw createCliCommandError({
@@ -72,5 +75,7 @@ export async function dispatchNodeFallbackAdd({
     interactive: undefined,
     kind: positionals[1],
     name: positionals[2],
+    printLine,
+    warnLine,
   });
 }

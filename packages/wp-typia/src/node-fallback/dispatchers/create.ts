@@ -15,6 +15,7 @@ export async function dispatchNodeFallbackCreate({
   mergedFlags,
   positionals,
   printLine,
+  warnLine,
 }: NodeFallbackDispatchContext): Promise<void> {
   const projectDir = positionals[1];
   if (!projectDir) {
@@ -34,7 +35,9 @@ export async function dispatchNodeFallbackCreate({
       emitOutput: mergedFlags.format !== 'json',
       flags: mergedFlags,
       interactive: mergedFlags.format === 'json' ? false : undefined,
+      printLine,
       projectDir,
+      warnLine,
     });
   } catch (error) {
     throw createCliCommandError({

@@ -19,6 +19,7 @@ export type NodeFallbackDispatchContext = {
   mergedFlags: Record<string, unknown>;
   positionals: string[];
   printLine: PrintLine;
+  warnLine: PrintLine;
 };
 
 export type NodeFallbackCommandDispatcher = (
