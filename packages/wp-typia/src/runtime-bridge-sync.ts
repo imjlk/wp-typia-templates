@@ -36,6 +36,11 @@ type SyncProjectContext = {
   scripts: Partial<Record<SyncScriptName, SyncScriptDefinition>>;
 };
 
+type SyncPackageJson = {
+  packageManager?: string;
+  scripts?: Record<string, unknown>;
+};
+
 export type SyncPlannedCommand = {
   args: string[];
   command: string;
@@ -92,16 +97,28 @@ function getSyncRootError(cwd: string): Error {
   );
 }
 
+function readSyncPackageJson(packageJsonPath: string): SyncPackageJson {
+  const source = fs.readFileSync(packageJsonPath, 'utf8');
+
+  try {
+    return JSON.parse(source) as SyncPackageJson;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    throw createCliDiagnosticCodeError(
+      CLI_DIAGNOSTIC_CODES.INVALID_ARGUMENT,
+      `Unable to parse ${packageJsonPath}: ${message}`,
+      error instanceof Error ? { cause: error } : undefined,
+    );
+  }
+}
+
 function resolveSyncProjectContext(cwd: string): SyncProjectContext {
   const packageJsonPath = path.join(cwd, 'package.json');
   if (!fs.existsSync(packageJsonPath)) {
     throw getSyncRootError(cwd);
   }
 
-  const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8')) as {
-    packageManager?: string;
-    scripts?: Record<string, unknown>;
-  };
+  const packageJson = readSyncPackageJson(packageJsonPath);
   const scripts = packageJson.scripts ?? {};
   const syncScripts = {
     sync:
