@@ -45,15 +45,23 @@ test('single-sources add-kind missing-name messages inside kind modules', () => 
     ].map((match) => match[1]);
     const [constantName] = definitions;
     const hasInlinePlanMessage = /missingNameMessage:\s*['"`]/.test(source);
-    const hasInlineRequireMessage =
-      /requireAddKindName\(\s*context,\s*['"`]/.test(source);
+    const requireAddKindNameArguments = [
+      ...source.matchAll(/requireAddKindName\(\s*[^,]+,\s*([^),]+)\s*[),]/gs),
+    ].map((match) => match[1]?.trim());
+    const hasInlineRequireMessage = requireAddKindNameArguments.some(
+      (argument) => /^['"`]/.test(argument ?? ''),
+    );
+    const hasMismatchedRequireMessage = requireAddKindNameArguments.some(
+      (argument) => argument !== constantName,
+    );
 
     if (
       definitions.length !== 1 ||
       !constantName ||
       !source.includes(`missingNameMessage: ${constantName}`) ||
       hasInlinePlanMessage ||
-      hasInlineRequireMessage
+      hasInlineRequireMessage ||
+      hasMismatchedRequireMessage
     ) {
       offenders.push(filename);
     }
