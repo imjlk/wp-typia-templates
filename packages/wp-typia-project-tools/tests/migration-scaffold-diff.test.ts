@@ -46,6 +46,7 @@ test("scaffold and verify generate auto-migration artifacts for additive schema 
 	expect(deprecatedSource).toContain("deprecated_0");
 	expect(Array.isArray(fixtureSource.cases)).toBe(true);
 	expect(fixtureSource.cases[0].name).toBe("default");
+	expect(phpRegistrySource).toContain("if ( ! defined( 'ABSPATH' ) ) {\n\texit;\n}");
 	expect(phpRegistrySource).toContain("'currentMigrationVersion' => 'v3'");
 	expect(phpRegistrySource).toContain("'legacyMigrationVersions' =>");
 	expect(phpRegistrySource).toContain("'v1'");

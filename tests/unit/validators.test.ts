@@ -13,6 +13,17 @@ function createFixture(files: Record<string, string>) {
   });
 }
 
+function escapePhpSingleQuotedString(value: string): string {
+  return value.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+}
+
+function buildPhpValidatorRequireSource(phpValidatorPath: string): string {
+  return [
+    "if (!defined('ABSPATH')) { define('ABSPATH', '/tmp/wp-typia-test/'); }",
+    `$validator = require '${escapePhpSingleQuotedString(phpValidatorPath)}';`,
+  ].join(' ');
+}
+
 describe('Typia metadata generator', () => {
   afterAll(() => {
     const baseDir = getExampleShowcaseFixtureRoot('.tmp-metadata-fixtures');
@@ -738,7 +749,7 @@ export interface BlockAttributes {
         'php',
         [
           '-r',
-          `$validator = require '${phpValidatorPath.replace(/\\/g, '\\\\').replace(/'/g, "\\'")}'; $payload = json_decode('${invalidArrayPayload}', true); echo json_encode($validator->validate($payload), JSON_UNESCAPED_SLASHES);`,
+          `${buildPhpValidatorRequireSource(phpValidatorPath)} $payload = json_decode('${invalidArrayPayload}', true); echo json_encode($validator->validate($payload), JSON_UNESCAPED_SLASHES);`,
         ],
         { encoding: 'utf8' },
       ),
@@ -748,7 +759,7 @@ export interface BlockAttributes {
         'php',
         [
           '-r',
-          `$validator = require '${phpValidatorPath.replace(/\\/g, '\\\\').replace(/'/g, "\\'")}'; $payload = json_decode('${invalidObjectPayload}', true); echo json_encode($validator->validate($payload), JSON_UNESCAPED_SLASHES);`,
+          `${buildPhpValidatorRequireSource(phpValidatorPath)} $payload = json_decode('${invalidObjectPayload}', true); echo json_encode($validator->validate($payload), JSON_UNESCAPED_SLASHES);`,
         ],
         { encoding: 'utf8' },
       ),
@@ -863,7 +874,7 @@ export interface BlockAttributes {
         'php',
         [
           '-r',
-          `$validator = require '${phpValidatorPath.replace(/\\/g, '\\\\').replace(/'/g, "\\'")}'; echo json_encode($validator->validate(["link" => ["kind" => "post", "postId" => 12]]), JSON_UNESCAPED_SLASHES);`,
+          `${buildPhpValidatorRequireSource(phpValidatorPath)} echo json_encode($validator->validate(["link" => ["kind" => "post", "postId" => 12]]), JSON_UNESCAPED_SLASHES);`,
         ],
         { encoding: 'utf8' },
       ),
@@ -873,7 +884,7 @@ export interface BlockAttributes {
         'php',
         [
           '-r',
-          `$validator = require '${phpValidatorPath.replace(/\\/g, '\\\\').replace(/'/g, "\\'")}'; echo json_encode($validator->validate(["link" => ["kind" => "missing", "href" => "https://example.com"]]), JSON_UNESCAPED_SLASHES);`,
+          `${buildPhpValidatorRequireSource(phpValidatorPath)} echo json_encode($validator->validate(["link" => ["kind" => "missing", "href" => "https://example.com"]]), JSON_UNESCAPED_SLASHES);`,
         ],
         { encoding: 'utf8' },
       ),
@@ -1010,7 +1021,7 @@ export interface BlockAttributes {
         'php',
         [
           '-r',
-          `$validator = require '${phpValidatorPath.replace(/\\/g, '\\\\').replace(/'/g, "\\'")}'; $payload = json_decode('${invalidPayload}', true); echo json_encode($validator->validate($payload), JSON_UNESCAPED_SLASHES);`,
+          `${buildPhpValidatorRequireSource(phpValidatorPath)} $payload = json_decode('${invalidPayload}', true); echo json_encode($validator->validate($payload), JSON_UNESCAPED_SLASHES);`,
         ],
         { encoding: 'utf8' },
       ),

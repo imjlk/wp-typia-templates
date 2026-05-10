@@ -131,6 +131,10 @@ function loadPhpValidatorPath() {
 	return path.join(getExampleShowcaseDir(), 'typia-validator.php');
 }
 
+function escapePhpSingleQuotedString(value: string): string {
+  return value.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+}
+
 function validatePayload(
   manifest: ContractManifest,
   payload: Record<string, unknown>,
@@ -248,8 +252,8 @@ function runPhpValidator<T extends Record<string, unknown> | unknown[]>(
   payload: Record<string, unknown>,
 ): T {
   const validatorPath = loadPhpValidatorPath();
-  const encodedPayload = JSON.stringify(payload).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
-  const phpSource = `$validator = require '${validatorPath.replace(/\\/g, '\\\\').replace(/'/g, "\\'")}'; $payload = json_decode('${encodedPayload}', true); echo json_encode($validator->${method}($payload), JSON_UNESCAPED_SLASHES);`;
+  const encodedPayload = escapePhpSingleQuotedString(JSON.stringify(payload));
+  const phpSource = `if (!defined('ABSPATH')) { define('ABSPATH', '/tmp/wp-typia-test/'); } $validator = require '${escapePhpSingleQuotedString(validatorPath)}'; $payload = json_decode('${encodedPayload}', true); echo json_encode($validator->${method}($payload), JSON_UNESCAPED_SLASHES);`;
 
   return JSON.parse(execFileSync('php', ['-r', phpSource], { encoding: 'utf8' })) as T;
 }

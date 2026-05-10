@@ -124,6 +124,15 @@ describe("metadata-php-render", () => {
 		const result = renderPhpValidator(manifest);
 
 		expect(result.warnings).toEqual([]);
+		expect(result.source.startsWith("<?php\ndeclare(strict_types=1);\n\n")).toBe(
+			true,
+		);
+		expect(result.source).toContain(
+			"if ( ! defined( 'ABSPATH' ) ) {\n\texit;\n}",
+		);
+		expect(result.source.indexOf("declare(strict_types=1);")).toBeLessThan(
+			result.source.indexOf("if ( ! defined( 'ABSPATH' ) ) {"),
+		);
 		expect(result.source).toContain("private array $manifest = [");
 		expect(result.source).toContain("'sourceType' => 'DemoBlockAttributes'");
 		expect(result.source).toContain("private function validateAttribute");
