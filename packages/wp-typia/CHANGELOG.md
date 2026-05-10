@@ -1,5 +1,24 @@
 # wp-typia
 
+## 0.22.10 — 2026-05-10
+
+### Patch changes
+
+- [8149293](https://github.com/imjlk/wp-typia/commit/8149293f42754b9dfe71154673ac80c45f816d20) Clarify why no-command Node fallback help exits with a non-zero status. — Thanks @imjlk!
+- [e437ad1](https://github.com/imjlk/wp-typia/commit/e437ad1bca60901b244636e17c3631201c94e63d) Split runtime completion payload builders into command-focused modules while preserving the existing runtime-bridge-output facade. — Thanks @imjlk!
+- [6b56ee8](https://github.com/imjlk/wp-typia/commit/6b56ee832e6dc1a372d314021e6289be3775b4a6) Report dry-run install marker setup failures when symlink, hard-link, and copy fallbacks all fail. — Thanks @imjlk!
+- [9540f25](https://github.com/imjlk/wp-typia/commit/9540f258d6ed641b331332681f8c2dcc6d47b6c6) Split CLI runtime bridge command execution into focused command modules while preserving the existing runtime-bridge public facade. — Thanks @imjlk!
+- [50f8aa0](https://github.com/imjlk/wp-typia/commit/50f8aa0087d27a515ef3c796276976507387f696) Expand add-block template typo suggestions so near-miss ids like `interactiv` point users to the intended built-in template. — Thanks @imjlk!
+- [e03d463](https://github.com/imjlk/wp-typia/commit/e03d4630aba274a273b907f2bd012458cd347fa2) Single-source add-kind missing-name messages so direct validation and execution-plan validation stay aligned. — Thanks @imjlk!
+- [aa95e61](https://github.com/imjlk/wp-typia/commit/aa95e61b3b0b6d4674896c42d8205bdfda1b6219) Pass the pattern add-kind warning printer through its execution plan so warning output uses the expected channel. — Thanks @imjlk!
+- [cb14db1](https://github.com/imjlk/wp-typia/commit/cb14db1c5a8dc976c7297216e021296d64d4873f) Normalize recognizable create completion package-manager metadata before formatting follow-up commands. — Thanks @imjlk!
+- [5d02abf](https://github.com/imjlk/wp-typia/commit/5d02abf4e378b9d76ef53b3d5225bf4781a05291) Move add-kind list and usage formatting helpers into the add-kind id leaf module to avoid registry coupling from shared CLI diagnostics. — Thanks @imjlk!
+- [4caa131](https://github.com/imjlk/wp-typia/commit/4caa1311c99d57530cd8e3dba514c79349693130) Route MCP command human output through injectable PrintLine helpers instead of direct console logging. — Thanks @imjlk!
+- [947b1f2](https://github.com/imjlk/wp-typia/commit/947b1f29ccb31d2d7ecd6a0d13bfd8fd2ac5b774) Route Node fallback completion warnings through an explicit warning printer while preserving normal stdout output. — Thanks @imjlk!
+- [8eda4de](https://github.com/imjlk/wp-typia/commit/8eda4de5277ae039c32e059014b727bc92bd7be6) Split shared CLI command option metadata into command-focused modules while keeping parser and routing aggregation behavior centralized. — Thanks @imjlk!
+- [f0e8487](https://github.com/imjlk/wp-typia/commit/f0e8487c827c1a3a1e6ca4a6f3d0aec147506201) Classify malformed `package.json` parse failures in `wp-typia sync` with a stable invalid-argument diagnostic. — Thanks @imjlk!
+- Updated dependencies: project-tools (npm)@0.22.10
+
 ## 0.22.9 — 2026-05-08
 
 ### Patch changes

@@ -1,5 +1,11 @@
 # @wp-typia/block-runtime
 
+## 0.5.1 — 2026-05-10
+
+### Patch changes
+
+- [f4d5058](https://github.com/imjlk/wp-typia/commit/f4d5058f996b4bbf350ff7e1d490d46a1c46f3bd) Add WordPress direct-access guards to generated PHP validator and migration registry artifacts. — Thanks @imjlk!
+
 ## 0.5.0 — 2026-04-20
 
 ### Minor changes

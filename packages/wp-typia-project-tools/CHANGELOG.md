@@ -1,5 +1,16 @@
 # @wp-typia/project-tools
 
+## 0.22.10 — 2026-05-10
+
+### Patch changes
+
+- [f4d5058](https://github.com/imjlk/wp-typia/commit/f4d5058f996b4bbf350ff7e1d490d46a1c46f3bd) Add WordPress direct-access guards to generated PHP validator and migration registry artifacts. — Thanks @imjlk!
+- [50f8aa0](https://github.com/imjlk/wp-typia/commit/50f8aa0087d27a515ef3c796276976507387f696) Expand add-block template typo suggestions so near-miss ids like `interactiv` point users to the intended built-in template. — Thanks @imjlk!
+- [9bb82db](https://github.com/imjlk/wp-typia/commit/9bb82db50f6b069029130e997f7777c476770eb8) Clarify doctor async/sync boundaries while moving workspace doctor inventory reads onto the async inventory API. — Thanks @imjlk!
+- [df92774](https://github.com/imjlk/wp-typia/commit/df92774cdc59b3b17d307d5b485b0779a528bb84) Split workspace inventory types, templates, parser, read helpers, and mutation helpers into focused runtime modules while preserving the public barrel. — Thanks @imjlk!
+- [88a9fea](https://github.com/imjlk/wp-typia/commit/88a9feac128434dfdc2bb514e2a3a17b517aeab2) Consolidate optional file reads and Node error-code handling through shared runtime filesystem helpers. — Thanks @imjlk!
+- Updated dependencies: block-runtime (npm)@0.5.1
+
 ## 0.22.9 — 2026-05-08
 
 ### Patch changes
