@@ -11,6 +11,48 @@ import {
 } from '../command-option-metadata';
 import { getMcpSchemaSources } from '../config';
 import { loadMcpToolGroups, syncMcpSchemas } from '../mcp';
+import type { PrintLine } from '../print-line';
+
+type McpToolGroupSummary = {
+  namespace: string;
+  toolCount: number;
+  tools: string[];
+};
+
+type McpCommandArgsWithPrintLine = {
+  printLine?: PrintLine;
+};
+
+type McpSyncResult = Awaited<ReturnType<typeof syncMcpSchemas>>;
+
+const defaultPrintLine: PrintLine = (line) => {
+  process.stdout.write(`${line}\n`);
+};
+
+function resolveMcpPrintLine(args: McpCommandArgsWithPrintLine): PrintLine {
+  return args.printLine ?? defaultPrintLine;
+}
+
+export function printMcpToolGroupSummary(
+  summary: McpToolGroupSummary[],
+  printLine: PrintLine,
+): void {
+  for (const group of summary) {
+    printLine(`${group.namespace} (${group.toolCount})`);
+    for (const tool of group.tools) {
+      printLine(`  - ${tool}`);
+    }
+  }
+}
+
+export function printMcpSyncSummary(
+  result: McpSyncResult,
+  printLine: PrintLine,
+): void {
+  printLine(
+    `Synced ${result.commandCount} MCP tools across ${result.groups.length} namespaces into ${result.outputDir}.`,
+  );
+}
 
 export const mcpCommand = defineCommand({
   defaultFormat: 'json',
@@ -18,6 +60,7 @@ export const mcpCommand = defineCommand({
   handler: async (args) => {
     const subcommand = args.positional[0] ?? 'list';
     const prefersStructuredOutput = prefersStructuredCliOutput(args);
+    const printLine = resolveMcpPrintLine(args as McpCommandArgsWithPrintLine);
     const userConfig =
       args.context?.store?.wpTypiaUserConfig &&
       typeof args.context.store.wpTypiaUserConfig === 'object'
@@ -48,12 +91,7 @@ export const mcpCommand = defineCommand({
           args.output({ groups: summary });
           return;
         }
-        for (const group of summary) {
-          console.log(`${group.namespace} (${group.toolCount})`);
-          for (const tool of group.tools) {
-            console.log(`  - ${tool}`);
-          }
-        }
+        printMcpToolGroupSummary(summary, printLine);
         return;
       }
 
@@ -66,9 +104,7 @@ export const mcpCommand = defineCommand({
           args.output({ sync: result });
           return;
         }
-        console.log(
-          `Synced ${result.commandCount} MCP tools across ${result.groups.length} namespaces into ${result.outputDir}.`,
-        );
+        printMcpSyncSummary(result, printLine);
         return;
       }
 
