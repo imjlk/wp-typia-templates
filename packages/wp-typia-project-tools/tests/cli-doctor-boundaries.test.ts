@@ -32,18 +32,31 @@ test("cli-doctor keeps environment and workspace checks in dedicated modules", (
 		resolve(sourceRoot, "cli-doctor-workspace-package.ts"),
 		"utf8",
 	);
+	const workspaceSharedSource = readFileSync(
+		resolve(sourceRoot, "cli-doctor-workspace-shared.ts"),
+		"utf8",
+	);
+	const migrationDoctorSource = readFileSync(
+		resolve(sourceRoot, "migration-maintenance-verify.ts"),
+		"utf8",
+	);
 
 	expect(cliDoctorSource).toContain('from "./cli-doctor-environment.js"');
 	expect(cliDoctorSource).toContain('from "./cli-doctor-workspace.js"');
+	expect(cliDoctorSource).toContain("...(await getWorkspaceDoctorChecks(cwd)),");
 	expect(cliDoctorSource).not.toContain("function readCommandVersion(");
 	expect(cliDoctorSource).not.toContain("function checkWorkspacePackageMetadata(");
 	expect(cliDoctorSource).not.toContain("function checkWorkspaceBindingBootstrap(");
 	expect(environmentSource).toContain("export async function getEnvironmentDoctorChecks(");
-	expect(workspaceSource).toContain("export function getWorkspaceDoctorChecks(");
+	expect(workspaceSource).toContain("export async function getWorkspaceDoctorChecks(");
+	expect(workspaceSource).toContain("readWorkspaceInventoryAsync(");
 	expect(workspaceSource).toContain('from "./cli-doctor-workspace-bindings.js"');
 	expect(workspaceSource).toContain('from "./cli-doctor-workspace-blocks.js"');
 	expect(workspaceSource).toContain('from "./cli-doctor-workspace-features.js"');
 	expect(workspaceSource).toContain('from "./cli-doctor-workspace-package.js"');
+	expect(workspaceSource).toContain("intentionally stay synchronous");
+	expect(workspaceSharedSource).toContain("category collectors remain synchronous");
+	expect(migrationDoctorSource).toContain("synchronous maintenance command");
 	expect(workspaceSource).not.toContain("function checkWorkspaceBlockMetadata(");
 	expect(workspaceSource).not.toContain("function checkWorkspaceBindingBootstrap(");
 	expect(workspaceSource).not.toContain("function checkWorkspaceAbilityBootstrap(");

@@ -131,6 +131,9 @@ function recordWorkspaceMigrationTargetAlignment(
   state: MigrationProjectState,
   recordCheck: (status: 'fail' | 'pass', label: string, detail: string) => void,
 ): void {
+  // `migrate doctor` is still a synchronous maintenance command: it shares
+  // sync migration project loading, generated artifact comparisons, and
+  // execFileSync verification with the rest of migration maintenance.
   let invalidWorkspaceReason: string | null = null
   let workspace
   try {

@@ -41,7 +41,7 @@ interface RunDoctorOptions {
 export async function getDoctorChecks(cwd: string): Promise<DoctorCheck[]> {
 	return [
 		...(await getEnvironmentDoctorChecks(cwd)),
-		...getWorkspaceDoctorChecks(cwd),
+		...(await getWorkspaceDoctorChecks(cwd)),
 	];
 }
 
