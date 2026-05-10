@@ -315,6 +315,33 @@ describe('Node fallback CLI core routing', () => {
     }
   });
 
+  test('routes Node fallback completion warnings through stderr', async () => {
+    const tempRoot = createTempRoot('wp-typia-node-init-warning-');
+    writeJson(path.join(tempRoot, 'package.json'), {
+      name: 'node-init-warning',
+      private: true,
+    });
+
+    try {
+      const result = await captureNodeCli(['init'], { cwd: tempRoot });
+
+      expect(result.error).toBeUndefined();
+      expect(result.exitCode).toBe(0);
+      expect(result.stderr).toContain(
+        'Preview only: `wp-typia init` does not write files yet.',
+      );
+      expect(result.stderr).toContain(
+        'package.json and generated helper files are snapshotted',
+      );
+      expect(result.stdout).toContain('Retrofit init plan for node-init-warning');
+      expect(result.stdout).not.toContain(
+        'Preview only: `wp-typia init` does not write files yet.',
+      );
+    } finally {
+      removeTempRoot(tempRoot);
+    }
+  });
+
   test('keeps add dispatch on stdout help and command diagnostics for missing kinds', async () => {
     const result = await captureNodeCli(['add']);
 
