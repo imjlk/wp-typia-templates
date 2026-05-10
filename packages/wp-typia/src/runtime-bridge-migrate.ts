@@ -26,14 +26,19 @@ export async function executeMigrateCommand({
   prompt,
   renderLine,
 }: MigrateExecutionInput): Promise<AlternateBufferCompletionPayload | void> {
-  const { formatMigrationHelpText, parseMigrationArgs, runMigrationCommand } =
-    await loadMigrationsRuntime();
-  if (!command) {
-    console.log(formatMigrationHelpText());
-    return;
-  }
-
   try {
+    const { formatMigrationHelpText, parseMigrationArgs, runMigrationCommand } =
+      await loadMigrationsRuntime();
+    if (!command) {
+      const helpText = formatMigrationHelpText();
+      if (renderLine) {
+        renderLine(helpText);
+      } else {
+        console.log(helpText);
+      }
+      return;
+    }
+
     const argv = [command];
     pushFlag(argv, 'all', flags.all);
     pushFlag(argv, 'force', flags.force);

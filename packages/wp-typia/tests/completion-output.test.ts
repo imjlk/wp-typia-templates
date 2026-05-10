@@ -8,6 +8,7 @@ import {
   buildCreateCompletionPayload,
   buildCreateDryRunPayload,
   type CreateProgressPayload as BridgeCreateProgressPayload,
+  executeMigrateCommand,
   formatCreateProgressLine,
   buildMigrationCompletionPayload,
   printCompletionPayload,
@@ -282,6 +283,21 @@ describe('alternate-buffer completion output helpers', () => {
       'Next steps:',
       '  wp-typia migrate scaffold --from-migration-version v1',
     ]);
+  });
+
+  test('migrate help output uses the injected renderLine when provided', async () => {
+    const lines: string[] = [];
+
+    await executeMigrateCommand({
+      cwd: tempRoot,
+      flags: {},
+      renderLine: (line) => {
+        lines.push(line);
+      },
+    });
+
+    expect(lines).toHaveLength(1);
+    expect(lines[0]).toContain('wp-typia migrate init');
   });
 
   test('create progress formatter keeps fallback status lines readable', () => {
