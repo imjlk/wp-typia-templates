@@ -34,6 +34,7 @@ export const patternAddKindEntry =
           patternSlug: result.patternSlug,
         }),
         missingNameMessage: PATTERN_MISSING_NAME_MESSAGE,
+        warnLine: context.warnLine,
       });
     },
     sortOrder: 60,
