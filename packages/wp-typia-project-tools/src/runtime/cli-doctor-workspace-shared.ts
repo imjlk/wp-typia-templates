@@ -113,6 +113,9 @@ export function checkExistingFiles(
 	label: string,
 	filePaths: Array<string | undefined>,
 ): DoctorCheck {
+	// Workspace category collectors remain synchronous pure mappers after the
+	// async inventory snapshot is loaded, so these small existence probes stay
+	// sync to preserve their current non-Promise APIs and output ordering.
 	const missing = filePaths
 		.filter((filePath): filePath is string => typeof filePath === "string")
 		.filter((filePath) => !fs.existsSync(path.join(projectDir, filePath)));

@@ -15,7 +15,10 @@ import {
 	createDoctorCheck,
 	createDoctorScopeCheck,
 } from "./cli-doctor-workspace-shared.js";
-import { readWorkspaceInventory, type WorkspaceInventory } from "./workspace-inventory.js";
+import {
+	readWorkspaceInventoryAsync,
+	type WorkspaceInventory,
+} from "./workspace-inventory.js";
 import {
 	getInvalidWorkspaceProjectReason,
 	parseWorkspacePackageJson,
@@ -58,12 +61,14 @@ function formatWorkspaceInventorySummary(inventory: WorkspaceInventory): string 
  * @param cwd Working directory expected to host an official workspace.
  * @returns Ordered workspace check rows ready for CLI rendering.
  */
-export function getWorkspaceDoctorChecks(cwd: string): DoctorCheck[] {
+export async function getWorkspaceDoctorChecks(cwd: string): Promise<DoctorCheck[]> {
 	const checks: DoctorCheck[] = [];
 
 	let workspace: WorkspaceProject | null = null;
 	let invalidWorkspaceReason: string | null = null;
 	try {
+		// Workspace discovery and package parsing intentionally stay synchronous
+		// because they share compatibility helpers with sync add/migration callers.
 		invalidWorkspaceReason = getInvalidWorkspaceProjectReason(cwd);
 		workspace = tryResolveWorkspaceProject(cwd);
 	} catch (error) {
@@ -117,6 +122,9 @@ export function getWorkspaceDoctorChecks(cwd: string): DoctorCheck[] {
 
 	let workspacePackageJson: WorkspacePackageJson;
 	try {
+		// Keep package metadata parsing sync until workspace-project exposes an
+		// async companion; the surrounding doctor orchestration already awaits
+		// async inventory reads below.
 		workspacePackageJson = parseWorkspacePackageJson(workspace.projectDir);
 	} catch (error) {
 		checks.push(
@@ -132,9 +140,7 @@ export function getWorkspaceDoctorChecks(cwd: string): DoctorCheck[] {
 	checks.push(getWorkspacePackageMetadataCheck(workspace, workspacePackageJson));
 
 	try {
-		// Doctor checks expose a synchronous API so callers can collect a stable
-		// snapshot without mixing async inventory reads into check aggregation.
-		const inventory = readWorkspaceInventory(workspace.projectDir);
+		const inventory = await readWorkspaceInventoryAsync(workspace.projectDir);
 		checks.push(
 			createDoctorCheck(
 				"Workspace inventory",
