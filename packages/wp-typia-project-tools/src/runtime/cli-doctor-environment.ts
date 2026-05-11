@@ -8,6 +8,7 @@ import {
 	getBuiltInTemplateLayerDirs,
 	isOmittableBuiltInTemplateLayerDir,
 } from "./template-builtins.js";
+import { createDoctorCheck } from "./cli-doctor-workspace-shared.js";
 import { isBuiltInTemplateId, listTemplates } from "./template-registry.js";
 
 import type { DoctorCheck } from "./cli-doctor.js";
@@ -46,14 +47,6 @@ async function checkTempDirectory(): Promise<boolean> {
 	} catch {
 		return false;
 	}
-}
-
-function createDoctorCheck(
-	label: string,
-	status: DoctorCheck["status"],
-	detail: string,
-): DoctorCheck {
-	return { detail, label, status };
 }
 
 function getTemplateDoctorChecks(): DoctorCheck[] {
