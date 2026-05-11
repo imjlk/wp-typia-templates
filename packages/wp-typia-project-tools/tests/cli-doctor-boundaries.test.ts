@@ -58,12 +58,18 @@ test("cli-doctor keeps environment and workspace checks in dedicated modules", (
 	expect(workspaceSource).toContain('from "./cli-doctor-workspace-features.js"');
 	expect(workspaceSource).toContain('from "./cli-doctor-workspace-package.js"');
 	expect(workspaceSource).toContain("intentionally stay synchronous");
-	expect(workspaceSource).toContain("highest-impact remaining probes");
 	expect(workspaceSharedSource).toContain("category collectors remain synchronous");
 	expect(migrationDoctorSource).toContain("synchronous maintenance command");
 	expect(workspaceSource).not.toContain("function checkWorkspaceBlockMetadata(");
 	expect(workspaceSource).not.toContain("function checkWorkspaceBindingBootstrap(");
 	expect(workspaceSource).not.toContain("function checkWorkspaceAbilityBootstrap(");
+	expect(workspaceSource).toContain("getWorkspaceBlockDoctorChecks(workspace, inventory)");
+	expect(workspaceSource).toContain(
+		"getWorkspaceBindingDoctorChecks(workspace, inventory)",
+	);
+	expect(workspaceSource).toContain(
+		"getWorkspaceFeatureDoctorChecks(workspace, inventory)",
+	);
 	expect(workspaceBlocksSource).toContain("export function getWorkspaceBlockDoctorChecks(");
 	expect(workspaceBindingsSource).toContain("export function getWorkspaceBindingDoctorChecks(");
 	expect(workspaceFeaturesSource).toContain("export function getWorkspaceFeatureDoctorChecks(");

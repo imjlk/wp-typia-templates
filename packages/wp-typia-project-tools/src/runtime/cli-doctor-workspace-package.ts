@@ -10,10 +10,17 @@ import { WORKSPACE_TEMPLATE_PACKAGE } from "./workspace-project.js";
 import type { DoctorCheck } from "./cli-doctor.js";
 import type { WorkspacePackageJson, WorkspaceProject } from "./workspace-project.js";
 
+/**
+ * Snapshot of package-level filesystem doctor inputs prepared asynchronously.
+ */
 export interface WorkspacePackageDoctorSnapshot {
+	/** Whether the expected workspace bootstrap PHP file exists. */
 	bootstrapExists: boolean;
+	/** Relative path to the expected workspace bootstrap PHP file. */
 	bootstrapRelativePath: string;
+	/** Whether the migration config file exists. */
 	migrationConfigExists: boolean;
+	/** Relative path to the migration config file. */
 	migrationConfigRelativePath: string;
 }
 
