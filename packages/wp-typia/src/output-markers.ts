@@ -1,3 +1,5 @@
+import { escapeRegExp } from './string-utils';
+
 export type OutputMarkerKind = 'dryRun' | 'progress' | 'success' | 'warning';
 
 export type OutputMarkerOptions = {
@@ -22,10 +24,6 @@ const ASCII_OUTPUT_MARKERS: Record<OutputMarkerKind, string> = {
 
 const ASCII_ENV_TRUTHY_VALUES = new Set(['1', 'on', 'true', 'yes']);
 const ASCII_ENV_FALSY_VALUES = new Set(['0', 'off', 'false', 'no']);
-
-function escapeRegExp(source: string): string {
-  return source.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
 
 function readAsciiPreferenceFromEnv(
   env: NodeJS.ProcessEnv,
