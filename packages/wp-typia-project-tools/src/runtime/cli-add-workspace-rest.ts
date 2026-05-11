@@ -565,6 +565,11 @@ export async function runAddRestResourceCommand({
 						"wp-typia add rest-resource <name> --manual [--body-type <ExportedBodyType>]",
 					)
 				: undefined;
+		if (resolvedMethod === "GET" && resolvedBodyTypeName) {
+			throw new Error(
+				"Manual REST contract GET routes cannot define a body type. Remove --body-type or use POST, PUT, or PATCH.",
+			);
+		}
 		const manualTypeNames = [
 			resolvedQueryTypeName,
 			resolvedResponseTypeName,

@@ -18,6 +18,93 @@ import {
 import { analyzeSourceTypes } from './metadata-parser.js';
 import { normalizeEndpointAuthDefinition } from './schema-core.js';
 
+const WORDPRESS_NAMED_CAPTURE_PATTERN =
+	/\(\?P<([A-Za-z_][A-Za-z0-9_]*)>[^)]*\)/gu;
+
+function escapeTemplateLiteralText(value: string): string {
+	return value
+		.replace(/\\/gu, '\\\\')
+		.replace(/`/gu, '\\`')
+		.replace(/\$\{/gu, '\\${');
+}
+
+function getEndpointPathParameterNames(endpointPath: string): string[] {
+	const names: string[] = [];
+	WORDPRESS_NAMED_CAPTURE_PATTERN.lastIndex = 0;
+
+	for (const match of endpointPath.matchAll(WORDPRESS_NAMED_CAPTURE_PATTERN)) {
+		const name = match[1];
+		if (name && !names.includes(name)) {
+			names.push(name);
+		}
+	}
+
+	return names;
+}
+
+function buildEndpointPathTemplate(
+	endpointPath: string,
+	pathParameterNames: readonly string[],
+): string {
+	const parameterIndexes = new Map(
+		pathParameterNames.map((name, index) => [name, index] as const),
+	);
+	const fragments: string[] = [];
+	let nextIndex = 0;
+	WORDPRESS_NAMED_CAPTURE_PATTERN.lastIndex = 0;
+
+	for (const match of endpointPath.matchAll(WORDPRESS_NAMED_CAPTURE_PATTERN)) {
+		const matchIndex = match.index ?? 0;
+		const name = match[1];
+		const parameterIndex = name ? parameterIndexes.get(name) : undefined;
+		fragments.push(escapeTemplateLiteralText(endpointPath.slice(nextIndex, matchIndex)));
+		if (parameterIndex !== undefined) {
+			fragments.push(
+				`\${encodeURIComponent( String( pathParam${parameterIndex} ) )}`,
+			);
+		}
+		nextIndex = matchIndex + match[0].length;
+	}
+
+	fragments.push(escapeTemplateLiteralText(endpointPath.slice(nextIndex)));
+
+	return `\`${fragments.join('')}\``;
+}
+
+function buildEndpointPathRequestOptionLines(options: {
+	endpointPath: string;
+	requestLocationExpression: string | null;
+}): string[] {
+	const pathParameterNames = getEndpointPathParameterNames(options.endpointPath);
+	if (pathParameterNames.length === 0) {
+		return [];
+	}
+
+	const pathParamSource =
+		options.requestLocationExpression === "'query-and-body'"
+			? 'request.query'
+			: 'request';
+	return [
+		`\tbuildRequestOptions: (request) => {`,
+		`\t\tconst pathParams = ${pathParamSource} as unknown as Record<string, unknown>;`,
+		...pathParameterNames.flatMap((name, index) => [
+			`\t\tconst pathParam${index} = pathParams[${toJavaScriptStringLiteral(name)}];`,
+			`\t\tif (pathParam${index} === undefined || pathParam${index} === null || pathParam${index} === '') {`,
+			`\t\t\tthrow new Error(${toJavaScriptStringLiteral(
+				`Missing path parameter "${name}" for endpoint path "${options.endpointPath}".`,
+			)});`,
+			`\t\t}`,
+		]),
+		`\t\treturn {`,
+		`\t\t\tpath: ${buildEndpointPathTemplate(
+			options.endpointPath,
+			pathParameterNames,
+		)},`,
+		`\t\t};`,
+		`\t},`,
+	];
+}
+
 export async function syncEndpointClientModule(
 	options: SyncEndpointClientOptions,
 	executionOptions: ArtifactSyncExecutionOptions = {},
@@ -135,6 +222,10 @@ export async function syncEndpointClientModule(
 			inlineHelpers.add('validateNoRequest');
 		}
 
+		const buildRequestOptionsLines = buildEndpointPathRequestOptionLines({
+			endpointPath: endpoint.path,
+			requestLocationExpression,
+		});
 		const returnCallExpression = hasRequest
 			? `callEndpoint( ${endpoint.operationId}Endpoint, request, options )`
 			: `callEndpoint( ${endpoint.operationId}Endpoint, undefined, options )`;
@@ -165,6 +256,7 @@ export async function syncEndpointClientModule(
 				...(requestLocationExpression
 					? [`\trequestLocation: ${requestLocationExpression},`]
 					: []),
+				...buildRequestOptionsLines,
 				`\tvalidateRequest: ${requestValidatorExpression},`,
 				`\tvalidateResponse: ${toValidatorAccessExpression(
 					endpoint.responseContract,

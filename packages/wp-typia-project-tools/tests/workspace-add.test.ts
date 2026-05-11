@@ -3527,6 +3527,13 @@ test("canonical CLI can add a type-only manual REST contract to an official work
   expect(clientSource).toContain("callExternalRecordManualRestContract");
   expect(clientSource).toContain("authIntent: 'authenticated'");
   expect(clientSource).toContain("authMode: 'authenticated-rest-nonce'");
+  expect(clientSource).toContain("buildRequestOptions: (request) => {");
+  expect(clientSource).toContain(
+    "const pathParams = request.query as unknown as Record<string, unknown>;"
+  );
+  expect(clientSource).toContain(
+    "path: `/legacy/v1/records/${encodeURIComponent( String( pathParam0 ) )}`"
+  );
   expect(clientSource).toContain("requestLocation: 'query-and-body'");
   expect(openApiSource).toContain("/legacy/v1/records/(?P<id>[\\\\d]+)");
   expect(openApiSource).toContain('"x-typia-authIntent": "authenticated"');
@@ -3610,6 +3617,54 @@ test("manual REST contract workflow rejects duplicate type names before writing 
       )
     )
   ).toContain("Manual REST contract type names must be unique");
+  expect(
+    fs.existsSync(path.join(targetDir, "src", "rest", "external-record"))
+  ).toBe(false);
+}, 20_000);
+
+test("manual REST contract workflow rejects GET routes with body types before writing files", async () => {
+  const targetDir = path.join(
+    tempRoot,
+    "demo-workspace-add-manual-rest-contract-get-body"
+  );
+
+  await scaffoldProject({
+    projectDir: targetDir,
+    templateId: workspaceTemplatePackageManifest.name,
+    packageManager: "npm",
+    noInstall: true,
+    answers: {
+      author: "Test Runner",
+      description: "Demo workspace manual rest GET body",
+      namespace: "demo-space",
+      phpPrefix: "demo_space",
+      slug: "demo-workspace-add-manual-rest-contract-get-body",
+      textDomain: "demo-space",
+      title: "Demo Workspace Manual Rest GET Body",
+    },
+  });
+
+  linkWorkspaceNodeModules(targetDir);
+
+  expect(
+    getCommandErrorMessage(() =>
+      runCli(
+        "node",
+        [
+          entryPath,
+          "add",
+          "rest-resource",
+          "external-record",
+          "--manual",
+          "--method",
+          "GET",
+          "--body-type",
+          "ExternalRecordRequest",
+        ],
+        { cwd: targetDir }
+      )
+    )
+  ).toContain("Manual REST contract GET routes cannot define a body type");
   expect(
     fs.existsSync(path.join(targetDir, "src", "rest", "external-record"))
   ).toBe(false);
