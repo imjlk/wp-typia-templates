@@ -52,8 +52,10 @@ function resolveSourceSubpath(sourceDir: string, relativePath: string): string {
 /**
  * Search a source directory for the first supported external template entry.
  *
- * @deprecated Use `findExternalTemplateEntry()` from async template-source
- * paths. This synchronous helper remains only for compatibility callers.
+ * @deprecated Since 0.22.10. Use `findExternalTemplateEntry()` from async
+ * template-source paths. Removal target: not currently scheduled; this sync
+ * compatibility helper remains available until release notes announce a
+ * versioned target.
  *
  * @param sourceDir Directory that may contain an external template config entry.
  * @returns The first matching entry path, or null when no supported entry exists.

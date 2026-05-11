@@ -84,6 +84,44 @@ test('shared async filesystem helpers expose path existence and node error codes
   expect(isFileNotFoundError(new Error('plain'))).toBe(false);
 });
 
+test('deprecated sync helpers document async replacements and removal policy', () => {
+  const inventorySource = readRuntimeSource('workspace-inventory-read.ts');
+  const externalTemplateSource = readRuntimeSource('template-source-external.ts');
+  const remoteTemplateSource = readRuntimeSource('template-source-remote.ts');
+  const apiGuideSource = fs.readFileSync(
+    path.join(
+      runtimeRoot,
+      '..',
+      '..',
+      '..',
+      '..',
+      'apps',
+      'docs',
+      'src',
+      'content',
+      'docs',
+      'reference',
+      'api.md',
+    ),
+    'utf8',
+  );
+
+  for (const source of [
+    inventorySource,
+    externalTemplateSource,
+    remoteTemplateSource,
+    apiGuideSource,
+  ]) {
+    expect(source).toContain('Removal target: not currently scheduled');
+  }
+  expect(inventorySource).toContain('Use `readWorkspaceInventoryAsync()`');
+  expect(inventorySource).toContain('Use `getWorkspaceBlockSelectOptionsAsync()`');
+  expect(externalTemplateSource).toContain('Use `findExternalTemplateEntry()`');
+  expect(remoteTemplateSource).toContain('Use `getDefaultCategoryAsync()`');
+  expect(remoteTemplateSource).toContain('Use `getTemplateProjectTypeAsync()`');
+  expect(apiGuideSource).toContain('Deprecated synchronous helper policy');
+});
+
 test('shared TypeScript property-name helper aligns literal property support', () => {
   const sourceFile = ts.createSourceFile(
     'fixture.ts',

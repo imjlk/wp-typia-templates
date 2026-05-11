@@ -17,6 +17,11 @@ import type {
  * synchronous APIs. Prefer `readWorkspaceInventoryAsync()` from async command
  * paths so workspace reads do not block the event loop.
  *
+ * @deprecated Since 0.22.10. Use `readWorkspaceInventoryAsync()` from async
+ * command paths. Removal target: not currently scheduled; this sync
+ * compatibility helper remains available until release notes announce a
+ * versioned target.
+ *
  * @param projectDir Workspace root directory.
  * @returns Parsed `WorkspaceInventory` including the resolved `blockConfigPath`.
  * @throws {Error} When `scripts/block-config.ts` is missing or invalid.
@@ -86,8 +91,10 @@ function toWorkspaceBlockSelectOptions(
  * The `description` field mirrors `block.typesFile`, while `name` and `value`
  * both map to the block slug for use in interactive add flows.
  *
- * @deprecated Use `getWorkspaceBlockSelectOptionsAsync()` from async command
- * paths. This helper intentionally remains sync-only for compatibility callers.
+ * @deprecated Since 0.22.10. Use `getWorkspaceBlockSelectOptionsAsync()` from
+ * async command paths. Removal target: not currently scheduled; this sync
+ * compatibility helper remains available until release notes announce a
+ * versioned target.
  *
  * @param projectDir Workspace root directory.
  * @returns Block options for variation-target selection.
