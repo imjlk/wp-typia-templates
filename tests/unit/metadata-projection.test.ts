@@ -15,14 +15,16 @@ import {
 function createNode(
 	kind: AttributeNode["kind"],
 	pathLabel: string,
-	overrides: Partial<AttributeNode> = {},
+	overrides: Omit<Partial<AttributeNode>, "wp"> & {
+		wp?: Partial<AttributeNode["wp"]>;
+	} = {},
 ): AttributeNode {
+	const node = baseNode(kind, pathLabel);
 	return {
-		...baseNode(kind, pathLabel),
+		...node,
 		...overrides,
 		wp: {
-			selector: null,
-			source: null,
+			...node.wp,
 			...(overrides.wp ?? {}),
 		},
 		union: overrides.union ?? null,

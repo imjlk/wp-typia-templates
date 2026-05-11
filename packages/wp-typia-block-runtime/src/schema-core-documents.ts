@@ -31,6 +31,8 @@ const WP_TYPIA_OPENAPI_EXTENSION_KEYS = {
 	AUTH_INTENT: "x-typia-authIntent",
 	AUTH_POLICY: "x-wp-typia-authPolicy",
 	PUBLIC_TOKEN_FIELD: "x-wp-typia-publicTokenField",
+	SECRET: "x-wp-typia-secret",
+	SECRET_STATE_FIELD: "x-wp-typia-secretStateField",
 	TYPE_TAG: "x-typeTag",
 } as const;
 
@@ -86,6 +88,26 @@ function applyCommonConstraints(
 	applyConstraintIfNumber(schema, "multipleOf", constraints.multipleOf);
 	applyConstraintIfNumber(schema, "minItems", constraints.minItems);
 	applyConstraintIfNumber(schema, "maxItems", constraints.maxItems);
+}
+
+function applyWordPressFieldMetadata(
+	schema: JsonSchemaObject,
+	attribute: ManifestAttribute,
+): void {
+	if (attribute.wp.writeOnly) {
+		schema.writeOnly = true;
+	}
+	if (attribute.wp.secret) {
+		schema[WP_TYPIA_OPENAPI_EXTENSION_KEYS.SECRET] = true;
+		schema.description =
+			typeof schema.description === "string" && schema.description.length > 0
+				? `${schema.description} This value is write-only and must never be returned raw in responses.`
+				: "Write-only secret value. Responses should expose only masked state.";
+	}
+	if (attribute.wp.secretStateField) {
+		schema[WP_TYPIA_OPENAPI_EXTENSION_KEYS.SECRET_STATE_FIELD] =
+			attribute.wp.secretStateField;
+	}
 }
 
 function createUnionDiscriminatorProperty(branchKey: string): JsonSchemaObject {
@@ -221,6 +243,7 @@ export function manifestAttributeToJsonSchema(
 	}
 
 	applyCommonConstraints(schema, attribute.typia.constraints);
+	applyWordPressFieldMetadata(schema, attribute);
 	return schema;
 }
 

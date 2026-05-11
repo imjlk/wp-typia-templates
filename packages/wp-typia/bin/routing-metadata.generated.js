@@ -49,6 +49,8 @@ export const longValueOptions = Object.freeze([
   '--query-type',
   '--response-type',
   '--route-pattern',
+  '--secret-field',
+  '--secret-state-field',
   '--seed',
   '--service',
   '--slot',

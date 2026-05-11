@@ -125,7 +125,10 @@ describe("metadata-parser", () => {
 			const excerpt = parserDemo.properties?.excerpt;
 			expect(excerpt?.wp).toEqual({
 				selector: ".demo__excerpt",
+				secret: false,
+				secretStateField: null,
 				source: "text",
+				writeOnly: false,
 			});
 
 			expect(parserDemo.properties?.settings.defaultValue).toEqual({

@@ -21,6 +21,7 @@ Extend an existing workspace with:
 - `wp-typia add rest-resource snapshots --namespace my-plugin/v1 --methods list,read,create`
 - `wp-typia add rest-resource snapshots --namespace my-plugin/v1 --methods read,update --route-pattern '/snapshots/(?P<id>[\d]+)' --permission-callback my_plugin_can_manage_snapshots`
 - `wp-typia add rest-resource external-record --manual --namespace legacy/v1 --method GET --auth authenticated --path '/records/(?P<id>[\d]+)'`
+- `wp-typia add rest-resource integration-settings --manual --namespace my-plugin/v1 --method POST --secret-field apiKey`
 - `wp-typia add post-meta integration-state --post-type post --type IntegrationStateMeta`
 - `wp-typia add ability review-workflow`
 - `wp-typia add ai-feature brief-suggestions --namespace my-plugin/v1`

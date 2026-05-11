@@ -316,11 +316,13 @@ describe("first-party TUI interaction models", () => {
 				namespace: " demo-space/v1 ",
 				path: " /records/(?P<id>[\\d]+) ",
 				position: "",
-				"query-type": " ExternalRecordQuery ",
-				"response-type": " ExternalRecordResponse ",
-				template: "persistence",
-			}),
-		).toEqual({
+					"query-type": " ExternalRecordQuery ",
+					"response-type": " ExternalRecordResponse ",
+					"secret-field": " apiKey ",
+					"secret-state-field": " hasApiKey ",
+					template: "persistence",
+				}),
+			).toEqual({
 			auth: "authenticated",
 			"body-type": "ExternalRecordRequest",
 			kind: "rest-resource",
@@ -329,10 +331,12 @@ describe("first-party TUI interaction models", () => {
 			methods: "list,read,create",
 			name: "snapshots",
 			namespace: "demo-space/v1",
-			path: "/records/(?P<id>[\\d]+)",
-			"query-type": "ExternalRecordQuery",
-			"response-type": "ExternalRecordResponse",
-		});
+				path: "/records/(?P<id>[\\d]+)",
+				"query-type": "ExternalRecordQuery",
+				"response-type": "ExternalRecordResponse",
+				"secret-field": "apiKey",
+				"secret-state-field": "hasApiKey",
+			});
 	});
 
 	test("migrate flow keeps visible field ordering stable across command switches", () => {

@@ -42,6 +42,8 @@ surfaces.
   Shared manifest and migration contract implementation owner.
 - `@wp-typia/block-runtime/schema-core`
   Shared schema/OpenAPI implementation owner.
+- `@wp-typia/block-runtime/typia-tags`
+  Type-only Typia tag namespace for generated-project metadata tags.
 - `@wp-typia/block-runtime/metadata-core`
   Metadata sync and endpoint manifest helpers.
 - `@wp-typia/block-runtime/metadata-analysis`

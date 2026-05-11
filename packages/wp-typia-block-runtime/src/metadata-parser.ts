@@ -205,7 +205,10 @@ function parseInterfaceDeclaration(
 		union: null,
 		wp: {
 			selector: null,
+			secret: false,
+			secretStateField: null,
 			source: null,
+			writeOnly: false,
 		},
 	};
 }
@@ -253,7 +256,10 @@ export function parseTypeNode(
 			union: null,
 			wp: {
 				selector: null,
+				secret: false,
+				secretStateField: null,
 				source: null,
+				writeOnly: false,
 			},
 		};
 	}
@@ -378,7 +384,10 @@ function parseUnionType(
 			union: null,
 			wp: {
 				selector: null,
+				secret: false,
+				secretStateField: null,
 				source: null,
+				writeOnly: false,
 			},
 		};
 	}
@@ -454,7 +463,10 @@ function parseDiscriminatedUnion(
 		},
 		wp: {
 			selector: null,
+			secret: false,
+			secretStateField: null,
 			source: null,
+			writeOnly: false,
 		},
 	};
 }
@@ -528,7 +540,10 @@ function parseTypeLiteral(
 		union: null,
 		wp: {
 			selector: null,
+			secret: false,
+			secretStateField: null,
 			source: null,
+			writeOnly: false,
 		},
 	};
 }
@@ -553,7 +568,10 @@ function parseLiteralType(
 		union: null,
 		wp: {
 			selector: null,
+			secret: false,
+			secretStateField: null,
 			source: null,
+			writeOnly: false,
 		},
 	};
 }
@@ -582,7 +600,10 @@ function parseTypeReference(
 			union: null,
 			wp: {
 				selector: null,
+				secret: false,
+				secretStateField: null,
 				source: null,
+				writeOnly: false,
 			},
 		};
 	}

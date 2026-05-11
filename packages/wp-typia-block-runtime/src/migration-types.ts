@@ -42,8 +42,11 @@ export interface ManifestWpMetadata {
 	enum?: JsonValue[] | null;
 	hasDefault?: boolean;
 	selector?: string | null;
+	secret?: boolean;
+	secretStateField?: string | null;
 	source?: "html" | "text" | "rich-text" | null;
 	type?: string | null;
+	writeOnly?: boolean;
 }
 
 export interface ManifestAttribute {

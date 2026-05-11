@@ -81,7 +81,10 @@ export interface AttributeNode {
 	union?: AttributeUnion | null;
 	wp: {
 		selector: string | null;
+		secret: boolean;
+		secretStateField: string | null;
 		source: WordPressAttributeSource | null;
+		writeOnly: boolean;
 	};
 }
 
@@ -131,8 +134,11 @@ export interface ManifestAttribute {
 		enum: Array<string | number | boolean> | null;
 		hasDefault: boolean;
 		selector?: string | null;
+		secret?: boolean;
+		secretStateField?: string | null;
 		source?: WordPressAttributeSource | null;
 		type: WordPressAttributeKind;
+		writeOnly?: boolean;
 	};
 }
 
@@ -209,7 +215,10 @@ export function baseNode(kind: AttributeKind, pathLabel: string): AttributeNode 
 		union: null,
 		wp: {
 			selector: null,
+			secret: false,
+			secretStateField: null,
 			source: null,
+			writeOnly: false,
 		},
 	};
 }

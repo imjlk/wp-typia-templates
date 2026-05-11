@@ -273,6 +273,10 @@ export interface RunAddPostMetaCommandOptions {
  * manual mode. Defaults to `<PascalName>Response`.
  * @property routePattern Optional generated item route pattern, relative to the
  * namespace. Defaults to `/<name>/item`.
+ * @property secretFieldName Optional write-only secret field name for manual
+ * settings contracts. Requires a request body.
+ * @property secretStateFieldName Optional masked response boolean field for
+ * `secretFieldName`. Defaults to `has<PascalSecretField>`.
  */
 export interface RunAddRestResourceCommandOptions {
 	auth?: string;
@@ -290,6 +294,8 @@ export interface RunAddRestResourceCommandOptions {
 	restResourceName: string;
 	responseTypeName?: string;
 	routePattern?: string;
+	secretFieldName?: string;
+	secretStateFieldName?: string;
 }
 
 /**
