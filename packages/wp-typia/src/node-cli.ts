@@ -308,11 +308,13 @@ const NODE_FALLBACK_COMMAND_DISPATCHERS = {
     cwd,
     mergedFlags,
     positionals,
+    printLine,
   }: NodeFallbackDispatchContext) => {
     await executeMigrateCommand({
       command: positionals[1],
       cwd,
       flags: mergedFlags,
+      printLine,
     });
   },
   sync: async ({

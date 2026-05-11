@@ -109,6 +109,7 @@ test('runtime bridge delegates command, output, and sync helpers to focused modu
   expect(doctorSource).toContain('export async function executeDoctorCommand(');
   expect(initSource).toContain('export async function executeInitCommand(');
   expect(migrateSource).toContain('export async function executeMigrateCommand(');
+  expect(migrateSource).not.toContain('console.log');
   expect(sharedSource).toContain('export async function wrapCliCommandError(');
   expect(templatesSource).toContain(
     'export async function executeTemplatesCommand(',
