@@ -200,6 +200,9 @@ test('node fallback source entry treats missing add kinds as an error while prin
     expect(capturedStdout.join('\n')).toContain(
       'wp-typia add ai-feature <name>',
     );
+    expect(capturedStdout.join('\n')).toContain(
+      'wp-typia add integration-env <name>',
+    );
     expect(capturedStdout.join('\n')).toContain('wp-typia add style <name>');
     expect(capturedStdout.join('\n')).toContain(
       'wp-typia add transform <name>',

@@ -38,6 +38,7 @@ export const longValueOptions = Object.freeze([
   '--position',
   '--query-post-type',
   '--seed',
+  '--service',
   '--slot',
   '--source',
   '--template',

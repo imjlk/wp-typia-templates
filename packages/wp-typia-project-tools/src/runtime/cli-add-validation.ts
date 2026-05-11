@@ -11,6 +11,8 @@ import {
 	type AddBlockTemplateId,
 	EDITOR_PLUGIN_SLOT_IDS,
 	type EditorPluginSlotId,
+	INTEGRATION_ENV_SERVICE_IDS,
+	type IntegrationEnvServiceId,
 	REST_RESOURCE_METHOD_IDS,
 	type RestResourceMethodId,
 	resolveEditorPluginSlotAlias,
@@ -202,5 +204,25 @@ export function assertValidEditorPluginSlot(slot = "sidebar"): EditorPluginSlotI
 
 	throw new Error(
 		`Editor plugin slot must be one of: ${EDITOR_PLUGIN_SLOT_IDS.join(", ")}. Legacy aliases: PluginSidebar, PluginDocumentSettingPanel.`,
+	);
+}
+
+/**
+ * Validate and normalize the optional integration environment service starter.
+ *
+ * @param service Optional service starter id. Defaults to `none`.
+ * @returns The canonical integration environment service id.
+ * @throws {Error} When the service starter is unsupported.
+ */
+export function assertValidIntegrationEnvService(
+	service = "none",
+): IntegrationEnvServiceId {
+	const trimmed = service.trim();
+	if ((INTEGRATION_ENV_SERVICE_IDS as readonly string[]).includes(trimmed)) {
+		return trimmed as IntegrationEnvServiceId;
+	}
+
+	throw new Error(
+		`Integration environment service must be one of: ${INTEGRATION_ENV_SERVICE_IDS.join(", ")}.`,
 	);
 }

@@ -7,6 +7,7 @@
 export const ADD_KIND_IDS = [
 	"admin-view",
 	"block",
+	"integration-env",
 	"variation",
 	"style",
 	"transform",

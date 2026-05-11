@@ -101,6 +101,15 @@ type EditorPluginPlanCompatibility = ExpectTrue<
   >
 >;
 
+type IntegrationEnvPlanCompatibility = ExpectTrue<
+  IsEqual<
+    Awaited<
+      ReturnType<AddKindExecutionPlanFor<'integration-env'>['execute']>
+    >,
+    Parameters<AddKindExecutionPlanFor<'integration-env'>['getValues']>[0]
+  >
+>;
+
 type SharedAddKindIdCompatibility = ExpectTrue<
   IsEqual<keyof typeof ADD_KIND_REGISTRY, AddKindId>
 >;
@@ -108,6 +117,7 @@ type SharedAddKindIdCompatibility = ExpectTrue<
 const addKindPlanCompatibilityChecks = {
   'admin-view': true,
   block: true,
+  'integration-env': true,
   variation: true,
   style: true,
   transform: true,
@@ -122,6 +132,7 @@ const addKindPlanCompatibilityChecks = {
 } satisfies {
   'admin-view': AdminViewPlanCompatibility;
   block: BlockPlanCompatibility;
+  'integration-env': IntegrationEnvPlanCompatibility;
   variation: VariationPlanCompatibility;
   style: StylePlanCompatibility;
   transform: TransformPlanCompatibility;
@@ -139,6 +150,7 @@ test('preserves compile-time compatibility between execute and getValues for eve
   expect(addKindPlanCompatibilityChecks).toEqual({
     'admin-view': true,
     block: true,
+    'integration-env': true,
     variation: true,
     style: true,
     transform: true,
@@ -178,6 +190,10 @@ test('keeps shared visible-field groups aligned for refactored add kinds', () =>
     'kind',
     'name',
     'source',
+  ]);
+  expect(getAddVisibleFieldNames({ kind: 'integration-env' })).toEqual([
+    'kind',
+    'name',
   ]);
   expect(getAddVisibleFieldNames({ kind: 'style' })).toEqual([
     'kind',
@@ -237,6 +253,10 @@ const warnLinePlanFixtures = {
   block: {
     flags: {},
     name: 'sample-block',
+  },
+  'integration-env': {
+    flags: {},
+    name: 'sample-integration-env',
   },
   'editor-plugin': {
     flags: {},
@@ -313,6 +333,7 @@ test('passes the warning line printer through every add-kind execution plan', as
     'ai-feature': true,
     'binding-source': true,
     block: true,
+    'integration-env': true,
     'editor-plugin': true,
     'hooked-block': true,
     pattern: true,

@@ -1018,6 +1018,8 @@ test("formatHelpText keeps migration UI flags out of external template usage", (
   expect(helpText).toContain("src/admin-views/");
   expect(helpText).toContain("@wp-typia/dataviews");
   expect(helpText).toContain("opt-in dependencies");
+  expect(helpText).toContain("wp-typia add integration-env <name>");
+  expect(helpText).toContain("scripts/integration-smoke/");
   expect(helpText).not.toContain("Public installs currently gate");
   expect(helpText).toContain("wp-typia add ai-feature <name>");
   expect(helpText).toContain(

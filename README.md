@@ -152,6 +152,7 @@ cd my-plugin
 bun install
 wp-typia add block counter-card --template basic
 wp-typia add block faq-stack --template compound --persistence-policy public --data-storage custom-table
+wp-typia add integration-env local-smoke --wp-env --service docker-compose
 wp-typia add style callout-emphasis --block counter-card
 wp-typia add transform quote-to-counter --from core/quote --to counter-card
 wp-typia add binding-source hero-data
@@ -170,6 +171,7 @@ wp-typia add hooked-block counter-card --anchor core/post-content --position aft
 - Need a parent/child block system? Start with `compound`.
 - Need a branded Query Loop inserter variation? Start with `query-loop`.
 - Need an empty workspace that will grow through `wp-typia add ...` workflows? Start with `--template workspace`.
+- Need a local WordPress smoke starter later? Use `wp-typia add integration-env <name> --wp-env` from a workspace.
 - Need schema evolution for a long-lived block? Enable `--with-migration-ui`.
 
 ## Retrofitting Existing Projects

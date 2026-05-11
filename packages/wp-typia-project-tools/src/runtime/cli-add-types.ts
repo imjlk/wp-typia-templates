@@ -60,6 +60,20 @@ export function resolveEditorPluginSlotAlias(
 }
 
 /**
+ * Optional local service starter ids accepted by
+ * `wp-typia add integration-env --service`.
+ */
+export const INTEGRATION_ENV_SERVICE_IDS = [
+	"none",
+	"docker-compose",
+] as const;
+/**
+ * Union of supported local service starter ids.
+ */
+export type IntegrationEnvServiceId =
+	(typeof INTEGRATION_ENV_SERVICE_IDS)[number];
+
+/**
  * Supported built-in block families accepted by `wp-typia add block --template`.
  */
 export const ADD_BLOCK_TEMPLATE_IDS = [
@@ -248,6 +262,23 @@ export interface RunAddEditorPluginCommandOptions {
 	cwd?: string;
 	editorPluginName: string;
 	slot?: string;
+}
+
+/**
+ * Options for `wp-typia add integration-env`.
+ *
+ * @property cwd Working directory used to resolve the nearest official workspace.
+ * Defaults to `process.cwd()`.
+ * @property integrationEnvName Human-entered environment name that will be
+ * normalized into script and documentation paths.
+ * @property service Optional local service starter. Defaults to `none`.
+ * @property withWpEnv Whether to add a local `@wordpress/env` preset and scripts.
+ */
+export interface RunAddIntegrationEnvCommandOptions {
+	cwd?: string;
+	integrationEnvName: string;
+	service?: string;
+	withWpEnv?: boolean;
 }
 
 /**

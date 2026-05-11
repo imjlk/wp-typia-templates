@@ -31,6 +31,10 @@ describe("first-party TUI interaction models", () => {
 			"name",
 			"template",
 		]);
+		expect(getVisibleAddFieldNames({ kind: "integration-env" })).toEqual([
+			"kind",
+			"name",
+		]);
 		expect(
 			getVisibleAddFieldNames({ kind: "block", template: "persistence" }),
 		).toEqual([

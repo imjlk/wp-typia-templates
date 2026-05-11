@@ -70,6 +70,11 @@ export const ADD_OPTION_METADATA = {
     description: 'Hook position for hooked-block workflows.',
     type: 'string',
   },
+  service: {
+    description:
+      'Optional local service starter for integration-env workflows (none or docker-compose).',
+    type: 'string',
+  },
   slot: {
     description:
       'Document editor shell slot for editor-plugin workflows (sidebar or document-setting-panel).',
@@ -89,5 +94,11 @@ export const ADD_OPTION_METADATA = {
     description:
       'Target workspace block slug or full block name for transform workflows.',
     type: 'string',
+  },
+  'wp-env': {
+    argumentKind: 'flag',
+    description:
+      'Add a local @wordpress/env preset for integration-env workflows.',
+    type: 'boolean',
   },
 } as const satisfies CommandOptionMetadataMap;
