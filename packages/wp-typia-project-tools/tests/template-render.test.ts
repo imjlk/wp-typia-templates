@@ -11,6 +11,7 @@ import {
 	copyInterpolatedDirectory,
 	copyRenderedDirectory,
 	listInterpolatedDirectoryOutputs,
+	pathExistsSync,
 	renderMustacheTemplateString,
 } from "../src/runtime/template-render.js";
 
@@ -27,6 +28,14 @@ describe("template render internals", () => {
 				value: "<demo>&",
 			}),
 		).toBe("<demo>& :: <demo>&");
+	});
+
+	test("pathExistsSync keeps the template renderer sync helper explicit", () => {
+		const targetPath = path.join(tempRoot, "path-exists-sync.txt");
+		fs.writeFileSync(targetPath, "ok", "utf8");
+
+		expect(pathExistsSync(targetPath)).toBe(true);
+		expect(pathExistsSync(path.join(tempRoot, "missing-path.txt"))).toBe(false);
 	});
 
 	test("copyRenderedDirectory and interpolation mode keep their semantics explicit", async () => {
