@@ -258,7 +258,7 @@ function buildEndpointPathTemplateBody(
 				fragments.push(
 					`\${${groupParameterIndexes
 						.map((index) => buildPathParameterPresentExpression(index))
-						.join(' || ')} ? \`${groupTemplate}\` : ''}`,
+						.join(' && ')} ? \`${groupTemplate}\` : ''}`,
 				);
 			}
 			continue;
