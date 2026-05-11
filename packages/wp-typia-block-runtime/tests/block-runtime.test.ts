@@ -21,6 +21,7 @@ describe("@wp-typia/block-runtime", () => {
 			rootModule,
 			blocksModule,
 			schemaCoreModule,
+			schemaTestModule,
 			migrationTypesModule,
 			metadataCoreModule,
 			defaultsModule,
@@ -32,6 +33,7 @@ describe("@wp-typia/block-runtime", () => {
 			import("@wp-typia/block-runtime"),
 			import("@wp-typia/block-runtime/blocks"),
 			import("@wp-typia/block-runtime/schema-core"),
+			import("@wp-typia/block-runtime/schema-test"),
 			import("@wp-typia/block-runtime/migration-types"),
 			import("@wp-typia/block-runtime/metadata-core"),
 			import("@wp-typia/block-runtime/defaults"),
@@ -60,6 +62,8 @@ describe("@wp-typia/block-runtime", () => {
 		expect(typeof schemaCoreModule.manifestToJsonSchema).toBe("function");
 		expect(typeof schemaCoreModule.manifestToOpenApi).toBe("function");
 		expect(typeof schemaCoreModule.normalizeEndpointAuthDefinition).toBe("function");
+		expect(typeof schemaTestModule.assertResponseMatchesSchema).toBe("function");
+		expect(typeof schemaTestModule.createResponseSchemaValidator).toBe("function");
 		expect(Object.keys(migrationTypesModule)).toEqual([]);
 		expect(typeof metadataCoreModule.defineEndpointManifest).toBe("function");
 		expect(typeof metadataCoreModule.runSyncBlockMetadata).toBe("function");

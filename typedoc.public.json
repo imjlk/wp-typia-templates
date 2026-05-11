@@ -11,6 +11,7 @@
     "packages/wp-typia-project-tools/src/runtime/index.ts",
     "packages/wp-typia-block-runtime/src/index.ts",
     "packages/wp-typia-block-runtime/src/schema-core.ts",
+    "packages/wp-typia-block-runtime/src/schema-test.ts",
     "packages/wp-typia-block-runtime/src/migration-types.ts",
     "packages/wp-typia-block-runtime/src/metadata-core.ts",
     "packages/wp-typia-block-runtime/src/identifiers.ts",

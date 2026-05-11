@@ -26,6 +26,7 @@ import {
   useEditorFields,
 } from '@wp-typia/block-runtime/inspector';
 import { collectPersistentBlockIdentityRepairs } from '@wp-typia/block-runtime/identifiers';
+import { assertResponseMatchesSchema } from '@wp-typia/block-runtime/schema-test';
 import { createNestedAttributeUpdater } from '@wp-typia/block-runtime/validation';
 import { runSyncBlockMetadata } from '@wp-typia/block-runtime/metadata-core';
 ```
@@ -39,9 +40,11 @@ and `@wp-typia/block-runtime/metadata-core`.
 Public subpaths such as `@wp-typia/block-runtime/inspector`,
 `@wp-typia/block-runtime/metadata-core`, and
 `@wp-typia/block-runtime/schema-core` stay stable even as their implementations
-are split into smaller focused modules internally. Consumers should keep
-importing the documented facade subpaths rather than reaching into those helper
-files directly.
+are split into smaller focused modules internally. `@wp-typia/block-runtime/schema-test`
+adds test-only helpers for asserting smoke/integration response payloads against
+generated `*.schema.json` artifacts. Consumers should keep importing the
+documented facade subpaths rather than reaching into those helper files
+directly.
 
 Advanced helper entrypoints such as `metadata-analysis`, `metadata-model`,
 `metadata-parser`, `metadata-php-render`, `metadata-projection`, `identifiers`,

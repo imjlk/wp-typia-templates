@@ -21,6 +21,11 @@
       "import": "./dist/schema-core.js",
       "default": "./dist/schema-core.js"
     },
+    "./schema-test": {
+      "types": "./dist/schema-test.d.ts",
+      "import": "./dist/schema-test.js",
+      "default": "./dist/schema-test.js"
+    },
     "./migration-types": {
       "types": "./dist/migration-types.d.ts",
       "import": "./dist/migration-types.js",
@@ -130,6 +135,7 @@
   },
   "dependencies": {
     "@wp-typia/api-client": "^0.4.5",
+    "ajv": "^8.18.0",
     "typescript": "^5.9.2"
   },
   "devDependencies": {

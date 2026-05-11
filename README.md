@@ -174,6 +174,8 @@ wp-typia add hooked-block counter-card --anchor core/post-content --position aft
 - Need an empty workspace that will grow through `wp-typia add ...` workflows? Start with `--template workspace`.
 - Need a local WordPress smoke starter later? Use `wp-typia add integration-env <name> --wp-env` from a workspace.
 - Need schema evolution for a long-lived block? Enable `--with-migration-ui`.
+- Need smoke tests for external/manual payloads? Use `@wp-typia/block-runtime/schema-test`
+  to assert responses against generated `*.schema.json` contract artifacts.
 
 ## Retrofitting Existing Projects
 

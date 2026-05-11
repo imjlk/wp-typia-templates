@@ -17,7 +17,6 @@
 	"devDependencies": {
 		"@wp-typia/api-client": "workspace:*",
 		"@wp-typia/block-runtime": "workspace:*",
-		"ajv": "^8.18.0",
 		"@types/node": "^24.0.0",
 		"@wp-typia/project-tools": "workspace:*",
 		"prettier": "3.8.2",
