@@ -66,6 +66,7 @@ export {
 	runAddEditorPluginCommand,
 	runAddHookedBlockCommand,
 	runAddPatternCommand,
+	runAddPostMetaCommand,
 	runAddRestResourceCommand,
 	runAddVariationCommand,
 	seedWorkspaceMigrationProject,

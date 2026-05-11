@@ -41,6 +41,12 @@ type SlugCollisionContext = {
 	slug: string;
 };
 
+type PostMetaCollisionContext = {
+	metaKey: string;
+	postType: string;
+	slug: string;
+};
+
 /**
  * Ensure scaffold targets do not already exist on disk or in workspace inventory.
  *
@@ -219,6 +225,28 @@ const REST_RESOURCE_COLLISION_DESCRIPTOR: ScaffoldCollisionDescriptor<
 		exists: (entry, { slug }) => entry.slug === slug,
 		message: ({ slug }) =>
 			`A REST resource inventory entry already exists for ${slug}. Choose a different name.`,
+	},
+};
+
+const POST_META_COLLISION_DESCRIPTOR: ScaffoldCollisionDescriptor<
+	PostMetaCollisionContext,
+	WorkspaceInventory["postMeta"][number]
+> = {
+	filesystemCollisions: [
+		{
+			label: "A post meta contract",
+			relativePath: ({ slug }) => path.join("src", "post-meta", slug),
+		},
+		{
+			label: "A post meta bootstrap",
+			relativePath: ({ slug }) => path.join("inc", "post-meta", `${slug}.php`),
+		},
+	],
+	inventoryCollision: {
+		entries: (inventory) => inventory.postMeta,
+		exists: (entry, { slug }) => entry.slug === slug,
+		message: ({ slug }) =>
+			`A post meta inventory entry already exists for ${slug}. Choose a different name.`,
 	},
 };
 
@@ -467,6 +495,45 @@ export function assertRestResourceDoesNotExist(
 		inventory,
 		projectDir,
 	});
+}
+
+/**
+ * Ensure a post-meta contract scaffold does not already exist on disk or in
+ * inventory.
+ *
+ * Also prevents accidentally registering the same meta key for the same post
+ * type through a second generated contract.
+ *
+ * @param projectDir Absolute workspace root used to resolve scaffold paths.
+ * @param postMetaSlug Normalized post-meta contract slug.
+ * @param postType WordPress post type scope.
+ * @param metaKey WordPress meta key.
+ * @param inventory Current workspace inventory used for duplicate detection.
+ * @throws {Error} When post-meta files or inventory entries already exist.
+ */
+export function assertPostMetaDoesNotExist(
+	projectDir: string,
+	postMetaSlug: string,
+	postType: string,
+	metaKey: string,
+	inventory: WorkspaceInventory,
+): void {
+	assertAddKindScaffoldDoesNotExist({
+		context: { metaKey, postType, slug: postMetaSlug },
+		descriptor: POST_META_COLLISION_DESCRIPTOR,
+		inventory,
+		projectDir,
+	});
+
+	if (
+		inventory.postMeta.some(
+			(entry) => entry.postType === postType && entry.metaKey === metaKey,
+		)
+	) {
+		throw new Error(
+			`A post meta inventory entry already registers ${metaKey} for ${postType}. Choose a different meta key or post type.`,
+		);
+	}
 }
 
 /**

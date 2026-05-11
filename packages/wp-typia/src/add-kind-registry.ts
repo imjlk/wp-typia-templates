@@ -9,6 +9,7 @@ import { editorPluginAddKindEntry } from './add-kinds/editor-plugin';
 import { hookedBlockAddKindEntry } from './add-kinds/hooked-block';
 import { integrationEnvAddKindEntry } from './add-kinds/integration-env';
 import { patternAddKindEntry } from './add-kinds/pattern';
+import { postMetaAddKindEntry } from './add-kinds/post-meta';
 import { restResourceAddKindEntry } from './add-kinds/rest-resource';
 import { styleAddKindEntry } from './add-kinds/style';
 import { transformAddKindEntry } from './add-kinds/transform';
@@ -44,6 +45,7 @@ export const ADD_KIND_REGISTRY = {
   'binding-source': bindingSourceAddKindEntry,
   contract: contractAddKindEntry,
   'rest-resource': restResourceAddKindEntry,
+  'post-meta': postMetaAddKindEntry,
   ability: abilityAddKindEntry,
   'ai-feature': aiFeatureAddKindEntry,
   'hooked-block': hookedBlockAddKindEntry,

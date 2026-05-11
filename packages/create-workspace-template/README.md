@@ -18,6 +18,7 @@ wp-typia add transform quote-to-block --from core/quote --to my-block
 wp-typia add binding-source hero-data
 wp-typia add binding-source hero-data --block my-block --attribute headline
 wp-typia add contract external-retrieve-response --type ExternalRetrieveResponse
+wp-typia add post-meta integration-state --post-type post --type IntegrationStateMeta
 wp-typia add editor-plugin review-workflow --slot sidebar
 wp-typia add editor-plugin seo-notes --slot document-setting-panel
 wp-typia add hooked-block my-block --anchor core/post-content --position after

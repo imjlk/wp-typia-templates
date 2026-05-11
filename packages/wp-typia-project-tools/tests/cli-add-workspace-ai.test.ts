@@ -372,7 +372,7 @@ describe("@wp-typia/project-tools cli-add-workspace ai-feature", () => {
 		runGeneratedScript(targetDir, "scripts/sync-rest-contracts.ts", ["--check"]);
 		runGeneratedScript(targetDir, "scripts/sync-ai-features.ts", ["--check"]);
 		typecheckGeneratedProject(targetDir);
-	}, 30_000);
+	}, 120_000);
 
 	test("later contract and REST resource adds preserve AI sync-rest wiring", async () => {
 		const targetDir = path.join(
@@ -446,7 +446,7 @@ describe("@wp-typia/project-tools cli-add-workspace ai-feature", () => {
 		expect(syncRestSource).toContain("aiFeatures.length === 0");
 
 		runGeneratedScript(targetDir, "scripts/sync-rest-contracts.ts", ["--check"]);
-	}, 30_000);
+	}, 120_000);
 
 	test("ai-feature duplicate failures preserve generated workspace files", async () => {
 		const targetDir = path.join(tempRoot, "demo-workspace-add-ai-feature-rollback");

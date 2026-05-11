@@ -9,6 +9,7 @@ export {
 	CONTRACT_CONFIG_ENTRY_MARKER,
 	EDITOR_PLUGIN_CONFIG_ENTRY_MARKER,
 	PATTERN_CONFIG_ENTRY_MARKER,
+	POST_META_CONFIG_ENTRY_MARKER,
 	REST_RESOURCE_CONFIG_ENTRY_MARKER,
 	VARIATION_CONFIG_ENTRY_MARKER,
 } from "./workspace-inventory-templates.js";
@@ -36,6 +37,7 @@ export type {
 	WorkspaceEditorPluginInventoryEntry,
 	WorkspaceInventory,
 	WorkspacePatternInventoryEntry,
+	WorkspacePostMetaInventoryEntry,
 	WorkspaceRestResourceInventoryEntry,
 	WorkspaceVariationInventoryEntry,
 } from "./workspace-inventory-types.js";

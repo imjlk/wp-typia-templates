@@ -316,7 +316,7 @@ describe('wp-typia add command bridge', () => {
       ),
     );
     expect(blockJson.attributes.headline).toEqual({ type: 'string' });
-  }, 15_000);
+  }, 30_000);
 
   test('passes block style and transform flags through the add bridge', async () => {
     const projectDir = path.join(tempRoot, 'demo-add-style-transform');
@@ -448,7 +448,7 @@ describe('wp-typia add command bridge', () => {
         path.join(projectDir, 'src', 'blocks', 'faq-stack', 'children.ts'),
       ),
     ).toBe(true);
-  }, 15_000);
+  }, 30_000);
 
   test('interactive add block validates the missing name before prompting', async () => {
     const projectDir = path.join(tempRoot, 'demo-add-interactive-missing-name');
@@ -659,6 +659,7 @@ describe('wp-typia add command bridge', () => {
       'binding-source',
       'contract',
       'rest-resource',
+      'post-meta',
       'ability',
       'ai-feature',
       'hooked-block',

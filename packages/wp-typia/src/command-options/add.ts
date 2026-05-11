@@ -74,6 +74,17 @@ export const ADD_OPTION_METADATA = {
       'Create a type-only manual REST contract without PHP route/controller files.',
     type: 'boolean',
   },
+  'hide-from-rest': {
+    argumentKind: 'flag',
+    description:
+      'Keep a generated post-meta contract out of WordPress REST/editor responses.',
+    type: 'boolean',
+  },
+  'meta-key': {
+    description:
+      'WordPress meta key for post-meta workflows; defaults to _<phpPrefix>_<name>.',
+    type: 'string',
+  },
   method: {
     description:
       'HTTP method for manual REST contract workflows (GET, POST, PUT, PATCH, or DELETE).',
@@ -91,6 +102,10 @@ export const ADD_OPTION_METADATA = {
   'permission-callback': {
     description:
       'PHP permission callback for generated REST resource route registrations.',
+    type: 'string',
+  },
+  'post-type': {
+    description: 'WordPress post type key for post-meta workflows.',
     type: 'string',
   },
   'persistence-policy': {

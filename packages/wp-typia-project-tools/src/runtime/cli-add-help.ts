@@ -26,6 +26,7 @@ export function formatAddHelpText(): string {
   wp-typia add contract <name> [--type <ExportedTypeName>] [--dry-run]
   wp-typia add rest-resource <name> [--namespace <vendor/v1>] [--methods <${REST_RESOURCE_METHOD_IDS.join(",")}>] [--route-pattern <route-pattern>] [--permission-callback <callback>] [--controller-class <ClassName>] [--controller-extends <BaseClass>] [--dry-run]
   wp-typia add rest-resource <name> --manual [--namespace <vendor/v1>] [--method <GET|POST|PUT|PATCH|DELETE>] [--auth <public|authenticated|public-write-protected>] [--path <route-pattern>] [--query-type <Type>] [--body-type <Type>] [--response-type <Type>] [--dry-run]
+  wp-typia add post-meta <name> --post-type <post-type> [--type <ExportedTypeName>] [--meta-key <meta-key>] [--hide-from-rest] [--dry-run]
   wp-typia add ability <name> [--dry-run]
   wp-typia add ai-feature <name> [--namespace <vendor/v1>] [--dry-run]
   wp-typia add hooked-block <block-slug> --anchor <anchor-block-name> --position <${HOOKED_BLOCK_POSITION_IDS.join("|")}> [--dry-run]
@@ -50,6 +51,7 @@ Notes:
   \`add contract\` registers a standalone TypeScript wire contract under \`src/contracts/\` and generates a stable JSON Schema artifact without creating PHP route glue.
   \`add rest-resource\` scaffolds plugin-level TypeScript REST contracts under \`src/rest/\` and PHP route glue under \`inc/rest/\`. Use \`--route-pattern\`, \`--permission-callback\`, \`--controller-class\`, and \`--controller-extends\` when an existing WordPress controller or permission model needs to own part of the generated route surface.
   Pass \`--manual\` with \`add rest-resource\` to track an external REST route with typed schemas, OpenAPI, clients, and drift checks without generating PHP route/controller files.
+  \`add post-meta\` scaffolds a typed post meta contract under \`src/post-meta/\`, generates a schema artifact, and wires \`register_post_meta()\` helpers under \`inc/post-meta/\`.
   \`add ability\` scaffolds typed workflow abilities under \`src/abilities/\` and server registration under \`inc/abilities/\`.
   \`add ai-feature\` scaffolds server-owned AI feature endpoints under \`src/ai-features/\` and PHP route glue under \`inc/ai-features/\`.
   \`add hooked-block\` patches an existing workspace block's \`block.json\` \`blockHooks\` metadata.

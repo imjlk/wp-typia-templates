@@ -4,7 +4,7 @@ import path from 'node:path';
 
 const runtimeRoot = path.join(import.meta.dir, '..', 'src', 'runtime');
 
-test('cli-add-workspace delegates asset, rest-resource, ai-feature, and admin-view workflows to focused helpers', () => {
+test('cli-add-workspace delegates asset, rest-resource, post-meta, ai-feature, and admin-view workflows to focused helpers', () => {
   const addWorkspaceSource = fs.readFileSync(
     path.join(runtimeRoot, 'cli-add-workspace.ts'),
     'utf8',
@@ -23,6 +23,18 @@ test('cli-add-workspace delegates asset, rest-resource, ai-feature, and admin-vi
   );
   const restSourceEmittersSource = fs.readFileSync(
     path.join(runtimeRoot, 'cli-add-workspace-rest-source-emitters.ts'),
+    'utf8',
+  );
+  const postMetaSource = fs.readFileSync(
+    path.join(runtimeRoot, 'cli-add-workspace-post-meta.ts'),
+    'utf8',
+  );
+  const postMetaAnchorsSource = fs.readFileSync(
+    path.join(runtimeRoot, 'cli-add-workspace-post-meta-anchors.ts'),
+    'utf8',
+  );
+  const postMetaSourceEmittersSource = fs.readFileSync(
+    path.join(runtimeRoot, 'cli-add-workspace-post-meta-source-emitters.ts'),
     'utf8',
   );
   const aiSource = fs.readFileSync(
@@ -71,12 +83,16 @@ test('cli-add-workspace delegates asset, rest-resource, ai-feature, and admin-vi
   );
   expect(addWorkspaceSource).toContain('from "./cli-add-workspace-assets.js"');
   expect(addWorkspaceSource).toContain('from "./cli-add-workspace-rest.js"');
+  expect(addWorkspaceSource).toContain(
+    'from "./cli-add-workspace-post-meta.js"',
+  );
   expect(addWorkspaceSource).toContain('from "./cli-add-workspace-ai.js"');
   expect(addWorkspaceSource).toContain('runAddAiFeatureCommand');
   expect(addWorkspaceSource).toContain('runAddAdminViewCommand');
   expect(addWorkspaceSource).toContain('runAddBindingSourceCommand');
   expect(addWorkspaceSource).toContain('runAddEditorPluginCommand');
   expect(addWorkspaceSource).toContain('runAddPatternCommand');
+  expect(addWorkspaceSource).toContain('runAddPostMetaCommand');
   expect(addWorkspaceSource).toContain('runAddRestResourceCommand');
   expect(addWorkspaceSource).not.toContain('function buildPatternSource(');
   expect(addWorkspaceSource).not.toContain(
@@ -97,8 +113,12 @@ test('cli-add-workspace delegates asset, rest-resource, ai-feature, and admin-vi
   expect(addWorkspaceSource).not.toContain(
     'function buildRestResourceTypesSource(',
   );
+  expect(addWorkspaceSource).not.toContain('function buildPostMetaTypesSource(');
   expect(addWorkspaceSource).not.toContain(
     'async function ensureRestResourceBootstrapAnchors(',
+  );
+  expect(addWorkspaceSource).not.toContain(
+    'async function ensurePostMetaBootstrapAnchors(',
   );
   expect(addWorkspaceSource).not.toContain(
     'async function ensureAdminViewBootstrapAnchors(',
@@ -123,6 +143,9 @@ test('cli-add-workspace delegates asset, rest-resource, ai-feature, and admin-vi
   );
   expect(addWorkspaceSource).not.toContain(
     'export async function runAddRestResourceCommand(',
+  );
+  expect(addWorkspaceSource).not.toContain(
+    'export async function runAddPostMetaCommand(',
   );
   expect(assetsSource).toContain('function buildPatternSource(');
   expect(assetsSource).toContain('function buildBindingSourceServerSource(');
@@ -160,6 +183,31 @@ test('cli-add-workspace delegates asset, rest-resource, ai-feature, and admin-vi
   );
   expect(restAnchorsSource).toContain(
     'async function ensureRestResourceSyncScriptAnchors(',
+  );
+  expect(postMetaSource).toContain(
+    'from "./cli-add-workspace-post-meta-anchors.js"',
+  );
+  expect(postMetaSource).toContain(
+    'from "./cli-add-workspace-post-meta-source-emitters.js"',
+  );
+  expect(postMetaSource).toContain(
+    'export async function runAddPostMetaCommand(',
+  );
+  expect(postMetaSource).not.toContain('function buildPostMetaTypesSource(');
+  expect(postMetaSource).not.toContain(
+    'async function ensurePostMetaBootstrapAnchors(',
+  );
+  expect(postMetaSourceEmittersSource).toContain(
+    'function buildPostMetaTypesSource(',
+  );
+  expect(postMetaSourceEmittersSource).toContain(
+    'function buildPostMetaPhpSource(',
+  );
+  expect(postMetaAnchorsSource).toContain(
+    'async function ensurePostMetaBootstrapAnchors(',
+  );
+  expect(postMetaAnchorsSource).toContain(
+    'async function ensurePostMetaSyncScriptAnchors(',
   );
   expect(aiScaffoldSource).toContain('from "./cli-add-workspace-ai-anchors.js"');
   expect(aiScaffoldSource).toContain(
@@ -237,6 +285,7 @@ test('cli-add-workspace delegates asset, rest-resource, ai-feature, and admin-vi
   expect(mutationSource).toContain('appendPhpSnippetBeforeClosingTag');
   for (const bootstrapAnchorSource of [
     aiAnchorsSource,
+    postMetaAnchorsSource,
     restAnchorsSource,
     assetsSource,
   ]) {

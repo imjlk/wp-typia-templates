@@ -154,15 +154,19 @@ function replaceBlockConfigImportForContracts(
 	const hasAiFeatureConfig = importSource.includes("WorkspaceAiFeatureConfig");
 	const hasRestResources = importSource.includes("REST_RESOURCES");
 	const hasRestResourceConfig = importSource.includes("WorkspaceRestResourceConfig");
+	const hasPostMeta = importSource.includes("POST_META");
+	const hasPostMetaConfig = importSource.includes("WorkspacePostMetaConfig");
 	const replacement = [
 		"import {",
 		...(hasAiFeatures ? ["\tAI_FEATURES,"] : []),
 		"\tBLOCKS,",
 		"\tCONTRACTS,",
+		...(hasPostMeta ? ["\tPOST_META,"] : []),
 		...(hasRestResources ? ["\tREST_RESOURCES,"] : []),
 		...(hasAiFeatureConfig ? ["\ttype WorkspaceAiFeatureConfig,"] : []),
 		"\ttype WorkspaceBlockConfig,",
 		"\ttype WorkspaceContractConfig,",
+		...(hasPostMetaConfig ? ["\ttype WorkspacePostMetaConfig,"] : []),
 		...(hasRestResourceConfig ? ["\ttype WorkspaceRestResourceConfig,"] : []),
 		"} from './block-config';",
 	].join("\n");
@@ -218,15 +222,19 @@ function replaceBlockConfigImportForRestResources(
 	const hasAiFeatureConfig = importSource.includes("WorkspaceAiFeatureConfig");
 	const hasContracts = importSource.includes("CONTRACTS");
 	const hasContractConfig = importSource.includes("WorkspaceContractConfig");
+	const hasPostMeta = importSource.includes("POST_META");
+	const hasPostMetaConfig = importSource.includes("WorkspacePostMetaConfig");
 	const replacement = [
 		"import {",
 		...(hasAiFeatures ? ["\tAI_FEATURES,"] : []),
 		"\tBLOCKS,",
 		...(hasContracts ? ["\tCONTRACTS,"] : []),
+		...(hasPostMeta ? ["\tPOST_META,"] : []),
 		"\tREST_RESOURCES,",
 		...(hasAiFeatureConfig ? ["\ttype WorkspaceAiFeatureConfig,"] : []),
 		"\ttype WorkspaceBlockConfig,",
 		...(hasContractConfig ? ["\ttype WorkspaceContractConfig,"] : []),
+		...(hasPostMetaConfig ? ["\ttype WorkspacePostMetaConfig,"] : []),
 		"\ttype WorkspaceRestResourceConfig,",
 		"} from './block-config';",
 	].join("\n");
@@ -262,33 +270,44 @@ function replaceRequiredContractSyncRestSource(
 	return nextSource.replace(anchor, replacement);
 }
 
+function formatNoResourcesSubject(subjects: readonly string[]): string {
+	if (subjects.length <= 2) {
+		return subjects.join(" or ");
+	}
+
+	const lastSubject = subjects[subjects.length - 1];
+	return `${subjects.slice(0, -1).join(", ")}, or ${lastSubject}`;
+}
+
 function buildContractNoResourcesGuard({
 	hasAiFeatures,
+	hasPostMeta,
 	hasRestResources,
 }: {
 	hasAiFeatures: boolean;
+	hasPostMeta: boolean;
 	hasRestResources: boolean;
 }): string {
-	const condition = [
-		"restBlocks.length === 0 &&",
-		...(hasRestResources
-			? [
-					"standaloneContracts.length === 0 &&",
-					"restResources.length === 0",
-				]
-			: ["standaloneContracts.length === 0"]),
-	];
+	const condition = ["restBlocks.length === 0 &&", "standaloneContracts.length === 0"];
+	if (hasPostMeta) {
+		condition[condition.length - 1] = `${condition[condition.length - 1]} &&`;
+		condition.push("postMetaContracts.length === 0");
+	}
+	if (hasRestResources) {
+		condition[condition.length - 1] = `${condition[condition.length - 1]} &&`;
+		condition.push("restResources.length === 0");
+	}
 	if (hasAiFeatures) {
 		condition[condition.length - 1] = `${condition[condition.length - 1]} &&`;
 		condition.push("aiFeatures.length === 0");
 	}
-	const noResourcesSubject = hasAiFeatures
-		? hasRestResources
-			? "REST-enabled workspace blocks, standalone contracts, plugin-level REST resources, or AI features"
-			: "REST-enabled workspace blocks, standalone contracts, or AI features"
-		: hasRestResources
-			? "REST-enabled workspace blocks, standalone contracts, or plugin-level REST resources"
-			: "REST-enabled workspace blocks or standalone contracts";
+	const noResourcesSubject = formatNoResourcesSubject([
+		"REST-enabled workspace blocks",
+		"standalone contracts",
+		...(hasPostMeta ? ["post meta contracts"] : []),
+		...(hasRestResources ? ["plugin-level REST resources"] : []),
+		...(hasAiFeatures ? ["AI features"] : []),
+	]);
 
 	return [
 		"if (",
@@ -305,7 +324,7 @@ function buildContractNoResourcesGuard({
 }
 
 const NO_RESOURCES_GUARD_PATTERN =
-	/if \(\s*restBlocks\.length === 0(?:\s*&&\s*standaloneContracts\.length === 0)?(?:\s*&&\s*restResources\.length === 0)?(?:\s*&&\s*aiFeatures\.length === 0)?\s*\) \{[\s\S]*?\n\t\treturn;\n\t\}/u;
+	/if \(\s*restBlocks\.length === 0(?:\s*&&\s*standaloneContracts\.length === 0)?(?:\s*&&\s*postMetaContracts\.length === 0)?(?:\s*&&\s*restResources\.length === 0)?(?:\s*&&\s*aiFeatures\.length === 0)?\s*\) \{[\s\S]*?\n\t\treturn;\n\t\}/u;
 
 function replaceNoResourcesGuard(
 	nextSource: string,
@@ -369,11 +388,15 @@ function insertStandaloneContractNoResourcesGuard(
 	const hasAiFeatures = nextSource.includes(
 		"const aiFeatures = AI_FEATURES.filter( isWorkspaceAiFeature );",
 	);
+	const hasPostMeta = nextSource.includes(
+		"const postMetaContracts = POST_META.filter( isWorkspacePostMetaContract );",
+	);
 
 	return replaceNoResourcesGuard(
 		nextSource,
 		buildContractNoResourcesGuard({
 			hasAiFeatures,
+			hasPostMeta,
 			hasRestResources,
 		}),
 		"ensureContractSyncScriptAnchors",
@@ -384,31 +407,35 @@ function insertStandaloneContractNoResourcesGuard(
 
 function buildRestResourceNoResourcesGuard({
 	hasAiFeatures,
+	hasPostMeta,
 	hasStandaloneContracts,
 }: {
 	hasAiFeatures: boolean;
+	hasPostMeta: boolean;
 	hasStandaloneContracts: boolean;
 }): string {
-	const condition = [
-		"restBlocks.length === 0 &&",
-		...(hasStandaloneContracts
-			? [
-					"standaloneContracts.length === 0 &&",
-					"restResources.length === 0",
-				]
-			: ["restResources.length === 0"]),
-	];
+	const condition = ["restBlocks.length === 0"];
+	if (hasStandaloneContracts) {
+		condition[condition.length - 1] = `${condition[condition.length - 1]} &&`;
+		condition.push("standaloneContracts.length === 0");
+	}
+	if (hasPostMeta) {
+		condition[condition.length - 1] = `${condition[condition.length - 1]} &&`;
+		condition.push("postMetaContracts.length === 0");
+	}
+	condition[condition.length - 1] = `${condition[condition.length - 1]} &&`;
+	condition.push("restResources.length === 0");
 	if (hasAiFeatures) {
 		condition[condition.length - 1] = `${condition[condition.length - 1]} &&`;
 		condition.push("aiFeatures.length === 0");
 	}
-	const noResourcesSubject = hasAiFeatures
-		? hasStandaloneContracts
-			? "REST-enabled workspace blocks, standalone contracts, plugin-level REST resources, or AI features"
-			: "REST-enabled workspace blocks, plugin-level REST resources, or AI features"
-		: hasStandaloneContracts
-			? "REST-enabled workspace blocks, standalone contracts, or plugin-level REST resources"
-			: "REST-enabled workspace blocks or plugin-level REST resources";
+	const noResourcesSubject = formatNoResourcesSubject([
+		"REST-enabled workspace blocks",
+		...(hasStandaloneContracts ? ["standalone contracts"] : []),
+		...(hasPostMeta ? ["post meta contracts"] : []),
+		"plugin-level REST resources",
+		...(hasAiFeatures ? ["AI features"] : []),
+	]);
 
 	return [
 		"if (",
@@ -434,11 +461,15 @@ function insertRestResourceNoResourcesGuard(
 	const hasAiFeatures = nextSource.includes(
 		"const aiFeatures = AI_FEATURES.filter( isWorkspaceAiFeature );",
 	);
+	const hasPostMeta = nextSource.includes(
+		"const postMetaContracts = POST_META.filter( isWorkspacePostMetaContract );",
+	);
 
 	return replaceNoResourcesGuard(
 		nextSource,
 		buildRestResourceNoResourcesGuard({
 			hasAiFeatures,
+			hasPostMeta,
 			hasStandaloneContracts,
 		}),
 		"ensureRestResourceSyncScriptAnchors",

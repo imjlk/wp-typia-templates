@@ -220,6 +220,30 @@ export interface RunAddContractCommandOptions {
 }
 
 /**
+ * Options for `wp-typia add post-meta`.
+ *
+ * @property cwd Working directory used to resolve the nearest official workspace.
+ * @property hideFromRest Whether to keep the generated meta key out of REST and
+ * editor responses. Defaults to REST/editor exposure being enabled.
+ * @property metaKey Optional WordPress meta key. Defaults to
+ * `_<phpPrefix>_<postMetaName>`.
+ * @property postMetaName Human-entered post-meta contract name normalized into
+ * a stable slug.
+ * @property postType WordPress post type key, 20 characters or fewer, that owns
+ * the generated meta key.
+ * @property typeName Optional exported TypeScript type or interface name.
+ * Defaults to `<PascalName>Meta`.
+ */
+export interface RunAddPostMetaCommandOptions {
+	cwd?: string;
+	hideFromRest?: boolean;
+	metaKey?: string;
+	postMetaName: string;
+	postType: string;
+	typeName?: string;
+}
+
+/**
  * Options for `wp-typia add rest-resource`.
  *
  * Passing `manual: true` records a type-only external REST route contract. In

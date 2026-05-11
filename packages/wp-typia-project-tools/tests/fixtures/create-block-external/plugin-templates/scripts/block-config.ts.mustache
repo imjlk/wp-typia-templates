@@ -81,6 +81,17 @@ export type WorkspaceRestResourceConfig =
 	| GeneratedWorkspaceRestResourceConfig
 	| ManualWorkspaceRestResourceConfig;
 
+export interface WorkspacePostMetaConfig {
+	metaKey: string;
+	phpFile: string;
+	postType: string;
+	schemaFile: string;
+	showInRest: boolean;
+	slug: string;
+	sourceTypeName: string;
+	typesFile: string;
+}
+
 export interface WorkspaceEditorPluginConfig {
 	file: string;
 	slug: string;
@@ -113,6 +124,10 @@ export const BINDING_SOURCES: WorkspaceBindingSourceConfig[] = [
 
 export const REST_RESOURCES: WorkspaceRestResourceConfig[] = [
 	// wp-typia add rest-resource entries
+];
+
+export const POST_META: WorkspacePostMetaConfig[] = [
+	// wp-typia add post-meta entries
 ];
 
 export const EDITOR_PLUGINS: WorkspaceEditorPluginConfig[] = [

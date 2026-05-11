@@ -11,6 +11,8 @@ export const WORKSPACE_BINDING_EDITOR_SCRIPT = "build/bindings/index.js";
 export const WORKSPACE_BINDING_EDITOR_ASSET = "build/bindings/index.asset.php";
 /** Glob pattern for generated REST resource PHP entrypoints. */
 export const WORKSPACE_REST_RESOURCE_GLOB = "/inc/rest/*.php";
+/** Glob pattern for generated post-meta PHP entrypoints. */
+export const WORKSPACE_POST_META_GLOB = "/inc/post-meta/*.php";
 /** Glob pattern for generated ability PHP entrypoints. */
 export const WORKSPACE_ABILITY_GLOB = "/inc/abilities/*.php";
 /** Relative path to the generated ability editor bundle. */

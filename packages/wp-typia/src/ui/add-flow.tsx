@@ -320,6 +320,16 @@ function AddFlowFields({
             name: 'methods',
           })
         : null,
+      visibleFields.has('post-type')
+        ? createElement(FirstPartyTextField, {
+            ...getWrappedFieldNeighbors(orderedVisibleFields, 'post-type'),
+            description: 'WordPress post type key, for example post or product',
+            key: 'post-type',
+            label: 'Post type',
+            name: 'post-type',
+            placeholder: 'post',
+          })
+        : null,
       visibleFields.has('anchor')
         ? createElement(FirstPartyTextField, {
             ...getWrappedFieldNeighbors(orderedVisibleFields, 'anchor'),
