@@ -122,6 +122,82 @@ describe("@wp-typia/block-runtime", () => {
 		expect(builtBlocksDts).toContain("export * from './blocks-webpack.js';");
 	});
 
+	test("endpoint client generation supports optional named route captures", async () => {
+		const { defineEndpointManifest, syncEndpointClient } = await import(
+			"@wp-typia/block-runtime/metadata-core"
+		);
+		const projectRoot = mkdtempSync(resolve(tmpdir(), "wp-typia-client-path-"));
+
+		try {
+			writeFileSync(
+				resolve(projectRoot, "api-types.ts"),
+				[
+					"export interface OptionalItemQuery {",
+					"\tid?: string;",
+					"}",
+					"",
+					"export interface OptionalItemResponse {",
+					"\tok: boolean;",
+					"}",
+					"",
+				].join("\n"),
+				"utf8",
+			);
+			writeFileSync(
+				resolve(projectRoot, "api-validators.ts"),
+				[
+					'import type { OptionalItemQuery, OptionalItemResponse } from "./api-types.js";',
+					"",
+					"export const apiValidators = {",
+					"\tquery: (input: unknown) => ({ data: input as OptionalItemQuery, errors: [], isValid: true }),",
+					"\tresponse: (input: unknown) => ({ data: input as OptionalItemResponse, errors: [], isValid: true }),",
+					"};",
+					"",
+				].join("\n"),
+				"utf8",
+			);
+
+			await syncEndpointClient({
+				clientFile: "api-client.ts",
+				manifest: defineEndpointManifest({
+					contracts: {
+						query: {
+							sourceTypeName: "OptionalItemQuery",
+						},
+						response: {
+							sourceTypeName: "OptionalItemResponse",
+						},
+					},
+					endpoints: [
+						{
+							auth: "public",
+							method: "GET",
+							operationId: "fetchOptionalItem",
+							path: "/items(?:/(?P<id>[\\d]+(?:-[\\d]+)*))?",
+							queryContract: "query",
+							responseContract: "response",
+						},
+					],
+				}),
+				projectRoot,
+				typesFile: "api-types.ts",
+				validatorsFile: "api-validators.ts",
+			});
+
+			const clientSource = readFileSync(
+				resolve(projectRoot, "api-client.ts"),
+				"utf8",
+			);
+			expect(clientSource).toContain("const rawPathParams = request as unknown;");
+			expect(clientSource).not.toContain('Missing path parameter "id"');
+			expect(clientSource).toContain(
+				"path: `/items${pathParam0 !== undefined && pathParam0 !== null && pathParam0 !== '' ? `/${encodeURIComponent( String( pathParam0 ) )}` : ''}`,",
+			);
+		} finally {
+			rmSync(projectRoot, { force: true, recursive: true });
+		}
+	});
+
 	test("Typia/Webpack compatibility preflight accepts the supported matrix", async () => {
 		const blocksModule = await import("@wp-typia/block-runtime/blocks");
 		const projectRoot = mkdtempSync(resolve(tmpdir(), "wp-typia-compat-ok-"));

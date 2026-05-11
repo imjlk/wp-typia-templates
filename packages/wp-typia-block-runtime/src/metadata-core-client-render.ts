@@ -21,85 +21,161 @@ import { normalizeEndpointAuthDefinition } from './schema-core.js';
 const WORDPRESS_NAMED_CAPTURE_PREFIX = '(?P<';
 const WORDPRESS_CAPTURE_NAME_PATTERN = /^[A-Za-z_][A-Za-z0-9_]*$/u;
 
+type EndpointPathTemplatePart =
+	| {
+			kind: 'literal';
+			value: string;
+	  }
+	| {
+			kind: 'optionalGroup';
+			parts: EndpointPathTemplatePart[];
+	  }
+	| {
+			kind: 'parameter';
+			name: string;
+			optional: boolean;
+	  };
+
 interface WordPressNamedCapture {
 	end: number;
 	name: string;
 	start: number;
 }
 
-function parseWordPressNamedCaptures(endpointPath: string): WordPressNamedCapture[] {
-	const captures: WordPressNamedCapture[] = [];
-	let searchIndex = 0;
+function findRegexGroupEnd(value: string, start: number): number | null {
+	if (value[start] !== '(') {
+		return null;
+	}
 
-	while (searchIndex < endpointPath.length) {
-		const start = endpointPath.indexOf(WORDPRESS_NAMED_CAPTURE_PREFIX, searchIndex);
-		if (start === -1) {
-			break;
-		}
+	let depth = 0;
+	let escaped = false;
+	let inCharacterClass = false;
 
-		const nameStart = start + WORDPRESS_NAMED_CAPTURE_PREFIX.length;
-		const nameEnd = endpointPath.indexOf('>', nameStart);
-		if (nameEnd === -1) {
-			break;
-		}
-
-		const name = endpointPath.slice(nameStart, nameEnd);
-		if (!WORDPRESS_CAPTURE_NAME_PATTERN.test(name)) {
-			searchIndex = nameEnd + 1;
+	for (let index = start; index < value.length; index += 1) {
+		const char = value[index] ?? '';
+		if (escaped) {
+			escaped = false;
 			continue;
 		}
-
-		let depth = 1;
-		let escaped = false;
-		let inCharacterClass = false;
-		let index = nameEnd + 1;
-
-		for (; index < endpointPath.length; index += 1) {
-			const char = endpointPath[index] ?? '';
-			if (escaped) {
-				escaped = false;
-				continue;
-			}
-			if (char === '\\') {
-				escaped = true;
-				continue;
-			}
-			if (char === '[' && !inCharacterClass) {
-				inCharacterClass = true;
-				continue;
-			}
-			if (char === ']' && inCharacterClass) {
-				inCharacterClass = false;
-				continue;
-			}
-			if (inCharacterClass) {
-				continue;
-			}
-			if (char === '(') {
-				depth += 1;
-				continue;
-			}
-			if (char === ')') {
-				depth -= 1;
-				if (depth === 0) {
-					break;
-				}
-			}
+		if (char === '\\') {
+			escaped = true;
+			continue;
 		}
-
-		if (depth === 0) {
-			captures.push({
-				end: index + 1,
-				name,
-				start,
-			});
-			searchIndex = index + 1;
-		} else {
-			searchIndex = nameEnd + 1;
+		if (char === '[' && !inCharacterClass) {
+			inCharacterClass = true;
+			continue;
+		}
+		if (char === ']' && inCharacterClass) {
+			inCharacterClass = false;
+			continue;
+		}
+		if (inCharacterClass) {
+			continue;
+		}
+		if (char === '(') {
+			depth += 1;
+			continue;
+		}
+		if (char === ')') {
+			depth -= 1;
+			if (depth === 0) {
+				return index + 1;
+			}
 		}
 	}
 
-	return captures;
+	return null;
+}
+
+function parseWordPressNamedCaptureAt(
+	endpointPath: string,
+	start: number,
+): WordPressNamedCapture | null {
+	if (!endpointPath.startsWith(WORDPRESS_NAMED_CAPTURE_PREFIX, start)) {
+		return null;
+	}
+
+	const nameStart = start + WORDPRESS_NAMED_CAPTURE_PREFIX.length;
+	const nameEnd = endpointPath.indexOf('>', nameStart);
+	if (nameEnd === -1) {
+		return null;
+	}
+
+	const name = endpointPath.slice(nameStart, nameEnd);
+	if (!WORDPRESS_CAPTURE_NAME_PATTERN.test(name)) {
+		return null;
+	}
+
+	const end = findRegexGroupEnd(endpointPath, start);
+	if (end === null || end <= nameEnd) {
+		return null;
+	}
+
+	return {
+		end,
+		name,
+		start,
+	};
+}
+
+function pushEndpointPathLiteral(
+	parts: EndpointPathTemplatePart[],
+	value: string,
+): void {
+	const previous = parts[parts.length - 1];
+	if (previous?.kind === 'literal') {
+		previous.value += value;
+		return;
+	}
+
+	parts.push({
+		kind: 'literal',
+		value,
+	});
+}
+
+function parseEndpointPathTemplateParts(
+	endpointPath: string,
+	start = 0,
+	end = endpointPath.length,
+): EndpointPathTemplatePart[] {
+	const parts: EndpointPathTemplatePart[] = [];
+	let index = start;
+
+	while (index < end) {
+		if (endpointPath.startsWith('(?:', index)) {
+			const groupEnd = findRegexGroupEnd(endpointPath, index);
+			if (groupEnd !== null && groupEnd <= end && endpointPath[groupEnd] === '?') {
+				parts.push({
+					kind: 'optionalGroup',
+					parts: parseEndpointPathTemplateParts(
+						endpointPath,
+						index + 3,
+						groupEnd - 1,
+					),
+				});
+				index = groupEnd + 1;
+				continue;
+			}
+		}
+
+		const capture = parseWordPressNamedCaptureAt(endpointPath, index);
+		if (capture && capture.end <= end) {
+			const optional = endpointPath[capture.end] === '?';
+			parts.push({
+				kind: 'parameter',
+				name: capture.name,
+				optional,
+			});
+			index = capture.end + (optional ? 1 : 0);
+			continue;
+		}
+
+		pushEndpointPathLiteral(parts, endpointPath[index] ?? '');
+		index += 1;
+	}
+
+	return parts;
 }
 
 function escapeTemplateLiteralText(value: string): string {
@@ -109,52 +185,119 @@ function escapeTemplateLiteralText(value: string): string {
 		.replace(/\$\{/gu, '\\${');
 }
 
-function getEndpointPathParameterNames(endpointPath: string): string[] {
-	const names: string[] = [];
-
-	for (const capture of parseWordPressNamedCaptures(endpointPath)) {
-		if (!names.includes(capture.name)) {
-			names.push(capture.name);
+function collectEndpointPathParameterNames(
+	parts: readonly EndpointPathTemplatePart[],
+	names: string[],
+): string[] {
+	for (const part of parts) {
+		if (part.kind === 'optionalGroup') {
+			collectEndpointPathParameterNames(part.parts, names);
+			continue;
+		}
+		if (part.kind === 'parameter' && !names.includes(part.name)) {
+			names.push(part.name);
 		}
 	}
 
 	return names;
 }
 
-function buildEndpointPathTemplate(
-	endpointPath: string,
+function getRequiredEndpointPathParameterNames(
+	parts: readonly EndpointPathTemplatePart[],
+): string[] {
+	const names: string[] = [];
+
+	for (const part of parts) {
+		if (part.kind === 'optionalGroup') {
+			continue;
+		}
+		if (part.kind === 'parameter' && !part.optional && !names.includes(part.name)) {
+			names.push(part.name);
+		}
+	}
+
+	return names;
+}
+
+function buildPathParameterPresentExpression(parameterIndex: number): string {
+	return `pathParam${parameterIndex} !== undefined && pathParam${parameterIndex} !== null && pathParam${parameterIndex} !== ''`;
+}
+
+function buildPathParameterExpression(parameterIndex: number): string {
+	return `encodeURIComponent( String( pathParam${parameterIndex} ) )`;
+}
+
+function buildEndpointPathTemplateBody(
+	parts: readonly EndpointPathTemplatePart[],
 	pathParameterNames: readonly string[],
 ): string {
 	const parameterIndexes = new Map(
 		pathParameterNames.map((name, index) => [name, index] as const),
 	);
 	const fragments: string[] = [];
-	let nextIndex = 0;
 
-	for (const capture of parseWordPressNamedCaptures(endpointPath)) {
-		const parameterIndex = parameterIndexes.get(capture.name);
-		fragments.push(escapeTemplateLiteralText(endpointPath.slice(nextIndex, capture.start)));
-		if (parameterIndex !== undefined) {
-			fragments.push(
-				`\${encodeURIComponent( String( pathParam${parameterIndex} ) )}`,
-			);
+	for (const part of parts) {
+		if (part.kind === 'literal') {
+			fragments.push(escapeTemplateLiteralText(part.value));
+			continue;
 		}
-		nextIndex = capture.end;
+		if (part.kind === 'optionalGroup') {
+			const groupParameterIndexes = collectEndpointPathParameterNames(
+				part.parts,
+				[],
+			)
+				.map((name) => parameterIndexes.get(name))
+				.filter((index): index is number => index !== undefined);
+			const groupTemplate = buildEndpointPathTemplateBody(
+				part.parts,
+				pathParameterNames,
+			);
+			if (groupParameterIndexes.length === 0) {
+				fragments.push(groupTemplate);
+			} else {
+				fragments.push(
+					`\${${groupParameterIndexes
+						.map((index) => buildPathParameterPresentExpression(index))
+						.join(' || ')} ? \`${groupTemplate}\` : ''}`,
+				);
+			}
+			continue;
+		}
+
+		const parameterIndex = parameterIndexes.get(part.name);
+		if (parameterIndex === undefined) {
+			continue;
+		}
+		const parameterExpression = buildPathParameterExpression(parameterIndex);
+		fragments.push(
+			part.optional
+				? `\${${buildPathParameterPresentExpression(
+						parameterIndex,
+					)} ? ${parameterExpression} : ''}`
+				: `\${${parameterExpression}}`,
+		);
 	}
 
-	fragments.push(escapeTemplateLiteralText(endpointPath.slice(nextIndex)));
+	return fragments.join('');
+}
 
-	return `\`${fragments.join('')}\``;
+function buildEndpointPathTemplate(
+	parts: readonly EndpointPathTemplatePart[],
+	pathParameterNames: readonly string[],
+): string {
+	return `\`${buildEndpointPathTemplateBody(parts, pathParameterNames)}\``;
 }
 
 function buildEndpointPathRequestOptionLines(options: {
 	endpointPath: string;
 	requestLocationExpression: string | null;
 }): string[] {
-	const pathParameterNames = getEndpointPathParameterNames(options.endpointPath);
+	const pathParts = parseEndpointPathTemplateParts(options.endpointPath);
+	const pathParameterNames = collectEndpointPathParameterNames(pathParts, []);
 	if (pathParameterNames.length === 0) {
 		return [];
 	}
+	const requiredPathParameterNames = getRequiredEndpointPathParameterNames(pathParts);
 
 	const pathParamSource =
 		options.requestLocationExpression === "'query-and-body'"
@@ -166,19 +309,22 @@ function buildEndpointPathRequestOptionLines(options: {
 		`\t\tconst pathParams = rawPathParams && typeof rawPathParams === 'object'`,
 		`\t\t\t? (rawPathParams as Record<string, unknown>)`,
 		`\t\t\t: {};`,
-		...pathParameterNames.flatMap((name, index) => [
-			`\t\tconst pathParam${index} = pathParams[${toJavaScriptStringLiteral(name)}];`,
-			`\t\tif (pathParam${index} === undefined || pathParam${index} === null || pathParam${index} === '') {`,
-			`\t\t\tthrow new Error(${toJavaScriptStringLiteral(
-				`Missing path parameter "${name}" for endpoint path "${options.endpointPath}".`,
-			)});`,
-			`\t\t}`,
-		]),
+		...pathParameterNames.map(
+			(name, index) =>
+				`\t\tconst pathParam${index} = pathParams[${toJavaScriptStringLiteral(name)}];`,
+		),
+		...requiredPathParameterNames.flatMap((name) => {
+			const index = pathParameterNames.indexOf(name);
+			return [
+				`\t\tif (pathParam${index} === undefined || pathParam${index} === null || pathParam${index} === '') {`,
+				`\t\t\tthrow new Error(${toJavaScriptStringLiteral(
+					`Missing path parameter "${name}" for endpoint path "${options.endpointPath}".`,
+				)});`,
+				`\t\t}`,
+			];
+		}),
 		`\t\treturn {`,
-		`\t\t\tpath: ${buildEndpointPathTemplate(
-			options.endpointPath,
-			pathParameterNames,
-		)},`,
+		`\t\t\tpath: ${buildEndpointPathTemplate(pathParts, pathParameterNames)},`,
 		`\t\t};`,
 		`\t},`,
 	];
