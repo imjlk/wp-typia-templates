@@ -88,6 +88,9 @@ export type AddBlockResult = Awaited<ReturnType<AddRuntime['runAddBlockCommand']
 export type AddEditorPluginResult = Awaited<
   ReturnType<AddRuntime['runAddEditorPluginCommand']>
 >;
+export type AddIntegrationEnvResult = Awaited<
+  ReturnType<AddRuntime['runAddIntegrationEnvCommand']>
+>;
 export type AddAiFeatureResult = Awaited<
   ReturnType<AddRuntime['runAddAiFeatureCommand']>
 >;
@@ -118,6 +121,7 @@ export type AddKindExecutionResultById = {
   block: AddBlockResult;
   'editor-plugin': AddEditorPluginResult;
   'hooked-block': AddHookedBlockResult;
+  'integration-env': AddIntegrationEnvResult;
   pattern: AddPatternResult;
   'rest-resource': AddRestResourceResult;
   style: AddBlockStyleResult;

@@ -33,6 +33,7 @@ export {
 	runAddBlockTransformCommand,
 	runAddEditorPluginCommand,
 	runAddHookedBlockCommand,
+	runAddIntegrationEnvCommand,
 	runAddPatternCommand,
 	runAddRestResourceCommand,
 	runAddVariationCommand,

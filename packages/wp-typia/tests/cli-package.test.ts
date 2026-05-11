@@ -351,6 +351,7 @@ describe('wp-typia package', () => {
     expect(addHelpOutput).toContain('admin-view');
     expect(addHelpOutput).toContain('ability');
     expect(addHelpOutput).toContain('ai-feature');
+    expect(addHelpOutput).toContain('integration-env');
     expect(addHelpOutput).toContain('editor-plugin');
     expect(doctorHelpOutput).toContain(
       '`json` for machine-readable doctor check output or `text` for human-readable output',

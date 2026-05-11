@@ -6,6 +6,7 @@ import { bindingSourceAddKindEntry } from './add-kinds/binding-source';
 import { blockAddKindEntry } from './add-kinds/block';
 import { editorPluginAddKindEntry } from './add-kinds/editor-plugin';
 import { hookedBlockAddKindEntry } from './add-kinds/hooked-block';
+import { integrationEnvAddKindEntry } from './add-kinds/integration-env';
 import { patternAddKindEntry } from './add-kinds/pattern';
 import { restResourceAddKindEntry } from './add-kinds/rest-resource';
 import { styleAddKindEntry } from './add-kinds/style';
@@ -34,6 +35,7 @@ export type {
 export const ADD_KIND_REGISTRY = {
   'admin-view': adminViewAddKindEntry,
   block: blockAddKindEntry,
+  'integration-env': integrationEnvAddKindEntry,
   variation: variationAddKindEntry,
   style: styleAddKindEntry,
   transform: transformAddKindEntry,

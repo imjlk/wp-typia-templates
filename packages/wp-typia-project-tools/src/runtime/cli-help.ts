@@ -21,6 +21,7 @@ export function formatHelpText(): string {
   wp-typia init [project-dir] [--apply] [--package-manager <id>]
   wp-typia add admin-view <name> [--source <rest-resource:slug|core-data:kind/name>]
   wp-typia add block <name> [--template <basic|interactivity|persistence|compound>] [--external-layer-source <./path|github:owner/repo/path[#ref]|npm-package>] [--external-layer-id <layer-id>] [--inner-blocks-preset <freeform|ordered|horizontal|locked-structure>] [--alternate-render-targets <email,mjml,plain-text>] [--data-storage <post-meta|custom-table>] [--persistence-policy <authenticated|public>]
+  wp-typia add integration-env <name> [--wp-env] [--service <none|docker-compose>]
   wp-typia add variation <name> --block <block-slug>
   wp-typia add style <name> --block <block-slug>
   wp-typia add transform <name> --from <namespace/block> --to <block-slug|namespace/block-slug>
@@ -54,6 +55,8 @@ Notes:
   Pass \`--source rest-resource:<slug>\` to reuse a list-capable REST resource.
   Pass \`--source core-data:postType/post\` or \`--source core-data:taxonomy/category\` to bind a WordPress-owned entity collection.
   Generated admin-view workspaces add \`@wp-typia/dataviews\` and the needed WordPress DataViews packages as opt-in dependencies.
+  \`add integration-env\` generates an opt-in local smoke starter under \`scripts/integration-smoke/\`, updates \`.env.example\`, and can add \`@wordpress/env\` plus \`.wp-env.json\` when \`--wp-env\` is passed.
+  Pass \`--service docker-compose\` to include a placeholder local service stack that can be adapted to project-specific dependencies.
   \`query-loop\` is create-only. Use \`wp-typia create <project-dir> --template query-loop\`; \`wp-typia add block\` accepts only basic, interactivity, persistence, and compound families.
   \`add variation\` uses an existing workspace block from \`scripts/block-config.ts\`.
   \`add style\` registers a Block Styles option for an existing generated block.

@@ -651,6 +651,7 @@ describe('wp-typia add command bridge', () => {
     expect(ADD_KIND_IDS).toEqual([
       'admin-view',
       'block',
+      'integration-env',
       'variation',
       'style',
       'transform',

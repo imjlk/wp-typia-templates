@@ -606,6 +606,11 @@ export {
 	runAddPatternCommand,
 } from "./cli-add-workspace-assets.js";
 /**
+ * Re-export the local integration environment scaffold workflow from the
+ * focused integration-env runtime helper module.
+ */
+export { runAddIntegrationEnvCommand } from "./cli-add-workspace-integration-env.js";
+/**
  * Re-export the plugin-level REST resource scaffold workflow from the focused
  * rest-resource runtime helper module.
  */
