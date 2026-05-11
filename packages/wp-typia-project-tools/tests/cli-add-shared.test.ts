@@ -223,6 +223,17 @@ test('focused validation helpers accept TypeScript identifiers and reject malfor
   ).toThrow(
     'Contract type must be a valid TypeScript identifier, such as ExternalRetrieveResponse.',
   );
+  for (const reservedName of ['class', 'default', 'interface']) {
+    expect(() =>
+      assertValidTypeScriptIdentifier(
+        'Contract type',
+        reservedName,
+        'wp-typia add contract <name> [--type <ExportedTypeName>]',
+      ),
+    ).toThrow(
+      `Contract type must not be a reserved TypeScript keyword, such as ${reservedName}.`,
+    );
+  }
 });
 
 test('shared add collision helper allows missing filesystem paths and inventory entries', () => {

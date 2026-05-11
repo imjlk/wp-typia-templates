@@ -3327,6 +3327,70 @@ test("canonical CLI can add a standalone contract to an official workspace templ
   typecheckGeneratedProject(targetDir);
 }, 30_000);
 
+test("contract workflow rejects reserved TypeScript type names before writing files", async () => {
+  const targetDir = path.join(
+    tempRoot,
+    "demo-workspace-add-contract-reserved-type"
+  );
+
+  await scaffoldProject({
+    projectDir: targetDir,
+    templateId: workspaceTemplatePackageManifest.name,
+    packageManager: "npm",
+    noInstall: true,
+    answers: {
+      author: "Test Runner",
+      description: "Demo workspace add contract reserved type",
+      namespace: "demo-space",
+      phpPrefix: "demo_space",
+      slug: "demo-workspace-add-contract-reserved-type",
+      textDomain: "demo-space",
+      title: "Demo Workspace Add Contract Reserved Type",
+    },
+  });
+
+  linkWorkspaceNodeModules(targetDir);
+
+  expect(
+    getCommandErrorMessage(() =>
+      runCli(
+        "node",
+        [
+          entryPath,
+          "add",
+          "contract",
+          "external-retrieve-response",
+          "--type",
+          "class",
+        ],
+        { cwd: targetDir }
+      )
+    )
+  ).toContain(
+    "Contract type must not be a reserved TypeScript keyword, such as class."
+  );
+  expect(
+    fs.existsSync(
+      path.join(targetDir, "src", "contracts", "external-retrieve-response.ts")
+    )
+  ).toBe(false);
+  expect(
+    fs.existsSync(
+      path.join(
+        targetDir,
+        "src",
+        "contracts",
+        "external-retrieve-response.schema.json"
+      )
+    )
+  ).toBe(false);
+  expect(
+    fs
+      .readFileSync(path.join(targetDir, "scripts", "block-config.ts"), "utf8")
+      .includes('slug: "external-retrieve-response"')
+  ).toBe(false);
+}, 20_000);
+
 test("canonical CLI can add a plugin-level REST resource to an official workspace template", async () => {
   const targetDir = path.join(tempRoot, "demo-workspace-add-rest-resource");
 
