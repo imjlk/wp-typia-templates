@@ -11,7 +11,10 @@ import {
 	assertValidTypeScriptIdentifier,
 	getWorkspaceBootstrapPath,
 	normalizeBlockSlug,
+	resolveGeneratedRestResourceRoutePattern,
 	resolveManualRestContractPathPattern,
+	resolveOptionalPhpCallbackReference,
+	resolveOptionalPhpClassReference,
 	resolveRestResourceNamespace,
 	rollbackWorkspaceMutation,
 	type ManualRestContractAuthId,
@@ -59,43 +62,60 @@ function buildRestResourceRouteRegistrations(
 		readHandlerName: string;
 		updateHandlerName: string;
 	},
+	options: {
+		controllerVariableName?: string;
+		permissionCallback?: string;
+		routePattern: string;
+	},
 ): string {
 	const collectionRoutes: string[] = [];
 	const itemRoutes: string[] = [];
+	const readPermissionCallback = options.permissionCallback
+		? quotePhpString(options.permissionCallback)
+		: quotePhpString("__return_true");
+	const writePermissionCallback = options.permissionCallback
+		? quotePhpString(options.permissionCallback)
+		: options.controllerVariableName
+			? `array( ${options.controllerVariableName}, 'can_manage_rest_resource' )`
+			: quotePhpString(functions.canWriteFunctionName);
+	const buildRouteCallback = (functionName: string, methodName: string) =>
+		options.controllerVariableName
+			? `array( ${options.controllerVariableName}, '${methodName}' )`
+			: quotePhpString(functionName);
 
 	if (methods.includes("list")) {
 		collectionRoutes.push(`\t\tarray(
 \t\t\t'methods'             => WP_REST_Server::READABLE,
-\t\t\t'callback'            => '${functions.listHandlerName}',
-\t\t\t'permission_callback' => '__return_true',
+\t\t\t'callback'            => ${buildRouteCallback(functions.listHandlerName, "list_items")},
+\t\t\t'permission_callback' => ${readPermissionCallback},
 \t\t)`);
 	}
 	if (methods.includes("create")) {
 		collectionRoutes.push(`\t\tarray(
 \t\t\t'methods'             => WP_REST_Server::CREATABLE,
-\t\t\t'callback'            => '${functions.createHandlerName}',
-\t\t\t'permission_callback' => '${functions.canWriteFunctionName}',
+\t\t\t'callback'            => ${buildRouteCallback(functions.createHandlerName, "create_item")},
+\t\t\t'permission_callback' => ${writePermissionCallback},
 \t\t)`);
 	}
 	if (methods.includes("read")) {
 		itemRoutes.push(`\t\tarray(
 \t\t\t'methods'             => WP_REST_Server::READABLE,
-\t\t\t'callback'            => '${functions.readHandlerName}',
-\t\t\t'permission_callback' => '__return_true',
+\t\t\t'callback'            => ${buildRouteCallback(functions.readHandlerName, "read_item")},
+\t\t\t'permission_callback' => ${readPermissionCallback},
 \t\t)`);
 	}
 	if (methods.includes("update")) {
 		itemRoutes.push(`\t\tarray(
 \t\t\t'methods'             => WP_REST_Server::EDITABLE,
-\t\t\t'callback'            => '${functions.updateHandlerName}',
-\t\t\t'permission_callback' => '${functions.canWriteFunctionName}',
+\t\t\t'callback'            => ${buildRouteCallback(functions.updateHandlerName, "update_item")},
+\t\t\t'permission_callback' => ${writePermissionCallback},
 \t\t)`);
 	}
 	if (methods.includes("delete")) {
 		itemRoutes.push(`\t\tarray(
 \t\t\t'methods'             => WP_REST_Server::DELETABLE,
-\t\t\t'callback'            => '${functions.deleteHandlerName}',
-\t\t\t'permission_callback' => '${functions.canWriteFunctionName}',
+\t\t\t'callback'            => ${buildRouteCallback(functions.deleteHandlerName, "delete_item")},
+\t\t\t'permission_callback' => ${writePermissionCallback},
 \t\t)`);
 	}
 
@@ -112,7 +132,7 @@ ${collectionRoutes.join(",\n")}
 	if (itemRoutes.length > 0) {
 		registrations.push(`\tregister_rest_route(
 \t\t$namespace,
-\t\t'/${restResourceSlug}/item',
+\t\t${quotePhpString(options.routePattern)},
 \t\tarray(
 ${itemRoutes.join(",\n")}
 \t\t)
@@ -122,12 +142,85 @@ ${itemRoutes.join(",\n")}
 	return registrations.join("\n\n");
 }
 
+function normalizeGlobalPhpClassName(classReference: string): string | undefined {
+	const normalized = classReference.startsWith("\\")
+		? classReference.slice(1)
+		: classReference;
+
+	return /^[A-Za-z_][A-Za-z0-9_]*$/u.test(normalized) ? normalized : undefined;
+}
+
+function toPhpClassConstantReference(classReference: string): string {
+	const normalized = classReference.startsWith("\\")
+		? classReference
+		: `\\${classReference}`;
+	return `${normalized}::class`;
+}
+
+function buildRestResourceControllerClassSource(options: {
+	controllerClass: string;
+	controllerExtends?: string;
+	functions: {
+		canWriteFunctionName: string;
+		createHandlerName: string;
+		deleteHandlerName: string;
+		listHandlerName: string;
+		readHandlerName: string;
+		updateHandlerName: string;
+	};
+}): string {
+	const controllerClassName = normalizeGlobalPhpClassName(options.controllerClass);
+	if (!controllerClassName) {
+		return "";
+	}
+
+	const extendsClause = options.controllerExtends
+		? ` extends ${options.controllerExtends.startsWith("\\") ? options.controllerExtends : `\\${options.controllerExtends}`}`
+		: "";
+
+	return `
+if ( ! class_exists( ${quotePhpString(controllerClassName)} ) ) {
+\tclass ${controllerClassName}${extendsClause} {
+\t\tpublic function can_manage_rest_resource() {
+\t\t\treturn ${options.functions.canWriteFunctionName}();
+\t\t}
+
+\t\tpublic function list_items( WP_REST_Request $request ) {
+\t\t\treturn ${options.functions.listHandlerName}( $request );
+\t\t}
+
+\t\tpublic function read_item( WP_REST_Request $request ) {
+\t\t\treturn ${options.functions.readHandlerName}( $request );
+\t\t}
+
+\t\tpublic function create_item( WP_REST_Request $request ) {
+\t\t\treturn ${options.functions.createHandlerName}( $request );
+\t\t}
+
+\t\tpublic function update_item( WP_REST_Request $request ) {
+\t\t\treturn ${options.functions.updateHandlerName}( $request );
+\t\t}
+
+\t\tpublic function delete_item( WP_REST_Request $request ) {
+\t\t\treturn ${options.functions.deleteHandlerName}( $request );
+\t\t}
+\t}
+}
+`;
+}
+
 function buildRestResourcePhpSource(
 	restResourceSlug: string,
 	namespace: string,
 	phpPrefix: string,
 	textDomain: string,
 	methods: RestResourceMethodId[],
+	options: {
+		controllerClass?: string;
+		controllerExtends?: string;
+		permissionCallback?: string;
+		routePattern: string;
+	},
 ): string {
 	const restResourceTitle = toTitleCase(restResourceSlug);
 	const restResourcePhpId = restResourceSlug.replace(/-/g, "_");
@@ -145,6 +238,7 @@ function buildRestResourcePhpSource(
 	const updateHandlerName = `${phpPrefix}_${restResourcePhpId}_handle_update_rest_resource`;
 	const deleteHandlerName = `${phpPrefix}_${restResourcePhpId}_handle_delete_rest_resource`;
 	const registerRoutesFunctionName = `${phpPrefix}_${restResourcePhpId}_register_rest_routes`;
+	const controllerVariableName = options.controllerClass ? "$controller" : undefined;
 	const routeRegistrations = buildRestResourceRouteRegistrations(restResourceSlug, methods, {
 		canWriteFunctionName,
 		createHandlerName,
@@ -152,7 +246,38 @@ function buildRestResourcePhpSource(
 		listHandlerName,
 		readHandlerName,
 		updateHandlerName,
+	}, {
+		...(controllerVariableName ? { controllerVariableName } : {}),
+		...(options.permissionCallback
+			? { permissionCallback: options.permissionCallback }
+			: {}),
+		routePattern: options.routePattern,
 	});
+	const controllerClassSource = options.controllerClass
+		? buildRestResourceControllerClassSource({
+				controllerClass: options.controllerClass,
+				...(options.controllerExtends
+					? { controllerExtends: options.controllerExtends }
+					: {}),
+				functions: {
+					canWriteFunctionName,
+					createHandlerName,
+					deleteHandlerName,
+					listHandlerName,
+					readHandlerName,
+					updateHandlerName,
+				},
+			})
+		: "";
+	const controllerBootstrapSource = options.controllerClass
+		? `\t\t$controller_class = ${toPhpClassConstantReference(options.controllerClass)};
+\t\tif ( ! class_exists( $controller_class ) ) {
+\t\t\treturn;
+\t\t}
+\t\t$controller = new $controller_class();
+
+`
+		: "";
 
 	return `<?php
 if ( ! defined( 'ABSPATH' ) ) {
@@ -472,10 +597,12 @@ if ( ! function_exists( '${deleteHandlerName}' ) ) {
 \t}
 }
 
+${controllerClassSource}
 if ( ! function_exists( '${registerRoutesFunctionName}' ) ) {
 \tfunction ${registerRoutesFunctionName}() {
 \t\t$namespace = ${quotePhpString(namespace)};
 
+${controllerBootstrapSource}
 ${routeRegistrations}
 \t}
 }
@@ -494,27 +621,35 @@ add_action( 'rest_api_init', '${registerRoutesFunctionName}' );
 export async function runAddRestResourceCommand({
 	auth,
 	bodyTypeName,
+	controllerClass,
+	controllerExtends,
 	cwd = process.cwd(),
 	manual,
 	method,
 	methods,
 	namespace,
+	permissionCallback,
 	pathPattern,
 	queryTypeName,
 	restResourceName,
 	responseTypeName,
+	routePattern,
 }: RunAddRestResourceCommandOptions): Promise<{
 	auth?: ManualRestContractAuthId;
 	bodyTypeName?: string;
+	controllerClass?: string;
+	controllerExtends?: string;
 	method?: ManualRestContractHttpMethodId;
 	methods: RestResourceMethodId[];
 	mode: "generated" | "manual";
 	namespace: string;
+	permissionCallback?: string;
 	pathPattern?: string;
 	projectDir: string;
 	queryTypeName?: string;
 	restResourceSlug: string;
 	responseTypeName?: string;
+	routePattern?: string;
 }> {
 	const workspace = resolveWorkspaceProject(cwd);
 	const restResourceSlug = assertValidGeneratedSlug(
@@ -538,6 +673,11 @@ export async function runAddRestResourceCommand({
 	const apiFilePath = path.join(restResourceDir, "api.ts");
 
 	if (manual) {
+		if (controllerClass || controllerExtends || permissionCallback || routePattern) {
+			throw new Error(
+				"Manual REST contracts do not generate PHP route glue. Use generated rest-resource mode for --route-pattern, --permission-callback, --controller-class, or --controller-extends.",
+			);
+		}
 		const pascalCase = toPascalCase(restResourceSlug);
 		const resolvedAuth = assertValidManualRestContractAuth(auth);
 		const resolvedMethod = assertValidManualRestContractHttpMethod(method);
@@ -686,6 +826,29 @@ export async function runAddRestResourceCommand({
 	}
 
 	const resolvedMethods = assertValidRestResourceMethods(methods);
+	const resolvedRoutePattern = resolveGeneratedRestResourceRoutePattern(
+		restResourceSlug,
+		routePattern,
+	);
+	const hasCustomRoutePattern =
+		typeof routePattern === "string" && routePattern.trim().length > 0;
+	const resolvedPermissionCallback = resolveOptionalPhpCallbackReference(
+		"Generated REST resource permission callback",
+		permissionCallback,
+	);
+	const resolvedControllerClass = resolveOptionalPhpClassReference(
+		"Generated REST resource controller class",
+		controllerClass,
+	);
+	const resolvedControllerExtends = resolveOptionalPhpClassReference(
+		"Generated REST resource controller base class",
+		controllerExtends,
+	);
+	if (resolvedControllerExtends && !resolvedControllerClass) {
+		throw new Error(
+			"Generated REST resource controller base class requires --controller-class.",
+		);
+	}
 	const bootstrapPath = getWorkspaceBootstrapPath(workspace);
 	const dataFilePath = path.join(restResourceDir, "data.ts");
 	const phpFilePath = path.join(workspace.projectDir, "inc", "rest", `${restResourceSlug}.php`);
@@ -732,6 +895,18 @@ export async function runAddRestResourceCommand({
 				workspace.workspace.phpPrefix,
 				workspace.workspace.textDomain,
 				resolvedMethods,
+				{
+					...(resolvedControllerClass
+						? { controllerClass: resolvedControllerClass }
+						: {}),
+					...(resolvedControllerExtends
+						? { controllerExtends: resolvedControllerExtends }
+						: {}),
+					...(resolvedPermissionCallback
+						? { permissionCallback: resolvedPermissionCallback }
+						: {}),
+					routePattern: resolvedRoutePattern,
+				},
 			),
 			"utf8",
 		);
@@ -745,27 +920,48 @@ export async function runAddRestResourceCommand({
 			variables: {
 				namespace: resolvedNamespace,
 				pascalCase: toPascalCase(restResourceSlug),
+				...(hasCustomRoutePattern ? { routePattern: resolvedRoutePattern } : {}),
 				slugKebabCase: restResourceSlug,
 				title: toTitleCase(restResourceSlug),
 			},
 		});
 		await appendWorkspaceInventoryEntries(workspace.projectDir, {
 			restResourceEntries: [
-				buildRestResourceConfigEntry(
+				buildRestResourceConfigEntry({
+					...(resolvedControllerClass
+						? { controllerClass: resolvedControllerClass }
+						: {}),
+					...(resolvedControllerExtends
+						? { controllerExtends: resolvedControllerExtends }
+						: {}),
+					methods: resolvedMethods,
+					namespace: resolvedNamespace,
+					...(resolvedPermissionCallback
+						? { permissionCallback: resolvedPermissionCallback }
+						: {}),
 					restResourceSlug,
-					resolvedNamespace,
-					resolvedMethods,
-				),
+					...(hasCustomRoutePattern ? { routePattern: resolvedRoutePattern } : {}),
+				}),
 			],
 			transformSource: ensureBlockConfigCanAddRestManifests,
 		});
 
 		return {
+			...(resolvedControllerClass
+				? { controllerClass: resolvedControllerClass }
+				: {}),
+			...(resolvedControllerExtends
+				? { controllerExtends: resolvedControllerExtends }
+				: {}),
 			methods: resolvedMethods,
 			mode: "generated",
 			namespace: resolvedNamespace,
+			...(resolvedPermissionCallback
+				? { permissionCallback: resolvedPermissionCallback }
+				: {}),
 			projectDir: workspace.projectDir,
 			restResourceSlug,
+			...(hasCustomRoutePattern ? { routePattern: resolvedRoutePattern } : {}),
 		};
 	} catch (error) {
 		await rollbackWorkspaceMutation(mutationSnapshot);

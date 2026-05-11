@@ -10,6 +10,17 @@ import {
 const REST_RESOURCE_MISSING_NAME_MESSAGE =
   '`wp-typia add rest-resource` requires <name>. Usage: wp-typia add rest-resource <name> [--namespace <vendor/v1>] [--methods <list,read,create,update,delete>] or wp-typia add rest-resource <name> --manual [--method GET] [--path /external].';
 
+function readOptionalDashedOrCamelStringFlag(
+  flags: Record<string, unknown>,
+  dashedName: string,
+  camelName: string,
+): string | undefined {
+  return (
+    readOptionalStrictStringFlag(flags, dashedName) ??
+    readOptionalStrictStringFlag(flags, camelName)
+  );
+}
+
 export const restResourceAddKindEntry =
   defineAddKindRegistryEntry<AddRestResourceResult>({
     completion: {
@@ -32,7 +43,18 @@ export const restResourceAddKindEntry =
               `Route: ${values.method} /${values.namespace}${values.pathPattern}`,
               `Auth: ${values.auth}`,
             ]
-          : [`Methods: ${values.methods}`]),
+          : [
+              `Methods: ${values.methods}`,
+              ...(values.routePattern
+                ? [`Item route: /${values.namespace}${values.routePattern}`]
+                : []),
+              ...(values.permissionCallback
+                ? [`Permission callback: ${values.permissionCallback}`]
+                : []),
+              ...(values.controllerClass
+                ? [`Controller class: ${values.controllerClass}`]
+                : []),
+            ]),
         `Project directory: ${projectDir}`,
       ],
       title: 'Added REST resource contract',
@@ -42,10 +64,14 @@ export const restResourceAddKindEntry =
     hiddenStringSubmitFields: [
       'auth',
       'body-type',
+      'controller-class',
+      'controller-extends',
       'method',
       'path',
+      'permission-callback',
       'query-type',
       'response-type',
+      'route-pattern',
     ],
     nameLabel: 'REST resource name',
     async prepareExecution(context) {
@@ -58,10 +84,25 @@ export const restResourceAddKindEntry =
         context.flags,
         'body-type',
       );
+      const controllerClass = readOptionalDashedOrCamelStringFlag(
+        context.flags,
+        'controller-class',
+        'controllerClass',
+      );
+      const controllerExtends = readOptionalDashedOrCamelStringFlag(
+        context.flags,
+        'controller-extends',
+        'controllerExtends',
+      );
       const manual = Boolean(context.flags.manual);
       const method = readOptionalStrictStringFlag(context.flags, 'method');
       const methods = readOptionalStrictStringFlag(context.flags, 'methods');
       const namespace = readOptionalStrictStringFlag(context.flags, 'namespace');
+      const permissionCallback = readOptionalDashedOrCamelStringFlag(
+        context.flags,
+        'permission-callback',
+        'permissionCallback',
+      );
       const pathPattern = readOptionalStrictStringFlag(context.flags, 'path');
       const queryTypeName = readOptionalStrictStringFlag(
         context.flags,
@@ -71,30 +112,42 @@ export const restResourceAddKindEntry =
         context.flags,
         'response-type',
       );
+      const routePattern = readOptionalDashedOrCamelStringFlag(
+        context.flags,
+        'route-pattern',
+        'routePattern',
+      );
 
       return createNamedExecutionPlan(context, {
         execute: ({ cwd, name }) =>
           context.addRuntime.runAddRestResourceCommand({
             auth,
             bodyTypeName,
+            controllerClass,
+            controllerExtends,
             cwd,
             manual,
             method,
             methods,
             namespace,
+            permissionCallback,
             pathPattern,
             queryTypeName,
             restResourceName: name,
             responseTypeName,
+            routePattern,
           }),
         getValues: (result) => ({
           auth: result.auth ?? '',
+          controllerClass: result.controllerClass ?? '',
           method: result.method ?? '',
           methods: result.methods.join(', '),
           mode: result.mode,
           namespace: result.namespace,
           pathPattern: result.pathPattern ?? '',
+          permissionCallback: result.permissionCallback ?? '',
           restResourceSlug: result.restResourceSlug,
+          routePattern: result.routePattern ?? '',
         }),
         missingNameMessage: REST_RESOURCE_MISSING_NAME_MESSAGE,
         name,
@@ -104,6 +157,6 @@ export const restResourceAddKindEntry =
     sortOrder: 80,
     supportsDryRun: true,
     usage:
-      'wp-typia add rest-resource <name> [--namespace <vendor/v1>] [--methods <list,read,create,update,delete>] [--manual --method <GET|POST|PUT|PATCH|DELETE> --auth <public|authenticated|public-write-protected> --path <route-pattern> --query-type <Type> --body-type <Type> --response-type <Type>] [--dry-run]',
+      'wp-typia add rest-resource <name> [--namespace <vendor/v1>] [--methods <list,read,create,update,delete>] [--route-pattern <route-pattern>] [--permission-callback <callback>] [--controller-class <ClassName>] [--controller-extends <BaseClass>] [--manual --method <GET|POST|PUT|PATCH|DELETE> --auth <public|authenticated|public-write-protected> --path <route-pattern> --query-type <Type> --body-type <Type> --response-type <Type>] [--dry-run]',
     visibleFieldNames: () => NAME_NAMESPACE_METHODS_VISIBLE_FIELDS,
   });

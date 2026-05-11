@@ -65,6 +65,8 @@ export interface WorkspaceRestResourceInventoryEntry {
 	auth?: string;
 	bodyTypeName?: string;
 	clientFile: string;
+	controllerClass?: string;
+	controllerExtends?: string;
 	dataFile?: string;
 	method?: string;
 	methods: string[];
@@ -72,9 +74,11 @@ export interface WorkspaceRestResourceInventoryEntry {
 	namespace: string;
 	openApiFile: string;
 	pathPattern?: string;
+	permissionCallback?: string;
 	phpFile?: string;
 	queryTypeName?: string;
 	responseTypeName?: string;
+	routePattern?: string;
 	slug: string;
 	typesFile: string;
 	validatorsFile: string;

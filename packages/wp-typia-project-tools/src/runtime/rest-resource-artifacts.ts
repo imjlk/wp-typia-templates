@@ -16,6 +16,7 @@ import type {
 interface RestResourceTemplateVariablesLike {
 	namespace: string;
 	pascalCase: string;
+	routePattern?: string;
 	slugKebabCase: string;
 	title: string;
 }
@@ -83,7 +84,13 @@ export function buildRestResourceEndpointManifest(
 	methods: RestResourceMethodId[],
 ) {
 	const basePath = `/${variables.namespace}/${variables.slugKebabCase}`;
-	const itemPath = `${basePath}/item`;
+	const routePattern =
+		variables.routePattern == null
+			? `/${variables.slugKebabCase}/item`
+			: variables.routePattern.startsWith("/")
+				? variables.routePattern
+				: `/${variables.routePattern}`;
+	const itemPath = `/${variables.namespace}${routePattern}`;
 	const contracts: Record<string, { sourceTypeName: string }> = {};
 	const endpoints: RestResourceEndpointDefinition[] = [];
 

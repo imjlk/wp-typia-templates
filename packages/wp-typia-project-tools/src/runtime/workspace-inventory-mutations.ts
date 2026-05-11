@@ -301,13 +301,17 @@ export function updateWorkspaceInventorySource(
 	for (const [fieldName, fieldSource] of [
 		["auth", "\tauth?: 'authenticated' | 'public' | 'public-write-protected';"],
 		["bodyTypeName", "\tbodyTypeName?: string;"],
+		["controllerClass", "\tcontrollerClass?: string;"],
+		["controllerExtends", "\tcontrollerExtends?: string;"],
 		["dataFile", "\tdataFile?: string;"],
 		["method", "\tmethod?: 'DELETE' | 'GET' | 'PATCH' | 'POST' | 'PUT';"],
 		["mode", "\tmode?: 'generated' | 'manual';"],
 		["pathPattern", "\tpathPattern?: string;"],
+		["permissionCallback", "\tpermissionCallback?: string;"],
 		["phpFile", "\tphpFile?: string;"],
 		["queryTypeName", "\tqueryTypeName?: string;"],
 		["responseTypeName", "\tresponseTypeName?: string;"],
+		["routePattern", "\troutePattern?: string;"],
 	] as const) {
 		nextSource = upsertInterfaceField(
 			nextSource,

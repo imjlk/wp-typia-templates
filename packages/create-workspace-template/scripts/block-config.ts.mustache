@@ -54,8 +54,11 @@ export interface WorkspaceRestResourceBaseConfig {
 	auth?: 'authenticated' | 'public' | 'public-write-protected';
 	bodyTypeName?: string;
 	clientFile: string;
+	controllerClass?: string;
+	controllerExtends?: string;
 	namespace: string;
 	openApiFile: string;
+	permissionCallback?: string;
 	restManifest?: ReturnType<
 		typeof import( '@wp-typia/block-runtime/metadata-core' ).defineEndpointManifest
 	>;
@@ -69,6 +72,7 @@ export interface GeneratedWorkspaceRestResourceConfig extends WorkspaceRestResou
 	methods: Array< 'list' | 'read' | 'create' | 'update' | 'delete' >;
 	mode?: 'generated';
 	phpFile: string;
+	routePattern?: string;
 }
 
 export interface ManualWorkspaceRestResourceConfig extends WorkspaceRestResourceBaseConfig {

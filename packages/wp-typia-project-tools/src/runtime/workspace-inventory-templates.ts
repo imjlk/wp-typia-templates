@@ -130,8 +130,11 @@ export interface WorkspaceRestResourceBaseConfig {
 \tauth?: 'authenticated' | 'public' | 'public-write-protected';
 \tbodyTypeName?: string;
 \tclientFile: string;
+\tcontrollerClass?: string;
+\tcontrollerExtends?: string;
 \tnamespace: string;
 \topenApiFile: string;
+\tpermissionCallback?: string;
 \trestManifest?: ReturnType<
 \t\ttypeof import( '@wp-typia/block-runtime/metadata-core' ).defineEndpointManifest
 \t>;
@@ -145,6 +148,7 @@ export interface GeneratedWorkspaceRestResourceConfig extends WorkspaceRestResou
 \tmethods: Array< 'list' | 'read' | 'create' | 'update' | 'delete' >;
 \tmode?: 'generated';
 \tphpFile: string;
+\troutePattern?: string;
 }
 
 export interface ManualWorkspaceRestResourceConfig extends WorkspaceRestResourceBaseConfig {

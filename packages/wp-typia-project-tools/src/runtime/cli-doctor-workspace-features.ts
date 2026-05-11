@@ -7,6 +7,7 @@ import {
 	MANUAL_REST_CONTRACT_HTTP_METHOD_IDS,
 	REST_RESOURCE_METHOD_IDS,
 	REST_RESOURCE_NAMESPACE_PATTERN,
+	isGeneratedRestResourceRoutePatternCompatible,
 	resolveEditorPluginSlotAlias,
 } from "./cli-add-shared.js";
 import {
@@ -148,13 +149,22 @@ function checkWorkspaceRestResourceConfig(
 		restResource.dataFile.length > 0 &&
 		typeof restResource.phpFile === "string" &&
 		restResource.phpFile.length > 0;
+		const hasRoutePattern =
+			restResource.routePattern == null ||
+			(typeof restResource.routePattern === "string" &&
+				restResource.routePattern.startsWith("/") &&
+				restResource.routePattern.length > 1 &&
+				!/\s/u.test(restResource.routePattern) &&
+				isGeneratedRestResourceRoutePatternCompatible(restResource.routePattern));
 
 	return createDoctorCheck(
 		`REST resource config ${restResource.slug}`,
-		hasNamespace && hasMethods && hasGeneratedFiles ? "pass" : "fail",
-		hasNamespace && hasMethods && hasGeneratedFiles
+		hasNamespace && hasMethods && hasGeneratedFiles && hasRoutePattern
+			? "pass"
+			: "fail",
+		hasNamespace && hasMethods && hasGeneratedFiles && hasRoutePattern
 			? `REST resource namespace ${restResource.namespace} with methods ${restResource.methods.join(", ")}`
-			: "REST resource namespace, methods, dataFile, or phpFile are invalid",
+			: "REST resource namespace, methods, dataFile, phpFile, or routePattern are invalid",
 	);
 }
 

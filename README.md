@@ -159,6 +159,7 @@ wp-typia add binding-source hero-data
 wp-typia add binding-source hero-data --block counter-card --attribute headline
 wp-typia add contract external-retrieve-response --type ExternalRetrieveResponse
 wp-typia add rest-resource snapshots --namespace my-plugin/v1 --methods list,read,create
+wp-typia add rest-resource snapshots --namespace my-plugin/v1 --methods read,update --route-pattern '/snapshots/(?P<id>[\d]+)' --permission-callback my_plugin_can_manage_snapshots
 wp-typia add rest-resource external-record --manual --namespace legacy/v1 --method GET --auth authenticated --path '/records/(?P<id>[\d]+)'
 wp-typia add editor-plugin review-workflow --slot sidebar
 wp-typia add editor-plugin seo-notes --slot document-setting-panel
@@ -177,6 +178,9 @@ wp-typia add hooked-block counter-card --anchor core/post-content --position aft
 - Need to describe a REST route owned by another plugin or legacy controller?
   Use `wp-typia add rest-resource <name> --manual` to generate TypeScript
   contracts, schemas, OpenAPI, and clients without PHP route glue.
+- Need generated REST contracts to fit an existing controller or permission
+  model? Add `--route-pattern`, `--permission-callback`, or `--controller-class`
+  while keeping generated OpenAPI and client paths aligned.
 - Need schema evolution for a long-lived block? Enable `--with-migration-ui`.
 - Need smoke tests for external/manual payloads? Use `@wp-typia/block-runtime/schema-test`
   to assert responses against generated `*.schema.json` contract artifacts.

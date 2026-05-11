@@ -198,7 +198,8 @@ wp-typia add pattern <name>
 wp-typia add binding-source <name>
 wp-typia add binding-source <name> --block <block-slug|namespace/block-slug> --attribute <attribute>
 wp-typia add contract <name> --type <ExportedTypeName>
-wp-typia add rest-resource <name> --namespace <vendor/v1> --methods GET,POST
+wp-typia add rest-resource <name> --namespace <vendor/v1> --methods list,read,create
+wp-typia add rest-resource <name> --namespace <vendor/v1> --methods read,update --route-pattern '/records/(?P<id>[\d]+)' --permission-callback my_plugin_can_manage_records
 wp-typia add ability <name>
 wp-typia add ai-feature <name> --namespace <vendor/v1>
 wp-typia add editor-plugin <name> --slot sidebar
@@ -221,6 +222,10 @@ Common flags:
 | `--slot <sidebar \| document-setting-panel>`                     | Editor shell slot for editor-plugin scaffolds; legacy aliases `PluginSidebar` and `PluginDocumentSettingPanel` remain accepted.                                                |
 | `--namespace <vendor/v1>`                                        | REST namespace for REST resource and AI feature workflows.                                                                                                                     |
 | `--methods <method[,method...]>`                                 | REST methods for REST resource workflows.                                                                                                                                      |
+| `--route-pattern <route-pattern>`                                | Generated REST resource item route pattern, relative to the namespace. Regex groups must use only `(?P<id>...)` so generated handlers and clients stay aligned.                |
+| `--permission-callback <callback>`                               | PHP permission callback for generated REST resource route registrations.                                                                                                       |
+| `--controller-class <ClassName>`                                 | PHP controller class wrapper for generated REST resource route callbacks.                                                                                                      |
+| `--controller-extends <BaseClass>`                               | Optional base class for generated REST resource controller wrappers.                                                                                                           |
 | `--type <ExportedTypeName>`                                      | Exported TypeScript type or interface for standalone contract schema artifacts.                                                                                                |
 | `--source <locator>`                                             | Optional data source locator for admin-view workflows. Current public support includes `rest-resource:products`, `core-data:postType/post`, and `core-data:taxonomy/category`. |
 | `--external-layer-source <source>`                               | Compose an external layer package on top of a built-in block template.                                                                                                         |
