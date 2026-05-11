@@ -52,6 +52,7 @@ test("cli-doctor keeps environment and workspace checks in dedicated modules", (
 	expect(environmentSource).not.toContain("function createDoctorCheck(");
 	expect(workspaceSource).toContain("export async function getWorkspaceDoctorChecks(");
 	expect(workspaceSource).toContain("readWorkspaceInventoryAsync(");
+	expect(workspaceSource).toContain("prepareWorkspacePackageDoctorSnapshot(");
 	expect(workspaceSource).toContain('from "./cli-doctor-workspace-bindings.js"');
 	expect(workspaceSource).toContain('from "./cli-doctor-workspace-blocks.js"');
 	expect(workspaceSource).toContain('from "./cli-doctor-workspace-features.js"');
@@ -62,9 +63,24 @@ test("cli-doctor keeps environment and workspace checks in dedicated modules", (
 	expect(workspaceSource).not.toContain("function checkWorkspaceBlockMetadata(");
 	expect(workspaceSource).not.toContain("function checkWorkspaceBindingBootstrap(");
 	expect(workspaceSource).not.toContain("function checkWorkspaceAbilityBootstrap(");
+	expect(workspaceSource).toContain("getWorkspaceBlockDoctorChecks(workspace, inventory)");
+	expect(workspaceSource).toContain(
+		"getWorkspaceBindingDoctorChecks(workspace, inventory)",
+	);
+	expect(workspaceSource).toContain(
+		"getWorkspaceFeatureDoctorChecks(workspace, inventory)",
+	);
 	expect(workspaceBlocksSource).toContain("export function getWorkspaceBlockDoctorChecks(");
 	expect(workspaceBindingsSource).toContain("export function getWorkspaceBindingDoctorChecks(");
 	expect(workspaceFeaturesSource).toContain("export function getWorkspaceFeatureDoctorChecks(");
+	expect(workspacePackageSource).toContain(
+		"export async function prepareWorkspacePackageDoctorSnapshot(",
+	);
+	expect(workspacePackageSource).toContain('from "./fs-async.js"');
+	expect(workspacePackageSource).toContain("Promise.all([");
+	expect(workspacePackageSource).not.toMatch(
+		/\bfs\.(?:existsSync|readFileSync|readdirSync)\b/u,
+	);
 	expect(workspacePackageSource).toContain("export function getWorkspacePackageMetadataCheck(");
 });
 

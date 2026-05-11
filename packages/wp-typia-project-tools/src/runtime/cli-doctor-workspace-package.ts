@@ -1,31 +1,75 @@
-import fs from "node:fs";
 import path from "node:path";
 
 import {
 	createDoctorCheck,
 	getWorkspaceBootstrapRelativePath,
 } from "./cli-doctor-workspace-shared.js";
+import { pathExists } from "./fs-async.js";
 import { WORKSPACE_TEMPLATE_PACKAGE } from "./workspace-project.js";
 
 import type { DoctorCheck } from "./cli-doctor.js";
 import type { WorkspacePackageJson, WorkspaceProject } from "./workspace-project.js";
 
 /**
+ * Snapshot of package-level filesystem doctor inputs prepared asynchronously.
+ */
+export interface WorkspacePackageDoctorSnapshot {
+	/** Whether the expected workspace bootstrap PHP file exists. */
+	bootstrapExists: boolean;
+	/** Relative path to the expected workspace bootstrap PHP file. */
+	bootstrapRelativePath: string;
+	/** Whether the migration config file exists. */
+	migrationConfigExists: boolean;
+	/** Relative path to the migration config file. */
+	migrationConfigRelativePath: string;
+}
+
+/**
+ * Prepare package-level workspace doctor inputs without blocking the event loop.
+ *
+ * @param workspace Resolved workspace metadata and filesystem paths.
+ * @param packageJson Parsed workspace package manifest.
+ * @returns Snapshot values consumed by synchronous doctor row mappers.
+ */
+export async function prepareWorkspacePackageDoctorSnapshot(
+	workspace: WorkspaceProject,
+	packageJson: WorkspacePackageJson,
+): Promise<WorkspacePackageDoctorSnapshot> {
+	const packageName = packageJson.name;
+	const bootstrapRelativePath = getWorkspaceBootstrapRelativePath(
+		typeof packageName === "string" && packageName.length > 0
+			? packageName
+			: workspace.packageName,
+	);
+	const migrationConfigRelativePath = path.join("src", "migrations", "config.ts");
+	const [bootstrapExists, migrationConfigExists] = await Promise.all([
+		pathExists(path.join(workspace.projectDir, bootstrapRelativePath)),
+		pathExists(path.join(workspace.projectDir, migrationConfigRelativePath)),
+	]);
+
+	return {
+		bootstrapExists,
+		bootstrapRelativePath,
+		migrationConfigExists,
+		migrationConfigRelativePath,
+	};
+}
+
+/**
  * Validate the package metadata that makes a project an official workspace.
  *
  * @param workspace Resolved workspace metadata and filesystem paths.
  * @param packageJson Parsed workspace package manifest.
+ * @param snapshot Async filesystem snapshot for package-level doctor inputs.
  * @returns A `DoctorCheck` describing whether package metadata matches the workspace contract.
  */
 export function getWorkspacePackageMetadataCheck(
 	workspace: WorkspaceProject,
 	packageJson: WorkspacePackageJson,
+	snapshot: WorkspacePackageDoctorSnapshot,
 ): DoctorCheck {
 	const issues: string[] = [];
 	const packageName = packageJson.name;
-	const bootstrapRelativePath = getWorkspaceBootstrapRelativePath(
-		typeof packageName === "string" && packageName.length > 0 ? packageName : workspace.packageName,
-	);
 	const wpTypia = packageJson.wpTypia;
 
 	if (typeof packageName !== "string" || packageName.length === 0) {
@@ -46,15 +90,15 @@ export function getWorkspacePackageMetadataCheck(
 	if (wpTypia?.phpPrefix !== workspace.workspace.phpPrefix) {
 		issues.push(`wpTypia.phpPrefix must equal "${workspace.workspace.phpPrefix}"`);
 	}
-	if (!fs.existsSync(path.join(workspace.projectDir, bootstrapRelativePath))) {
-		issues.push(`Missing bootstrap file ${bootstrapRelativePath}`);
+	if (!snapshot.bootstrapExists) {
+		issues.push(`Missing bootstrap file ${snapshot.bootstrapRelativePath}`);
 	}
 
 	return createDoctorCheck(
 		"Workspace package metadata",
 		issues.length === 0 ? "pass" : "fail",
 		issues.length === 0
-			? `package.json metadata aligns with ${workspace.packageName} and ${bootstrapRelativePath}`
+			? `package.json metadata aligns with ${workspace.packageName} and ${snapshot.bootstrapRelativePath}`
 			: issues.join("; "),
 	);
 }
@@ -62,29 +106,25 @@ export function getWorkspacePackageMetadataCheck(
 /**
  * Report whether a workspace configured for migrations exposes the expected doctor inputs.
  *
- * @param workspace Resolved workspace metadata and filesystem paths.
  * @param packageJson Parsed workspace package manifest.
+ * @param snapshot Async filesystem snapshot for package-level doctor inputs.
  * @returns A migration hint row when the workspace uses migrations, otherwise `null`.
  */
 export function getMigrationWorkspaceHintCheck(
-	workspace: WorkspaceProject,
 	packageJson: WorkspacePackageJson,
+	snapshot: WorkspacePackageDoctorSnapshot,
 ): DoctorCheck | null {
 	const hasMigrationScript = typeof packageJson.scripts?.["migration:doctor"] === "string";
-	const migrationConfigRelativePath = path.join("src", "migrations", "config.ts");
-	const hasMigrationConfig = fs.existsSync(
-		path.join(workspace.projectDir, migrationConfigRelativePath),
-	);
 
-	if (!hasMigrationScript && !hasMigrationConfig) {
+	if (!hasMigrationScript && !snapshot.migrationConfigExists) {
 		return null;
 	}
 
 	return createDoctorCheck(
 		"Migration workspace",
-		hasMigrationConfig ? "pass" : "fail",
-		hasMigrationConfig
+		snapshot.migrationConfigExists ? "pass" : "fail",
+		snapshot.migrationConfigExists
 			? "Run `wp-typia migrate doctor --all` for migration target, snapshot, fixture, and generated artifact checks"
-			: `Missing ${migrationConfigRelativePath} for the configured migration workspace`,
+			: `Missing ${snapshot.migrationConfigRelativePath} for the configured migration workspace`,
 	);
 }

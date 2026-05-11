@@ -10,6 +10,7 @@ import {
 import {
 	getMigrationWorkspaceHintCheck,
 	getWorkspacePackageMetadataCheck,
+	prepareWorkspacePackageDoctorSnapshot,
 } from "./cli-doctor-workspace-package.js";
 import {
 	createDoctorCheck,
@@ -137,7 +138,18 @@ export async function getWorkspaceDoctorChecks(cwd: string): Promise<DoctorCheck
 		return checks;
 	}
 
-	checks.push(getWorkspacePackageMetadataCheck(workspace, workspacePackageJson));
+	const packageDoctorSnapshot = await prepareWorkspacePackageDoctorSnapshot(
+		workspace,
+		workspacePackageJson,
+	);
+
+	checks.push(
+		getWorkspacePackageMetadataCheck(
+			workspace,
+			workspacePackageJson,
+			packageDoctorSnapshot,
+		),
+	);
 
 	try {
 		const inventory = await readWorkspaceInventoryAsync(workspace.projectDir);
@@ -148,13 +160,16 @@ export async function getWorkspaceDoctorChecks(cwd: string): Promise<DoctorCheck
 				formatWorkspaceInventorySummary(inventory),
 			),
 		);
+		// The highest-impact remaining probes live in block, binding, and feature
+		// categories; keep them synchronous until broader path/content snapshots
+		// can preserve their current row ordering and diagnostics.
 		checks.push(...getWorkspaceBlockDoctorChecks(workspace, inventory));
 		checks.push(...getWorkspaceBindingDoctorChecks(workspace, inventory));
 		checks.push(...getWorkspaceFeatureDoctorChecks(workspace, inventory));
 
 		const migrationWorkspaceCheck = getMigrationWorkspaceHintCheck(
-			workspace,
 			workspacePackageJson,
+			packageDoctorSnapshot,
 		);
 		if (migrationWorkspaceCheck) {
 			checks.push(migrationWorkspaceCheck);
