@@ -120,6 +120,7 @@ const PHP_CALLBACK_REFERENCE_PATTERN = new RegExp(
 	`^\\\\?${PHP_IDENTIFIER_PATTERN}(?:\\\\${PHP_IDENTIFIER_PATTERN})*(?:::${PHP_IDENTIFIER_PATTERN})?$`,
 	"u",
 );
+const REST_ROUTE_NAMED_CAPTURE_PATTERN = /\(\?P<([A-Za-z_][A-Za-z0-9_]*)>/gu;
 
 /**
  * Validate a normalized workspace-generated slug.
@@ -384,6 +385,23 @@ function resolveRestRoutePathPattern(options: {
 	return withLeadingSlash;
 }
 
+/**
+ * Check whether a generated REST item route keeps the generated `id` contract aligned.
+ *
+ * @param routePattern Route pattern relative to the namespace.
+ * @returns True when the pattern has no named captures or includes `(?P<id>...)`.
+ */
+export function isGeneratedRestResourceRoutePatternCompatible(
+	routePattern: string,
+): boolean {
+	const namedCaptures = Array.from(
+		routePattern.matchAll(REST_ROUTE_NAMED_CAPTURE_PATTERN),
+		(match) => match[1],
+	);
+
+	return namedCaptures.length === 0 || namedCaptures.includes("id");
+}
+
 export function resolveManualRestContractPathPattern(
 	slug: string,
 	pathPattern?: string,
@@ -409,13 +427,25 @@ export function resolveGeneratedRestResourceRoutePattern(
 	slug: string,
 	routePattern?: string,
 ): string {
-	return resolveRestRoutePathPattern({
+	const resolvedRoutePattern = resolveRestRoutePathPattern({
 		defaultPath: `/${slug}/item`,
 		emptyMessage:
 			"Generated REST resource route pattern is required. Use `--route-pattern <route-pattern>` such as `/records/(?P<id>[\\d]+)`.",
 		label: "Generated REST resource route pattern",
 		pathPattern: routePattern,
 	});
+	const hasExplicitRoutePattern =
+		typeof routePattern === "string" && routePattern.trim().length > 0;
+	if (
+		hasExplicitRoutePattern &&
+		!isGeneratedRestResourceRoutePatternCompatible(resolvedRoutePattern)
+	) {
+		throw new Error(
+			"Generated REST resource route pattern must include an `(?P<id>...)` named capture when using named regex captures.",
+		);
+	}
+
+	return resolvedRoutePattern;
 }
 
 /**

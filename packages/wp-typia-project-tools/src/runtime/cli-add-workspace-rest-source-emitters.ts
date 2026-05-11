@@ -17,6 +17,15 @@ function indentMultiline(source: string, prefix: string): string {
 		.join("\n");
 }
 
+/**
+ * Build a generated REST resource config entry for `scripts/block-config.ts`.
+ *
+ * @param options REST resource metadata. `restResourceSlug`, `namespace`, and
+ * `methods` are required; `controllerClass`, `controllerExtends`,
+ * `permissionCallback`, and `routePattern` opt into generated controller,
+ * permission, and item-route escape hatches.
+ * @returns TypeScript object literal source for one generated REST resource entry.
+ */
 export function buildRestResourceConfigEntry(
 	options: {
 		controllerClass?: string;

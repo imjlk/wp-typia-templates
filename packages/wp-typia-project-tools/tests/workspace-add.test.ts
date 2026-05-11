@@ -4943,6 +4943,25 @@ test("rest resource workflow rejects invalid namespace and methods and preserves
     )
   ).toContain("REST resource methods must be a comma-separated list");
 
+  expect(
+    getCommandErrorMessage(() =>
+      runCli(
+        "node",
+        [
+          entryPath,
+          "add",
+          "rest-resource",
+          "snapshots",
+          "--route-pattern",
+          "/snapshots/(?P<recordId>[\\d]+)",
+        ],
+        {
+          cwd: targetDir,
+        }
+      )
+    )
+  ).toContain("must include an `(?P<id>...)` named capture");
+
   runCli("node", [entryPath, "add", "rest-resource", "snapshots"], {
     cwd: targetDir,
   });

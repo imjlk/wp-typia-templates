@@ -157,6 +157,6 @@ export const restResourceAddKindEntry =
     sortOrder: 80,
     supportsDryRun: true,
     usage:
-      'wp-typia add rest-resource <name> [--namespace <vendor/v1>] [--methods <list,read,create,update,delete>] [--route-pattern <route-pattern>] [--permission-callback <callback>] [--controller-class <ClassName> --controller-extends <BaseClass>] [--manual --method <GET|POST|PUT|PATCH|DELETE> --auth <public|authenticated|public-write-protected> --path <route-pattern> --query-type <Type> --body-type <Type> --response-type <Type>] [--dry-run]',
+      'wp-typia add rest-resource <name> [--namespace <vendor/v1>] [--methods <list,read,create,update,delete>] [--route-pattern <route-pattern>] [--permission-callback <callback>] [--controller-class <ClassName>] [--controller-extends <BaseClass>] [--manual --method <GET|POST|PUT|PATCH|DELETE> --auth <public|authenticated|public-write-protected> --path <route-pattern> --query-type <Type> --body-type <Type> --response-type <Type>] [--dry-run]',
     visibleFieldNames: () => NAME_NAMESPACE_METHODS_VISIBLE_FIELDS,
   });
