@@ -46,6 +46,7 @@ export const adminViewAddKindEntry =
         }),
         missingNameMessage: ADMIN_VIEW_MISSING_NAME_MESSAGE,
         name,
+        warnLine: context.warnLine,
       });
     },
     sortOrder: 10,

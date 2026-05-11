@@ -50,6 +50,7 @@ export const variationAddKindEntry =
         }),
         missingNameMessage: VARIATION_MISSING_NAME_MESSAGE,
         name,
+        warnLine: context.warnLine,
       });
     },
     sortOrder: 30,

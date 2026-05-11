@@ -50,6 +50,7 @@ export const styleAddKindEntry =
         }),
         missingNameMessage: STYLE_MISSING_NAME_MESSAGE,
         name,
+        warnLine: context.warnLine,
       });
     },
     sortOrder: 40,
