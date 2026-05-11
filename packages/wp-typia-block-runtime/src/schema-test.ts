@@ -40,6 +40,10 @@ const validatorCache = new WeakMap<
 	ValidateFunction<unknown>
 >();
 
+function isFiniteNumber(value: unknown): value is number {
+	return typeof value === "number" && Number.isFinite(value);
+}
+
 /**
  * Error thrown by `assertResponseMatchesSchema()` when a payload does not match
  * a generated JSON Schema artifact.
@@ -81,17 +85,31 @@ function getAjv(): Ajv2020 {
 		keyword: "x-typeTag",
 		schemaType: "string",
 		validate(typeTag: string, data: unknown): boolean {
-			if (typeof data !== "number" || !Number.isInteger(data)) {
-				return false;
-			}
-
 			switch (typeTag) {
 				case "int32":
-					return data >= INT32_MIN && data <= INT32_MAX;
+					return (
+						isFiniteNumber(data) &&
+						Number.isInteger(data) &&
+						data >= INT32_MIN &&
+						data <= INT32_MAX
+					);
 				case "uint32":
-					return data >= 0 && data <= UINT32_MAX;
+					return (
+						isFiniteNumber(data) &&
+						Number.isInteger(data) &&
+						data >= 0 &&
+						data <= UINT32_MAX
+					);
 				case "uint64":
-					return data >= 0 && data <= Number.MAX_SAFE_INTEGER;
+					return (
+						isFiniteNumber(data) &&
+						Number.isInteger(data) &&
+						data >= 0 &&
+						data <= Number.MAX_SAFE_INTEGER
+					);
+				case "float":
+				case "double":
+					return isFiniteNumber(data);
 				default:
 					return false;
 			}

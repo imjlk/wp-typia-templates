@@ -15,6 +15,11 @@ interface ExternalRetrieveResponse {
 	status: "ok";
 }
 
+interface MetricResponse {
+	ratio: number;
+	velocity: number;
+}
+
 const externalRetrieveResponseSchema = {
 	$schema: "https://json-schema.org/draft/2020-12/schema",
 	additionalProperties: false,
@@ -36,6 +41,24 @@ const externalRetrieveResponseSchema = {
 	},
 	required: ["count", "items", "status"],
 	title: "ExternalRetrieveResponse",
+	type: "object",
+} satisfies GeneratedSchemaDocument;
+
+const metricResponseSchema = {
+	$schema: "https://json-schema.org/draft/2020-12/schema",
+	additionalProperties: false,
+	properties: {
+		ratio: {
+			type: "number",
+			"x-typeTag": "double",
+		},
+		velocity: {
+			type: "number",
+			"x-typeTag": "float",
+		},
+	},
+	required: ["ratio", "velocity"],
+	title: "MetricResponse",
 	type: "object",
 } satisfies GeneratedSchemaDocument;
 
@@ -77,6 +100,35 @@ describe("@wp-typia/block-runtime/schema-test", () => {
 			"additionalProperties",
 			"x-typeTag",
 			"type",
+		]);
+	});
+
+	test("accepts floating-point type tags for generated response schemas", () => {
+		const validate =
+			createResponseSchemaValidator<MetricResponse>(metricResponseSchema);
+
+		const valid = validate({
+			ratio: 0.125,
+			velocity: -12.5,
+		});
+		expect(valid).toEqual({
+			data: {
+				ratio: 0.125,
+				velocity: -12.5,
+			},
+			errors: [],
+			isValid: true,
+		});
+
+		const invalid = validate({
+			ratio: Number.POSITIVE_INFINITY,
+			velocity: "fast",
+		});
+		expect(invalid.isValid).toBe(false);
+		expect(invalid.errors.map((error) => error.path)).toEqual([
+			"$.ratio",
+			"$.velocity",
+			"$.velocity",
 		]);
 	});
 
