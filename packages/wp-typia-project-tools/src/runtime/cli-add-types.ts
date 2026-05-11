@@ -229,11 +229,17 @@ export interface RunAddContractCommandOptions {
  * @property auth Optional auth intent for manual mode. Defaults to public.
  * @property bodyTypeName Optional exported TypeScript body type for manual
  * mode. Defaults to `<PascalName>Request` for write methods.
+ * @property controllerClass Optional generated REST controller class reference.
+ * When present, route callbacks delegate through an instantiated controller.
+ * @property controllerExtends Optional base class for the generated controller
+ * wrapper when `controllerClass` is a global class name.
  * @property cwd Working directory used to resolve the nearest official workspace.
  * @property manual Whether to scaffold a type-only external REST contract.
  * @property method HTTP method for manual REST contract mode. Defaults to GET.
  * @property methods Optional comma-separated REST method list.
  * @property namespace Optional REST namespace, defaulting to the workspace namespace.
+ * @property permissionCallback Optional PHP callback used for generated REST
+ * route permission checks.
  * @property pathPattern Route path pattern for manual mode, relative to the
  * namespace. Defaults to `/<name>`.
  * @property queryTypeName Optional exported TypeScript query type for manual
@@ -241,19 +247,25 @@ export interface RunAddContractCommandOptions {
  * @property restResourceName Human-entered resource name normalized into a slug.
  * @property responseTypeName Optional exported TypeScript response type for
  * manual mode. Defaults to `<PascalName>Response`.
+ * @property routePattern Optional generated item route pattern, relative to the
+ * namespace. Defaults to `/<name>/item`.
  */
 export interface RunAddRestResourceCommandOptions {
 	auth?: string;
 	bodyTypeName?: string;
+	controllerClass?: string;
+	controllerExtends?: string;
 	cwd?: string;
 	manual?: boolean;
 	method?: string;
 	methods?: string;
 	namespace?: string;
+	permissionCallback?: string;
 	pathPattern?: string;
 	queryTypeName?: string;
 	restResourceName: string;
 	responseTypeName?: string;
+	routePattern?: string;
 }
 
 /**

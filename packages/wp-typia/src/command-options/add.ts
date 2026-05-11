@@ -28,6 +28,16 @@ export const ADD_OPTION_METADATA = {
       'Target block slug for variation, style, and end-to-end binding-source workflows.',
     type: 'string',
   },
+  'controller-class': {
+    description:
+      'Generated REST resource controller class used for route callbacks.',
+    type: 'string',
+  },
+  'controller-extends': {
+    description:
+      'Optional base class for generated REST resource controller wrappers.',
+    type: 'string',
+  },
   'data-storage': {
     description: 'Persistence storage mode for persistence-capable templates.',
     type: 'string',
@@ -78,6 +88,11 @@ export const ADD_OPTION_METADATA = {
     description: 'REST namespace for rest-resource and ai-feature workflows.',
     type: 'string',
   },
+  'permission-callback': {
+    description:
+      'PHP permission callback for generated REST resource route registrations.',
+    type: 'string',
+  },
   'persistence-policy': {
     description: 'Persistence write policy for persistence-capable templates.',
     type: 'string',
@@ -99,6 +114,11 @@ export const ADD_OPTION_METADATA = {
   'response-type': {
     description:
       'Exported TypeScript response type for manual REST contract workflows.',
+    type: 'string',
+  },
+  'route-pattern': {
+    description:
+      'Generated REST resource item route pattern relative to the REST namespace.',
     type: 'string',
   },
   service: {

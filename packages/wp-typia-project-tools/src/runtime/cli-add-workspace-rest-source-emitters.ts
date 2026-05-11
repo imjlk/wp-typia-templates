@@ -18,37 +18,56 @@ function indentMultiline(source: string, prefix: string): string {
 }
 
 export function buildRestResourceConfigEntry(
-	restResourceSlug: string,
-	namespace: string,
-	methods: RestResourceMethodId[],
+	options: {
+		controllerClass?: string;
+		controllerExtends?: string;
+		methods: RestResourceMethodId[];
+		namespace: string;
+		permissionCallback?: string;
+		restResourceSlug: string;
+		routePattern?: string;
+	},
 ): string {
-	const pascalCase = toPascalCase(restResourceSlug);
-	const title = toTitleCase(restResourceSlug);
+	const pascalCase = toPascalCase(options.restResourceSlug);
+	const title = toTitleCase(options.restResourceSlug);
 	const manifest = buildRestResourceEndpointManifest(
 		{
-			namespace,
+			namespace: options.namespace,
 			pascalCase,
-			slugKebabCase: restResourceSlug,
+			...(options.routePattern ? { routePattern: options.routePattern } : {}),
+			slugKebabCase: options.restResourceSlug,
 			title,
 		},
-		methods,
+		options.methods,
 	);
 
 	return [
 		"\t{",
-		`\t\tapiFile: ${quoteTsString(`src/rest/${restResourceSlug}/api.ts`)},`,
-		`\t\tclientFile: ${quoteTsString(`src/rest/${restResourceSlug}/api-client.ts`)},`,
-		`\t\tdataFile: ${quoteTsString(`src/rest/${restResourceSlug}/data.ts`)},`,
-		`\t\tmethods: [ ${methods.map((method) => quoteTsString(method)).join(", ")} ],`,
-		`\t\tnamespace: ${quoteTsString(namespace)},`,
-		`\t\topenApiFile: ${quoteTsString(`src/rest/${restResourceSlug}/api.openapi.json`)},`,
-		`\t\tphpFile: ${quoteTsString(`inc/rest/${restResourceSlug}.php`)},`,
+		`\t\tapiFile: ${quoteTsString(`src/rest/${options.restResourceSlug}/api.ts`)},`,
+		...(options.controllerClass
+			? [`\t\tcontrollerClass: ${quoteTsString(options.controllerClass)},`]
+			: []),
+		...(options.controllerExtends
+			? [`\t\tcontrollerExtends: ${quoteTsString(options.controllerExtends)},`]
+			: []),
+		`\t\tclientFile: ${quoteTsString(`src/rest/${options.restResourceSlug}/api-client.ts`)},`,
+		`\t\tdataFile: ${quoteTsString(`src/rest/${options.restResourceSlug}/data.ts`)},`,
+		`\t\tmethods: [ ${options.methods.map((method) => quoteTsString(method)).join(", ")} ],`,
+		`\t\tnamespace: ${quoteTsString(options.namespace)},`,
+		`\t\topenApiFile: ${quoteTsString(`src/rest/${options.restResourceSlug}/api.openapi.json`)},`,
+		...(options.permissionCallback
+			? [`\t\tpermissionCallback: ${quoteTsString(options.permissionCallback)},`]
+			: []),
+		`\t\tphpFile: ${quoteTsString(`inc/rest/${options.restResourceSlug}.php`)},`,
 		"\t\trestManifest: defineEndpointManifest(",
 		indentMultiline(JSON.stringify(manifest, null, "\t"), "\t\t\t"),
 		"\t\t),",
-		`\t\tslug: ${quoteTsString(restResourceSlug)},`,
-		`\t\ttypesFile: ${quoteTsString(`src/rest/${restResourceSlug}/api-types.ts`)},`,
-		`\t\tvalidatorsFile: ${quoteTsString(`src/rest/${restResourceSlug}/api-validators.ts`)},`,
+		...(options.routePattern
+			? [`\t\troutePattern: ${quoteTsString(options.routePattern)},`]
+			: []),
+		`\t\tslug: ${quoteTsString(options.restResourceSlug)},`,
+		`\t\ttypesFile: ${quoteTsString(`src/rest/${options.restResourceSlug}/api-types.ts`)},`,
+		`\t\tvalidatorsFile: ${quoteTsString(`src/rest/${options.restResourceSlug}/api-validators.ts`)},`,
 		"\t},",
 	].join("\n");
 }
@@ -402,9 +421,8 @@ export function buildRestResourceApiSource(
 		clientEndpointImports.push(`list${pascalCase}ResourcesEndpoint`);
 		exportedBindings.push(`export const restResourceListEndpoint = {
 \t...list${pascalCase}ResourcesEndpoint,
-\tbuildRequestOptions: () => ( {
-\t\turl: resolveRestRouteUrl( list${pascalCase}ResourcesEndpoint.path ),
-\t} ),
+\tbuildRequestOptions: ( request: ${pascalCase}ListQuery ) =>
+\t\tresolveEndpointRouteOptions( list${pascalCase}ResourcesEndpoint, request ),
 };
 
 export function listResource( request: ${pascalCase}ListQuery ) {
@@ -417,9 +435,8 @@ export function listResource( request: ${pascalCase}ListQuery ) {
 		clientEndpointImports.push(`read${pascalCase}ResourceEndpoint`);
 		exportedBindings.push(`export const restResourceReadEndpoint = {
 \t...read${pascalCase}ResourceEndpoint,
-\tbuildRequestOptions: () => ( {
-\t\turl: resolveRestRouteUrl( read${pascalCase}ResourceEndpoint.path ),
-\t} ),
+\tbuildRequestOptions: ( request: ${pascalCase}ReadQuery ) =>
+\t\tresolveEndpointRouteOptions( read${pascalCase}ResourceEndpoint, request ),
 };
 
 export function readResource( request: ${pascalCase}ReadQuery ) {
@@ -432,15 +449,15 @@ export function readResource( request: ${pascalCase}ReadQuery ) {
 		clientEndpointImports.push(`create${pascalCase}ResourceEndpoint`);
 		exportedBindings.push(`export const restResourceCreateEndpoint = {
 \t...create${pascalCase}ResourceEndpoint,
-\tbuildRequestOptions: () => {
+\tbuildRequestOptions: ( request: ${pascalCase}CreateRequest ) => {
 \t\tconst nonce = resolveRestNonce();
 \t\treturn {
+\t\t\t...resolveEndpointRouteOptions( create${pascalCase}ResourceEndpoint, request ),
 \t\t\theaders: nonce
 \t\t\t\t? {
 \t\t\t\t\t'X-WP-Nonce': nonce,
 \t\t\t\t}
 \t\t\t\t: undefined,
-\t\t\turl: resolveRestRouteUrl( create${pascalCase}ResourceEndpoint.path ),
 \t\t};
 \t},
 };
@@ -456,15 +473,18 @@ export function createResource( request: ${pascalCase}CreateRequest ) {
 		clientEndpointImports.push(`update${pascalCase}ResourceEndpoint`);
 		exportedBindings.push(`export const restResourceUpdateEndpoint = {
 \t...update${pascalCase}ResourceEndpoint,
-\tbuildRequestOptions: () => {
+\tbuildRequestOptions: ( request: {
+\t\tbody: ${pascalCase}UpdateRequest;
+\t\tquery: ${pascalCase}UpdateQuery;
+\t} ) => {
 \t\tconst nonce = resolveRestNonce();
 \t\treturn {
+\t\t\t...resolveEndpointRouteOptions( update${pascalCase}ResourceEndpoint, request ),
 \t\t\theaders: nonce
 \t\t\t\t? {
 \t\t\t\t\t'X-WP-Nonce': nonce,
 \t\t\t\t}
 \t\t\t\t: undefined,
-\t\t\turl: resolveRestRouteUrl( update${pascalCase}ResourceEndpoint.path ),
 \t\t};
 \t},
 };
@@ -482,15 +502,15 @@ export function updateResource( request: {
 		clientEndpointImports.push(`delete${pascalCase}ResourceEndpoint`);
 		exportedBindings.push(`export const restResourceDeleteEndpoint = {
 \t...delete${pascalCase}ResourceEndpoint,
-\tbuildRequestOptions: () => {
+\tbuildRequestOptions: ( request: ${pascalCase}DeleteQuery ) => {
 \t\tconst nonce = resolveRestNonce();
 \t\treturn {
+\t\t\t...resolveEndpointRouteOptions( delete${pascalCase}ResourceEndpoint, request ),
 \t\t\theaders: nonce
 \t\t\t\t? {
 \t\t\t\t\t'X-WP-Nonce': nonce,
 \t\t\t\t}
 \t\t\t\t: undefined,
-\t\t\turl: resolveRestRouteUrl( delete${pascalCase}ResourceEndpoint.path ),
 \t\t};
 \t},
 };
@@ -538,6 +558,24 @@ import {
 \t${clientEndpointImports.sort().join(",\n\t")},
 } from './api-client';
 ${resolveRestNonceSource}
+function resolveEndpointRouteOptions<TRequest>(
+\tendpoint: {
+\t\tbuildRequestOptions?: ( request: TRequest ) => {
+\t\t\tpath?: string;
+\t\t\turl?: string;
+\t\t};
+\t\tpath: string;
+\t},
+\trequest: TRequest
+) {
+\tconst requestOptions = endpoint.buildRequestOptions?.( request ) ?? {};
+\treturn {
+\t\t...requestOptions,
+\t\tpath: undefined,
+\t\turl: requestOptions.url ?? resolveRestRouteUrl( requestOptions.path ?? endpoint.path ),
+\t};
+}
+
 ${exportedBindings.join("\n\n")}
 `;
 }

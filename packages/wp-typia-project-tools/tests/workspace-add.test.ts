@@ -3813,6 +3813,109 @@ test("canonical CLI can add a plugin-level REST resource to an official workspac
   typecheckGeneratedProject(targetDir);
 }, 30_000);
 
+test("canonical CLI can add a generated REST resource with custom route and controller hooks", async () => {
+  const targetDir = path.join(
+    tempRoot,
+    "demo-workspace-add-custom-rest-resource"
+  );
+
+  await scaffoldProject({
+    projectDir: targetDir,
+    templateId: workspaceTemplatePackageManifest.name,
+    packageManager: "npm",
+    noInstall: true,
+    answers: {
+      author: "Test Runner",
+      description: "Demo workspace add custom rest resource",
+      namespace: "demo-space",
+      phpPrefix: "demo_space",
+      slug: "demo-workspace-add-custom-rest-resource",
+      textDomain: "demo-space",
+      title: "Demo Workspace Add Custom Rest Resource",
+    },
+  });
+
+  linkWorkspaceNodeModules(targetDir);
+
+  runCli(
+    "node",
+    [
+      entryPath,
+      "add",
+      "rest-resource",
+      "snapshots",
+      "--namespace",
+      "demo-space/v1",
+      "--methods",
+      "read,update,delete",
+      "--route-pattern",
+      "/snapshots/(?P<id>[\\d]+)",
+      "--permission-callback",
+      "demo_space_can_manage_snapshots",
+      "--controller-class",
+      "Demo_Space_Snapshots_Controller",
+      "--controller-extends",
+      "WP_REST_Controller",
+    ],
+    {
+      cwd: targetDir,
+    }
+  );
+
+  const blockConfigSource = fs.readFileSync(
+    path.join(targetDir, "scripts", "block-config.ts"),
+    "utf8"
+  );
+  const apiSource = fs.readFileSync(
+    path.join(targetDir, "src", "rest", "snapshots", "api.ts"),
+    "utf8"
+  );
+  const clientSource = fs.readFileSync(
+    path.join(targetDir, "src", "rest", "snapshots", "api-client.ts"),
+    "utf8"
+  );
+  const openApiSource = fs.readFileSync(
+    path.join(targetDir, "src", "rest", "snapshots", "api.openapi.json"),
+    "utf8"
+  );
+  const phpSource = fs.readFileSync(
+    path.join(targetDir, "inc", "rest", "snapshots.php"),
+    "utf8"
+  );
+
+  expect(blockConfigSource).toContain(
+    'controllerClass: "Demo_Space_Snapshots_Controller"'
+  );
+  expect(blockConfigSource).toContain('controllerExtends: "WP_REST_Controller"');
+  expect(blockConfigSource).toContain(
+    'permissionCallback: "demo_space_can_manage_snapshots"'
+  );
+  expect(blockConfigSource).toContain('routePattern: "/snapshots/(?P<id>[\\\\d]+)"');
+  expect(apiSource).toContain(
+    "resolveEndpointRouteOptions( readSnapshotsResourceEndpoint, request )"
+  );
+  expect(clientSource).toContain(
+    "path: `/demo-space/v1/snapshots/${encodeURIComponent( String( pathParam0 ) )}`,"
+  );
+  expect(openApiSource).toContain('"/demo-space/v1/snapshots/(?P<id>[\\\\d]+)"');
+  expect(phpSource).toContain(
+    "class Demo_Space_Snapshots_Controller extends \\WP_REST_Controller"
+  );
+  expect(phpSource).toContain(
+    "$controller_class = \\Demo_Space_Snapshots_Controller::class;"
+  );
+  expect(phpSource).toContain(
+    "'callback'            => array( $controller, 'read_item' )"
+  );
+  expect(phpSource).toContain(
+    "'permission_callback' => 'demo_space_can_manage_snapshots'"
+  );
+  expect(phpSource).toContain("'/snapshots/(?P<id>[\\\\d]+)'");
+
+  runCli("npm", ["run", "sync-rest", "--", "--check"], { cwd: targetDir });
+  typecheckGeneratedProject(targetDir);
+}, 30_000);
+
 test("canonical CLI can add a DataViews admin screen without an unpublished override", async () => {
   const targetDir = path.join(tempRoot, "demo-workspace-add-admin-view-public");
 

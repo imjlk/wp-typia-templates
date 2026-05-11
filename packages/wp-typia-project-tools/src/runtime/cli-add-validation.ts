@@ -111,6 +111,15 @@ const TYPESCRIPT_RESERVED_IDENTIFIERS = new Set([
  * Namespace format accepted by plugin-level REST resources.
  */
 export const REST_RESOURCE_NAMESPACE_PATTERN = /^[a-z][a-z0-9-]*(?:\/[a-z0-9-]+)+$/u;
+const PHP_IDENTIFIER_PATTERN = "[A-Za-z_][A-Za-z0-9_]*";
+const PHP_QUALIFIED_NAME_PATTERN = new RegExp(
+	`^\\\\?${PHP_IDENTIFIER_PATTERN}(?:\\\\${PHP_IDENTIFIER_PATTERN})*$`,
+	"u",
+);
+const PHP_CALLBACK_REFERENCE_PATTERN = new RegExp(
+	`^\\\\?${PHP_IDENTIFIER_PATTERN}(?:\\\\${PHP_IDENTIFIER_PATTERN})*(?:::${PHP_IDENTIFIER_PATTERN})?$`,
+	"u",
+);
 
 /**
  * Validate a normalized workspace-generated slug.
@@ -239,6 +248,62 @@ export function assertValidRestResourceMethods(
 }
 
 /**
+ * Validate a PHP callable reference supplied to generated REST route metadata.
+ *
+ * @param label Human-readable field label for errors.
+ * @param callback Optional PHP function or `ClassName::method` callback string.
+ * @returns The trimmed callback when present.
+ * @throws {Error} When the callback cannot be emitted as a safe PHP callable string.
+ */
+export function resolveOptionalPhpCallbackReference(
+	label: string,
+	callback?: string,
+): string | undefined {
+	if (callback == null) {
+		return undefined;
+	}
+	const trimmed = callback.trim();
+	if (!trimmed) {
+		throw new Error(`${label} cannot be empty.`);
+	}
+	if (!PHP_CALLBACK_REFERENCE_PATTERN.test(trimmed)) {
+		throw new Error(
+			`${label} must be a PHP function reference or ClassName::method callback.`,
+		);
+	}
+
+	return trimmed;
+}
+
+/**
+ * Validate a PHP class reference used by generated REST controller wrappers.
+ *
+ * @param label Human-readable field label for errors.
+ * @param classReference Optional PHP class name.
+ * @returns The trimmed class reference when present.
+ * @throws {Error} When the class reference cannot be emitted safely.
+ */
+export function resolveOptionalPhpClassReference(
+	label: string,
+	classReference?: string,
+): string | undefined {
+	if (classReference == null) {
+		return undefined;
+	}
+	const trimmed = classReference.trim();
+	if (!trimmed) {
+		throw new Error(`${label} cannot be empty.`);
+	}
+	if (!PHP_QUALIFIED_NAME_PATTERN.test(trimmed)) {
+		throw new Error(
+			`${label} must be a PHP class reference such as Demo_Rest_Controller or Vendor\\Plugin\\Controller.`,
+		);
+	}
+
+	return trimmed;
+}
+
+/**
  * Normalize and validate the HTTP method used by a manual REST contract.
  *
  * @param method Optional method input. Defaults to GET.
@@ -290,37 +355,67 @@ export function assertValidManualRestContractAuth(
  * @returns A route pattern with a leading slash.
  * @throws {Error} When the path pattern is empty or clearly not a route path.
  */
-export function resolveManualRestContractPathPattern(
-	slug: string,
-	pathPattern?: string,
-): string {
+function resolveRestRoutePathPattern(options: {
+	defaultPath: string;
+	emptyMessage: string;
+	label: string;
+	pathPattern?: string;
+}): string {
 	const explicitPath =
-		typeof pathPattern === "string" ? pathPattern.trim() : undefined;
+		typeof options.pathPattern === "string" ? options.pathPattern.trim() : undefined;
 	if (explicitPath === "") {
-		throw new Error(
-			"Manual REST contract path is required. Use `--path <route-pattern>` such as `/external-record/(?P<id>[\\d]+)`.",
-		);
+		throw new Error(options.emptyMessage);
 	}
-	const trimmed = explicitPath ?? `/${slug}`;
+	const trimmed = explicitPath ?? options.defaultPath;
 	if (/^https?:\/\//iu.test(trimmed)) {
 		throw new Error(
-			"Manual REST contract path must be a route pattern relative to the namespace, not an absolute URL.",
+			`${options.label} must be a route pattern relative to the namespace, not an absolute URL.`,
 		);
 	}
 	const withLeadingSlash = trimmed.startsWith("/") ? trimmed : `/${trimmed}`;
 
 	if (!withLeadingSlash || withLeadingSlash === "/") {
-		throw new Error(
-			"Manual REST contract path is required. Use `--path <route-pattern>` such as `/external-record/(?P<id>[\\d]+)`.",
-		);
+		throw new Error(options.emptyMessage);
 	}
 	if (/\s/u.test(withLeadingSlash)) {
-		throw new Error(
-			"Manual REST contract path must not contain whitespace.",
-		);
+		throw new Error(`${options.label} must not contain whitespace.`);
 	}
 
 	return withLeadingSlash;
+}
+
+export function resolveManualRestContractPathPattern(
+	slug: string,
+	pathPattern?: string,
+): string {
+	return resolveRestRoutePathPattern({
+		defaultPath: `/${slug}`,
+		emptyMessage:
+			"Manual REST contract path is required. Use `--path <route-pattern>` such as `/external-record/(?P<id>[\\d]+)`.",
+		label: "Manual REST contract path",
+		pathPattern,
+	});
+}
+
+/**
+ * Normalize and validate a generated REST resource item route pattern.
+ *
+ * @param slug Generated resource slug used for the default item route path.
+ * @param routePattern Optional route path pattern, relative to the namespace.
+ * @returns A route pattern with a leading slash.
+ * @throws {Error} When the route pattern is empty or clearly not a route path.
+ */
+export function resolveGeneratedRestResourceRoutePattern(
+	slug: string,
+	routePattern?: string,
+): string {
+	return resolveRestRoutePathPattern({
+		defaultPath: `/${slug}/item`,
+		emptyMessage:
+			"Generated REST resource route pattern is required. Use `--route-pattern <route-pattern>` such as `/records/(?P<id>[\\d]+)`.",
+		label: "Generated REST resource route pattern",
+		pathPattern: routePattern,
+	});
 }
 
 /**
