@@ -173,6 +173,14 @@ describe("@wp-typia/block-runtime", () => {
 						{
 							auth: "public",
 							method: "GET",
+							operationId: "listOptionalPreviewItems",
+							path: "/items(?:/preview)?",
+							responseContract: "response",
+							tags: ["Items"],
+						},
+						{
+							auth: "public",
+							method: "GET",
 							operationId: "fetchOptionalItem",
 							path: "/items(?:/(?P<id>[\\d]+(?:-[\\d]+)*)/(?P<slug>[a-z]+))?",
 							queryContract: "query",
@@ -193,6 +201,8 @@ describe("@wp-typia/block-runtime", () => {
 			expect(clientSource).toContain("const rawPathParams = request as unknown;");
 			expect(clientSource).not.toContain('Missing path parameter "id"');
 			expect(clientSource).not.toContain('Missing path parameter "slug"');
+			expect(clientSource).toContain("buildRequestOptions: () => {");
+			expect(clientSource).toContain("path: `/items`,");
 			expect(clientSource).toContain(
 				"path: `/items${pathParam0 !== undefined && pathParam0 !== null && pathParam0 !== '' && pathParam1 !== undefined && pathParam1 !== null && pathParam1 !== '' ? `/${encodeURIComponent( String( pathParam0 ) )}/${encodeURIComponent( String( pathParam1 ) )}` : ''}`,",
 			);

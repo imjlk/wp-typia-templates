@@ -219,6 +219,18 @@ function getRequiredEndpointPathParameterNames(
 	return names;
 }
 
+function hasOptionalEndpointPathGroup(
+	parts: readonly EndpointPathTemplatePart[],
+): boolean {
+	for (const part of parts) {
+		if (part.kind === 'optionalGroup') {
+			return true;
+		}
+	}
+
+	return false;
+}
+
 function buildPathParameterPresentExpression(parameterIndex: number): string {
 	return `pathParam${parameterIndex} !== undefined && pathParam${parameterIndex} !== null && pathParam${parameterIndex} !== ''`;
 }
@@ -252,9 +264,7 @@ function buildEndpointPathTemplateBody(
 				part.parts,
 				pathParameterNames,
 			);
-			if (groupParameterIndexes.length === 0) {
-				fragments.push(groupTemplate);
-			} else {
+			if (groupParameterIndexes.length > 0) {
 				fragments.push(
 					`\${${groupParameterIndexes
 						.map((index) => buildPathParameterPresentExpression(index))
@@ -294,7 +304,8 @@ function buildEndpointPathRequestOptionLines(options: {
 }): string[] {
 	const pathParts = parseEndpointPathTemplateParts(options.endpointPath);
 	const pathParameterNames = collectEndpointPathParameterNames(pathParts, []);
-	if (pathParameterNames.length === 0) {
+	const hasPathParameters = pathParameterNames.length > 0;
+	if (!hasPathParameters && !hasOptionalEndpointPathGroup(pathParts)) {
 		return [];
 	}
 	const requiredPathParameterNames = getRequiredEndpointPathParameterNames(pathParts);
@@ -304,15 +315,19 @@ function buildEndpointPathRequestOptionLines(options: {
 			? 'request.query'
 			: 'request';
 	return [
-		`\tbuildRequestOptions: (request) => {`,
-		`\t\tconst rawPathParams = ${pathParamSource} as unknown;`,
-		`\t\tconst pathParams = rawPathParams && typeof rawPathParams === 'object'`,
-		`\t\t\t? (rawPathParams as Record<string, unknown>)`,
-		`\t\t\t: {};`,
-		...pathParameterNames.map(
-			(name, index) =>
-				`\t\tconst pathParam${index} = pathParams[${toJavaScriptStringLiteral(name)}];`,
-		),
+		`\tbuildRequestOptions: (${hasPathParameters ? 'request' : ''}) => {`,
+		...(hasPathParameters
+			? [
+					`\t\tconst rawPathParams = ${pathParamSource} as unknown;`,
+					`\t\tconst pathParams = rawPathParams && typeof rawPathParams === 'object'`,
+					`\t\t\t? (rawPathParams as Record<string, unknown>)`,
+					`\t\t\t: {};`,
+					...pathParameterNames.map(
+						(name, index) =>
+							`\t\tconst pathParam${index} = pathParams[${toJavaScriptStringLiteral(name)}];`,
+					),
+				]
+			: []),
 		...requiredPathParameterNames.flatMap((name) => {
 			const index = pathParameterNames.indexOf(name);
 			return [
