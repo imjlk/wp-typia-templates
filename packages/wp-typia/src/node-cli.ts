@@ -3,6 +3,7 @@ import {
   CLI_DIAGNOSTIC_CODES,
   createCliCommandError,
   formatCliDiagnosticError,
+  isCliDiagnosticError,
   serializeCliDiagnosticError,
 } from '@wp-typia/project-tools/cli-diagnostics';
 import {
@@ -53,6 +54,7 @@ import { dispatchNodeFallbackAdd } from './node-fallback/dispatchers/add';
 import { dispatchNodeFallbackCreate } from './node-fallback/dispatchers/create';
 import {
   NODE_FALLBACK_HELP_RENDERERS,
+  NODE_FALLBACK_NO_COMMAND_REASON_LINE,
   STANDALONE_GUIDANCE_LINE,
   renderGeneralHelp,
   renderNoCommandHelp,
@@ -74,6 +76,24 @@ const printLine: PrintLine = (line) => {
 const warnLine: PrintLine = (line) => {
   console.warn(line);
 };
+
+function createNoCommandCliError() {
+  return createCliCommandError({
+    code: CLI_DIAGNOSTIC_CODES.INVALID_COMMAND,
+    command: 'wp-typia',
+    detailLines: [NODE_FALLBACK_NO_COMMAND_REASON_LINE],
+    summary: 'No command was provided.',
+  });
+}
+
+function isNoCommandCliDiagnostic(error: unknown): boolean {
+  return (
+    isCliDiagnosticError(error) &&
+    error.code === CLI_DIAGNOSTIC_CODES.INVALID_COMMAND &&
+    error.command === 'wp-typia' &&
+    error.detailLines.includes(NODE_FALLBACK_NO_COMMAND_REASON_LINE)
+  );
+}
 
 export function hasFlagBeforeTerminator(argv: string[], flag: string): boolean {
   for (const arg of argv) {
@@ -432,9 +452,11 @@ export async function runNodeCli(argv = process.argv.slice(2)): Promise<void> {
     hasFlagBeforeTerminator(cliArgv, '--version') || command === 'version';
 
   if (cliArgv.length === 0) {
-    renderNoCommandHelp(printLine);
-    process.exitCode = 1;
-    return;
+    const noCommandError = createNoCommandCliError();
+    if (rawMergedFlags.format !== 'json') {
+      renderNoCommandHelp(printLine);
+    }
+    throw noCommandError;
   }
 
   if (helpRequested) {
@@ -519,6 +541,11 @@ export async function runNodeCliEntrypoint(
           2,
         )}\n`,
       );
+      process.exitCode = 1;
+      return;
+    }
+    if (isNoCommandCliDiagnostic(error)) {
+      // Human no-command output already includes the explanatory line and help.
       process.exitCode = 1;
       return;
     }
