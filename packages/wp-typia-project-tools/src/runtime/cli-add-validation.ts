@@ -121,6 +121,8 @@ const PHP_CALLBACK_REFERENCE_PATTERN = new RegExp(
 	"u",
 );
 const REST_ROUTE_NAMED_CAPTURE_PATTERN = /\(\?P<([A-Za-z_][A-Za-z0-9_]*)>/gu;
+const REST_ROUTE_UNSUPPORTED_CAPTURE_PATTERN =
+	/\((?!\?(?:P<[A-Za-z_][A-Za-z0-9_]*>|:))/u;
 
 /**
  * Validate a normalized workspace-generated slug.
@@ -389,7 +391,7 @@ function resolveRestRoutePathPattern(options: {
  * Check whether a generated REST item route keeps the generated `id` contract aligned.
  *
  * @param routePattern Route pattern relative to the namespace.
- * @returns True when the pattern has no named captures or includes `(?P<id>...)`.
+ * @returns True when the pattern has no regex groups or uses only `(?P<id>...)`.
  */
 export function isGeneratedRestResourceRoutePatternCompatible(
 	routePattern: string,
@@ -398,8 +400,14 @@ export function isGeneratedRestResourceRoutePatternCompatible(
 		routePattern.matchAll(REST_ROUTE_NAMED_CAPTURE_PATTERN),
 		(match) => match[1],
 	);
+	const hasRegexGroup = routePattern.includes("(");
+	const hasUnsupportedCapture =
+		REST_ROUTE_UNSUPPORTED_CAPTURE_PATTERN.test(routePattern);
 
-	return namedCaptures.length === 0 || namedCaptures.includes("id");
+	return (
+		!hasUnsupportedCapture &&
+		(!hasRegexGroup || (namedCaptures.length === 1 && namedCaptures[0] === "id"))
+	);
 }
 
 export function resolveManualRestContractPathPattern(
@@ -441,7 +449,7 @@ export function resolveGeneratedRestResourceRoutePattern(
 		!isGeneratedRestResourceRoutePatternCompatible(resolvedRoutePattern)
 	) {
 		throw new Error(
-			"Generated REST resource route pattern must include an `(?P<id>...)` named capture when using named regex captures.",
+			"Generated REST resource route pattern must use only an `(?P<id>...)` named capture when using regex groups.",
 		);
 	}
 

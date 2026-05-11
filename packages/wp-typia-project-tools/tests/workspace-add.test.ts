@@ -3853,7 +3853,7 @@ test("canonical CLI can add a generated REST resource with custom route and cont
       "--permission-callback",
       "demo_space_can_manage_snapshots",
       "--controller-class",
-      "Demo_Space_Snapshots_Controller",
+      "\\Demo_Space_Snapshots_Controller",
       "--controller-extends",
       "WP_REST_Controller",
     ],
@@ -3884,7 +3884,7 @@ test("canonical CLI can add a generated REST resource with custom route and cont
   );
 
   expect(blockConfigSource).toContain(
-    'controllerClass: "Demo_Space_Snapshots_Controller"'
+    'controllerClass: "\\\\Demo_Space_Snapshots_Controller"'
   );
   expect(blockConfigSource).toContain('controllerExtends: "WP_REST_Controller"');
   expect(blockConfigSource).toContain(
@@ -3900,6 +3900,9 @@ test("canonical CLI can add a generated REST resource with custom route and cont
   expect(openApiSource).toContain('"/demo-space/v1/snapshots/(?P<id>[\\\\d]+)"');
   expect(phpSource).toContain(
     "class Demo_Space_Snapshots_Controller extends \\WP_REST_Controller"
+  );
+  expect(phpSource).toContain(
+    "class_exists( 'Demo_Space_Snapshots_Controller' )"
   );
   expect(phpSource).toContain(
     "$controller_class = \\Demo_Space_Snapshots_Controller::class;"
@@ -4960,7 +4963,26 @@ test("rest resource workflow rejects invalid namespace and methods and preserves
         }
       )
     )
-  ).toContain("must include an `(?P<id>...)` named capture");
+  ).toContain("must use only an `(?P<id>...)` named capture");
+
+  expect(
+    getCommandErrorMessage(() =>
+      runCli(
+        "node",
+        [
+          entryPath,
+          "add",
+          "rest-resource",
+          "snapshots",
+          "--route-pattern",
+          "/snapshots/([\\d]+)",
+        ],
+        {
+          cwd: targetDir,
+        }
+      )
+    )
+  ).toContain("must use only an `(?P<id>...)` named capture");
 
   runCli("node", [entryPath, "add", "rest-resource", "snapshots"], {
     cwd: targetDir,

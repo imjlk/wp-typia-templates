@@ -142,8 +142,12 @@ ${itemRoutes.join(",\n")}
 	return registrations.join("\n\n");
 }
 
-function isGlobalPhpClassName(classReference: string): boolean {
-	return /^[A-Za-z_][A-Za-z0-9_]*$/u.test(classReference);
+function normalizeGlobalPhpClassName(classReference: string): string | undefined {
+	const normalized = classReference.startsWith("\\")
+		? classReference.slice(1)
+		: classReference;
+
+	return /^[A-Za-z_][A-Za-z0-9_]*$/u.test(normalized) ? normalized : undefined;
 }
 
 function toPhpClassConstantReference(classReference: string): string {
@@ -165,7 +169,8 @@ function buildRestResourceControllerClassSource(options: {
 		updateHandlerName: string;
 	};
 }): string {
-	if (!isGlobalPhpClassName(options.controllerClass)) {
+	const controllerClassName = normalizeGlobalPhpClassName(options.controllerClass);
+	if (!controllerClassName) {
 		return "";
 	}
 
@@ -174,8 +179,8 @@ function buildRestResourceControllerClassSource(options: {
 		: "";
 
 	return `
-if ( ! class_exists( ${quotePhpString(options.controllerClass)} ) ) {
-\tclass ${options.controllerClass}${extendsClause} {
+if ( ! class_exists( ${quotePhpString(controllerClassName)} ) ) {
+\tclass ${controllerClassName}${extendsClause} {
 \t\tpublic function can_manage_rest_resource() {
 \t\t\treturn ${options.functions.canWriteFunctionName}();
 \t\t}
