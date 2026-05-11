@@ -14,11 +14,8 @@ import {
   formatOutputMarker,
   type OutputMarkerOptions,
 } from '../output-markers';
+import { escapeRegExp } from '../string-utils';
 import type { CreateProgressPayload } from './types';
-
-function escapeRegExp(source: string): string {
-  return source.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&');
-}
 
 const LOOSE_CREATE_COMPLETION_PACKAGE_MANAGER_PATTERN = new RegExp(
   `^(?:corepack\\s+)?(${PACKAGE_MANAGER_IDS.map(escapeRegExp).join('|')})(?=$|[@:/+\\s])`,
