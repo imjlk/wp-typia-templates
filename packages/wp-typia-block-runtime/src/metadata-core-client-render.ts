@@ -18,8 +18,89 @@ import {
 import { analyzeSourceTypes } from './metadata-parser.js';
 import { normalizeEndpointAuthDefinition } from './schema-core.js';
 
-const WORDPRESS_NAMED_CAPTURE_PATTERN =
-	/\(\?P<([A-Za-z_][A-Za-z0-9_]*)>[^)]*\)/gu;
+const WORDPRESS_NAMED_CAPTURE_PREFIX = '(?P<';
+const WORDPRESS_CAPTURE_NAME_PATTERN = /^[A-Za-z_][A-Za-z0-9_]*$/u;
+
+interface WordPressNamedCapture {
+	end: number;
+	name: string;
+	start: number;
+}
+
+function parseWordPressNamedCaptures(endpointPath: string): WordPressNamedCapture[] {
+	const captures: WordPressNamedCapture[] = [];
+	let searchIndex = 0;
+
+	while (searchIndex < endpointPath.length) {
+		const start = endpointPath.indexOf(WORDPRESS_NAMED_CAPTURE_PREFIX, searchIndex);
+		if (start === -1) {
+			break;
+		}
+
+		const nameStart = start + WORDPRESS_NAMED_CAPTURE_PREFIX.length;
+		const nameEnd = endpointPath.indexOf('>', nameStart);
+		if (nameEnd === -1) {
+			break;
+		}
+
+		const name = endpointPath.slice(nameStart, nameEnd);
+		if (!WORDPRESS_CAPTURE_NAME_PATTERN.test(name)) {
+			searchIndex = nameEnd + 1;
+			continue;
+		}
+
+		let depth = 1;
+		let escaped = false;
+		let inCharacterClass = false;
+		let index = nameEnd + 1;
+
+		for (; index < endpointPath.length; index += 1) {
+			const char = endpointPath[index] ?? '';
+			if (escaped) {
+				escaped = false;
+				continue;
+			}
+			if (char === '\\') {
+				escaped = true;
+				continue;
+			}
+			if (char === '[' && !inCharacterClass) {
+				inCharacterClass = true;
+				continue;
+			}
+			if (char === ']' && inCharacterClass) {
+				inCharacterClass = false;
+				continue;
+			}
+			if (inCharacterClass) {
+				continue;
+			}
+			if (char === '(') {
+				depth += 1;
+				continue;
+			}
+			if (char === ')') {
+				depth -= 1;
+				if (depth === 0) {
+					break;
+				}
+			}
+		}
+
+		if (depth === 0) {
+			captures.push({
+				end: index + 1,
+				name,
+				start,
+			});
+			searchIndex = index + 1;
+		} else {
+			searchIndex = nameEnd + 1;
+		}
+	}
+
+	return captures;
+}
 
 function escapeTemplateLiteralText(value: string): string {
 	return value
@@ -30,12 +111,10 @@ function escapeTemplateLiteralText(value: string): string {
 
 function getEndpointPathParameterNames(endpointPath: string): string[] {
 	const names: string[] = [];
-	WORDPRESS_NAMED_CAPTURE_PATTERN.lastIndex = 0;
 
-	for (const match of endpointPath.matchAll(WORDPRESS_NAMED_CAPTURE_PATTERN)) {
-		const name = match[1];
-		if (name && !names.includes(name)) {
-			names.push(name);
+	for (const capture of parseWordPressNamedCaptures(endpointPath)) {
+		if (!names.includes(capture.name)) {
+			names.push(capture.name);
 		}
 	}
 
@@ -51,19 +130,16 @@ function buildEndpointPathTemplate(
 	);
 	const fragments: string[] = [];
 	let nextIndex = 0;
-	WORDPRESS_NAMED_CAPTURE_PATTERN.lastIndex = 0;
 
-	for (const match of endpointPath.matchAll(WORDPRESS_NAMED_CAPTURE_PATTERN)) {
-		const matchIndex = match.index ?? 0;
-		const name = match[1];
-		const parameterIndex = name ? parameterIndexes.get(name) : undefined;
-		fragments.push(escapeTemplateLiteralText(endpointPath.slice(nextIndex, matchIndex)));
+	for (const capture of parseWordPressNamedCaptures(endpointPath)) {
+		const parameterIndex = parameterIndexes.get(capture.name);
+		fragments.push(escapeTemplateLiteralText(endpointPath.slice(nextIndex, capture.start)));
 		if (parameterIndex !== undefined) {
 			fragments.push(
 				`\${encodeURIComponent( String( pathParam${parameterIndex} ) )}`,
 			);
 		}
-		nextIndex = matchIndex + match[0].length;
+		nextIndex = capture.end;
 	}
 
 	fragments.push(escapeTemplateLiteralText(endpointPath.slice(nextIndex)));
@@ -86,7 +162,10 @@ function buildEndpointPathRequestOptionLines(options: {
 			: 'request';
 	return [
 		`\tbuildRequestOptions: (request) => {`,
-		`\t\tconst pathParams = ${pathParamSource} as unknown as Record<string, unknown>;`,
+		`\t\tconst rawPathParams = ${pathParamSource} as unknown;`,
+		`\t\tconst pathParams = rawPathParams && typeof rawPathParams === 'object'`,
+		`\t\t\t? (rawPathParams as Record<string, unknown>)`,
+		`\t\t\t: {};`,
 		...pathParameterNames.flatMap((name, index) => [
 			`\t\tconst pathParam${index} = pathParams[${toJavaScriptStringLiteral(name)}];`,
 			`\t\tif (pathParam${index} === undefined || pathParam${index} === null || pathParam${index} === '') {`,

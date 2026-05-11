@@ -19,10 +19,12 @@ import {
 } from '../src/runtime/cli-add-collision.js';
 import { readOptionalFile } from '../src/runtime/cli-add-filesystem.js';
 import {
+  assertValidManualRestContractAuth,
   assertValidGeneratedSlug,
   assertValidRestResourceMethods,
   assertValidRestResourceNamespace,
   assertValidTypeScriptIdentifier,
+  resolveManualRestContractPathPattern,
   resolveRestResourceNamespace,
 } from '../src/runtime/cli-add-validation.js';
 import type { WorkspaceInventory } from '../src/runtime/workspace-inventory.js';
@@ -167,7 +169,7 @@ test('focused validation helpers accept generated slugs and reject malformed val
   );
 });
 
-test('focused validation helpers normalize REST namespaces and methods', () => {
+test('focused validation helpers normalize REST namespaces, methods, and manual route inputs', () => {
   expect(assertValidRestResourceNamespace(' demo-space/v1 ')).toBe(
     'demo-space/v1',
   );
@@ -178,6 +180,15 @@ test('focused validation helpers normalize REST namespaces and methods', () => {
     'read',
     'delete',
   ]);
+  expect(assertValidManualRestContractAuth(' Authenticated ')).toBe(
+    'authenticated',
+  );
+  expect(resolveManualRestContractPathPattern('external-record')).toBe(
+    '/external-record',
+  );
+  expect(resolveManualRestContractPathPattern('external-record', ' records ')).toBe(
+    '/records',
+  );
 
   expect(() => assertValidRestResourceNamespace('')).toThrow(
     'REST resource namespace is required. Use `--namespace <vendor/v1>` or let the workspace default apply.',
@@ -194,6 +205,9 @@ test('focused validation helpers normalize REST namespaces and methods', () => {
   expect(() => assertValidRestResourceMethods(',,')).toThrow(
     'REST resource methods must include at least one of: list, read, create, update, delete.',
   );
+  expect(() =>
+    resolveManualRestContractPathPattern('external-record', '   '),
+  ).toThrow('Manual REST contract path is required');
 });
 
 test('focused validation helpers accept TypeScript identifiers and reject malformed type names', () => {

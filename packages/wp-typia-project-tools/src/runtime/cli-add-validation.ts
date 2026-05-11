@@ -272,7 +272,7 @@ export function assertValidManualRestContractHttpMethod(
 export function assertValidManualRestContractAuth(
 	auth = "public",
 ): ManualRestContractAuthId {
-	const normalized = auth.trim();
+	const normalized = auth.trim().toLowerCase();
 	if ((MANUAL_REST_CONTRACT_AUTH_IDS as readonly string[]).includes(normalized)) {
 		return normalized as ManualRestContractAuthId;
 	}
@@ -294,10 +294,14 @@ export function resolveManualRestContractPathPattern(
 	slug: string,
 	pathPattern?: string,
 ): string {
-	const trimmed =
-		typeof pathPattern === "string" && pathPattern.trim().length > 0
-			? pathPattern.trim()
-			: `/${slug}`;
+	const explicitPath =
+		typeof pathPattern === "string" ? pathPattern.trim() : undefined;
+	if (explicitPath === "") {
+		throw new Error(
+			"Manual REST contract path is required. Use `--path <route-pattern>` such as `/external-record/(?P<id>[\\d]+)`.",
+		);
+	}
+	const trimmed = explicitPath ?? `/${slug}`;
 	if (/^https?:\/\//iu.test(trimmed)) {
 		throw new Error(
 			"Manual REST contract path must be a route pattern relative to the namespace, not an absolute URL.",

@@ -148,7 +148,6 @@ export interface GeneratedWorkspaceRestResourceConfig extends WorkspaceRestResou
 }
 
 export interface ManualWorkspaceRestResourceConfig extends WorkspaceRestResourceBaseConfig {
-\tbodyTypeName?: string;
 \tmethod: 'DELETE' | 'GET' | 'PATCH' | 'POST' | 'PUT';
 \tmethods: [];
 \tmode: 'manual';

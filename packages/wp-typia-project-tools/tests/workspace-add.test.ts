@@ -3454,9 +3454,9 @@ test("canonical CLI can add a type-only manual REST contract to an official work
       "--method",
       "POST",
       "--auth",
-      "authenticated",
+      "Authenticated",
       "--path",
-      "/records/(?P<id>[\\d]+)",
+      "/records/(?P<id>[\\d]+(?:-[\\d]+)*)",
       "--query-type",
       "ExternalRecordQuery",
       "--body-type",
@@ -3507,7 +3507,9 @@ test("canonical CLI can add a type-only manual REST contract to an official work
   expect(blockConfigSource).toContain('auth: "authenticated"');
   expect(blockConfigSource).toContain('namespace: "legacy/v1"');
   expect(blockConfigSource).toContain('method: "POST"');
-  expect(blockConfigSource).toContain('pathPattern: "/records/(?P<id>[\\\\d]+)"');
+  expect(blockConfigSource).toContain(
+    'pathPattern: "/records/(?P<id>[\\\\d]+(?:-[\\\\d]+)*)"'
+  );
   expect(blockConfigSource).toContain('queryTypeName: "ExternalRecordQuery"');
   expect(blockConfigSource).toContain('bodyTypeName: "ExternalRecordRequest"');
   expect(blockConfigSource).toContain('responseTypeName: "ExternalRecordResponse"');
@@ -3528,14 +3530,17 @@ test("canonical CLI can add a type-only manual REST contract to an official work
   expect(clientSource).toContain("authIntent: 'authenticated'");
   expect(clientSource).toContain("authMode: 'authenticated-rest-nonce'");
   expect(clientSource).toContain("buildRequestOptions: (request) => {");
+  expect(clientSource).toContain("const rawPathParams = request.query as unknown;");
   expect(clientSource).toContain(
-    "const pathParams = request.query as unknown as Record<string, unknown>;"
+    "const pathParams = rawPathParams && typeof rawPathParams === 'object'"
   );
   expect(clientSource).toContain(
     "path: `/legacy/v1/records/${encodeURIComponent( String( pathParam0 ) )}`"
   );
   expect(clientSource).toContain("requestLocation: 'query-and-body'");
-  expect(openApiSource).toContain("/legacy/v1/records/(?P<id>[\\\\d]+)");
+  expect(openApiSource).toContain(
+    "/legacy/v1/records/(?P<id>[\\\\d]+(?:-[\\\\d]+)*)"
+  );
   expect(openApiSource).toContain('"x-typia-authIntent": "authenticated"');
   expect(fs.existsSync(responseSchemaPath)).toBe(true);
   expect(
