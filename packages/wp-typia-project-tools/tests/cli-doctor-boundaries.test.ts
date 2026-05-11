@@ -48,6 +48,8 @@ test("cli-doctor keeps environment and workspace checks in dedicated modules", (
 	expect(cliDoctorSource).not.toContain("function checkWorkspacePackageMetadata(");
 	expect(cliDoctorSource).not.toContain("function checkWorkspaceBindingBootstrap(");
 	expect(environmentSource).toContain("export async function getEnvironmentDoctorChecks(");
+	expect(environmentSource).toContain('from "./cli-doctor-workspace-shared.js"');
+	expect(environmentSource).not.toContain("function createDoctorCheck(");
 	expect(workspaceSource).toContain("export async function getWorkspaceDoctorChecks(");
 	expect(workspaceSource).toContain("readWorkspaceInventoryAsync(");
 	expect(workspaceSource).toContain('from "./cli-doctor-workspace-bindings.js"');
