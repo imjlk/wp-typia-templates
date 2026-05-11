@@ -8,24 +8,12 @@ import {
 	resolveCommandOptionValues,
 } from "../command-option-metadata";
 import { emitCliDiagnosticFailure } from "../cli-diagnostic-output";
-import type { PrintLine } from "../print-line";
+import { resolveCommandPrintLine } from "./output-adapters";
 import { resolveBundledModuleHref } from "../render-loader";
 import { executeMigrateCommand } from "../runtime-bridge";
 import { supportsInteractiveTui } from "../runtime-capabilities";
 import type { WpTypiaRenderArgs } from "./render-types";
 import { LazyFlow } from "../ui/lazy-flow";
-
-type MigrateCommandArgsWithPrintLine = {
-	printLine?: PrintLine;
-};
-
-const defaultPrintLine: PrintLine = (line) => {
-	process.stdout.write(`${line}\n`);
-};
-
-function resolveMigratePrintLine(args: MigrateCommandArgsWithPrintLine): PrintLine {
-	return args.printLine ?? defaultPrintLine;
-}
 
 function loadMigrateFlow() {
 	return import(
@@ -45,9 +33,7 @@ export const migrateCommand = defineCommand({
 	defaultFormat: "toon",
 	description: "Run migration workflows for migration-capable wp-typia projects.",
 	handler: async (args) => {
-		const printLine = resolveMigratePrintLine(
-			args as MigrateCommandArgsWithPrintLine,
-		);
+		const printLine = resolveCommandPrintLine(args);
 		try {
 			await executeMigrateCommand({
 				command: args.positional[0],

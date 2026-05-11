@@ -13,6 +13,7 @@ import {
   prefersStructuredCliOutput,
 } from '../cli-diagnostic-output';
 import { getAddBlockDefaults } from '../config';
+import { resolveCommandOutputAdapters } from './output-adapters';
 import { resolveBundledModuleHref } from '../render-loader';
 import { executeAddCommand } from '../runtime-bridge';
 import {
@@ -43,6 +44,7 @@ export const addCommand = defineCommand({
     'Extend an official wp-typia workspace with blocks, variations, block styles, transforms, patterns, binding sources, plugin-level REST resources, workflow abilities, server-only AI features, editor plugins, or hooked blocks.',
   handler: async (args) => {
     const prefersStructuredOutput = prefersStructuredCliOutput(args);
+    const { printLine, warnLine } = resolveCommandOutputAdapters(args);
 
     try {
       if (prefersStructuredOutput) {
@@ -53,6 +55,8 @@ export const addCommand = defineCommand({
           interactive: false,
           kind: args.positional[0],
           name: args.positional[1],
+          printLine,
+          warnLine,
         });
         args.output(
           buildStructuredCompletionSuccessPayload('add', completion, {
@@ -70,6 +74,8 @@ export const addCommand = defineCommand({
         flags: args.flags as Record<string, unknown>,
         kind: args.positional[0],
         name: args.positional[1],
+        printLine,
+        warnLine,
       });
     } catch (error) {
       emitCliDiagnosticFailure(args, {

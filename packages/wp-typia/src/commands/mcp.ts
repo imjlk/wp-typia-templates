@@ -11,6 +11,7 @@ import {
 } from '../command-option-metadata';
 import { getMcpSchemaSources } from '../config';
 import { loadMcpToolGroups, syncMcpSchemas } from '../mcp';
+import { resolveCommandPrintLine } from './output-adapters';
 import type { PrintLine } from '../print-line';
 
 type McpToolGroupSummary = {
@@ -19,19 +20,7 @@ type McpToolGroupSummary = {
   tools: string[];
 };
 
-type McpCommandArgsWithPrintLine = {
-  printLine?: PrintLine;
-};
-
 type McpSyncResult = Awaited<ReturnType<typeof syncMcpSchemas>>;
-
-const defaultPrintLine: PrintLine = (line) => {
-  process.stdout.write(`${line}\n`);
-};
-
-function resolveMcpPrintLine(args: McpCommandArgsWithPrintLine): PrintLine {
-  return args.printLine ?? defaultPrintLine;
-}
 
 export function printMcpToolGroupSummary(
   summary: McpToolGroupSummary[],
@@ -60,7 +49,7 @@ export const mcpCommand = defineCommand({
   handler: async (args) => {
     const subcommand = args.positional[0] ?? 'list';
     const prefersStructuredOutput = prefersStructuredCliOutput(args);
-    const printLine = resolveMcpPrintLine(args as McpCommandArgsWithPrintLine);
+    const printLine = resolveCommandPrintLine(args);
     const userConfig =
       args.context?.store?.wpTypiaUserConfig &&
       typeof args.context.store.wpTypiaUserConfig === 'object'

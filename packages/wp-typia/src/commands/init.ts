@@ -8,6 +8,7 @@ import {
   emitCliDiagnosticFailure,
   prefersStructuredCliOutput,
 } from '../cli-diagnostic-output';
+import { resolveCommandOutputAdapters } from './output-adapters';
 import { executeInitCommand } from '../runtime-bridge';
 import { buildStructuredInitSuccessPayload } from '../runtime-bridge-output';
 
@@ -17,6 +18,7 @@ export const initCommand = defineCommand({
     'Preview or apply the minimum wp-typia retrofit plan for an existing project.',
   handler: async (args) => {
     const prefersStructuredOutput = prefersStructuredCliOutput(args);
+    const { printLine, warnLine } = resolveCommandOutputAdapters(args);
 
     try {
       const plan = await executeInitCommand(
@@ -29,7 +31,11 @@ export const initCommand = defineCommand({
               : undefined,
           projectDir: args.positional[0] as string | undefined,
         },
-        { emitOutput: !prefersStructuredOutput },
+        {
+          emitOutput: !prefersStructuredOutput,
+          printLine,
+          warnLine,
+        },
       );
       if (prefersStructuredOutput) {
         args.output(buildStructuredInitSuccessPayload(plan));
