@@ -30,6 +30,8 @@ function readRuntimeSource(fileName: string): string {
 }
 
 test('runtime helper modules own filesystem and TypeScript property-name helpers', () => {
+  const initTemplatesSource = readRuntimeSource('cli-init-templates.ts');
+
   expect(readRuntimeSource('template-source-cache.ts')).not.toContain(
     'async function pathExists',
   );
@@ -51,6 +53,11 @@ test('runtime helper modules own filesystem and TypeScript property-name helpers
   expect(readRuntimeSource('cli-add-workspace-assets.ts')).not.toContain(
     'function resolveBindingTargetBlockSlug',
   );
+  expect(initTemplatesSource).not.toContain(
+    "( result.error as NodeJS.ErrnoException ).code === 'ENOENT'",
+  );
+  expect(initTemplatesSource).toContain('function isFileNotFoundError');
+  expect(initTemplatesSource).toContain('isFileNotFoundError( result.error )');
 });
 
 test('shared async filesystem helpers expose path existence and node error codes', async () => {
