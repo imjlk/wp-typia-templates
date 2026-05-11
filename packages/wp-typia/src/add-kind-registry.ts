@@ -4,6 +4,7 @@ import { adminViewAddKindEntry } from './add-kinds/admin-view';
 import { aiFeatureAddKindEntry } from './add-kinds/ai-feature';
 import { bindingSourceAddKindEntry } from './add-kinds/binding-source';
 import { blockAddKindEntry } from './add-kinds/block';
+import { contractAddKindEntry } from './add-kinds/contract';
 import { editorPluginAddKindEntry } from './add-kinds/editor-plugin';
 import { hookedBlockAddKindEntry } from './add-kinds/hooked-block';
 import { integrationEnvAddKindEntry } from './add-kinds/integration-env';
@@ -41,6 +42,7 @@ export const ADD_KIND_REGISTRY = {
   transform: transformAddKindEntry,
   pattern: patternAddKindEntry,
   'binding-source': bindingSourceAddKindEntry,
+  contract: contractAddKindEntry,
   'rest-resource': restResourceAddKindEntry,
   ability: abilityAddKindEntry,
   'ai-feature': aiFeatureAddKindEntry,

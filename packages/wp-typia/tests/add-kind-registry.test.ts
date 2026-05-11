@@ -66,6 +66,13 @@ type BindingSourcePlanCompatibility = ExpectTrue<
   >
 >;
 
+type ContractPlanCompatibility = ExpectTrue<
+  IsEqual<
+    Awaited<ReturnType<AddKindExecutionPlanFor<'contract'>['execute']>>,
+    Parameters<AddKindExecutionPlanFor<'contract'>['getValues']>[0]
+  >
+>;
+
 type RestResourcePlanCompatibility = ExpectTrue<
   IsEqual<
     Awaited<ReturnType<AddKindExecutionPlanFor<'rest-resource'>['execute']>>,
@@ -123,6 +130,7 @@ const addKindPlanCompatibilityChecks = {
   transform: true,
   pattern: true,
   'binding-source': true,
+  contract: true,
   'rest-resource': true,
   ability: true,
   'ai-feature': true,
@@ -138,6 +146,7 @@ const addKindPlanCompatibilityChecks = {
   transform: TransformPlanCompatibility;
   pattern: PatternPlanCompatibility;
   'binding-source': BindingSourcePlanCompatibility;
+  contract: ContractPlanCompatibility;
   'rest-resource': RestResourcePlanCompatibility;
   ability: AbilityPlanCompatibility;
   'ai-feature': AiFeaturePlanCompatibility;
@@ -156,6 +165,7 @@ test('preserves compile-time compatibility between execute and getValues for eve
     transform: true,
     pattern: true,
     'binding-source': true,
+    contract: true,
     'rest-resource': true,
     ability: true,
     'ai-feature': true,
@@ -217,6 +227,11 @@ test('keeps shared visible-field groups aligned for refactored add kinds', () =>
     'anchor',
     'position',
   ]);
+  expect(getAddVisibleFieldNames({ kind: 'contract' })).toEqual([
+    'kind',
+    'name',
+    'type',
+  ]);
   expect(getAddVisibleFieldNames({ kind: 'block', template: 'basic' })).toEqual(
     ['kind', 'name', 'template'],
   );
@@ -253,6 +268,10 @@ const warnLinePlanFixtures = {
   block: {
     flags: {},
     name: 'sample-block',
+  },
+  contract: {
+    flags: {},
+    name: 'sample-contract',
   },
   'integration-env': {
     flags: {},
@@ -333,6 +352,7 @@ test('passes the warning line printer through every add-kind execution plan', as
     'ai-feature': true,
     'binding-source': true,
     block: true,
+    contract: true,
     'integration-env': true,
     'editor-plugin': true,
     'hooked-block': true,

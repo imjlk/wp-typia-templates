@@ -197,6 +197,7 @@ wp-typia add transform <name> --from <namespace/block> --to <block-slug|namespac
 wp-typia add pattern <name>
 wp-typia add binding-source <name>
 wp-typia add binding-source <name> --block <block-slug|namespace/block-slug> --attribute <attribute>
+wp-typia add contract <name> --type <ExportedTypeName>
 wp-typia add rest-resource <name> --namespace <vendor/v1> --methods GET,POST
 wp-typia add ability <name>
 wp-typia add ai-feature <name> --namespace <vendor/v1>
@@ -220,6 +221,7 @@ Common flags:
 | `--slot <sidebar \| document-setting-panel>`                     | Editor shell slot for editor-plugin scaffolds; legacy aliases `PluginSidebar` and `PluginDocumentSettingPanel` remain accepted.                                                |
 | `--namespace <vendor/v1>`                                        | REST namespace for REST resource and AI feature workflows.                                                                                                                     |
 | `--methods <method[,method...]>`                                 | REST methods for REST resource workflows.                                                                                                                                      |
+| `--type <ExportedTypeName>`                                      | Exported TypeScript type or interface for standalone contract schema artifacts.                                                                                                |
 | `--source <locator>`                                             | Optional data source locator for admin-view workflows. Current public support includes `rest-resource:products`, `core-data:postType/post`, and `core-data:taxonomy/category`. |
 | `--external-layer-source <source>`                               | Compose an external layer package on top of a built-in block template.                                                                                                         |
 | `--external-layer-id <id>`                                       | Select a specific external layer.                                                                                                                                              |
@@ -243,6 +245,12 @@ matching canonical slot.
 Binding-source scaffolds can stop at registration-only wiring, or you can pass
 both `--block` and `--attribute` to connect the source to a generated block
 attribute end to end.
+
+Standalone contract scaffolds create `src/contracts/<name>.ts`, register the
+named type in `scripts/block-config.ts`, and generate
+`src/contracts/<name>.schema.json`. They do not create PHP route glue. Use them
+for external WordPress routes, PHP assertions, or smoke tests that need a stable
+runtime schema before a full `rest-resource` or manual REST contract exists.
 
 Admin-view scaffolds can optionally bind to a generated data source with
 `--source`. For example, `rest-resource:products` points at a matching

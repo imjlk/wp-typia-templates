@@ -8,6 +8,8 @@ export const BLOCK_TRANSFORM_CONFIG_ENTRY_MARKER =
 export const PATTERN_CONFIG_ENTRY_MARKER = "\t// wp-typia add pattern entries";
 export const BINDING_SOURCE_CONFIG_ENTRY_MARKER =
 	"\t// wp-typia add binding-source entries";
+export const CONTRACT_CONFIG_ENTRY_MARKER =
+	"\t// wp-typia add contract entries";
 export const REST_RESOURCE_CONFIG_ENTRY_MARKER =
 	"\t// wp-typia add rest-resource entries";
 export const ABILITY_CONFIG_ENTRY_MARKER = "\t// wp-typia add ability entries";
@@ -101,6 +103,23 @@ export const BINDING_SOURCES_CONST_SECTION = `
 
 export const BINDING_SOURCES: WorkspaceBindingSourceConfig[] = [
 \t// wp-typia add binding-source entries
+];
+`;
+
+export const CONTRACTS_INTERFACE_SECTION = `
+
+export interface WorkspaceContractConfig {
+\tschemaFile: string;
+\tslug: string;
+\tsourceTypeName: string;
+\ttypesFile: string;
+}
+`;
+
+export const CONTRACTS_CONST_SECTION = `
+
+export const CONTRACTS: WorkspaceContractConfig[] = [
+\t// wp-typia add contract entries
 ];
 `;
 

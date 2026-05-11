@@ -10,8 +10,10 @@ import {
 
 import {
 	BLOCKS,
+	CONTRACTS,
 	REST_RESOURCES,
 	type WorkspaceBlockConfig,
+	type WorkspaceContractConfig,
 	type WorkspaceRestResourceConfig,
 } from './block-config';
 
@@ -66,6 +68,20 @@ function isWorkspaceRestResource(
 	);
 }
 
+function isWorkspaceStandaloneContract(
+	contract: WorkspaceContractConfig
+): contract is WorkspaceContractConfig & {
+	schemaFile: string;
+	sourceTypeName: string;
+	typesFile: string;
+} {
+	return (
+		typeof contract.schemaFile === 'string' &&
+		typeof contract.sourceTypeName === 'string' &&
+		typeof contract.typesFile === 'string'
+	);
+}
+
 async function assertTypeArtifactsCurrent( block: WorkspaceBlockConfig ) {
 	const report = await runSyncBlockMetadata(
 		{
@@ -97,13 +113,18 @@ async function assertTypeArtifactsCurrent( block: WorkspaceBlockConfig ) {
 async function main() {
 	const options = parseCliOptions( process.argv.slice( 2 ) );
 	const restBlocks = BLOCKS.filter( isRestEnabledBlock );
+	const standaloneContracts = CONTRACTS.filter( isWorkspaceStandaloneContract );
 	const restResources = REST_RESOURCES.filter( isWorkspaceRestResource );
 
-	if ( restBlocks.length === 0 && restResources.length === 0 ) {
+	if (
+		restBlocks.length === 0 &&
+		standaloneContracts.length === 0 &&
+		restResources.length === 0
+	) {
 		console.log(
 			options.check
-				? 'ℹ️ No REST-enabled workspace blocks or plugin-level REST resources are registered yet. `sync-rest --check` is already clean.'
-				: 'ℹ️ No REST-enabled workspace blocks or plugin-level REST resources are registered yet.'
+				? 'ℹ️ No REST-enabled workspace blocks, standalone contracts, or plugin-level REST resources are registered yet. `sync-rest --check` is already clean.'
+				: 'ℹ️ No REST-enabled workspace blocks, standalone contracts, or plugin-level REST resources are registered yet.'
 		);
 		return;
 	}
@@ -167,6 +188,19 @@ async function main() {
 		);
 	}
 
+	for ( const contract of standaloneContracts ) {
+		await syncTypeSchemas(
+			{
+				jsonSchemaFile: contract.schemaFile,
+				sourceTypeName: contract.sourceTypeName,
+				typesFile: contract.typesFile,
+			},
+			{
+				check: options.check,
+			}
+		);
+	}
+
 	for ( const resource of restResources ) {
 		const contracts = resource.restManifest.contracts;
 
@@ -218,8 +252,8 @@ async function main() {
 
 	console.log(
 		options.check
-			? '✅ REST contract schemas, portable API clients, and endpoint-aware OpenAPI documents are already up to date for workspace blocks and plugin-level resources!'
-			: '✅ REST contract schemas, portable API clients, and endpoint-aware OpenAPI documents generated for workspace blocks and plugin-level resources!'
+			? '✅ REST contract schemas, standalone schemas, portable API clients, and endpoint-aware OpenAPI documents are already up to date for workspace blocks, standalone contracts, and plugin-level resources!'
+			: '✅ REST contract schemas, standalone schemas, portable API clients, and endpoint-aware OpenAPI documents generated for workspace blocks, standalone contracts, and plugin-level resources!'
 	);
 }
 

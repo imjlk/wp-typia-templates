@@ -15,6 +15,7 @@
  * `seedWorkspaceMigrationProject` for
  * explicit `wp-typia add` flows,
  * `runAddAiFeatureCommand` for server-owned WordPress AI feature scaffolds,
+ * `runAddContractCommand` for standalone TypeScript schema artifacts,
  * `runAddRestResourceCommand` for plugin-level REST resource scaffolds,
  * `getDoctorChecks`, `runDoctor`, and `DoctorCheck` for diagnostics,
  * `createCliCommandError`, `createCliDiagnosticCodeError`,
@@ -61,6 +62,7 @@ export {
 	runAddBlockCommand,
 	runAddBlockStyleCommand,
 	runAddBlockTransformCommand,
+	runAddContractCommand,
 	runAddEditorPluginCommand,
 	runAddHookedBlockCommand,
 	runAddPatternCommand,

@@ -42,6 +42,13 @@ export interface WorkspaceBindingSourceConfig {
 	slug: string;
 }
 
+export interface WorkspaceContractConfig {
+	schemaFile: string;
+	slug: string;
+	sourceTypeName: string;
+	typesFile: string;
+}
+
 export interface WorkspaceRestResourceConfig {
 	apiFile: string;
 	clientFile: string;
@@ -93,6 +100,10 @@ export const PATTERNS: WorkspacePatternConfig[] = [
 
 export const BINDING_SOURCES: WorkspaceBindingSourceConfig[] = [
 	// wp-typia add binding-source entries
+];
+
+export const CONTRACTS: WorkspaceContractConfig[] = [
+	// wp-typia add contract entries
 ];
 
 export const REST_RESOURCES: WorkspaceRestResourceConfig[] = [

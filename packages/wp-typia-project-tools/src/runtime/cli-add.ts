@@ -31,6 +31,7 @@ export {
 	runAddBindingSourceCommand,
 	runAddBlockStyleCommand,
 	runAddBlockTransformCommand,
+	runAddContractCommand,
 	runAddEditorPluginCommand,
 	runAddHookedBlockCommand,
 	runAddIntegrationEnvCommand,

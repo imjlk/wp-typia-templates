@@ -374,6 +374,80 @@ describe("@wp-typia/project-tools cli-add-workspace ai-feature", () => {
 		typecheckGeneratedProject(targetDir);
 	}, 30_000);
 
+	test("later contract and REST resource adds preserve AI sync-rest wiring", async () => {
+		const targetDir = path.join(
+			tempRoot,
+			"demo-workspace-add-ai-feature-contract-rest",
+		);
+
+		await scaffoldOfficialWorkspace(targetDir, {
+			description: "Demo workspace add ai feature contract rest",
+			slug: "demo-workspace-add-ai-feature-contract-rest",
+			title: "Demo Workspace Add AI Feature Contract Rest",
+		});
+
+		linkWorkspaceNodeModules(targetDir);
+
+		runCli(
+			"node",
+			[
+				entryPath,
+				"add",
+				"ai-feature",
+				"brief-suggestions",
+				"--namespace",
+				"demo-space/v1",
+			],
+			{
+				cwd: targetDir,
+			},
+		);
+		runCli(
+			"node",
+			[
+				entryPath,
+				"add",
+				"contract",
+				"external-response",
+				"--type",
+				"ExternalResponse",
+			],
+			{
+				cwd: targetDir,
+			},
+		);
+		runCli(
+			"node",
+			[
+				entryPath,
+				"add",
+				"rest-resource",
+				"snapshots",
+				"--namespace",
+				"demo-space/v1",
+				"--methods",
+				"list,read,create,update,delete",
+			],
+			{
+				cwd: targetDir,
+			},
+		);
+
+		const syncRestSource = fs.readFileSync(
+			path.join(targetDir, "scripts", "sync-rest-contracts.ts"),
+			"utf8",
+		);
+
+		expect(syncRestSource).toContain("AI_FEATURES");
+		expect(syncRestSource).toContain("CONTRACTS");
+		expect(syncRestSource).toContain("REST_RESOURCES");
+		expect(syncRestSource).toContain("standaloneContracts.length === 0");
+		expect(syncRestSource).toContain("restResources.length === 0");
+		expect(syncRestSource).toContain("aiFeatures.length === 0");
+
+		runGeneratedScript(targetDir, "scripts/sync-rest-contracts.ts", ["--check"]);
+	}, 30_000);
+
 	test("ai-feature duplicate failures preserve generated workspace files", async () => {
 		const targetDir = path.join(tempRoot, "demo-workspace-add-ai-feature-rollback");
 

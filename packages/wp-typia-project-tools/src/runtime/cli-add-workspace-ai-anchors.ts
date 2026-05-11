@@ -218,6 +218,88 @@ function replaceRequiredSyncRestSource(
 	return nextSource.replace(anchor, replacement);
 }
 
+function replaceBlockConfigImportForAiFeatures(
+	nextSource: string,
+	syncRestScriptPath: string,
+): string {
+	const importPatterns = [
+		/^import\s*\{\n(?:\t[^\n]*\n)+\} from ["']\.\/block-config["'];?$/mu,
+		/^import\s*\{[^\n]*\}\s*from\s*["']\.\/block-config["'];?$/mu,
+	];
+	const importMatch =
+		importPatterns.map((pattern) => pattern.exec(nextSource)).find(Boolean) ??
+		null;
+
+	if (!importMatch) {
+		throw new Error(
+			[
+				`ensureAiFeatureSyncRestAnchors could not patch ${path.basename(syncRestScriptPath)}.`,
+				"Missing expected workspace inventory import anchor in scripts/sync-rest-contracts.ts.",
+				"Restore the generated template or add the AI feature wiring manually before retrying.",
+			].join(" "),
+		);
+	}
+
+	const importSource = importMatch[0];
+	if (
+		importSource.includes("AI_FEATURES") &&
+		importSource.includes("WorkspaceAiFeatureConfig")
+	) {
+		return nextSource;
+	}
+
+	const hasContracts = importSource.includes("CONTRACTS");
+	const hasContractConfig = importSource.includes("WorkspaceContractConfig");
+	const replacement = [
+		"import {",
+		"\tAI_FEATURES,",
+		"\tBLOCKS,",
+		...(hasContracts ? ["\tCONTRACTS,"] : []),
+		"\tREST_RESOURCES,",
+		"\ttype WorkspaceAiFeatureConfig,",
+		"\ttype WorkspaceBlockConfig,",
+		...(hasContractConfig ? ["\ttype WorkspaceContractConfig,"] : []),
+		"\ttype WorkspaceRestResourceConfig,",
+		"} from './block-config';",
+	].join("\n");
+
+	return nextSource.replace(importSource, replacement);
+}
+
+function replaceAiFeatureSyncSummaryCopy(
+	nextSource: string,
+	syncRestScriptPath: string,
+): string {
+	const standaloneSummary =
+		"workspace blocks, standalone contracts, and plugin-level resources";
+	const standaloneAiSummary =
+		"workspace blocks, standalone contracts, plugin-level resources, and AI features";
+	const restResourceSummary = "workspace blocks and plugin-level resources";
+	const restResourceAiSummary =
+		"workspace blocks, plugin-level resources, and AI features";
+
+	if (nextSource.includes(standaloneSummary)) {
+		return nextSource.split(standaloneSummary).join(standaloneAiSummary);
+	}
+	if (nextSource.includes(restResourceSummary)) {
+		return nextSource.split(restResourceSummary).join(restResourceAiSummary);
+	}
+	if (
+		nextSource.includes(standaloneAiSummary) ||
+		nextSource.includes(restResourceAiSummary)
+	) {
+		return nextSource;
+	}
+
+	throw new Error(
+		[
+			`ensureAiFeatureSyncRestAnchors could not patch ${path.basename(syncRestScriptPath)}.`,
+			"Missing expected sync summary copy anchor in scripts/sync-rest-contracts.ts.",
+			"Restore the generated template or add the AI feature wiring manually before retrying.",
+		].join(" "),
+	);
+}
+
 /**
  * Patch `scripts/sync-rest-contracts.ts` after sync-project wiring so AI feature REST artifacts join the split sync flow.
  */
@@ -231,39 +313,14 @@ export async function ensureAiFeatureSyncRestAnchors(
 	);
 
 	await patchFile(syncRestScriptPath, (source) => {
-		let nextSource = source;
-		const importAnchor = [
-			"import {",
-			"\tBLOCKS,",
-			"\tREST_RESOURCES,",
-			"\ttype WorkspaceBlockConfig,",
-			"\ttype WorkspaceRestResourceConfig,",
-			"} from './block-config';",
-		].join("\n");
+		let nextSource = replaceBlockConfigImportForAiFeatures(
+			source,
+			syncRestScriptPath,
+		);
 		const helperInsertionAnchor = "async function assertTypeArtifactsCurrent";
 		const restResourcesAnchor =
 			"const restResources = REST_RESOURCES.filter( isWorkspaceRestResource );";
-		const noResourcesPattern =
-			/if \( restBlocks.length === 0 && restResources.length === 0 \) \{[\s\S]*?\n\t\treturn;\n\t\}/u;
 		const consoleLogPattern = /\n\tconsole\.log\(\n\t\toptions\.check/u;
-
-		nextSource = replaceRequiredSyncRestSource(
-			nextSource,
-			"AI_FEATURES",
-			importAnchor,
-			[
-				"import {",
-				"\tAI_FEATURES,",
-				"\tBLOCKS,",
-				"\tREST_RESOURCES,",
-				"\ttype WorkspaceAiFeatureConfig,",
-				"\ttype WorkspaceBlockConfig,",
-				"\ttype WorkspaceRestResourceConfig,",
-				"} from './block-config';",
-			].join("\n"),
-			"workspace inventory import",
-			syncRestScriptPath,
-		);
 
 		nextSource = replaceRequiredSyncRestSource(
 			nextSource,
@@ -311,18 +368,36 @@ export async function ensureAiFeatureSyncRestAnchors(
 
 		nextSource = replaceRequiredSyncRestSource(
 			nextSource,
-			"restBlocks.length === 0 && restResources.length === 0 && aiFeatures.length === 0",
-			noResourcesPattern,
-			[
-				"if ( restBlocks.length === 0 && restResources.length === 0 && aiFeatures.length === 0 ) {",
-				"\t\tconsole.log(",
-				"\t\t\toptions.check",
-				"\t\t\t\t? 'ℹ️ No REST-enabled workspace blocks, plugin-level REST resources, or AI features are registered yet. `sync-rest --check` is already clean.'",
-				"\t\t\t\t: 'ℹ️ No REST-enabled workspace blocks, plugin-level REST resources, or AI features are registered yet.'",
-				"\t\t);",
-				"\t\treturn;",
-				"\t}",
-			].join("\n"),
+			"aiFeatures.length === 0",
+			nextSource.includes("const standaloneContracts = CONTRACTS.filter")
+				? /if \(\s*restBlocks\.length === 0 &&\s*standaloneContracts\.length === 0 &&\s*restResources\.length === 0\s*\) \{[\s\S]*?\n\t\treturn;\n\t\}/u
+				: /if \( restBlocks.length === 0 && restResources.length === 0 \) \{[\s\S]*?\n\t\treturn;\n\t\}/u,
+			nextSource.includes("const standaloneContracts = CONTRACTS.filter")
+				? [
+						"if (",
+						"\t\trestBlocks.length === 0 &&",
+						"\t\tstandaloneContracts.length === 0 &&",
+						"\t\trestResources.length === 0 &&",
+						"\t\taiFeatures.length === 0",
+						"\t) {",
+						"\t\tconsole.log(",
+						"\t\t\toptions.check",
+						"\t\t\t\t? 'ℹ️ No REST-enabled workspace blocks, standalone contracts, plugin-level REST resources, or AI features are registered yet. `sync-rest --check` is already clean.'",
+						"\t\t\t\t: 'ℹ️ No REST-enabled workspace blocks, standalone contracts, plugin-level REST resources, or AI features are registered yet.'",
+						"\t\t);",
+						"\t\treturn;",
+						"\t}",
+					].join("\n")
+				: [
+						"if ( restBlocks.length === 0 && restResources.length === 0 && aiFeatures.length === 0 ) {",
+						"\t\tconsole.log(",
+						"\t\t\toptions.check",
+						"\t\t\t\t? 'ℹ️ No REST-enabled workspace blocks, plugin-level REST resources, or AI features are registered yet. `sync-rest --check` is already clean.'",
+						"\t\t\t\t: 'ℹ️ No REST-enabled workspace blocks, plugin-level REST resources, or AI features are registered yet.'",
+						"\t\t);",
+						"\t\treturn;",
+						"\t}",
+					].join("\n"),
 			"no-resources guard",
 			syncRestScriptPath,
 		);
@@ -389,12 +464,8 @@ export async function ensureAiFeatureSyncRestAnchors(
 			syncRestScriptPath,
 		);
 
-		nextSource = replaceRequiredSyncRestSource(
+		nextSource = replaceAiFeatureSyncSummaryCopy(
 			nextSource,
-			"workspace blocks, plugin-level resources, and AI features",
-			"workspace blocks and plugin-level resources",
-			"workspace blocks, plugin-level resources, and AI features",
-			"sync summary copy",
 			syncRestScriptPath,
 		);
 

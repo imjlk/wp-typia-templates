@@ -67,6 +67,11 @@ describe("first-party TUI interaction models", () => {
 			"block",
 			"attribute",
 		]);
+		expect(getVisibleAddFieldNames({ kind: "contract" })).toEqual([
+			"kind",
+			"name",
+			"type",
+		]);
 		expect(getVisibleAddFieldNames({ kind: "rest-resource" })).toEqual([
 			"kind",
 			"name",
@@ -226,6 +231,20 @@ describe("first-party TUI interaction models", () => {
 			kind: "admin-view",
 			name: "reports",
 			source: "rest-resource:reports",
+		});
+
+		expect(
+			sanitizeAddSubmitValues({
+				anchor: "",
+				block: "",
+				kind: "contract",
+				name: "external-retrieve-response",
+				type: " ExternalRetrieveResponse ",
+			}),
+		).toEqual({
+			kind: "contract",
+			name: "external-retrieve-response",
+			type: "ExternalRetrieveResponse",
 		});
 
 		expect(

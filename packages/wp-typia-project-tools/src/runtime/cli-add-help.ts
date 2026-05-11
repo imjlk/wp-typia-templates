@@ -23,6 +23,7 @@ export function formatAddHelpText(): string {
   wp-typia add transform <name> --from <namespace/block> --to <block-slug|namespace/block-slug> [--dry-run]
   wp-typia add pattern <name> [--dry-run]
   wp-typia add binding-source <name> [--block <block-slug|namespace/block-slug> --attribute <attribute>] [--dry-run]
+  wp-typia add contract <name> [--type <ExportedTypeName>] [--dry-run]
   wp-typia add rest-resource <name> [--namespace <vendor/v1>] [--methods <${REST_RESOURCE_METHOD_IDS.join(",")}>] [--dry-run]
   wp-typia add ability <name> [--dry-run]
   wp-typia add ai-feature <name> [--namespace <vendor/v1>] [--dry-run]
@@ -45,6 +46,7 @@ Notes:
   \`add transform\` adds a block-to-block transform into an existing generated block.
   \`add pattern\` scaffolds a namespaced PHP pattern shell under \`src/patterns/\`.
   \`add binding-source\` scaffolds shared PHP and editor registration under \`src/bindings/\`; pass \`--block\` and \`--attribute\` together to declare an end-to-end bindable attribute on an existing generated block.
+  \`add contract\` registers a standalone TypeScript wire contract under \`src/contracts/\` and generates a stable JSON Schema artifact without creating PHP route glue.
   \`add rest-resource\` scaffolds plugin-level TypeScript REST contracts under \`src/rest/\` and PHP route glue under \`inc/rest/\`.
   \`add ability\` scaffolds typed workflow abilities under \`src/abilities/\` and server registration under \`inc/abilities/\`.
   \`add ai-feature\` scaffolds server-owned AI feature endpoints under \`src/ai-features/\` and PHP route glue under \`inc/ai-features/\`.

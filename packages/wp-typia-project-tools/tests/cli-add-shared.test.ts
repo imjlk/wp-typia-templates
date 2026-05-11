@@ -12,6 +12,7 @@ import {
   assertAbilityDoesNotExist,
   assertAdminViewDoesNotExist,
   assertAiFeatureDoesNotExist,
+  assertContractDoesNotExist,
   assertRestResourceDoesNotExist,
   assertScaffoldDoesNotExist,
   assertVariationDoesNotExist,
@@ -21,6 +22,7 @@ import {
   assertValidGeneratedSlug,
   assertValidRestResourceMethods,
   assertValidRestResourceNamespace,
+  assertValidTypeScriptIdentifier,
   resolveRestResourceNamespace,
 } from '../src/runtime/cli-add-validation.js';
 import type { WorkspaceInventory } from '../src/runtime/workspace-inventory.js';
@@ -48,6 +50,7 @@ function createEmptyInventory(
     blocks: [],
     blockStyles: [],
     blockTransforms: [],
+    contracts: [],
     editorPlugins: [],
     hasAbilitiesSection: false,
     hasAdminViewsSection: false,
@@ -55,6 +58,7 @@ function createEmptyInventory(
     hasBindingSourcesSection: false,
     hasBlockStylesSection: false,
     hasBlockTransformsSection: false,
+    hasContractsSection: false,
     hasEditorPluginsSection: false,
     hasPatternsSection: false,
     hasRestResourcesSection: false,
@@ -109,6 +113,7 @@ test('focused add runtime modules own their helper categories', () => {
   );
   expect(typesSource).not.toContain('export const ADD_KIND_IDS = [');
   expect(validationSource).toContain('export function assertValidGeneratedSlug');
+  expect(validationSource).toContain('export function assertValidTypeScriptIdentifier');
   expect(validationSource).toContain('export function assertValidRestResourceMethods');
   expect(validationSource).toContain('export function assertValidEditorPluginSlot');
   expect(filesystemSource).toContain('export async function snapshotWorkspaceFiles');
@@ -189,6 +194,46 @@ test('focused validation helpers normalize REST namespaces and methods', () => {
   expect(() => assertValidRestResourceMethods(',,')).toThrow(
     'REST resource methods must include at least one of: list, read, create, update, delete.',
   );
+});
+
+test('focused validation helpers accept TypeScript identifiers and reject malformed type names', () => {
+  expect(
+    assertValidTypeScriptIdentifier(
+      'Contract type',
+      ' ExternalRetrieveResponse ',
+      'wp-typia add contract <name> [--type <ExportedTypeName>]',
+    ),
+  ).toBe('ExternalRetrieveResponse');
+
+  expect(() =>
+    assertValidTypeScriptIdentifier(
+      'Contract type',
+      '',
+      'wp-typia add contract <name> [--type <ExportedTypeName>]',
+    ),
+  ).toThrow(
+    'Contract type is required. Use `wp-typia add contract <name> [--type <ExportedTypeName>]`.',
+  );
+  expect(() =>
+    assertValidTypeScriptIdentifier(
+      'Contract type',
+      'external-response',
+      'wp-typia add contract <name> [--type <ExportedTypeName>]',
+    ),
+  ).toThrow(
+    'Contract type must be a valid TypeScript identifier, such as ExternalRetrieveResponse.',
+  );
+  for (const reservedName of ['class', 'default', 'interface']) {
+    expect(() =>
+      assertValidTypeScriptIdentifier(
+        'Contract type',
+        reservedName,
+        'wp-typia add contract <name> [--type <ExportedTypeName>]',
+      ),
+    ).toThrow(
+      `Contract type must not be a reserved TypeScript keyword, such as ${reservedName}.`,
+    );
+  }
 });
 
 test('shared add collision helper allows missing filesystem paths and inventory entries', () => {
@@ -305,6 +350,28 @@ test('focused collision helpers check every REST resource filesystem target', ()
     ),
   ).toThrow(
     'A REST resource bootstrap already exists at inc/rest/products.php. Choose a different name.',
+  );
+});
+
+test('focused collision helpers check standalone contract filesystem targets', () => {
+  const projectDir = path.join(tempRoot, 'contract-collision');
+  const schemaPath = path.join(
+    projectDir,
+    'src',
+    'contracts',
+    'external-response.schema.json',
+  );
+  fs.mkdirSync(path.dirname(schemaPath), { recursive: true });
+  fs.writeFileSync(schemaPath, '{}\n', 'utf8');
+
+  expect(() =>
+    assertContractDoesNotExist(
+      projectDir,
+      'external-response',
+      createEmptyInventory(),
+    ),
+  ).toThrow(
+    'A standalone contract schema already exists at src/contracts/external-response.schema.json. Choose a different name.',
   );
 });
 

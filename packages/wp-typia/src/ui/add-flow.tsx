@@ -216,6 +216,17 @@ function AddFlowFields({
             placeholder: 'core-data:postType/post',
           })
         : null,
+      visibleFields.has('type')
+        ? createElement(FirstPartyTextField, {
+            ...getWrappedFieldNeighbors(orderedVisibleFields, 'type'),
+            description:
+              'Optional exported TypeScript type name; defaults to PascalCase(name)',
+            key: 'type',
+            label: 'Source type',
+            name: 'type',
+            placeholder: 'ExternalRetrieveResponse',
+          })
+        : null,
       visibleFields.has('alternate-render-targets')
         ? createElement(FirstPartyTextField, {
             ...getWrappedFieldNeighbors(

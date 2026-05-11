@@ -616,6 +616,11 @@ export { runAddIntegrationEnvCommand } from "./cli-add-workspace-integration-env
  */
 export { runAddRestResourceCommand } from "./cli-add-workspace-rest.js";
 /**
+ * Re-export the standalone contract scaffold workflow from the focused
+ * contract runtime helper module.
+ */
+export { runAddContractCommand } from "./cli-add-workspace-contract.js";
+/**
  * Re-export the typed workflow ability scaffold workflow from the focused
  * ability runtime helper module.
  */

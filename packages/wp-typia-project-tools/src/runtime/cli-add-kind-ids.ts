@@ -13,6 +13,7 @@ export const ADD_KIND_IDS = [
 	"transform",
 	"pattern",
 	"binding-source",
+	"contract",
 	"rest-resource",
 	"ability",
 	"ai-feature",

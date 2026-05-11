@@ -19,6 +19,90 @@ import {
 } from "./cli-add-types.js";
 
 const WORKSPACE_GENERATED_SLUG_PATTERN = /^[a-z][a-z0-9-]*$/;
+const TYPESCRIPT_IDENTIFIER_PATTERN = /^[A-Za-z_$][A-Za-z0-9_$]*$/u;
+const TYPESCRIPT_RESERVED_IDENTIFIERS = new Set([
+	"abstract",
+	"any",
+	"as",
+	"asserts",
+	"async",
+	"await",
+	"bigint",
+	"boolean",
+	"break",
+	"case",
+	"catch",
+	"class",
+	"const",
+	"constructor",
+	"continue",
+	"debugger",
+	"declare",
+	"default",
+	"delete",
+	"do",
+	"else",
+	"enum",
+	"export",
+	"extends",
+	"false",
+	"finally",
+	"for",
+	"from",
+	"function",
+	"get",
+	"global",
+	"if",
+	"implements",
+	"import",
+	"in",
+	"infer",
+	"instanceof",
+	"interface",
+	"intrinsic",
+	"is",
+	"keyof",
+	"let",
+	"module",
+	"namespace",
+	"never",
+	"new",
+	"null",
+	"number",
+	"object",
+	"of",
+	"out",
+	"override",
+	"package",
+	"private",
+	"protected",
+	"public",
+	"readonly",
+	"require",
+	"return",
+	"satisfies",
+	"set",
+	"static",
+	"string",
+	"super",
+	"switch",
+	"symbol",
+	"this",
+	"throw",
+	"true",
+	"try",
+	"type",
+	"typeof",
+	"undefined",
+	"unique",
+	"unknown",
+	"using",
+	"var",
+	"void",
+	"while",
+	"with",
+	"yield",
+]);
 /**
  * Namespace format accepted by plugin-level REST resources.
  */
@@ -44,6 +128,38 @@ export function assertValidGeneratedSlug(label: string, slug: string, usage: str
 	}
 
 	return slug;
+}
+
+/**
+ * Validate a source type name used by generated schema artifact workflows.
+ *
+ * @param label Human-readable field label used in error messages.
+ * @param value TypeScript identifier candidate from CLI input or defaults.
+ * @param usage CLI usage hint shown when the identifier is empty.
+ * @returns The trimmed, validated TypeScript identifier.
+ * @throws {Error} When the value is empty or not a TypeScript identifier.
+ */
+export function assertValidTypeScriptIdentifier(
+	label: string,
+	value: string,
+	usage: string,
+): string {
+	const trimmed = value.trim();
+	if (!trimmed) {
+		throw new Error(`${label} is required. Use \`${usage}\`.`);
+	}
+	if (!TYPESCRIPT_IDENTIFIER_PATTERN.test(trimmed)) {
+		throw new Error(
+			`${label} must be a valid TypeScript identifier, such as ExternalRetrieveResponse.`,
+		);
+	}
+	if (TYPESCRIPT_RESERVED_IDENTIFIERS.has(trimmed)) {
+		throw new Error(
+			`${label} must not be a reserved TypeScript keyword, such as ${trimmed}.`,
+		);
+	}
+
+	return trimmed;
 }
 
 /**

@@ -41,7 +41,7 @@ const addOptions = buildCommandOptions(ADD_OPTION_METADATA);
 export const addCommand = defineCommand({
   defaultFormat: 'toon',
   description:
-    'Extend an official wp-typia workspace with blocks, integration envs, variations, block styles, transforms, patterns, binding sources, plugin-level REST resources, workflow abilities, server-only AI features, editor plugins, or hooked blocks.',
+    'Extend an official wp-typia workspace with blocks, integration envs, variations, block styles, transforms, patterns, binding sources, standalone contracts, plugin-level REST resources, workflow abilities, server-only AI features, editor plugins, or hooked blocks.',
   handler: async (args) => {
     const prefersStructuredOutput = prefersStructuredCliOutput(args);
     const { printLine, warnLine } = resolveCommandOutputAdapters(args);
