@@ -196,6 +196,15 @@ describe("@wp-typia/block-runtime", () => {
 							responseContract: "response",
 							tags: ["Items"],
 						},
+						{
+							auth: "public",
+							method: "GET",
+							operationId: "fetchLatestOrOptionalItem",
+							path: "/items(?:/latest|/(?P<id>[\\d]+))?",
+							queryContract: "query",
+							responseContract: "response",
+							tags: ["Items"],
+						},
 					],
 				}),
 				projectRoot,
@@ -217,6 +226,9 @@ describe("@wp-typia/block-runtime", () => {
 			);
 			expect(clientSource).toContain(
 				"path: `/items${pathParam0 !== undefined && pathParam0 !== null && pathParam0 !== '' ? `/${encodeURIComponent( String( pathParam0 ) )}` : pathParam1 !== undefined && pathParam1 !== null && pathParam1 !== '' ? `/${encodeURIComponent( String( pathParam1 ) )}` : ''}`,",
+			);
+			expect(clientSource).toContain(
+				"path: `/items${pathParam0 !== undefined && pathParam0 !== null && pathParam0 !== '' ? `/${encodeURIComponent( String( pathParam0 ) )}` : `/latest`}`,",
 			);
 			await expect(
 				syncEndpointClient({

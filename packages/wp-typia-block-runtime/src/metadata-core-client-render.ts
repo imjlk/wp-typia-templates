@@ -279,7 +279,9 @@ function buildEndpointPathTemplateBody(
 			continue;
 		}
 		if (part.kind === 'optionalGroup') {
-			const alternativeFragments = splitEndpointPathAlternativeParts(part.parts)
+			const alternativeGroups = splitEndpointPathAlternativeParts(part.parts);
+			let literalFallbackTemplate: string | null = null;
+			const alternativeFragments = alternativeGroups
 				.map((alternativeParts) => {
 					const alternativeParameterIndexes = collectEndpointPathParameterNames(
 						alternativeParts,
@@ -288,6 +290,15 @@ function buildEndpointPathTemplateBody(
 						.map((name) => parameterIndexes.get(name))
 						.filter((index): index is number => index !== undefined);
 					if (alternativeParameterIndexes.length === 0) {
+						if (
+							alternativeGroups.length > 1 &&
+							literalFallbackTemplate === null
+						) {
+							literalFallbackTemplate = buildEndpointPathTemplateBody(
+								alternativeParts,
+								pathParameterNames,
+							);
+						}
 						return null;
 					}
 
@@ -316,7 +327,11 @@ function buildEndpointPathTemplateBody(
 							(fragment) =>
 								`${fragment.condition} ? \`${fragment.template}\` : `,
 						)
-						.join('')}''}`,
+						.join('')}${
+						literalFallbackTemplate === null
+							? "''"
+							: `\`${literalFallbackTemplate}\``
+					}}`,
 				);
 			}
 			continue;
