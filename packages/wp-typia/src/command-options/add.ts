@@ -18,6 +18,11 @@ export const ADD_OPTION_METADATA = {
       'Target block attribute for end-to-end binding-source workflows.',
     type: 'string',
   },
+  auth: {
+    description:
+      'Auth intent for manual REST contract workflows (public, authenticated, or public-write-protected).',
+    type: 'string',
+  },
   block: {
     description:
       'Target block slug for variation, style, and end-to-end binding-source workflows.',
@@ -53,6 +58,17 @@ export const ADD_OPTION_METADATA = {
       'Compound-only InnerBlocks preset (freeform, ordered, horizontal, locked-structure).',
     type: 'string',
   },
+  manual: {
+    argumentKind: 'flag',
+    description:
+      'Create a type-only manual REST contract without PHP route/controller files.',
+    type: 'boolean',
+  },
+  method: {
+    description:
+      'HTTP method for manual REST contract workflows (GET, POST, PUT, PATCH, or DELETE).',
+    type: 'string',
+  },
   methods: {
     description:
       'Comma-separated REST resource methods for rest-resource workflows.',
@@ -66,8 +82,23 @@ export const ADD_OPTION_METADATA = {
     description: 'Persistence write policy for persistence-capable templates.',
     type: 'string',
   },
+  path: {
+    description:
+      'Route path pattern for manual REST contract workflows, relative to the REST namespace.',
+    type: 'string',
+  },
   position: {
     description: 'Hook position for hooked-block workflows.',
+    type: 'string',
+  },
+  'query-type': {
+    description:
+      'Exported TypeScript query type for manual REST contract workflows.',
+    type: 'string',
+  },
+  'response-type': {
+    description:
+      'Exported TypeScript response type for manual REST contract workflows.',
     type: 'string',
   },
   service: {
@@ -93,6 +124,11 @@ export const ADD_OPTION_METADATA = {
   type: {
     description:
       'Exported TypeScript type or interface name for standalone contract workflows.',
+    type: 'string',
+  },
+  'body-type': {
+    description:
+      'Exported TypeScript body type for manual REST contract workflows.',
     type: 'string',
   },
   to: {

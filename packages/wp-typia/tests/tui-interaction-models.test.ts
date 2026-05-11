@@ -281,19 +281,33 @@ describe("first-party TUI interaction models", () => {
 		expect(
 			sanitizeAddSubmitValues({
 				anchor: "",
+				auth: " authenticated ",
 				block: "",
+				"body-type": " ExternalRecordRequest ",
 				kind: "rest-resource",
+				manual: true,
+				method: " POST ",
 				methods: " list,read,create ",
 				name: "snapshots",
 				namespace: " demo-space/v1 ",
+				path: " /records/(?P<id>[\\d]+) ",
 				position: "",
+				"query-type": " ExternalRecordQuery ",
+				"response-type": " ExternalRecordResponse ",
 				template: "persistence",
 			}),
 		).toEqual({
+			auth: "authenticated",
+			"body-type": "ExternalRecordRequest",
 			kind: "rest-resource",
+			manual: true,
+			method: "POST",
 			methods: "list,read,create",
 			name: "snapshots",
 			namespace: "demo-space/v1",
+			path: "/records/(?P<id>[\\d]+)",
+			"query-type": "ExternalRecordQuery",
+			"response-type": "ExternalRecordResponse",
 		});
 	});
 

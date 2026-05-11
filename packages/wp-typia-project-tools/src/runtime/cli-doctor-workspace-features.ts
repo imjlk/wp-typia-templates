@@ -3,6 +3,8 @@ import path from "node:path";
 
 import {
 	EDITOR_PLUGIN_SLOT_IDS,
+	MANUAL_REST_CONTRACT_AUTH_IDS,
+	MANUAL_REST_CONTRACT_HTTP_METHOD_IDS,
 	REST_RESOURCE_METHOD_IDS,
 	REST_RESOURCE_NAMESPACE_PATTERN,
 	resolveEditorPluginSlotAlias,
@@ -30,10 +32,41 @@ import type { DoctorCheck } from "./cli-doctor.js";
 import type { WorkspaceInventory } from "./workspace-inventory.js";
 import type { WorkspaceProject } from "./workspace-project.js";
 
+function isManualRestResource(
+	restResource: WorkspaceInventory["restResources"][number],
+): boolean {
+	return restResource.mode === "manual";
+}
+
 function getWorkspaceRestResourceRequiredFiles(
 	restResource: WorkspaceInventory["restResources"][number],
 ): string[] {
 	const schemaNames = new Set<string>();
+	if (isManualRestResource(restResource)) {
+		schemaNames.add("query");
+		if (restResource.bodyTypeName) {
+			schemaNames.add("request");
+		}
+		schemaNames.add("response");
+
+		return Array.from(
+			new Set([
+				restResource.apiFile,
+				...Array.from(schemaNames, (schemaName) =>
+					path.join(
+						path.dirname(restResource.typesFile),
+						"api-schemas",
+						`${schemaName}.schema.json`,
+					),
+				),
+				restResource.clientFile,
+				restResource.openApiFile,
+				restResource.typesFile,
+				restResource.validatorsFile,
+			]),
+		);
+	}
+
 	if (restResource.methods.includes("list")) {
 		schemaNames.add("list-query");
 		schemaNames.add("list-response");
@@ -67,9 +100,9 @@ function getWorkspaceRestResourceRequiredFiles(
 				),
 			),
 			restResource.clientFile,
-			restResource.dataFile,
+			...(restResource.dataFile ? [restResource.dataFile] : []),
 			restResource.openApiFile,
-			restResource.phpFile,
+			...(restResource.phpFile ? [restResource.phpFile] : []),
 			restResource.typesFile,
 			restResource.validatorsFile,
 		]),
@@ -80,18 +113,48 @@ function checkWorkspaceRestResourceConfig(
 	restResource: WorkspaceInventory["restResources"][number],
 ): DoctorCheck {
 	const hasNamespace = REST_RESOURCE_NAMESPACE_PATTERN.test(restResource.namespace);
+	if (isManualRestResource(restResource)) {
+		const hasAuth =
+			restResource.auth == null ||
+			(MANUAL_REST_CONTRACT_AUTH_IDS as readonly string[]).includes(
+				restResource.auth,
+			);
+		const hasMethod =
+			typeof restResource.method === "string" &&
+			(MANUAL_REST_CONTRACT_HTTP_METHOD_IDS as readonly string[]).includes(
+				restResource.method,
+			);
+		const hasPathPattern =
+			typeof restResource.pathPattern === "string" &&
+			restResource.pathPattern.startsWith("/") &&
+			restResource.pathPattern.length > 1;
+
+		return createDoctorCheck(
+			`REST resource config ${restResource.slug}`,
+			hasNamespace && hasAuth && hasMethod && hasPathPattern ? "pass" : "fail",
+			hasNamespace && hasAuth && hasMethod && hasPathPattern
+				? `Manual REST contract ${restResource.method} /${restResource.namespace}${restResource.pathPattern}`
+				: "Manual REST contract namespace, auth, method, or path pattern is invalid",
+		);
+	}
+
 	const hasMethods =
 		restResource.methods.length > 0 &&
 		restResource.methods.every((method) =>
 			(REST_RESOURCE_METHOD_IDS as readonly string[]).includes(method),
 		);
+	const hasGeneratedFiles =
+		typeof restResource.dataFile === "string" &&
+		restResource.dataFile.length > 0 &&
+		typeof restResource.phpFile === "string" &&
+		restResource.phpFile.length > 0;
 
 	return createDoctorCheck(
 		`REST resource config ${restResource.slug}`,
-		hasNamespace && hasMethods ? "pass" : "fail",
-		hasNamespace && hasMethods
+		hasNamespace && hasMethods && hasGeneratedFiles ? "pass" : "fail",
+		hasNamespace && hasMethods && hasGeneratedFiles
 			? `REST resource namespace ${restResource.namespace} with methods ${restResource.methods.join(", ")}`
-			: "REST resource namespace or methods are invalid",
+			: "REST resource namespace, methods, dataFile, or phpFile are invalid",
 	);
 }
 
@@ -622,7 +685,7 @@ export function getWorkspaceFeatureDoctorChecks(
 ): DoctorCheck[] {
 	const checks: DoctorCheck[] = [];
 
-	if (inventory.restResources.length > 0) {
+	if (inventory.restResources.some((restResource) => !isManualRestResource(restResource))) {
 		checks.push(
 			checkWorkspaceRestResourceBootstrap(
 				workspace.projectDir,

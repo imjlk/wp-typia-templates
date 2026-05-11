@@ -3391,6 +3391,290 @@ test("contract workflow rejects reserved TypeScript type names before writing fi
   ).toBe(false);
 }, 20_000);
 
+test("canonical CLI can add a type-only manual REST contract to an official workspace template", async () => {
+  const targetDir = path.join(tempRoot, "demo-workspace-add-manual-rest-contract");
+
+  await scaffoldProject({
+    projectDir: targetDir,
+    templateId: workspaceTemplatePackageManifest.name,
+    packageManager: "npm",
+    noInstall: true,
+    answers: {
+      author: "Test Runner",
+      description: "Demo workspace add manual rest contract",
+      namespace: "demo-space",
+      phpPrefix: "demo_space",
+      slug: "demo-workspace-add-manual-rest-contract",
+      textDomain: "demo-space",
+      title: "Demo Workspace Add Manual Rest Contract",
+    },
+  });
+
+  linkWorkspaceNodeModules(targetDir);
+
+  const blockConfigPath = path.join(targetDir, "scripts", "block-config.ts");
+  fs.writeFileSync(
+    blockConfigPath,
+    replaceFixtureSource(
+      fs.readFileSync(blockConfigPath, "utf8"),
+      /export interface WorkspaceRestResourceBaseConfig \{[\s\S]*?export type WorkspaceRestResourceConfig =\n\t\| GeneratedWorkspaceRestResourceConfig\n\t\| ManualWorkspaceRestResourceConfig;\n/u,
+      [
+        "export interface WorkspaceRestResourceConfig {",
+        "\tapiFile: string;",
+        "\tclientFile: string;",
+        "\tdataFile: string;",
+        "\tmethods: Array< 'list' | 'read' | 'create' | 'update' | 'delete' >;",
+        "\tnamespace: string;",
+        "\topenApiFile: string;",
+        "\tphpFile: string;",
+        "\trestManifest?: ReturnType<",
+        "\t\ttypeof import( '@wp-typia/block-runtime/metadata-core' ).defineEndpointManifest",
+        "\t>;",
+        "\tslug: string;",
+        "\ttypesFile: string;",
+        "\tvalidatorsFile: string;",
+        "}",
+        "",
+      ].join("\n"),
+      "legacy REST resource config interface"
+    ),
+    "utf8"
+  );
+
+  runCli(
+    "node",
+    [
+      entryPath,
+      "add",
+      "rest-resource",
+      "external-record",
+      "--manual",
+      "--namespace",
+      "legacy/v1",
+      "--method",
+      "POST",
+      "--auth",
+      "Authenticated",
+      "--path",
+      "/records/(?P<id>[\\d]+(?:-[\\d]+)*)",
+      "--query-type",
+      "ExternalRecordQuery",
+      "--body-type",
+      "ExternalRecordRequest",
+      "--response-type",
+      "ExternalRecordResponse",
+    ],
+    {
+      cwd: targetDir,
+    }
+  );
+
+  const blockConfigSource = fs.readFileSync(
+    blockConfigPath,
+    "utf8"
+  );
+  const syncRestSource = fs.readFileSync(
+    path.join(targetDir, "scripts", "sync-rest-contracts.ts"),
+    "utf8"
+  );
+  const typesSource = fs.readFileSync(
+    path.join(targetDir, "src", "rest", "external-record", "api-types.ts"),
+    "utf8"
+  );
+  const validatorsSource = fs.readFileSync(
+    path.join(targetDir, "src", "rest", "external-record", "api-validators.ts"),
+    "utf8"
+  );
+  const clientSource = fs.readFileSync(
+    path.join(targetDir, "src", "rest", "external-record", "api-client.ts"),
+    "utf8"
+  );
+  const openApiSource = fs.readFileSync(
+    path.join(targetDir, "src", "rest", "external-record", "api.openapi.json"),
+    "utf8"
+  );
+  const responseSchemaPath = path.join(
+    targetDir,
+    "src",
+    "rest",
+    "external-record",
+    "api-schemas",
+    "response.schema.json"
+  );
+
+  expect(blockConfigSource).toContain('slug: "external-record"');
+  expect(blockConfigSource).toContain("mode: 'manual'");
+  expect(blockConfigSource).toContain('auth: "authenticated"');
+  expect(blockConfigSource).toContain('namespace: "legacy/v1"');
+  expect(blockConfigSource).toContain('method: "POST"');
+  expect(blockConfigSource).toContain(
+    'pathPattern: "/records/(?P<id>[\\\\d]+(?:-[\\\\d]+)*)"'
+  );
+  expect(blockConfigSource).toContain('queryTypeName: "ExternalRecordQuery"');
+  expect(blockConfigSource).toContain('bodyTypeName: "ExternalRecordRequest"');
+  expect(blockConfigSource).toContain('responseTypeName: "ExternalRecordResponse"');
+  expect(blockConfigSource).toContain("\tdataFile?: string;");
+  expect(blockConfigSource).toContain("\tphpFile?: string;");
+  expect(blockConfigSource).not.toContain("inc/rest/external-record.php");
+  expect(blockConfigSource).not.toContain(
+    'dataFile: "src/rest/external-record/data.ts"'
+  );
+  expect(syncRestSource).toContain("REST_RESOURCES.filter( isWorkspaceRestResource )");
+  expect(typesSource).toContain("export interface ExternalRecordQuery");
+  expect(typesSource).toContain("export interface ExternalRecordRequest");
+  expect(typesSource).toContain("export interface ExternalRecordResponse");
+  expect(validatorsSource).toContain("query:");
+  expect(validatorsSource).toContain("request:");
+  expect(validatorsSource).toContain("response:");
+  expect(clientSource).toContain("callExternalRecordManualRestContract");
+  expect(clientSource).toContain("authIntent: 'authenticated'");
+  expect(clientSource).toContain("authMode: 'authenticated-rest-nonce'");
+  expect(clientSource).toContain("buildRequestOptions: (request) => {");
+  expect(clientSource).toContain("const rawPathParams = request.query as unknown;");
+  expect(clientSource).toContain(
+    "const pathParams = rawPathParams && typeof rawPathParams === 'object'"
+  );
+  expect(clientSource).toContain(
+    "path: `/legacy/v1/records/${encodeURIComponent( String( pathParam0 ) )}`"
+  );
+  expect(clientSource).toContain("requestLocation: 'query-and-body'");
+  expect(openApiSource).toContain(
+    "/legacy/v1/records/(?P<id>[\\\\d]+(?:-[\\\\d]+)*)"
+  );
+  expect(openApiSource).toContain('"x-typia-authIntent": "authenticated"');
+  expect(fs.existsSync(responseSchemaPath)).toBe(true);
+  expect(
+    fs.existsSync(path.join(targetDir, "inc", "rest", "external-record.php"))
+  ).toBe(false);
+  expect(
+    fs.existsSync(path.join(targetDir, "src", "rest", "external-record", "data.ts"))
+  ).toBe(false);
+
+  const doctorOutput = runCli("node", [entryPath, "doctor", "--format", "json"], {
+    cwd: targetDir,
+  });
+  const doctorChecks = parseJsonObjectFromOutput<{
+    checks: Array<{ detail: string; label: string; status: string }>;
+  }>(doctorOutput);
+  expect(
+    doctorChecks.checks.find((check) => check.label === "REST resource bootstrap")
+  ).toBeUndefined();
+  expect(
+    doctorChecks.checks.find(
+      (check) => check.label === "REST resource config external-record"
+    )?.status
+  ).toBe("pass");
+  expect(
+    doctorChecks.checks.find((check) => check.label === "REST resource external-record")
+      ?.status
+  ).toBe("pass");
+
+  runCli("npm", ["run", "sync-rest", "--", "--check"], { cwd: targetDir });
+
+  fs.writeFileSync(responseSchemaPath, "{}\n", "utf8");
+  expect(() =>
+    runCli("npm", ["run", "sync-rest", "--", "--check"], { cwd: targetDir })
+  ).toThrow("Generated artifacts are missing or stale");
+  runCli("npm", ["run", "sync-rest"], { cwd: targetDir });
+  typecheckGeneratedProject(targetDir);
+}, 30_000);
+
+test("manual REST contract workflow rejects duplicate type names before writing files", async () => {
+  const targetDir = path.join(
+    tempRoot,
+    "demo-workspace-add-manual-rest-contract-duplicate-types"
+  );
+
+  await scaffoldProject({
+    projectDir: targetDir,
+    templateId: workspaceTemplatePackageManifest.name,
+    packageManager: "npm",
+    noInstall: true,
+    answers: {
+      author: "Test Runner",
+      description: "Demo workspace manual rest duplicate types",
+      namespace: "demo-space",
+      phpPrefix: "demo_space",
+      slug: "demo-workspace-add-manual-rest-contract-duplicate-types",
+      textDomain: "demo-space",
+      title: "Demo Workspace Manual Rest Duplicate Types",
+    },
+  });
+
+  linkWorkspaceNodeModules(targetDir);
+
+  expect(
+    getCommandErrorMessage(() =>
+      runCli(
+        "node",
+        [
+          entryPath,
+          "add",
+          "rest-resource",
+          "external-record",
+          "--manual",
+          "--query-type",
+          "ExternalRecordContract",
+          "--response-type",
+          "ExternalRecordContract",
+        ],
+        { cwd: targetDir }
+      )
+    )
+  ).toContain("Manual REST contract type names must be unique");
+  expect(
+    fs.existsSync(path.join(targetDir, "src", "rest", "external-record"))
+  ).toBe(false);
+}, 20_000);
+
+test("manual REST contract workflow rejects GET routes with body types before writing files", async () => {
+  const targetDir = path.join(
+    tempRoot,
+    "demo-workspace-add-manual-rest-contract-get-body"
+  );
+
+  await scaffoldProject({
+    projectDir: targetDir,
+    templateId: workspaceTemplatePackageManifest.name,
+    packageManager: "npm",
+    noInstall: true,
+    answers: {
+      author: "Test Runner",
+      description: "Demo workspace manual rest GET body",
+      namespace: "demo-space",
+      phpPrefix: "demo_space",
+      slug: "demo-workspace-add-manual-rest-contract-get-body",
+      textDomain: "demo-space",
+      title: "Demo Workspace Manual Rest GET Body",
+    },
+  });
+
+  linkWorkspaceNodeModules(targetDir);
+
+  expect(
+    getCommandErrorMessage(() =>
+      runCli(
+        "node",
+        [
+          entryPath,
+          "add",
+          "rest-resource",
+          "external-record",
+          "--manual",
+          "--method",
+          "GET",
+          "--body-type",
+          "ExternalRecordRequest",
+        ],
+        { cwd: targetDir }
+      )
+    )
+  ).toContain("Manual REST contract GET routes cannot define a body type");
+  expect(
+    fs.existsSync(path.join(targetDir, "src", "rest", "external-record"))
+  ).toBe(false);
+}, 20_000);
+
 test("canonical CLI can add a plugin-level REST resource to an official workspace template", async () => {
   const targetDir = path.join(tempRoot, "demo-workspace-add-rest-resource");
 

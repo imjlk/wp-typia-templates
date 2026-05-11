@@ -532,7 +532,7 @@ export const BLOCKS: WorkspaceBlockConfig[] = [
   let previousSectionIndex = -1;
   for (const { constName, interfaceName, marker } of expectedSections) {
     const interfacePattern = new RegExp(
-      `export interface ${interfaceName}\\b`,
+      `export (?:interface|type) ${interfaceName}\\b`,
       "gu"
     );
     const constPattern = new RegExp(`export const ${constName}\\b`, "gu");
@@ -540,7 +540,7 @@ export const BLOCKS: WorkspaceBlockConfig[] = [
     expect(repairedSource.match(constPattern)?.length).toBe(1);
     expect(repairedSource).toContain(marker);
 
-    const sectionIndex = repairedSource.indexOf(`export interface ${interfaceName}`);
+    const sectionIndex = repairedSource.search(interfacePattern);
     expect(sectionIndex).toBeGreaterThan(previousSectionIndex);
     expect(repairedSource.indexOf(`export const ${constName}`)).toBeGreaterThan(
       sectionIndex

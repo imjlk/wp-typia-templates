@@ -1,8 +1,13 @@
 import {
 	quoteTsString,
+	type ManualRestContractAuthId,
+	type ManualRestContractHttpMethodId,
 	type RestResourceMethodId,
 } from "./cli-add-shared.js";
-import { buildRestResourceEndpointManifest } from "./rest-resource-artifacts.js";
+import {
+	buildManualRestContractEndpointManifest,
+	buildRestResourceEndpointManifest,
+} from "./rest-resource-artifacts.js";
 import { toPascalCase, toTitleCase } from "./string-case.js";
 
 function indentMultiline(source: string, prefix: string): string {
@@ -46,6 +51,183 @@ export function buildRestResourceConfigEntry(
 		`\t\tvalidatorsFile: ${quoteTsString(`src/rest/${restResourceSlug}/api-validators.ts`)},`,
 		"\t},",
 	].join("\n");
+}
+
+/**
+ * Build the `REST_RESOURCES` config entry appended for a manual REST contract.
+ *
+ * @param options Manual contract file, route, type, and auth metadata.
+ * @param options.auth Auth intent stored in the endpoint manifest.
+ * @param options.bodyTypeName Optional exported body type name.
+ * @param options.method Uppercase HTTP method for the external route.
+ * @param options.namespace REST namespace such as `vendor/v1`.
+ * @param options.pathPattern Route pattern relative to the namespace.
+ * @param options.queryTypeName Exported query type name.
+ * @param options.responseTypeName Exported response type name.
+ * @param options.restResourceSlug Normalized workspace REST contract slug.
+ * @returns A TypeScript object literal string for `scripts/block-config.ts`.
+ */
+export function buildManualRestContractConfigEntry(options: {
+	auth: ManualRestContractAuthId;
+	bodyTypeName?: string;
+	method: ManualRestContractHttpMethodId;
+	namespace: string;
+	pathPattern: string;
+	queryTypeName: string;
+	responseTypeName: string;
+	restResourceSlug: string;
+}): string {
+	const pascalCase = toPascalCase(options.restResourceSlug);
+	const title = toTitleCase(options.restResourceSlug);
+	const manifest = buildManualRestContractEndpointManifest({
+		auth: options.auth,
+		...(options.bodyTypeName ? { bodyTypeName: options.bodyTypeName } : {}),
+		method: options.method,
+		namespace: options.namespace,
+		pascalCase,
+		pathPattern: options.pathPattern,
+		queryTypeName: options.queryTypeName,
+		responseTypeName: options.responseTypeName,
+		slugKebabCase: options.restResourceSlug,
+		title,
+	});
+
+	return [
+		"\t{",
+		`\t\tapiFile: ${quoteTsString(`src/rest/${options.restResourceSlug}/api.ts`)},`,
+		`\t\tauth: ${quoteTsString(options.auth)},`,
+		...(options.bodyTypeName
+			? [`\t\tbodyTypeName: ${quoteTsString(options.bodyTypeName)},`]
+			: []),
+		`\t\tclientFile: ${quoteTsString(`src/rest/${options.restResourceSlug}/api-client.ts`)},`,
+		`\t\tmethod: ${quoteTsString(options.method)},`,
+		"\t\tmethods: [],",
+		"\t\tmode: 'manual',",
+		`\t\tnamespace: ${quoteTsString(options.namespace)},`,
+		`\t\topenApiFile: ${quoteTsString(`src/rest/${options.restResourceSlug}/api.openapi.json`)},`,
+		`\t\tpathPattern: ${quoteTsString(options.pathPattern)},`,
+		`\t\tqueryTypeName: ${quoteTsString(options.queryTypeName)},`,
+		"\t\trestManifest: defineEndpointManifest(",
+		indentMultiline(JSON.stringify(manifest, null, "\t"), "\t\t\t"),
+		"\t\t),",
+		`\t\tresponseTypeName: ${quoteTsString(options.responseTypeName)},`,
+		`\t\tslug: ${quoteTsString(options.restResourceSlug)},`,
+		`\t\ttypesFile: ${quoteTsString(`src/rest/${options.restResourceSlug}/api-types.ts`)},`,
+		`\t\tvalidatorsFile: ${quoteTsString(`src/rest/${options.restResourceSlug}/api-validators.ts`)},`,
+		"\t},",
+	].join("\n");
+}
+
+/**
+ * Build the editable TypeScript type source for a manual REST contract.
+ *
+ * @param options Manual contract type naming metadata.
+ * @param options.bodyTypeName Optional exported body type name.
+ * @param options.queryTypeName Exported query type name.
+ * @param options.responseTypeName Exported response type name.
+ * @param options.restResourceSlug Normalized workspace REST contract slug.
+ * @returns TypeScript source for `api-types.ts`.
+ */
+export function buildManualRestContractTypesSource(options: {
+	bodyTypeName?: string;
+	queryTypeName: string;
+	responseTypeName: string;
+	restResourceSlug: string;
+}): string {
+	const title = toTitleCase(options.restResourceSlug);
+	const lines = [
+		"import { tags } from 'typia';",
+		"",
+		`export interface ${options.queryTypeName} {`,
+		"\tid?: string & tags.MinLength< 1 >;",
+		"\tpreview?: boolean;",
+		"}",
+	];
+
+	if (options.bodyTypeName) {
+		lines.push(
+			"",
+			`export interface ${options.bodyTypeName} {`,
+			"\tpayload: string & tags.MinLength< 1 >;",
+			"\tcomment?: string & tags.MaxLength< 500 >;",
+			"}",
+		);
+	}
+
+	lines.push(
+		"",
+		`export interface ${options.responseTypeName} {`,
+		"\tid: string & tags.MinLength< 1 >;",
+		"\tstatus: 'ok' | 'error';",
+		"\tmessage?: string;",
+		"\tupdatedAt?: string;",
+		"}",
+		"",
+		`// ${title} is a manual REST contract: edit these types to match the external route owner.`,
+	);
+
+	return `${lines.join("\n")}\n`;
+}
+
+/**
+ * Build Typia validator source for a manual REST contract.
+ *
+ * @param options Manual contract type names to validate.
+ * @param options.bodyTypeName Optional exported body type name.
+ * @param options.queryTypeName Exported query type name.
+ * @param options.responseTypeName Exported response type name.
+ * @returns TypeScript source for `api-validators.ts`.
+ */
+export function buildManualRestContractValidatorsSource(options: {
+	bodyTypeName?: string;
+	queryTypeName: string;
+	responseTypeName: string;
+}): string {
+	const importedTypes = [
+		options.queryTypeName,
+		...(options.bodyTypeName ? [options.bodyTypeName] : []),
+		options.responseTypeName,
+	].sort();
+	const validatorDeclarations = [
+		`const validateQuery = typia.createValidate< ${options.queryTypeName} >();`,
+		...(options.bodyTypeName
+			? [`const validateRequest = typia.createValidate< ${options.bodyTypeName} >();`]
+			: []),
+		`const validateResponse = typia.createValidate< ${options.responseTypeName} >();`,
+	];
+	const validatorEntries = [
+		`\tquery: ( input: unknown ) => toValidationResult< ${options.queryTypeName} >( validateQuery( input ) ),`,
+		...(options.bodyTypeName
+			? [
+					`\trequest: ( input: unknown ) => toValidationResult< ${options.bodyTypeName} >( validateRequest( input ) ),`,
+				]
+			: []),
+		`\tresponse: ( input: unknown ) => toValidationResult< ${options.responseTypeName} >( validateResponse( input ) ),`,
+	];
+
+	return `import typia from 'typia';
+
+import { toValidationResult } from '@wp-typia/rest';
+import type {
+\t${importedTypes.join(",\n\t")},
+} from './api-types';
+
+${validatorDeclarations.join("\n")}
+
+export const apiValidators = {
+${validatorEntries.join("\n")}
+};
+`;
+}
+
+/**
+ * Build the public API shim for a manual REST contract.
+ *
+ * @returns TypeScript source that re-exports the generated endpoint client.
+ */
+export function buildManualRestContractApiSource(): string {
+	return `export * from './api-client';
+`;
 }
 
 export function buildRestResourceTypesSource(

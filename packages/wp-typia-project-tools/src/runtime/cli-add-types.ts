@@ -20,6 +20,36 @@ export const REST_RESOURCE_METHOD_IDS = [
 export type RestResourceMethodId = (typeof REST_RESOURCE_METHOD_IDS)[number];
 
 /**
+ * Supported HTTP methods accepted by manual REST contract mode.
+ */
+export const MANUAL_REST_CONTRACT_HTTP_METHOD_IDS = [
+	"DELETE",
+	"GET",
+	"PATCH",
+	"POST",
+	"PUT",
+] as const;
+/**
+ * Union of supported manual REST contract HTTP methods.
+ */
+export type ManualRestContractHttpMethodId =
+	(typeof MANUAL_REST_CONTRACT_HTTP_METHOD_IDS)[number];
+
+/**
+ * Supported auth intent values accepted by manual REST contract mode.
+ */
+export const MANUAL_REST_CONTRACT_AUTH_IDS = [
+	"authenticated",
+	"public",
+	"public-write-protected",
+] as const;
+/**
+ * Union of supported manual REST contract auth intents.
+ */
+export type ManualRestContractAuthId =
+	(typeof MANUAL_REST_CONTRACT_AUTH_IDS)[number];
+
+/**
  * Canonical editor-plugin shell surface ids accepted by
  * `wp-typia add editor-plugin --slot`.
  */
@@ -192,16 +222,38 @@ export interface RunAddContractCommandOptions {
 /**
  * Options for `wp-typia add rest-resource`.
  *
+ * Passing `manual: true` records a type-only external REST route contract. In
+ * manual mode wp-typia still owns TypeScript contracts, validators, OpenAPI,
+ * generated clients, and drift checks, but it does not create PHP route glue.
+ *
+ * @property auth Optional auth intent for manual mode. Defaults to public.
+ * @property bodyTypeName Optional exported TypeScript body type for manual
+ * mode. Defaults to `<PascalName>Request` for write methods.
  * @property cwd Working directory used to resolve the nearest official workspace.
+ * @property manual Whether to scaffold a type-only external REST contract.
+ * @property method HTTP method for manual REST contract mode. Defaults to GET.
  * @property methods Optional comma-separated REST method list.
  * @property namespace Optional REST namespace, defaulting to the workspace namespace.
+ * @property pathPattern Route path pattern for manual mode, relative to the
+ * namespace. Defaults to `/<name>`.
+ * @property queryTypeName Optional exported TypeScript query type for manual
+ * mode. Defaults to `<PascalName>Query`.
  * @property restResourceName Human-entered resource name normalized into a slug.
+ * @property responseTypeName Optional exported TypeScript response type for
+ * manual mode. Defaults to `<PascalName>Response`.
  */
 export interface RunAddRestResourceCommandOptions {
+	auth?: string;
+	bodyTypeName?: string;
 	cwd?: string;
+	manual?: boolean;
+	method?: string;
 	methods?: string;
 	namespace?: string;
+	pathPattern?: string;
+	queryTypeName?: string;
 	restResourceName: string;
+	responseTypeName?: string;
 }
 
 /**
