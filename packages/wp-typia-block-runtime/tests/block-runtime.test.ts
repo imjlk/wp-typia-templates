@@ -187,6 +187,15 @@ describe("@wp-typia/block-runtime", () => {
 							responseContract: "response",
 							tags: ["Items"],
 						},
+						{
+							auth: "public",
+							method: "GET",
+							operationId: "fetchOptionalItemAlternative",
+							path: "/items(?:/(?P<id>[\\d]+)|/(?P<slug>[a-z]+))?",
+							queryContract: "query",
+							responseContract: "response",
+							tags: ["Items"],
+						},
 					],
 				}),
 				projectRoot,
@@ -205,6 +214,36 @@ describe("@wp-typia/block-runtime", () => {
 			expect(clientSource).toContain("path: `/items`,");
 			expect(clientSource).toContain(
 				"path: `/items${pathParam0 !== undefined && pathParam0 !== null && pathParam0 !== '' && pathParam1 !== undefined && pathParam1 !== null && pathParam1 !== '' ? `/${encodeURIComponent( String( pathParam0 ) )}/${encodeURIComponent( String( pathParam1 ) )}` : ''}`,",
+			);
+			expect(clientSource).toContain(
+				"path: `/items${pathParam0 !== undefined && pathParam0 !== null && pathParam0 !== '' ? `/${encodeURIComponent( String( pathParam0 ) )}` : pathParam1 !== undefined && pathParam1 !== null && pathParam1 !== '' ? `/${encodeURIComponent( String( pathParam1 ) )}` : ''}`,",
+			);
+			await expect(
+				syncEndpointClient({
+					clientFile: "path-only-client.ts",
+					manifest: defineEndpointManifest({
+						contracts: {
+							response: {
+								sourceTypeName: "OptionalItemResponse",
+							},
+						},
+						endpoints: [
+							{
+								auth: "public",
+								method: "GET",
+								operationId: "fetchPathOnlyItem",
+								path: "/items/(?P<id>[\\d]+)",
+								responseContract: "response",
+								tags: ["Items"],
+							},
+						],
+					}),
+					projectRoot,
+					typesFile: "api-types.ts",
+					validatorsFile: "api-validators.ts",
+				}),
+			).rejects.toThrow(
+				"uses named path captures but does not define a query or body contract",
 			);
 		} finally {
 			rmSync(projectRoot, { force: true, recursive: true });

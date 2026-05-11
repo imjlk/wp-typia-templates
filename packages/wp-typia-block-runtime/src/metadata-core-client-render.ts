@@ -231,6 +231,31 @@ function hasOptionalEndpointPathGroup(
 	return false;
 }
 
+function splitEndpointPathAlternativeParts(
+	parts: readonly EndpointPathTemplatePart[],
+): EndpointPathTemplatePart[][] {
+	const alternatives: EndpointPathTemplatePart[][] = [[]];
+
+	for (const part of parts) {
+		if (part.kind !== 'literal' || !part.value.includes('|')) {
+			alternatives[alternatives.length - 1]?.push(part);
+			continue;
+		}
+
+		const literalAlternatives = part.value.split('|');
+		for (const [index, literal] of literalAlternatives.entries()) {
+			if (index > 0) {
+				alternatives.push([]);
+			}
+			if (literal.length > 0) {
+				pushEndpointPathLiteral(alternatives[alternatives.length - 1]!, literal);
+			}
+		}
+	}
+
+	return alternatives;
+}
+
 function buildPathParameterPresentExpression(parameterIndex: number): string {
 	return `pathParam${parameterIndex} !== undefined && pathParam${parameterIndex} !== null && pathParam${parameterIndex} !== ''`;
 }
@@ -254,21 +279,44 @@ function buildEndpointPathTemplateBody(
 			continue;
 		}
 		if (part.kind === 'optionalGroup') {
-			const groupParameterIndexes = collectEndpointPathParameterNames(
-				part.parts,
-				[],
-			)
-				.map((name) => parameterIndexes.get(name))
-				.filter((index): index is number => index !== undefined);
-			const groupTemplate = buildEndpointPathTemplateBody(
-				part.parts,
-				pathParameterNames,
-			);
-			if (groupParameterIndexes.length > 0) {
+			const alternativeFragments = splitEndpointPathAlternativeParts(part.parts)
+				.map((alternativeParts) => {
+					const alternativeParameterIndexes = collectEndpointPathParameterNames(
+						alternativeParts,
+						[],
+					)
+						.map((name) => parameterIndexes.get(name))
+						.filter((index): index is number => index !== undefined);
+					if (alternativeParameterIndexes.length === 0) {
+						return null;
+					}
+
+					return {
+						condition: alternativeParameterIndexes
+							.map((index) => buildPathParameterPresentExpression(index))
+							.join(' && '),
+						template: buildEndpointPathTemplateBody(
+							alternativeParts,
+							pathParameterNames,
+						),
+					};
+				})
+				.filter(
+					(
+						fragment,
+					): fragment is {
+						condition: string;
+						template: string;
+					} => fragment !== null,
+				);
+			if (alternativeFragments.length > 0) {
 				fragments.push(
-					`\${${groupParameterIndexes
-						.map((index) => buildPathParameterPresentExpression(index))
-						.join(' && ')} ? \`${groupTemplate}\` : ''}`,
+					`\${${alternativeFragments
+						.map(
+							(fragment) =>
+								`${fragment.condition} ? \`${fragment.template}\` : `,
+						)
+						.join('')}''}`,
 				);
 			}
 			continue;
@@ -398,6 +446,19 @@ export async function syncEndpointClientModule(
 
 		const queryContractKey = endpoint.queryContract ?? null;
 		const bodyContractKey = endpoint.bodyContract ?? null;
+		const endpointPathParameterNames = collectEndpointPathParameterNames(
+			parseEndpointPathTemplateParts(endpoint.path),
+			[],
+		);
+		if (
+			!queryContractKey &&
+			!bodyContractKey &&
+			endpointPathParameterNames.length > 0
+		) {
+			throw new Error(
+				`Endpoint "${endpoint.operationId}" path "${endpoint.path}" uses named path captures but does not define a query or body contract to carry those values.`,
+			);
+		}
 		const hasRequest = Boolean(queryContractKey || bodyContractKey);
 		const responseContract = resolveEndpointClientContract(
 			manifest,
