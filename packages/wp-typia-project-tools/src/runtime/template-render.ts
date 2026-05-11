@@ -337,6 +337,6 @@ export async function listInterpolatedDirectoryOutputs(
 	return outputs.sort((left, right) => left.localeCompare(right));
 }
 
-export function pathExists(targetPath: string): boolean {
+export function pathExistsSync(targetPath: string): boolean {
 	return fs.existsSync(targetPath);
 }
