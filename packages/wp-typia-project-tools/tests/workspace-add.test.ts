@@ -1230,6 +1230,13 @@ test("canonical CLI can add an integration environment starter to an official wo
   const smokeScriptSource = fs.readFileSync(smokeScriptPath, "utf8");
   expect(smokeScriptSource).toContain("WordPress REST index");
   expect(smokeScriptSource).toContain("local-smoke");
+  expect(smokeScriptSource).toContain("function resolveEndpointUrl");
+  expect(smokeScriptSource).toContain(
+    'resolveEndpointUrl(baseUrl, "wp-json/")'
+  );
+  expect(smokeScriptSource).toContain(
+    'resolveEndpointUrl(serviceUrl, "health")'
+  );
   runCli("node", ["--check", smokeScriptPath], { cwd: targetDir });
   expect(
     fs.readFileSync(
@@ -1238,6 +1245,48 @@ test("canonical CLI can add an integration environment starter to an official wo
     )
   ).toContain("Adapting the Starter");
 });
+
+test("canonical CLI preserves an existing wp-env dependency when adding an integration environment", async () => {
+  const targetDir = path.join(
+    tempRoot,
+    "demo-workspace-add-integration-env-existing-wp-env"
+  );
+
+  await scaffoldOfficialWorkspace(targetDir, {
+    description: "Demo workspace add integration env existing wp-env",
+    slug: "demo-workspace-add-integration-env-existing-wp-env",
+    title: "Demo Workspace Add Integration Env Existing Wp Env",
+  });
+
+  const packageJsonPath = path.join(targetDir, "package.json");
+  const packageJson = JSON.parse(
+    fs.readFileSync(packageJsonPath, "utf8")
+  ) as {
+    devDependencies?: Record<string, string>;
+  };
+  packageJson.devDependencies = {
+    ...(packageJson.devDependencies ?? {}),
+    "@wordpress/env": "^10.0.0",
+  };
+  fs.writeFileSync(
+    packageJsonPath,
+    `${JSON.stringify(packageJson, null, "\t")}\n`,
+    "utf8"
+  );
+
+  linkWorkspaceNodeModules(targetDir);
+  runCli("node", [entryPath, "add", "integration-env", "local-smoke", "--wp-env"], {
+    cwd: targetDir,
+  });
+
+  const updatedPackageJson = JSON.parse(
+    fs.readFileSync(packageJsonPath, "utf8")
+  ) as {
+    devDependencies: Record<string, string>;
+  };
+  expect(updatedPackageJson.devDependencies["@wordpress/env"]).toBe("^10.0.0");
+  expect(fs.existsSync(path.join(targetDir, ".wp-env.json"))).toBe(true);
+}, 20_000);
 
 test("canonical CLI can dry-run hooked-block metadata updates without rewriting block.json", async () => {
   const targetDir = path.join(tempRoot, "demo-workspace-add-hooked-block-dry-run");

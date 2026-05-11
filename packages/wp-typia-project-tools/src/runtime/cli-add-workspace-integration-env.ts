@@ -22,6 +22,17 @@ interface IntegrationEnvPackageJson {
 	scripts?: Record<string, string>;
 }
 
+/**
+ * Runtime result returned after adding an integration environment starter.
+ *
+ * @property integrationEnvSlug Normalized slug used for generated script and
+ * documentation paths.
+ * @property projectDir Absolute official workspace directory that was updated.
+ * @property service Canonical local service starter id selected for the scaffold.
+ * @property warnings Optional non-fatal preservation notices for existing files
+ * or scripts.
+ * @property withWpEnv Whether the generated scaffold included the wp-env preset.
+ */
 export interface RunAddIntegrationEnvCommandResult {
 	integrationEnvSlug: string;
 	projectDir: string;
@@ -131,6 +142,16 @@ function getEnv(name, fallback) {
 	return process.env[name] ?? envFile[name] ?? fallback;
 }
 
+function resolveEndpointUrl(baseUrl, endpointPath) {
+	const normalizedBaseUrl = new URL(baseUrl);
+	if (!normalizedBaseUrl.pathname.endsWith("/")) {
+		normalizedBaseUrl.pathname = \`\${normalizedBaseUrl.pathname}/\`;
+	}
+
+	const relativePath = endpointPath.replace(/^\\/+/u, "");
+	return new URL(relativePath, normalizedBaseUrl);
+}
+
 async function assertJsonEndpoint(label, url) {
 	const response = await fetch(url, {
 		headers: {
@@ -161,13 +182,13 @@ const serviceUrl = getEnv("WP_TYPIA_SERVICE_URL", "").trim();
 
 await assertJsonEndpoint(
 	"WordPress REST index",
-	new URL("/wp-json/", baseUrl),
+	resolveEndpointUrl(baseUrl, "wp-json/"),
 );
 
 if (serviceUrl.length > 0) {
 	await assertJsonEndpoint(
 		"Local integration service healthcheck",
-		new URL("/health", serviceUrl),
+		resolveEndpointUrl(serviceUrl, "health"),
 	);
 }
 
@@ -354,10 +375,13 @@ function addIntegrationEnvPackageJsonEntries({
 	warnings: string[];
 	withWpEnv: boolean;
 }) {
-	packageJson.devDependencies = {
+	const devDependencies = {
 		...(packageJson.devDependencies ?? {}),
-		...(withWpEnv ? { "@wordpress/env": WP_ENV_PACKAGE_VERSION } : {}),
 	};
+	if (withWpEnv && devDependencies["@wordpress/env"] === undefined) {
+		devDependencies["@wordpress/env"] = WP_ENV_PACKAGE_VERSION;
+	}
+	packageJson.devDependencies = devDependencies;
 	const scripts = {
 		...(packageJson.scripts ?? {}),
 	};
