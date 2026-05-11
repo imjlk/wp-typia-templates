@@ -7,7 +7,10 @@ import {
 	syncTypeSchemas,
 } from "@wp-typia/block-runtime/metadata-core";
 
-import type { RestResourceMethodId } from "./cli-add-shared.js";
+import type {
+	ManualRestContractHttpMethodId,
+	RestResourceMethodId,
+} from "./cli-add-shared.js";
 
 interface RestResourceTemplateVariablesLike {
 	namespace: string;
@@ -24,6 +27,27 @@ interface SyncRestResourceArtifactsOptions {
 	typesFile: string;
 	validatorsFile: string;
 	variables: RestResourceTemplateVariablesLike;
+}
+
+interface ManualRestContractTemplateVariablesLike {
+	bodyTypeName?: string;
+	method: ManualRestContractHttpMethodId;
+	namespace: string;
+	pascalCase: string;
+	pathPattern: string;
+	queryTypeName: string;
+	responseTypeName: string;
+	slugKebabCase: string;
+	title: string;
+}
+
+interface SyncManualRestContractArtifactsOptions {
+	clientFile: string;
+	outputDir: string;
+	projectDir: string;
+	typesFile: string;
+	validatorsFile: string;
+	variables: ManualRestContractTemplateVariablesLike;
 }
 
 type RestResourceEndpointDefinition = Parameters<
@@ -165,6 +189,54 @@ export function buildRestResourceEndpointManifest(
 }
 
 /**
+ * Build the endpoint manifest for a type-only manual REST contract. Manual
+ * contracts describe routes owned by another integration without generating PHP
+ * route glue in the workspace.
+ *
+ * @param variables Template naming data used for contract names, route path,
+ * and OpenAPI info.
+ * @returns Endpoint manifest consumed by schema, OpenAPI, and client generators.
+ */
+export function buildManualRestContractEndpointManifest(
+	variables: ManualRestContractTemplateVariablesLike,
+) {
+	const contracts: Record<string, { sourceTypeName: string }> = {
+		query: {
+			sourceTypeName: variables.queryTypeName,
+		},
+		response: {
+			sourceTypeName: variables.responseTypeName,
+		},
+	};
+	if (variables.bodyTypeName) {
+		contracts.request = {
+			sourceTypeName: variables.bodyTypeName,
+		};
+	}
+
+	return defineEndpointManifest({
+		contracts,
+		endpoints: [
+			{
+				auth: "public",
+				...(variables.bodyTypeName ? { bodyContract: "request" } : {}),
+				method: variables.method,
+				operationId: `call${variables.pascalCase}ManualRestContract`,
+				path: `/${variables.namespace}${variables.pathPattern}`,
+				queryContract: "query",
+				responseContract: "response",
+				summary: `Call external ${variables.title} REST route.`,
+				tags: [variables.title],
+			},
+		],
+		info: {
+			title: `${variables.title} Manual REST Contract`,
+			version: "1.0.0",
+		},
+	});
+}
+
+/**
  * Synchronize generated schemas, OpenAPI output, and endpoint client code for
  * a workspace-level REST resource scaffold.
  *
@@ -181,6 +253,57 @@ export async function syncRestResourceArtifacts({
 	variables,
 }: SyncRestResourceArtifactsOptions): Promise<void> {
 	const manifest = buildRestResourceEndpointManifest(variables, methods);
+
+	for (const [baseName, contract] of Object.entries(manifest.contracts) as Array<
+		[string, { sourceTypeName: string }]
+	>) {
+		await syncTypeSchemas(
+			{
+				jsonSchemaFile: path.join(outputDir, "api-schemas", `${baseName}.schema.json`),
+				openApiFile: path.join(outputDir, "api-schemas", `${baseName}.openapi.json`),
+				projectRoot: projectDir,
+				sourceTypeName: contract.sourceTypeName,
+				typesFile,
+			},
+		);
+	}
+
+	await syncRestOpenApi(
+		{
+			manifest,
+			openApiFile: path.join(outputDir, "api.openapi.json"),
+			projectRoot: projectDir,
+			typesFile,
+		},
+	);
+
+	await syncEndpointClient(
+		{
+			clientFile,
+			manifest,
+			projectRoot: projectDir,
+			typesFile,
+			validatorsFile,
+		},
+	);
+}
+
+/**
+ * Synchronize generated schemas, OpenAPI output, and endpoint client code for a
+ * type-only manual REST contract.
+ *
+ * @param options Contract file paths and naming variables.
+ * @returns A promise that resolves after every generated artifact has refreshed.
+ */
+export async function syncManualRestContractArtifacts({
+	clientFile,
+	outputDir,
+	projectDir,
+	typesFile,
+	validatorsFile,
+	variables,
+}: SyncManualRestContractArtifactsOptions): Promise<void> {
+	const manifest = buildManualRestContractEndpointManifest(variables);
 
 	for (const [baseName, contract] of Object.entries(manifest.contracts) as Array<
 		[string, { sourceTypeName: string }]

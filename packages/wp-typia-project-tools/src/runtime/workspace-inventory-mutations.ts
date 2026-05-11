@@ -127,6 +127,66 @@ function ensureInterfaceField(
 	);
 }
 
+function upsertInterfaceField(
+	source: string,
+	interfaceName: string,
+	fieldName: string,
+	fieldSource: string,
+): string {
+	const interfacePattern = new RegExp(
+		`(export\\s+interface\\s+${escapeRegex(
+			interfaceName,
+		)}\\s*\\{\\r?\\n)([\\s\\S]*?)(\\r?\\n\\})`,
+		"u",
+	);
+
+	return source.replace(
+		interfacePattern,
+		(match, start: string, body: string, end: string) => {
+			const lineEnding = start.endsWith("\r\n") ? "\r\n" : "\n";
+			const formattedFieldSource = `${fieldSource
+				.replace(/\r?\n$/u, "")
+				.split("\n")
+				.join(lineEnding)}${lineEnding}`;
+			const existingFieldPattern = new RegExp(
+				`(^[ \\t]*${escapeRegex(fieldName)}\\??:\\s*[^;\\r\\n]+;?\\r?\\n?)`,
+				"mu",
+			);
+			const existingFieldMatch = existingFieldPattern.exec(body);
+
+			if (existingFieldMatch?.[0]) {
+				if (existingFieldMatch[0].trim() === fieldSource.trim()) {
+					return match;
+				}
+
+				return `${start}${body.slice(
+					0,
+					existingFieldMatch.index,
+				)}${formattedFieldSource}${body.slice(existingFieldMatch.index + existingFieldMatch[0].length)}${end}`;
+			}
+
+			const memberPattern = /^[ \t]*([A-Za-z_$][\w$]*)\??:/gmu;
+			for (const member of body.matchAll(memberPattern)) {
+				const memberIndex = member.index;
+				const memberName = member[1];
+				if (memberIndex === undefined || !memberName) {
+					continue;
+				}
+				if (memberName.localeCompare(fieldName) > 0) {
+					return `${start}${body.slice(
+						0,
+						memberIndex,
+					)}${formattedFieldSource}${body.slice(memberIndex)}${end}`;
+				}
+			}
+
+			return `${start}${body}${
+				body.length > 0 && !body.endsWith(lineEnding) ? lineEnding : ""
+			}${formattedFieldSource}${end}`;
+		},
+	);
+}
+
 function normalizeInterfaceFieldBlock(
 	source: string,
 	interfaceName: string,
@@ -238,6 +298,23 @@ export function updateWorkspaceInventorySource(
 		WORKSPACE_COMPATIBILITY_CONFIG_FIELD,
 		["optionalFeatureIds: string[];", "requiredFeatureIds: string[];"],
 	);
+	for (const [fieldName, fieldSource] of [
+		["bodyTypeName", "\tbodyTypeName?: string;"],
+		["dataFile", "\tdataFile?: string;"],
+		["method", "\tmethod?: 'DELETE' | 'GET' | 'PATCH' | 'POST' | 'PUT';"],
+		["mode", "\tmode?: 'generated' | 'manual';"],
+		["pathPattern", "\tpathPattern?: string;"],
+		["phpFile", "\tphpFile?: string;"],
+		["queryTypeName", "\tqueryTypeName?: string;"],
+		["responseTypeName", "\tresponseTypeName?: string;"],
+	] as const) {
+		nextSource = upsertInterfaceField(
+			nextSource,
+			"WorkspaceRestResourceConfig",
+			fieldName,
+			fieldSource,
+		);
+	}
 	return nextSource;
 }
 

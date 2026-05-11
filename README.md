@@ -159,6 +159,7 @@ wp-typia add binding-source hero-data
 wp-typia add binding-source hero-data --block counter-card --attribute headline
 wp-typia add contract external-retrieve-response --type ExternalRetrieveResponse
 wp-typia add rest-resource snapshots --namespace my-plugin/v1 --methods list,read,create
+wp-typia add rest-resource external-record --manual --namespace legacy/v1 --method GET --path '/records/(?P<id>[\d]+)'
 wp-typia add editor-plugin review-workflow --slot sidebar
 wp-typia add editor-plugin seo-notes --slot document-setting-panel
 wp-typia add hooked-block counter-card --anchor core/post-content --position after
@@ -173,6 +174,9 @@ wp-typia add hooked-block counter-card --anchor core/post-content --position aft
 - Need a branded Query Loop inserter variation? Start with `query-loop`.
 - Need an empty workspace that will grow through `wp-typia add ...` workflows? Start with `--template workspace`.
 - Need a local WordPress smoke starter later? Use `wp-typia add integration-env <name> --wp-env` from a workspace.
+- Need to describe a REST route owned by another plugin or legacy controller?
+  Use `wp-typia add rest-resource <name> --manual` to generate TypeScript
+  contracts, schemas, OpenAPI, and clients without PHP route glue.
 - Need schema evolution for a long-lived block? Enable `--with-migration-ui`.
 - Need smoke tests for external/manual payloads? Use `@wp-typia/block-runtime/schema-test`
   to assert responses against generated `*.schema.json` contract artifacts.

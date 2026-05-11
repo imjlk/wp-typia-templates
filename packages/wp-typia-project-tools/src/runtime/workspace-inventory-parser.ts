@@ -1,6 +1,9 @@
 import ts from "typescript";
 
-import { REST_RESOURCE_METHOD_IDS } from "./cli-add-shared.js";
+import {
+	MANUAL_REST_CONTRACT_HTTP_METHOD_IDS,
+	REST_RESOURCE_METHOD_IDS,
+} from "./cli-add-shared.js";
 import { getPropertyNameText } from "./ts-property-names.js";
 import {
 	ABILITY_CONFIG_ENTRY_MARKER,
@@ -376,8 +379,24 @@ export const INVENTORY_SECTIONS: readonly InventorySectionDescriptor[] = [
 				entryName: "REST_RESOURCES",
 				fields: [
 					{ key: "apiFile", required: true },
+					{ key: "bodyTypeName" },
 					{ key: "clientFile", required: true },
-					{ key: "dataFile", required: true },
+					{ key: "dataFile" },
+					{
+						key: "method",
+						validate: (value, context) => {
+							if (
+								typeof value === "string" &&
+								!(
+									MANUAL_REST_CONTRACT_HTTP_METHOD_IDS as readonly string[]
+								).includes(value)
+							) {
+								throw new Error(
+									`${context.entryName}[${context.elementIndex}].${context.key} must be one of: ${MANUAL_REST_CONTRACT_HTTP_METHOD_IDS.join(", ")}.`,
+								);
+							}
+						},
+					},
 					{
 						key: "methods",
 						kind: "stringArray",
@@ -397,9 +416,26 @@ export const INVENTORY_SECTIONS: readonly InventorySectionDescriptor[] = [
 							}
 						},
 					},
+					{
+						key: "mode",
+						validate: (value, context) => {
+							if (
+								typeof value === "string" &&
+								value !== "generated" &&
+								value !== "manual"
+							) {
+								throw new Error(
+									`${context.entryName}[${context.elementIndex}].${context.key} must be generated or manual.`,
+								);
+							}
+						},
+					},
 					{ key: "namespace", required: true },
 					{ key: "openApiFile", required: true },
-					{ key: "phpFile", required: true },
+					{ key: "pathPattern" },
+					{ key: "phpFile" },
+					{ key: "queryTypeName" },
+					{ key: "responseTypeName" },
 					{ key: "slug", required: true },
 					{ key: "typesFile", required: true },
 					{ key: "validatorsFile", required: true },

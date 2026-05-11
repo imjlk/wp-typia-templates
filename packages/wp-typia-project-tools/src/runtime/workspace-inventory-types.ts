@@ -62,12 +62,18 @@ export interface WorkspaceContractInventoryEntry {
  */
 export interface WorkspaceRestResourceInventoryEntry {
 	apiFile: string;
+	bodyTypeName?: string;
 	clientFile: string;
-	dataFile: string;
+	dataFile?: string;
+	method?: string;
 	methods: string[];
+	mode?: "generated" | "manual";
 	namespace: string;
 	openApiFile: string;
-	phpFile: string;
+	pathPattern?: string;
+	phpFile?: string;
+	queryTypeName?: string;
+	responseTypeName?: string;
 	slug: string;
 	typesFile: string;
 	validatorsFile: string;

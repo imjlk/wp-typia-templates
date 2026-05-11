@@ -13,6 +13,8 @@ import {
 	type EditorPluginSlotId,
 	INTEGRATION_ENV_SERVICE_IDS,
 	type IntegrationEnvServiceId,
+	MANUAL_REST_CONTRACT_HTTP_METHOD_IDS,
+	type ManualRestContractHttpMethodId,
 	REST_RESOURCE_METHOD_IDS,
 	type RestResourceMethodId,
 	resolveEditorPluginSlotAlias,
@@ -232,6 +234,68 @@ export function assertValidRestResourceMethods(
 	}
 
 	return normalizedMethods as RestResourceMethodId[];
+}
+
+/**
+ * Normalize and validate the HTTP method used by a manual REST contract.
+ *
+ * @param method Optional method input. Defaults to GET.
+ * @returns A canonical uppercase HTTP method.
+ * @throws {Error} When the method is unsupported.
+ */
+export function assertValidManualRestContractHttpMethod(
+	method = "GET",
+): ManualRestContractHttpMethodId {
+	const normalized = method.trim().toUpperCase();
+	if (
+		(MANUAL_REST_CONTRACT_HTTP_METHOD_IDS as readonly string[]).includes(
+			normalized,
+		)
+	) {
+		return normalized as ManualRestContractHttpMethodId;
+	}
+
+	throw new Error(
+		`Manual REST contract method must be one of: ${MANUAL_REST_CONTRACT_HTTP_METHOD_IDS.join(", ")}.`,
+	);
+}
+
+/**
+ * Normalize and validate a manual REST contract route path pattern.
+ *
+ * @param slug Generated contract slug used for the default route path.
+ * @param pathPattern Optional route path pattern, relative to the namespace.
+ * @returns A route pattern with a leading slash.
+ * @throws {Error} When the path pattern is empty or clearly not a route path.
+ */
+export function resolveManualRestContractPathPattern(
+	slug: string,
+	pathPattern?: string,
+): string {
+	const trimmed =
+		typeof pathPattern === "string" && pathPattern.trim().length > 0
+			? pathPattern.trim()
+			: `/${slug}`;
+	if (/^https?:\/\//iu.test(trimmed)) {
+		throw new Error(
+			"Manual REST contract path must be a route pattern relative to the namespace, not an absolute URL.",
+		);
+	}
+	const withLeadingSlash = trimmed.startsWith("/") ? trimmed : `/${trimmed}`;
+	const normalized = withLeadingSlash;
+
+	if (!normalized || normalized === "/") {
+		throw new Error(
+			"Manual REST contract path is required. Use `--path <route-pattern>` such as `/external-record/(?P<id>[\\d]+)`.",
+		);
+	}
+	if (/\s/u.test(normalized)) {
+		throw new Error(
+			"Manual REST contract path must not contain whitespace.",
+		);
+	}
+
+	return normalized;
 }
 
 /**

@@ -44,15 +44,21 @@ export interface WorkspaceBindingSourceConfig {
 
 export interface WorkspaceRestResourceConfig {
 	apiFile: string;
+	bodyTypeName?: string;
 	clientFile: string;
-	dataFile: string;
+	dataFile?: string;
+	method?: 'DELETE' | 'GET' | 'PATCH' | 'POST' | 'PUT';
 	methods: Array< 'list' | 'read' | 'create' | 'update' | 'delete' >;
+	mode?: 'generated' | 'manual';
 	namespace: string;
 	openApiFile: string;
-	phpFile: string;
+	pathPattern?: string;
+	phpFile?: string;
+	queryTypeName?: string;
 	restManifest?: ReturnType<
 		typeof import( '@wp-typia/block-runtime/metadata-core' ).defineEndpointManifest
 	>;
+	responseTypeName?: string;
 	slug: string;
 	typesFile: string;
 	validatorsFile: string;

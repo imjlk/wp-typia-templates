@@ -127,15 +127,21 @@ export const REST_RESOURCES_INTERFACE_SECTION = `
 
 export interface WorkspaceRestResourceConfig {
 \tapiFile: string;
+\tbodyTypeName?: string;
 \tclientFile: string;
-\tdataFile: string;
+\tdataFile?: string;
+\tmethod?: 'DELETE' | 'GET' | 'PATCH' | 'POST' | 'PUT';
 \tmethods: Array< 'list' | 'read' | 'create' | 'update' | 'delete' >;
+\tmode?: 'generated' | 'manual';
 \tnamespace: string;
 \topenApiFile: string;
-\tphpFile: string;
+\tpathPattern?: string;
+\tphpFile?: string;
+\tqueryTypeName?: string;
 \trestManifest?: ReturnType<
 \t\ttypeof import( '@wp-typia/block-runtime/metadata-core' ).defineEndpointManifest
 \t>;
+\tresponseTypeName?: string;
 \tslug: string;
 \ttypesFile: string;
 \tvalidatorsFile: string;
