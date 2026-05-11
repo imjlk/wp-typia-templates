@@ -170,6 +170,70 @@ function replaceBlockConfigImportForContracts(
 	return nextSource.replace(importSource, replacement);
 }
 
+function replaceBlockConfigImportForRestResources(
+	nextSource: string,
+	syncRestScriptPath: string,
+): string {
+	const importPatterns = [
+		/^import\s*\{\n(?:\t[^\n]*\n)+\} from ["']\.\/block-config["'];?$/mu,
+		/^import\s*\{[^\n]*\}\s*from\s*["']\.\/block-config["'];?$/mu,
+	];
+	const importMatch =
+		importPatterns.map((pattern) => pattern.exec(nextSource)).find(Boolean) ??
+		null;
+
+	if (!importMatch) {
+		throw new Error(
+			getSyncRestPatchErrorMessage(
+				"ensureRestResourceSyncScriptAnchors",
+				syncRestScriptPath,
+				"block-config import",
+				"REST_RESOURCES",
+			),
+		);
+	}
+
+	const importSource = importMatch[0];
+	if (
+		importSource.includes("REST_RESOURCES") &&
+		importSource.includes("WorkspaceRestResourceConfig")
+	) {
+		return nextSource;
+	}
+	if (
+		!importSource.includes("BLOCKS") ||
+		!importSource.includes("WorkspaceBlockConfig")
+	) {
+		throw new Error(
+			getSyncRestPatchErrorMessage(
+				"ensureRestResourceSyncScriptAnchors",
+				syncRestScriptPath,
+				"BLOCKS import",
+				"REST_RESOURCES",
+			),
+		);
+	}
+
+	const hasAiFeatures = importSource.includes("AI_FEATURES");
+	const hasAiFeatureConfig = importSource.includes("WorkspaceAiFeatureConfig");
+	const hasContracts = importSource.includes("CONTRACTS");
+	const hasContractConfig = importSource.includes("WorkspaceContractConfig");
+	const replacement = [
+		"import {",
+		...(hasAiFeatures ? ["\tAI_FEATURES,"] : []),
+		"\tBLOCKS,",
+		...(hasContracts ? ["\tCONTRACTS,"] : []),
+		"\tREST_RESOURCES,",
+		...(hasAiFeatureConfig ? ["\ttype WorkspaceAiFeatureConfig,"] : []),
+		"\ttype WorkspaceBlockConfig,",
+		...(hasContractConfig ? ["\ttype WorkspaceContractConfig,"] : []),
+		"\ttype WorkspaceRestResourceConfig,",
+		"} from './block-config';",
+	].join("\n");
+
+	return nextSource.replace(importSource, replacement);
+}
+
 function replaceRequiredContractSyncRestSource(
 	nextSource: string,
 	target: string,
@@ -499,27 +563,13 @@ export async function ensureRestResourceSyncScriptAnchors(
 	const syncRestScriptPath = path.join(workspace.projectDir, "scripts", "sync-rest-contracts.ts");
 
 	await patchFile(syncRestScriptPath, (source) => {
-		let nextSource = source;
-		const importAnchor = "import { BLOCKS, type WorkspaceBlockConfig } from './block-config';";
+		let nextSource = replaceBlockConfigImportForRestResources(
+			source,
+			syncRestScriptPath,
+		);
 		const helperInsertionAnchor = "async function assertTypeArtifactsCurrent";
 		const restBlocksAnchor = "const restBlocks = BLOCKS.filter( isRestEnabledBlock );";
 		const consoleLogPattern = /\n\tconsole\.log\(\n\t\toptions\.check/u;
-
-		nextSource = replaceRequiredSyncRestSource(
-			nextSource,
-			"REST_RESOURCES",
-			importAnchor,
-			[
-				"import {",
-				"\tBLOCKS,",
-				"\tREST_RESOURCES,",
-				"\ttype WorkspaceBlockConfig,",
-				"\ttype WorkspaceRestResourceConfig,",
-				"} from './block-config';",
-			].join("\n"),
-			"BLOCKS import",
-			syncRestScriptPath,
-		);
 
 		nextSource = replaceRequiredSyncRestSource(
 			nextSource,

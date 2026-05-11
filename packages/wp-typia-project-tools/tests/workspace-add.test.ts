@@ -100,6 +100,55 @@ function replaceFixtureSource(
   return nextSource;
 }
 
+function createLegacySyncRestSourceWithoutContractAndRestResources(
+  source: string
+): string {
+  return source
+    .replace(
+      /import \{\n\tBLOCKS,\n\tCONTRACTS,\n\tREST_RESOURCES,\n\ttype WorkspaceBlockConfig,\n\ttype WorkspaceContractConfig,\n\ttype WorkspaceRestResourceConfig,\n\} from '\.\/block-config';/u,
+      "import { BLOCKS, type WorkspaceBlockConfig } from './block-config';"
+    )
+    .replace(/\nfunction isWorkspaceStandaloneContract\([\s\S]*?\n\}\n/u, "\n")
+    .replace(/\nfunction isWorkspaceRestResource\([\s\S]*?\n\}\n/u, "\n")
+    .replace(
+      "\n\tconst standaloneContracts = CONTRACTS.filter( isWorkspaceStandaloneContract );",
+      ""
+    )
+    .replace(
+      "\n\tconst restResources = REST_RESOURCES.filter( isWorkspaceRestResource );",
+      ""
+    )
+    .replace(
+      /\n\tif \(\s*restBlocks\.length === 0 &&\s*standaloneContracts\.length === 0 &&\s*restResources\.length === 0\s*\) \{[\s\S]*?\n\t\}/u,
+      [
+        "\n\tif ( restBlocks.length === 0 ) {",
+        "\t\tconsole.log(",
+        "\t\t\toptions.check",
+        "\t\t\t\t? 'ℹ️ No REST-enabled workspace blocks are registered yet. `sync-rest --check` is already clean.'",
+        "\t\t\t\t: 'ℹ️ No REST-enabled workspace blocks are registered yet.'",
+        "\t\t);",
+        "\t\treturn;",
+        "\t}",
+      ].join("\n")
+    )
+    .replace(
+      /\n\tfor \( const contract of standaloneContracts \) \{[\s\S]*?\n\t\}\n/u,
+      "\n"
+    )
+    .replace(
+      /\n\tfor \( const resource of restResources \) \{[\s\S]*?\n\t\}\n\n\tconsole\.log\(/u,
+      "\n\tconsole.log("
+    )
+    .replace(
+      "✅ REST contract schemas, portable API clients, and endpoint-aware OpenAPI documents are already up to date for workspace blocks and plugin-level resources!",
+      "✅ REST contract schemas, portable API clients, and endpoint-aware OpenAPI documents are already up to date with the TypeScript types!"
+    )
+    .replace(
+      "✅ REST contract schemas, portable API clients, and endpoint-aware OpenAPI documents generated for workspace blocks and plugin-level resources!",
+      "✅ REST contract schemas, portable API clients, and endpoint-aware OpenAPI documents generated from TypeScript types!"
+    );
+}
+
 describe("@wp-typia/project-tools workspace add", () => {
   const tempRoot = createScaffoldTempRoot("wp-typia-workspace-add-");
 
@@ -4095,48 +4144,9 @@ test("rest resource workflow repairs legacy sync-rest scripts before writing wor
     "scripts",
     "sync-rest-contracts.ts"
   );
-  const legacySyncRestSource = fs
-    .readFileSync(syncRestScriptPath, "utf8")
-    .replace(
-      /import \{\n\tBLOCKS,\n\tCONTRACTS,\n\tREST_RESOURCES,\n\ttype WorkspaceBlockConfig,\n\ttype WorkspaceContractConfig,\n\ttype WorkspaceRestResourceConfig,\n\} from '\.\/block-config';/u,
-      "import { BLOCKS, type WorkspaceBlockConfig } from './block-config';"
-    )
-    .replace(/\nfunction isWorkspaceStandaloneContract\([\s\S]*?\n\}\n/u, "\n")
-    .replace(/\nfunction isWorkspaceRestResource\([\s\S]*?\n\}\n/u, "\n")
-    .replace(
-      "\n\tconst standaloneContracts = CONTRACTS.filter( isWorkspaceStandaloneContract );",
-      ""
-    )
-    .replace(
-      "\n\tconst restResources = REST_RESOURCES.filter( isWorkspaceRestResource );",
-      ""
-    )
-    .replace(
-      /\n\tif \(\n\t\trestBlocks\.length === 0 &&\n\t\tstandaloneContracts\.length === 0 &&\n\t\trestResources\.length === 0\n\t\) \{[\s\S]*?\n\t\}/u,
-      [
-        "\n\tif ( restBlocks.length === 0 ) {",
-        "\t\tconsole.log(",
-        "\t\t\toptions.check",
-        "\t\t\t\t? 'ℹ️ No REST-enabled workspace blocks are registered yet. `sync-rest --check` is already clean.'",
-        "\t\t\t\t: 'ℹ️ No REST-enabled workspace blocks are registered yet.'",
-        "\t\t);",
-        "\t\treturn;",
-        "\t}",
-      ].join("\n")
-    )
-    .replace(/\n\tfor \( const contract of standaloneContracts \) \{[\s\S]*?\n\t\}\n/u, "\n")
-    .replace(
-      /\n\tfor \( const resource of restResources \) \{[\s\S]*?\n\t\}\n\n\tconsole\.log\(/u,
-      "\n\tconsole.log("
-    )
-    .replace(
-      "✅ REST contract schemas, portable API clients, and endpoint-aware OpenAPI documents are already up to date for workspace blocks and plugin-level resources!",
-      "✅ REST contract schemas, portable API clients, and endpoint-aware OpenAPI documents are already up to date with the TypeScript types!"
-    )
-    .replace(
-      "✅ REST contract schemas, portable API clients, and endpoint-aware OpenAPI documents generated for workspace blocks and plugin-level resources!",
-      "✅ REST contract schemas, portable API clients, and endpoint-aware OpenAPI documents generated from TypeScript types!"
-    );
+  const legacySyncRestSource = createLegacySyncRestSourceWithoutContractAndRestResources(
+    fs.readFileSync(syncRestScriptPath, "utf8")
+  );
   fs.writeFileSync(syncRestScriptPath, legacySyncRestSource, "utf8");
 
   runCli("node", [entryPath, "add", "rest-resource", "snapshots"], {
@@ -4186,40 +4196,9 @@ test("contract workflow repairs legacy sync-rest scripts before writing standalo
     "scripts",
     "sync-rest-contracts.ts"
   );
-  const legacySyncRestSource = fs
-    .readFileSync(syncRestScriptPath, "utf8")
-    .replace(
-      /import \{\n\tBLOCKS,\n\tCONTRACTS,\n\tREST_RESOURCES,\n\ttype WorkspaceBlockConfig,\n\ttype WorkspaceContractConfig,\n\ttype WorkspaceRestResourceConfig,\n\} from '\.\/block-config';/u,
-      "import { BLOCKS, type WorkspaceBlockConfig } from './block-config';"
-    )
-    .replace(/\nfunction isWorkspaceStandaloneContract\([\s\S]*?\n\}\n/u, "\n")
-    .replace(/\nfunction isWorkspaceRestResource\([\s\S]*?\n\}\n/u, "\n")
-    .replace(
-      "\n\tconst standaloneContracts = CONTRACTS.filter( isWorkspaceStandaloneContract );",
-      ""
-    )
-    .replace(
-      "\n\tconst restResources = REST_RESOURCES.filter( isWorkspaceRestResource );",
-      ""
-    )
-    .replace(
-      /\n\tif \(\n\t\trestBlocks\.length === 0 &&\n\t\tstandaloneContracts\.length === 0 &&\n\t\trestResources\.length === 0\n\t\) \{[\s\S]*?\n\t\}/u,
-      [
-        "\n\tif ( restBlocks.length === 0 ) {",
-        "\t\tconsole.log(",
-        "\t\t\toptions.check",
-        "\t\t\t\t? 'ℹ️ No REST-enabled workspace blocks are registered yet. `sync-rest --check` is already clean.'",
-        "\t\t\t\t: 'ℹ️ No REST-enabled workspace blocks are registered yet.'",
-        "\t\t);",
-        "\t\treturn;",
-        "\t}",
-      ].join("\n")
-    )
-    .replace(/\n\tfor \( const contract of standaloneContracts \) \{[\s\S]*?\n\t\}\n/u, "\n")
-    .replace(
-      /\n\tfor \( const resource of restResources \) \{[\s\S]*?\n\t\}\n\n\tconsole\.log\(/u,
-      "\n\tconsole.log("
-    );
+  const legacySyncRestSource = createLegacySyncRestSourceWithoutContractAndRestResources(
+    fs.readFileSync(syncRestScriptPath, "utf8")
+  );
   fs.writeFileSync(syncRestScriptPath, legacySyncRestSource, "utf8");
 
   runCli(
@@ -4245,6 +4224,83 @@ test("contract workflow repairs legacy sync-rest scripts before writing standalo
 
   runCli("npm", ["run", "sync-rest", "--", "--check"], { cwd: targetDir });
 }, 20_000);
+
+test("rest resource workflow repairs sync-rest after legacy contract-first repairs", async () => {
+  const targetDir = path.join(
+    tempRoot,
+    "demo-workspace-contract-first-rest-resource-legacy-sync-rest"
+  );
+
+  await scaffoldProject({
+    projectDir: targetDir,
+    templateId: workspaceTemplatePackageManifest.name,
+    packageManager: "npm",
+    noInstall: true,
+    answers: {
+      author: "Test Runner",
+      description: "Demo workspace contract first rest resource legacy sync rest",
+      namespace: "demo-space",
+      phpPrefix: "demo_space",
+      slug: "demo-workspace-contract-first-rest-resource-legacy-sync-rest",
+      textDomain: "demo-space",
+      title: "Demo Workspace Contract First Rest Resource Legacy Sync Rest",
+    },
+  });
+
+  linkWorkspaceNodeModules(targetDir);
+
+  const syncRestScriptPath = path.join(
+    targetDir,
+    "scripts",
+    "sync-rest-contracts.ts"
+  );
+  fs.writeFileSync(
+    syncRestScriptPath,
+    createLegacySyncRestSourceWithoutContractAndRestResources(
+      fs.readFileSync(syncRestScriptPath, "utf8")
+    ),
+    "utf8"
+  );
+
+  runCli(
+    "node",
+    [
+      entryPath,
+      "add",
+      "contract",
+      "external-response",
+      "--type",
+      "ExternalResponse",
+    ],
+    { cwd: targetDir }
+  );
+  runCli(
+    "node",
+    [
+      entryPath,
+      "add",
+      "rest-resource",
+      "snapshots",
+      "--namespace",
+      "demo-space/v1",
+      "--methods",
+      "list,read,create,update,delete",
+    ],
+    { cwd: targetDir }
+  );
+
+  const repairedSyncRestSource = fs.readFileSync(syncRestScriptPath, "utf8");
+  expect(repairedSyncRestSource).toContain("CONTRACTS");
+  expect(repairedSyncRestSource).toContain("REST_RESOURCES");
+  expect(repairedSyncRestSource).toContain(
+    "const standaloneContracts = CONTRACTS.filter( isWorkspaceStandaloneContract );"
+  );
+  expect(repairedSyncRestSource).toContain(
+    "const restResources = REST_RESOURCES.filter( isWorkspaceRestResource );"
+  );
+
+  runCli("npm", ["run", "sync-rest", "--", "--check"], { cwd: targetDir });
+}, 30_000);
 
 test("rest resource workflow fails fast when sync-rest anchors drift past automatic repair", async () => {
   const targetDir = path.join(
