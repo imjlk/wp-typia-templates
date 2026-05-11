@@ -8,6 +8,7 @@ import {
 } from "@wp-typia/block-runtime/metadata-core";
 
 import type {
+	ManualRestContractAuthId,
 	ManualRestContractHttpMethodId,
 	RestResourceMethodId,
 } from "./cli-add-shared.js";
@@ -30,6 +31,7 @@ interface SyncRestResourceArtifactsOptions {
 }
 
 interface ManualRestContractTemplateVariablesLike {
+	auth: ManualRestContractAuthId;
 	bodyTypeName?: string;
 	method: ManualRestContractHttpMethodId;
 	namespace: string;
@@ -53,6 +55,21 @@ interface SyncManualRestContractArtifactsOptions {
 type RestResourceEndpointDefinition = Parameters<
 	typeof defineEndpointManifest
 >[0]["endpoints"][number];
+
+function resolveManualRestContractWordPressAuth(auth: ManualRestContractAuthId) {
+	if (auth === "authenticated") {
+		return {
+			mechanism: "rest-nonce" as const,
+		};
+	}
+	if (auth === "public-write-protected") {
+		return {
+			mechanism: "public-signed-token" as const,
+		};
+	}
+
+	return undefined;
+}
 
 /**
  * Build the endpoint manifest for a workspace-level REST resource scaffold.
@@ -213,12 +230,13 @@ export function buildManualRestContractEndpointManifest(
 			sourceTypeName: variables.bodyTypeName,
 		};
 	}
+	const wordpressAuth = resolveManualRestContractWordPressAuth(variables.auth);
 
 	return defineEndpointManifest({
 		contracts,
 		endpoints: [
 			{
-				auth: "public",
+				auth: variables.auth,
 				...(variables.bodyTypeName ? { bodyContract: "request" } : {}),
 				method: variables.method,
 				operationId: `call${variables.pascalCase}ManualRestContract`,
@@ -227,6 +245,7 @@ export function buildManualRestContractEndpointManifest(
 				responseContract: "response",
 				summary: `Call external ${variables.title} REST route.`,
 				tags: [variables.title],
+				...(wordpressAuth ? { wordpressAuth } : {}),
 			},
 		],
 		info: {

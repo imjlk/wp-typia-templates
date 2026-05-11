@@ -3,6 +3,7 @@ import path from "node:path";
 
 import {
 	EDITOR_PLUGIN_SLOT_IDS,
+	MANUAL_REST_CONTRACT_AUTH_IDS,
 	MANUAL_REST_CONTRACT_HTTP_METHOD_IDS,
 	REST_RESOURCE_METHOD_IDS,
 	REST_RESOURCE_NAMESPACE_PATTERN,
@@ -113,6 +114,11 @@ function checkWorkspaceRestResourceConfig(
 ): DoctorCheck {
 	const hasNamespace = REST_RESOURCE_NAMESPACE_PATTERN.test(restResource.namespace);
 	if (isManualRestResource(restResource)) {
+		const hasAuth =
+			restResource.auth == null ||
+			(MANUAL_REST_CONTRACT_AUTH_IDS as readonly string[]).includes(
+				restResource.auth,
+			);
 		const hasMethod =
 			typeof restResource.method === "string" &&
 			(MANUAL_REST_CONTRACT_HTTP_METHOD_IDS as readonly string[]).includes(
@@ -125,10 +131,10 @@ function checkWorkspaceRestResourceConfig(
 
 		return createDoctorCheck(
 			`REST resource config ${restResource.slug}`,
-			hasNamespace && hasMethod && hasPathPattern ? "pass" : "fail",
-			hasNamespace && hasMethod && hasPathPattern
+			hasNamespace && hasAuth && hasMethod && hasPathPattern ? "pass" : "fail",
+			hasNamespace && hasAuth && hasMethod && hasPathPattern
 				? `Manual REST contract ${restResource.method} /${restResource.namespace}${restResource.pathPattern}`
-				: "Manual REST contract namespace, method, or path pattern is invalid",
+				: "Manual REST contract namespace, auth, method, or path pattern is invalid",
 		);
 	}
 
@@ -137,13 +143,18 @@ function checkWorkspaceRestResourceConfig(
 		restResource.methods.every((method) =>
 			(REST_RESOURCE_METHOD_IDS as readonly string[]).includes(method),
 		);
+	const hasGeneratedFiles =
+		typeof restResource.dataFile === "string" &&
+		restResource.dataFile.length > 0 &&
+		typeof restResource.phpFile === "string" &&
+		restResource.phpFile.length > 0;
 
 	return createDoctorCheck(
 		`REST resource config ${restResource.slug}`,
-		hasNamespace && hasMethods ? "pass" : "fail",
-		hasNamespace && hasMethods
+		hasNamespace && hasMethods && hasGeneratedFiles ? "pass" : "fail",
+		hasNamespace && hasMethods && hasGeneratedFiles
 			? `REST resource namespace ${restResource.namespace} with methods ${restResource.methods.join(", ")}`
-			: "REST resource namespace or methods are invalid",
+			: "REST resource namespace, methods, dataFile, or phpFile are invalid",
 	);
 }
 

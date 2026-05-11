@@ -125,27 +125,41 @@ export const CONTRACTS: WorkspaceContractConfig[] = [
 
 export const REST_RESOURCES_INTERFACE_SECTION = `
 
-export interface WorkspaceRestResourceConfig {
+export interface WorkspaceRestResourceBaseConfig {
 \tapiFile: string;
+\tauth?: 'authenticated' | 'public' | 'public-write-protected';
 \tbodyTypeName?: string;
 \tclientFile: string;
-\tdataFile?: string;
-\tmethod?: 'DELETE' | 'GET' | 'PATCH' | 'POST' | 'PUT';
-\tmethods: Array< 'list' | 'read' | 'create' | 'update' | 'delete' >;
-\tmode?: 'generated' | 'manual';
 \tnamespace: string;
 \topenApiFile: string;
-\tpathPattern?: string;
-\tphpFile?: string;
-\tqueryTypeName?: string;
 \trestManifest?: ReturnType<
 \t\ttypeof import( '@wp-typia/block-runtime/metadata-core' ).defineEndpointManifest
 \t>;
-\tresponseTypeName?: string;
 \tslug: string;
 \ttypesFile: string;
 \tvalidatorsFile: string;
 }
+
+export interface GeneratedWorkspaceRestResourceConfig extends WorkspaceRestResourceBaseConfig {
+\tdataFile: string;
+\tmethods: Array< 'list' | 'read' | 'create' | 'update' | 'delete' >;
+\tmode?: 'generated';
+\tphpFile: string;
+}
+
+export interface ManualWorkspaceRestResourceConfig extends WorkspaceRestResourceBaseConfig {
+\tbodyTypeName?: string;
+\tmethod: 'DELETE' | 'GET' | 'PATCH' | 'POST' | 'PUT';
+\tmethods: [];
+\tmode: 'manual';
+\tpathPattern: string;
+\tqueryTypeName: string;
+\tresponseTypeName: string;
+}
+
+export type WorkspaceRestResourceConfig =
+\t| GeneratedWorkspaceRestResourceConfig
+\t| ManualWorkspaceRestResourceConfig;
 `;
 
 export const REST_RESOURCES_CONST_SECTION = `

@@ -36,6 +36,20 @@ export type ManualRestContractHttpMethodId =
 	(typeof MANUAL_REST_CONTRACT_HTTP_METHOD_IDS)[number];
 
 /**
+ * Supported auth intent values accepted by manual REST contract mode.
+ */
+export const MANUAL_REST_CONTRACT_AUTH_IDS = [
+	"authenticated",
+	"public",
+	"public-write-protected",
+] as const;
+/**
+ * Union of supported manual REST contract auth intents.
+ */
+export type ManualRestContractAuthId =
+	(typeof MANUAL_REST_CONTRACT_AUTH_IDS)[number];
+
+/**
  * Canonical editor-plugin shell surface ids accepted by
  * `wp-typia add editor-plugin --slot`.
  */
@@ -212,6 +226,7 @@ export interface RunAddContractCommandOptions {
  * manual mode wp-typia still owns TypeScript contracts, validators, OpenAPI,
  * generated clients, and drift checks, but it does not create PHP route glue.
  *
+ * @property auth Optional auth intent for manual mode. Defaults to public.
  * @property bodyTypeName Optional exported TypeScript body type for manual
  * mode. Defaults to `<PascalName>Request` for write methods.
  * @property cwd Working directory used to resolve the nearest official workspace.
@@ -228,6 +243,7 @@ export interface RunAddContractCommandOptions {
  * manual mode. Defaults to `<PascalName>Response`.
  */
 export interface RunAddRestResourceCommandOptions {
+	auth?: string;
 	bodyTypeName?: string;
 	cwd?: string;
 	manual?: boolean;

@@ -28,7 +28,7 @@ export function formatHelpText(): string {
   wp-typia add pattern <name>
   wp-typia add binding-source <name> [--block <block-slug|namespace/block-slug> --attribute <attribute>]
   wp-typia add rest-resource <name> [--namespace <vendor/v1>] [--methods <method[,method...]>]
-  wp-typia add rest-resource <name> --manual [--namespace <vendor/v1>] [--method <GET|POST|PUT|PATCH|DELETE>] [--path <route-pattern>] [--query-type <Type>] [--body-type <Type>] [--response-type <Type>]
+  wp-typia add rest-resource <name> --manual [--namespace <vendor/v1>] [--method <GET|POST|PUT|PATCH|DELETE>] [--auth <public|authenticated|public-write-protected>] [--path <route-pattern>] [--query-type <Type>] [--body-type <Type>] [--response-type <Type>]
   wp-typia add ability <name>
   wp-typia add ai-feature <name> [--namespace <vendor/v1>]
   wp-typia add editor-plugin <name> [--slot <sidebar|document-setting-panel>]

@@ -1,6 +1,7 @@
 import ts from "typescript";
 
 import {
+	MANUAL_REST_CONTRACT_AUTH_IDS,
 	MANUAL_REST_CONTRACT_HTTP_METHOD_IDS,
 	REST_RESOURCE_METHOD_IDS,
 } from "./cli-add-shared.js";
@@ -379,6 +380,21 @@ export const INVENTORY_SECTIONS: readonly InventorySectionDescriptor[] = [
 				entryName: "REST_RESOURCES",
 				fields: [
 					{ key: "apiFile", required: true },
+					{
+						key: "auth",
+						validate: (value, context) => {
+							if (
+								typeof value === "string" &&
+								!(MANUAL_REST_CONTRACT_AUTH_IDS as readonly string[]).includes(
+									value,
+								)
+							) {
+								throw new Error(
+									`${context.entryName}[${context.elementIndex}].${context.key} must be one of: ${MANUAL_REST_CONTRACT_AUTH_IDS.join(", ")}.`,
+								);
+							}
+						},
+					},
 					{ key: "bodyTypeName" },
 					{ key: "clientFile", required: true },
 					{ key: "dataFile" },

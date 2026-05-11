@@ -16,6 +16,7 @@ export const longValueOptions = Object.freeze([
   '--alternate-render-targets',
   '--anchor',
   '--attribute',
+  '--auth',
   '--block',
   '--body-type',
   '--config',

@@ -13,6 +13,8 @@ import {
 	type EditorPluginSlotId,
 	INTEGRATION_ENV_SERVICE_IDS,
 	type IntegrationEnvServiceId,
+	MANUAL_REST_CONTRACT_AUTH_IDS,
+	type ManualRestContractAuthId,
 	MANUAL_REST_CONTRACT_HTTP_METHOD_IDS,
 	type ManualRestContractHttpMethodId,
 	REST_RESOURCE_METHOD_IDS,
@@ -261,6 +263,26 @@ export function assertValidManualRestContractHttpMethod(
 }
 
 /**
+ * Normalize and validate the auth intent used by a manual REST contract.
+ *
+ * @param auth Optional auth intent input. Defaults to public.
+ * @returns A canonical auth intent.
+ * @throws {Error} When the auth intent is unsupported.
+ */
+export function assertValidManualRestContractAuth(
+	auth = "public",
+): ManualRestContractAuthId {
+	const normalized = auth.trim();
+	if ((MANUAL_REST_CONTRACT_AUTH_IDS as readonly string[]).includes(normalized)) {
+		return normalized as ManualRestContractAuthId;
+	}
+
+	throw new Error(
+		`Manual REST contract auth must be one of: ${MANUAL_REST_CONTRACT_AUTH_IDS.join(", ")}.`,
+	);
+}
+
+/**
  * Normalize and validate a manual REST contract route path pattern.
  *
  * @param slug Generated contract slug used for the default route path.
@@ -282,20 +304,19 @@ export function resolveManualRestContractPathPattern(
 		);
 	}
 	const withLeadingSlash = trimmed.startsWith("/") ? trimmed : `/${trimmed}`;
-	const normalized = withLeadingSlash;
 
-	if (!normalized || normalized === "/") {
+	if (!withLeadingSlash || withLeadingSlash === "/") {
 		throw new Error(
 			"Manual REST contract path is required. Use `--path <route-pattern>` such as `/external-record/(?P<id>[\\d]+)`.",
 		);
 	}
-	if (/\s/u.test(normalized)) {
+	if (/\s/u.test(withLeadingSlash)) {
 		throw new Error(
 			"Manual REST contract path must not contain whitespace.",
 		);
 	}
 
-	return normalized;
+	return withLeadingSlash;
 }
 
 /**

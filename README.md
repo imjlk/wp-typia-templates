@@ -159,7 +159,7 @@ wp-typia add binding-source hero-data
 wp-typia add binding-source hero-data --block counter-card --attribute headline
 wp-typia add contract external-retrieve-response --type ExternalRetrieveResponse
 wp-typia add rest-resource snapshots --namespace my-plugin/v1 --methods list,read,create
-wp-typia add rest-resource external-record --manual --namespace legacy/v1 --method GET --path '/records/(?P<id>[\d]+)'
+wp-typia add rest-resource external-record --manual --namespace legacy/v1 --method GET --auth authenticated --path '/records/(?P<id>[\d]+)'
 wp-typia add editor-plugin review-workflow --slot sidebar
 wp-typia add editor-plugin seo-notes --slot document-setting-panel
 wp-typia add hooked-block counter-card --anchor core/post-content --position after

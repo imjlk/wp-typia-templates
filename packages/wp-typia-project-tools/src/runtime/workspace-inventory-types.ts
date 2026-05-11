@@ -62,6 +62,7 @@ export interface WorkspaceContractInventoryEntry {
  */
 export interface WorkspaceRestResourceInventoryEntry {
 	apiFile: string;
+	auth?: string;
 	bodyTypeName?: string;
 	clientFile: string;
 	dataFile?: string;

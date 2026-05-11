@@ -28,7 +28,10 @@ export const restResourceAddKindEntry =
         `Mode: ${values.mode}`,
         `Namespace: ${values.namespace}`,
         ...(values.mode === 'manual'
-          ? [`Route: ${values.method} /${values.namespace}${values.pathPattern}`]
+          ? [
+              `Route: ${values.method} /${values.namespace}${values.pathPattern}`,
+              `Auth: ${values.auth}`,
+            ]
           : [`Methods: ${values.methods}`]),
         `Project directory: ${projectDir}`,
       ],
@@ -41,6 +44,7 @@ export const restResourceAddKindEntry =
         context,
         REST_RESOURCE_MISSING_NAME_MESSAGE,
       );
+      const auth = readOptionalStrictStringFlag(context.flags, 'auth');
       const bodyTypeName = readOptionalStrictStringFlag(
         context.flags,
         'body-type',
@@ -62,6 +66,7 @@ export const restResourceAddKindEntry =
       return createNamedExecutionPlan(context, {
         execute: ({ cwd, name }) =>
           context.addRuntime.runAddRestResourceCommand({
+            auth,
             bodyTypeName,
             cwd,
             manual,
@@ -74,6 +79,7 @@ export const restResourceAddKindEntry =
             responseTypeName,
           }),
         getValues: (result) => ({
+          auth: result.auth ?? '',
           method: result.method ?? '',
           methods: result.methods.join(', '),
           mode: result.mode,
@@ -89,6 +95,6 @@ export const restResourceAddKindEntry =
     sortOrder: 80,
     supportsDryRun: true,
     usage:
-      'wp-typia add rest-resource <name> [--namespace <vendor/v1>] [--methods <list,read,create,update,delete>] [--manual --method <GET|POST|PUT|PATCH|DELETE> --path <route-pattern> --query-type <Type> --body-type <Type> --response-type <Type>] [--dry-run]',
+      'wp-typia add rest-resource <name> [--namespace <vendor/v1>] [--methods <list,read,create,update,delete>] [--manual --method <GET|POST|PUT|PATCH|DELETE> --auth <public|authenticated|public-write-protected> --path <route-pattern> --query-type <Type> --body-type <Type> --response-type <Type>] [--dry-run]',
     visibleFieldNames: () => NAME_NAMESPACE_METHODS_VISIBLE_FIELDS,
   });

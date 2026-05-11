@@ -18,6 +18,11 @@ export const ADD_OPTION_METADATA = {
       'Target block attribute for end-to-end binding-source workflows.',
     type: 'string',
   },
+  auth: {
+    description:
+      'Auth intent for manual REST contract workflows (public, authenticated, or public-write-protected).',
+    type: 'string',
+  },
   block: {
     description:
       'Target block slug for variation, style, and end-to-end binding-source workflows.',

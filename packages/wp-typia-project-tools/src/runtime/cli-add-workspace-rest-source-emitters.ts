@@ -1,5 +1,6 @@
 import {
 	quoteTsString,
+	type ManualRestContractAuthId,
 	type ManualRestContractHttpMethodId,
 	type RestResourceMethodId,
 } from "./cli-add-shared.js";
@@ -52,7 +53,22 @@ export function buildRestResourceConfigEntry(
 	].join("\n");
 }
 
+/**
+ * Build the `REST_RESOURCES` config entry appended for a manual REST contract.
+ *
+ * @param options Manual contract file, route, type, and auth metadata.
+ * @param options.auth Auth intent stored in the endpoint manifest.
+ * @param options.bodyTypeName Optional exported body type name.
+ * @param options.method Uppercase HTTP method for the external route.
+ * @param options.namespace REST namespace such as `vendor/v1`.
+ * @param options.pathPattern Route pattern relative to the namespace.
+ * @param options.queryTypeName Exported query type name.
+ * @param options.responseTypeName Exported response type name.
+ * @param options.restResourceSlug Normalized workspace REST contract slug.
+ * @returns A TypeScript object literal string for `scripts/block-config.ts`.
+ */
 export function buildManualRestContractConfigEntry(options: {
+	auth: ManualRestContractAuthId;
 	bodyTypeName?: string;
 	method: ManualRestContractHttpMethodId;
 	namespace: string;
@@ -64,6 +80,7 @@ export function buildManualRestContractConfigEntry(options: {
 	const pascalCase = toPascalCase(options.restResourceSlug);
 	const title = toTitleCase(options.restResourceSlug);
 	const manifest = buildManualRestContractEndpointManifest({
+		auth: options.auth,
 		...(options.bodyTypeName ? { bodyTypeName: options.bodyTypeName } : {}),
 		method: options.method,
 		namespace: options.namespace,
@@ -78,6 +95,7 @@ export function buildManualRestContractConfigEntry(options: {
 	return [
 		"\t{",
 		`\t\tapiFile: ${quoteTsString(`src/rest/${options.restResourceSlug}/api.ts`)},`,
+		`\t\tauth: ${quoteTsString(options.auth)},`,
 		...(options.bodyTypeName
 			? [`\t\tbodyTypeName: ${quoteTsString(options.bodyTypeName)},`]
 			: []),
@@ -100,6 +118,16 @@ export function buildManualRestContractConfigEntry(options: {
 	].join("\n");
 }
 
+/**
+ * Build the editable TypeScript type source for a manual REST contract.
+ *
+ * @param options Manual contract type naming metadata.
+ * @param options.bodyTypeName Optional exported body type name.
+ * @param options.queryTypeName Exported query type name.
+ * @param options.responseTypeName Exported response type name.
+ * @param options.restResourceSlug Normalized workspace REST contract slug.
+ * @returns TypeScript source for `api-types.ts`.
+ */
 export function buildManualRestContractTypesSource(options: {
 	bodyTypeName?: string;
 	queryTypeName: string;
@@ -141,6 +169,15 @@ export function buildManualRestContractTypesSource(options: {
 	return `${lines.join("\n")}\n`;
 }
 
+/**
+ * Build Typia validator source for a manual REST contract.
+ *
+ * @param options Manual contract type names to validate.
+ * @param options.bodyTypeName Optional exported body type name.
+ * @param options.queryTypeName Exported query type name.
+ * @param options.responseTypeName Exported response type name.
+ * @returns TypeScript source for `api-validators.ts`.
+ */
 export function buildManualRestContractValidatorsSource(options: {
 	bodyTypeName?: string;
 	queryTypeName: string;
@@ -183,6 +220,11 @@ ${validatorEntries.join("\n")}
 `;
 }
 
+/**
+ * Build the public API shim for a manual REST contract.
+ *
+ * @returns TypeScript source that re-exports the generated endpoint client.
+ */
 export function buildManualRestContractApiSource(): string {
 	return `export * from './api-client';
 `;

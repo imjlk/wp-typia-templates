@@ -3,6 +3,7 @@ import path from "node:path";
 
 import { ensureBlockConfigCanAddRestManifests } from "./cli-add-block-legacy-validator.js";
 import {
+	assertValidManualRestContractAuth,
 	assertValidManualRestContractHttpMethod,
 	assertRestResourceDoesNotExist,
 	assertValidGeneratedSlug,
@@ -13,6 +14,7 @@ import {
 	resolveManualRestContractPathPattern,
 	resolveRestResourceNamespace,
 	rollbackWorkspaceMutation,
+	type ManualRestContractAuthId,
 	type ManualRestContractHttpMethodId,
 	type RestResourceMethodId,
 	type RunAddRestResourceCommandOptions,
@@ -490,6 +492,7 @@ add_action( 'rest_api_init', '${registerRoutesFunctionName}' );
  * @returns Resolved scaffold metadata for the created REST resource.
  */
 export async function runAddRestResourceCommand({
+	auth,
 	bodyTypeName,
 	cwd = process.cwd(),
 	manual,
@@ -501,6 +504,7 @@ export async function runAddRestResourceCommand({
 	restResourceName,
 	responseTypeName,
 }: RunAddRestResourceCommandOptions): Promise<{
+	auth?: ManualRestContractAuthId;
 	bodyTypeName?: string;
 	method?: ManualRestContractHttpMethodId;
 	methods: RestResourceMethodId[];
@@ -535,6 +539,7 @@ export async function runAddRestResourceCommand({
 
 	if (manual) {
 		const pascalCase = toPascalCase(restResourceSlug);
+		const resolvedAuth = assertValidManualRestContractAuth(auth);
 		const resolvedMethod = assertValidManualRestContractHttpMethod(method);
 		const resolvedPathPattern = resolveManualRestContractPathPattern(
 			restResourceSlug,
@@ -560,6 +565,21 @@ export async function runAddRestResourceCommand({
 						"wp-typia add rest-resource <name> --manual [--body-type <ExportedBodyType>]",
 					)
 				: undefined;
+		const manualTypeNames = [
+			resolvedQueryTypeName,
+			resolvedResponseTypeName,
+			resolvedBodyTypeName,
+		].filter((value): value is string => value != null);
+		const duplicateManualTypeNames = manualTypeNames.filter(
+			(name, index) => manualTypeNames.indexOf(name) !== index,
+		);
+		if (duplicateManualTypeNames.length > 0) {
+			throw new Error(
+				`Manual REST contract type names must be unique: ${Array.from(
+					new Set(duplicateManualTypeNames),
+				).join(", ")}. Use distinct --query-type, --body-type, and --response-type values.`,
+			);
+		}
 		const mutationSnapshot: WorkspaceMutationSnapshot = {
 			fileSources: await snapshotWorkspaceFiles([
 				blockConfigPath,
@@ -607,6 +627,7 @@ export async function runAddRestResourceCommand({
 				typesFile: `src/rest/${restResourceSlug}/api-types.ts`,
 				validatorsFile: `src/rest/${restResourceSlug}/api-validators.ts`,
 				variables: {
+					auth: resolvedAuth,
 					...(resolvedBodyTypeName
 						? { bodyTypeName: resolvedBodyTypeName }
 						: {}),
@@ -623,6 +644,7 @@ export async function runAddRestResourceCommand({
 			await appendWorkspaceInventoryEntries(workspace.projectDir, {
 				restResourceEntries: [
 					buildManualRestContractConfigEntry({
+						auth: resolvedAuth,
 						...(resolvedBodyTypeName
 							? { bodyTypeName: resolvedBodyTypeName }
 							: {}),
@@ -638,6 +660,7 @@ export async function runAddRestResourceCommand({
 			});
 
 			return {
+				auth: resolvedAuth,
 				...(resolvedBodyTypeName
 					? { bodyTypeName: resolvedBodyTypeName }
 					: {}),

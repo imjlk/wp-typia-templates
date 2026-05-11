@@ -49,27 +49,41 @@ export interface WorkspaceContractConfig {
 	typesFile: string;
 }
 
-export interface WorkspaceRestResourceConfig {
+export interface WorkspaceRestResourceBaseConfig {
 	apiFile: string;
+	auth?: 'authenticated' | 'public' | 'public-write-protected';
 	bodyTypeName?: string;
 	clientFile: string;
-	dataFile?: string;
-	method?: 'DELETE' | 'GET' | 'PATCH' | 'POST' | 'PUT';
-	methods: Array< 'list' | 'read' | 'create' | 'update' | 'delete' >;
-	mode?: 'generated' | 'manual';
 	namespace: string;
 	openApiFile: string;
-	pathPattern?: string;
-	phpFile?: string;
-	queryTypeName?: string;
 	restManifest?: ReturnType<
 		typeof import( '@wp-typia/block-runtime/metadata-core' ).defineEndpointManifest
 	>;
-	responseTypeName?: string;
 	slug: string;
 	typesFile: string;
 	validatorsFile: string;
 }
+
+export interface GeneratedWorkspaceRestResourceConfig extends WorkspaceRestResourceBaseConfig {
+	dataFile: string;
+	methods: Array< 'list' | 'read' | 'create' | 'update' | 'delete' >;
+	mode?: 'generated';
+	phpFile: string;
+}
+
+export interface ManualWorkspaceRestResourceConfig extends WorkspaceRestResourceBaseConfig {
+	bodyTypeName?: string;
+	method: 'DELETE' | 'GET' | 'PATCH' | 'POST' | 'PUT';
+	methods: [];
+	mode: 'manual';
+	pathPattern: string;
+	queryTypeName: string;
+	responseTypeName: string;
+}
+
+export type WorkspaceRestResourceConfig =
+	| GeneratedWorkspaceRestResourceConfig
+	| ManualWorkspaceRestResourceConfig;
 
 export interface WorkspaceEditorPluginConfig {
 	file: string;

@@ -3415,16 +3415,29 @@ test("canonical CLI can add a type-only manual REST contract to an official work
   const blockConfigPath = path.join(targetDir, "scripts", "block-config.ts");
   fs.writeFileSync(
     blockConfigPath,
-    fs
-      .readFileSync(blockConfigPath, "utf8")
-      .replace("\tbodyTypeName?: string;\n", "")
-      .replace("\tdataFile?: string;\n", "\tdataFile: string;\n")
-      .replace("\tmethod?: 'DELETE' | 'GET' | 'PATCH' | 'POST' | 'PUT';\n", "")
-      .replace("\tmode?: 'generated' | 'manual';\n", "")
-      .replace("\tpathPattern?: string;\n", "")
-      .replace("\tphpFile?: string;\n", "\tphpFile: string;\n")
-      .replace("\tqueryTypeName?: string;\n", "")
-      .replace("\tresponseTypeName?: string;\n", ""),
+    replaceFixtureSource(
+      fs.readFileSync(blockConfigPath, "utf8"),
+      /export interface WorkspaceRestResourceBaseConfig \{[\s\S]*?export type WorkspaceRestResourceConfig =\n\t\| GeneratedWorkspaceRestResourceConfig\n\t\| ManualWorkspaceRestResourceConfig;\n/u,
+      [
+        "export interface WorkspaceRestResourceConfig {",
+        "\tapiFile: string;",
+        "\tclientFile: string;",
+        "\tdataFile: string;",
+        "\tmethods: Array< 'list' | 'read' | 'create' | 'update' | 'delete' >;",
+        "\tnamespace: string;",
+        "\topenApiFile: string;",
+        "\tphpFile: string;",
+        "\trestManifest?: ReturnType<",
+        "\t\ttypeof import( '@wp-typia/block-runtime/metadata-core' ).defineEndpointManifest",
+        "\t>;",
+        "\tslug: string;",
+        "\ttypesFile: string;",
+        "\tvalidatorsFile: string;",
+        "}",
+        "",
+      ].join("\n"),
+      "legacy REST resource config interface"
+    ),
     "utf8"
   );
 
@@ -3440,6 +3453,8 @@ test("canonical CLI can add a type-only manual REST contract to an official work
       "legacy/v1",
       "--method",
       "POST",
+      "--auth",
+      "authenticated",
       "--path",
       "/records/(?P<id>[\\d]+)",
       "--query-type",
@@ -3489,6 +3504,7 @@ test("canonical CLI can add a type-only manual REST contract to an official work
 
   expect(blockConfigSource).toContain('slug: "external-record"');
   expect(blockConfigSource).toContain("mode: 'manual'");
+  expect(blockConfigSource).toContain('auth: "authenticated"');
   expect(blockConfigSource).toContain('namespace: "legacy/v1"');
   expect(blockConfigSource).toContain('method: "POST"');
   expect(blockConfigSource).toContain('pathPattern: "/records/(?P<id>[\\\\d]+)"');
@@ -3509,8 +3525,11 @@ test("canonical CLI can add a type-only manual REST contract to an official work
   expect(validatorsSource).toContain("request:");
   expect(validatorsSource).toContain("response:");
   expect(clientSource).toContain("callExternalRecordManualRestContract");
+  expect(clientSource).toContain("authIntent: 'authenticated'");
+  expect(clientSource).toContain("authMode: 'authenticated-rest-nonce'");
   expect(clientSource).toContain("requestLocation: 'query-and-body'");
   expect(openApiSource).toContain("/legacy/v1/records/(?P<id>[\\\\d]+)");
+  expect(openApiSource).toContain('"x-typia-authIntent": "authenticated"');
   expect(fs.existsSync(responseSchemaPath)).toBe(true);
   expect(
     fs.existsSync(path.join(targetDir, "inc", "rest", "external-record.php"))
@@ -3547,6 +3566,54 @@ test("canonical CLI can add a type-only manual REST contract to an official work
   runCli("npm", ["run", "sync-rest"], { cwd: targetDir });
   typecheckGeneratedProject(targetDir);
 }, 30_000);
+
+test("manual REST contract workflow rejects duplicate type names before writing files", async () => {
+  const targetDir = path.join(
+    tempRoot,
+    "demo-workspace-add-manual-rest-contract-duplicate-types"
+  );
+
+  await scaffoldProject({
+    projectDir: targetDir,
+    templateId: workspaceTemplatePackageManifest.name,
+    packageManager: "npm",
+    noInstall: true,
+    answers: {
+      author: "Test Runner",
+      description: "Demo workspace manual rest duplicate types",
+      namespace: "demo-space",
+      phpPrefix: "demo_space",
+      slug: "demo-workspace-add-manual-rest-contract-duplicate-types",
+      textDomain: "demo-space",
+      title: "Demo Workspace Manual Rest Duplicate Types",
+    },
+  });
+
+  linkWorkspaceNodeModules(targetDir);
+
+  expect(
+    getCommandErrorMessage(() =>
+      runCli(
+        "node",
+        [
+          entryPath,
+          "add",
+          "rest-resource",
+          "external-record",
+          "--manual",
+          "--query-type",
+          "ExternalRecordContract",
+          "--response-type",
+          "ExternalRecordContract",
+        ],
+        { cwd: targetDir }
+      )
+    )
+  ).toContain("Manual REST contract type names must be unique");
+  expect(
+    fs.existsSync(path.join(targetDir, "src", "rest", "external-record"))
+  ).toBe(false);
+}, 20_000);
 
 test("canonical CLI can add a plugin-level REST resource to an official workspace template", async () => {
   const targetDir = path.join(tempRoot, "demo-workspace-add-rest-resource");

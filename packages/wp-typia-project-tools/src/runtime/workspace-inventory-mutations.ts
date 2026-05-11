@@ -15,7 +15,7 @@ function ensureWorkspaceInventorySections(source: string): string {
 	for (const section of INVENTORY_SECTIONS) {
 		if (
 			section.interface &&
-			!hasExportedInterface(nextSource, section.interface.name)
+			!hasExportedTypeDeclaration(nextSource, section.interface.name)
 		) {
 			nextSource += section.interface.section;
 		}
@@ -27,9 +27,9 @@ function ensureWorkspaceInventorySections(source: string): string {
 	return `${nextSource}\n`;
 }
 
-function hasExportedInterface(source: string, interfaceName: string): boolean {
+function hasExportedTypeDeclaration(source: string, interfaceName: string): boolean {
 	return new RegExp(
-		`export\\s+interface\\s+${escapeRegex(interfaceName)}\\b`,
+		`export\\s+(?:interface|type)\\s+${escapeRegex(interfaceName)}\\b`,
 		"u",
 	).test(source);
 }
@@ -299,6 +299,7 @@ export function updateWorkspaceInventorySource(
 		["optionalFeatureIds: string[];", "requiredFeatureIds: string[];"],
 	);
 	for (const [fieldName, fieldSource] of [
+		["auth", "\tauth?: 'authenticated' | 'public' | 'public-write-protected';"],
 		["bodyTypeName", "\tbodyTypeName?: string;"],
 		["dataFile", "\tdataFile?: string;"],
 		["method", "\tmethod?: 'DELETE' | 'GET' | 'PATCH' | 'POST' | 'PUT';"],
