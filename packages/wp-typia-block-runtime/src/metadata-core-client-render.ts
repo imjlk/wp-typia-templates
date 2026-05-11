@@ -219,6 +219,22 @@ function getRequiredEndpointPathParameterNames(
 	return names;
 }
 
+function collectEndpointPathBranchGuardParameterNames(
+	parts: readonly EndpointPathTemplatePart[],
+	names: string[],
+): string[] {
+	for (const part of parts) {
+		if (part.kind === 'optionalGroup') {
+			continue;
+		}
+		if (part.kind === 'parameter' && !part.optional && !names.includes(part.name)) {
+			names.push(part.name);
+		}
+	}
+
+	return names;
+}
+
 function hasOptionalEndpointPathGroup(
 	parts: readonly EndpointPathTemplatePart[],
 ): boolean {
@@ -283,10 +299,8 @@ function buildEndpointPathTemplateBody(
 			let literalFallbackTemplate: string | null = null;
 			const alternativeFragments = alternativeGroups
 				.map((alternativeParts) => {
-					const alternativeParameterIndexes = collectEndpointPathParameterNames(
-						alternativeParts,
-						[],
-					)
+					const alternativeParameterIndexes =
+						collectEndpointPathBranchGuardParameterNames(alternativeParts, [])
 						.map((name) => parameterIndexes.get(name))
 						.filter((index): index is number => index !== undefined);
 					if (alternativeParameterIndexes.length === 0) {

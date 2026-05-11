@@ -190,6 +190,15 @@ describe("@wp-typia/block-runtime", () => {
 						{
 							auth: "public",
 							method: "GET",
+							operationId: "fetchOptionalItemWithNestedSlug",
+							path: "/items(?:/(?P<id>[\\d]+)(?:/(?P<slug>[a-z]+))?)?",
+							queryContract: "query",
+							responseContract: "response",
+							tags: ["Items"],
+						},
+						{
+							auth: "public",
+							method: "GET",
 							operationId: "fetchOptionalItemAlternative",
 							path: "/items(?:/(?P<id>[\\d]+)|/(?P<slug>[a-z]+))?",
 							queryContract: "query",
@@ -223,6 +232,9 @@ describe("@wp-typia/block-runtime", () => {
 			expect(clientSource).toContain("path: `/items`,");
 			expect(clientSource).toContain(
 				"path: `/items${pathParam0 !== undefined && pathParam0 !== null && pathParam0 !== '' && pathParam1 !== undefined && pathParam1 !== null && pathParam1 !== '' ? `/${encodeURIComponent( String( pathParam0 ) )}/${encodeURIComponent( String( pathParam1 ) )}` : ''}`,",
+			);
+			expect(clientSource).toContain(
+				"path: `/items${pathParam0 !== undefined && pathParam0 !== null && pathParam0 !== '' ? `/${encodeURIComponent( String( pathParam0 ) )}${pathParam1 !== undefined && pathParam1 !== null && pathParam1 !== '' ? `/${encodeURIComponent( String( pathParam1 ) )}` : ''}` : ''}`,",
 			);
 			expect(clientSource).toContain(
 				"path: `/items${pathParam0 !== undefined && pathParam0 !== null && pathParam0 !== '' ? `/${encodeURIComponent( String( pathParam0 ) )}` : pathParam1 !== undefined && pathParam1 !== null && pathParam1 !== '' ? `/${encodeURIComponent( String( pathParam1 ) )}` : ''}`,",
