@@ -49,6 +49,9 @@ secondary imports compared with the core package roots and primary subpaths.
   Shared manifest and migration contract types.
 - `@wp-typia/block-runtime/schema-core`
   Shared schema/OpenAPI helpers.
+- `@wp-typia/block-runtime/schema-test`
+  Test helpers for validating smoke/integration response payloads against
+  generated JSON Schema artifacts.
 - `@wp-typia/block-runtime/metadata-core`
   Metadata sync and endpoint manifest helpers.
 - `@wp-typia/block-runtime/metadata-analysis`
@@ -712,6 +715,26 @@ wire schema but should not generate a WordPress REST route. Generated
 top of the same TypeScript-to-schema foundation; manual REST contract workflows
 can reference the same stable schema files when route ownership stays outside
 the scaffold.
+
+Node-based smoke tests can assert response payloads against those generated
+schemas without hand-checking individual keys:
+
+```ts
+import { assertResponseMatchesSchema } from '@wp-typia/block-runtime/schema-test';
+import externalRetrieveResponseSchema from './src/contracts/external-retrieve-response.schema.json';
+
+const payload = await fetchExternalRecord();
+
+assertResponseMatchesSchema('ExternalRetrieveResponse', payload, {
+  schemas: {
+    ExternalRetrieveResponse: externalRetrieveResponseSchema,
+  },
+});
+```
+
+Validation failures include normalized field paths such as `$.items[0]` or
+`$.status`, so CI output points at the field that drifted from the generated
+contract.
 
 ```ts
 await syncRestOpenApi({

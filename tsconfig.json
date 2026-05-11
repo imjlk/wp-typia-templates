@@ -30,6 +30,9 @@
       "@wp-typia/block-runtime/schema-core": [
         "packages/wp-typia-block-runtime/src/schema-core.ts"
       ],
+      "@wp-typia/block-runtime/schema-test": [
+        "packages/wp-typia-block-runtime/src/schema-test.ts"
+      ],
       "@wp-typia/block-runtime/migration-types": [
         "packages/wp-typia-block-runtime/src/migration-types.ts"
       ],
