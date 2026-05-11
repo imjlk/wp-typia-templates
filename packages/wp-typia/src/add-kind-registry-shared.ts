@@ -24,6 +24,7 @@ export type AddFieldName =
   | 'anchor'
   | 'methods'
   | 'namespace'
+  | 'post-type'
   | 'position'
   | 'slot'
   | 'to'
@@ -108,6 +109,9 @@ export type AddPatternResult = Awaited<
 export type AddRestResourceResult = Awaited<
   ReturnType<AddRuntime['runAddRestResourceCommand']>
 >;
+export type AddPostMetaResult = Awaited<
+  ReturnType<AddRuntime['runAddPostMetaCommand']>
+>;
 export type AddBlockStyleResult = Awaited<
   ReturnType<AddRuntime['runAddBlockStyleCommand']>
 >;
@@ -129,6 +133,7 @@ export type AddKindExecutionResultById = {
   'hooked-block': AddHookedBlockResult;
   'integration-env': AddIntegrationEnvResult;
   pattern: AddPatternResult;
+  'post-meta': AddPostMetaResult;
   'rest-resource': AddRestResourceResult;
   style: AddBlockStyleResult;
   transform: AddBlockTransformResult;
@@ -202,6 +207,12 @@ export const NAME_NAMESPACE_VISIBLE_FIELDS = [
   'kind',
   'name',
   'namespace',
+] as const satisfies ReadonlyArray<AddFieldName>;
+export const NAME_POST_TYPE_TYPE_VISIBLE_FIELDS = [
+  'kind',
+  'name',
+  'post-type',
+  'type',
 ] as const satisfies ReadonlyArray<AddFieldName>;
 
 export function requireAddKindName(

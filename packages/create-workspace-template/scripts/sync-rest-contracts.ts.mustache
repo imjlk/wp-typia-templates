@@ -11,9 +11,11 @@ import {
 import {
 	BLOCKS,
 	CONTRACTS,
+	POST_META,
 	REST_RESOURCES,
 	type WorkspaceBlockConfig,
 	type WorkspaceContractConfig,
+	type WorkspacePostMetaConfig,
 	type WorkspaceRestResourceConfig,
 } from './block-config';
 
@@ -82,6 +84,20 @@ function isWorkspaceStandaloneContract(
 	);
 }
 
+function isWorkspacePostMetaContract(
+	postMeta: WorkspacePostMetaConfig
+): postMeta is WorkspacePostMetaConfig & {
+	schemaFile: string;
+	sourceTypeName: string;
+	typesFile: string;
+} {
+	return (
+		typeof postMeta.schemaFile === 'string' &&
+		typeof postMeta.sourceTypeName === 'string' &&
+		typeof postMeta.typesFile === 'string'
+	);
+}
+
 async function assertTypeArtifactsCurrent( block: WorkspaceBlockConfig ) {
 	const report = await runSyncBlockMetadata(
 		{
@@ -114,17 +130,19 @@ async function main() {
 	const options = parseCliOptions( process.argv.slice( 2 ) );
 	const restBlocks = BLOCKS.filter( isRestEnabledBlock );
 	const standaloneContracts = CONTRACTS.filter( isWorkspaceStandaloneContract );
+	const postMetaContracts = POST_META.filter( isWorkspacePostMetaContract );
 	const restResources = REST_RESOURCES.filter( isWorkspaceRestResource );
 
 	if (
 		restBlocks.length === 0 &&
 		standaloneContracts.length === 0 &&
+		postMetaContracts.length === 0 &&
 		restResources.length === 0
 	) {
 		console.log(
 			options.check
-				? 'ℹ️ No REST-enabled workspace blocks, standalone contracts, or plugin-level REST resources are registered yet. `sync-rest --check` is already clean.'
-				: 'ℹ️ No REST-enabled workspace blocks, standalone contracts, or plugin-level REST resources are registered yet.'
+				? 'ℹ️ No REST-enabled workspace blocks, standalone contracts, post meta contracts, or plugin-level REST resources are registered yet. `sync-rest --check` is already clean.'
+				: 'ℹ️ No REST-enabled workspace blocks, standalone contracts, post meta contracts, or plugin-level REST resources are registered yet.'
 		);
 		return;
 	}
@@ -201,6 +219,19 @@ async function main() {
 		);
 	}
 
+	for ( const postMeta of postMetaContracts ) {
+		await syncTypeSchemas(
+			{
+				jsonSchemaFile: postMeta.schemaFile,
+				sourceTypeName: postMeta.sourceTypeName,
+				typesFile: postMeta.typesFile,
+			},
+			{
+				check: options.check,
+			}
+		);
+	}
+
 	for ( const resource of restResources ) {
 		const contracts = resource.restManifest.contracts;
 
@@ -252,8 +283,8 @@ async function main() {
 
 	console.log(
 		options.check
-			? '✅ REST contract schemas, standalone schemas, portable API clients, and endpoint-aware OpenAPI documents are already up to date for workspace blocks, standalone contracts, and plugin-level resources!'
-			: '✅ REST contract schemas, standalone schemas, portable API clients, and endpoint-aware OpenAPI documents generated for workspace blocks, standalone contracts, and plugin-level resources!'
+			? '✅ REST contract schemas, standalone schemas, post meta schemas, portable API clients, and endpoint-aware OpenAPI documents are already up to date for workspace blocks, standalone contracts, post meta contracts, and plugin-level resources!'
+			: '✅ REST contract schemas, standalone schemas, post meta schemas, portable API clients, and endpoint-aware OpenAPI documents generated for workspace blocks, standalone contracts, post meta contracts, and plugin-level resources!'
 	);
 }
 

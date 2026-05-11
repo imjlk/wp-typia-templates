@@ -39,6 +39,7 @@ function formatWorkspaceInventorySummary(inventory: WorkspaceInventory): string 
 		`${inventory.patterns.length} pattern(s)`,
 		`${inventory.bindingSources.length} binding source(s)`,
 		`${inventory.restResources.length} REST resource(s)`,
+		`${inventory.postMeta.length} post meta contract(s)`,
 		`${inventory.abilities.length} ability scaffold(s)`,
 		`${inventory.aiFeatures.length} AI feature(s)`,
 		`${inventory.editorPlugins.length} editor plugin(s)`,

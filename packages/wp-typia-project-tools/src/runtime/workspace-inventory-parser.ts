@@ -35,6 +35,9 @@ import {
 	PATTERNS_CONST_SECTION,
 	PATTERNS_INTERFACE_SECTION,
 	PATTERN_CONFIG_ENTRY_MARKER,
+	POST_META_CONFIG_ENTRY_MARKER,
+	POST_META_CONST_SECTION,
+	POST_META_INTERFACE_SECTION,
 	REST_RESOURCES_CONST_SECTION,
 	REST_RESOURCES_INTERFACE_SECTION,
 	REST_RESOURCE_CONFIG_ENTRY_MARKER,
@@ -58,9 +61,12 @@ import type {
 	WorkspaceInventoryParseResult,
 	WorkspaceInventorySectionFlagKey,
 	WorkspacePatternInventoryEntry,
+	WorkspacePostMetaInventoryEntry,
 	WorkspaceRestResourceInventoryEntry,
 	WorkspaceVariationInventoryEntry,
 } from "./workspace-inventory-types.js";
+
+type InventoryEntryFieldValue = string | string[] | boolean | undefined;
 
 type InventoryEntryFieldValidationContext = {
 	elementIndex: number;
@@ -70,10 +76,10 @@ type InventoryEntryFieldValidationContext = {
 
 type InventoryEntryFieldDescriptor = {
 	key: string;
-	kind?: "string" | "stringArray";
+	kind?: "boolean" | "string" | "stringArray";
 	required?: boolean;
 	validate?: (
-		value: string | string[] | undefined,
+		value: InventoryEntryFieldValue,
 		context: InventoryEntryFieldValidationContext,
 	) => void;
 };
@@ -470,6 +476,37 @@ export const INVENTORY_SECTIONS: readonly InventorySectionDescriptor[] = [
 	},
 	{
 		append: {
+			marker: POST_META_CONFIG_ENTRY_MARKER,
+			optionKey: "postMetaEntries",
+		},
+		interface: {
+			name: "WorkspacePostMetaConfig",
+			section: POST_META_INTERFACE_SECTION,
+		},
+		parse: {
+			entriesKey: "postMeta",
+			entry: defineInventoryEntryParser<WorkspacePostMetaInventoryEntry>()({
+				entryName: "POST_META",
+				fields: [
+					{ key: "metaKey", required: true },
+					{ key: "phpFile", required: true },
+					{ key: "postType", required: true },
+					{ key: "schemaFile", required: true },
+					{ key: "showInRest", kind: "boolean", required: true },
+					{ key: "slug", required: true },
+					{ key: "sourceTypeName", required: true },
+					{ key: "typesFile", required: true },
+				],
+			}),
+			hasSectionKey: "hasPostMetaSection",
+		},
+		value: {
+			name: "POST_META",
+			section: POST_META_CONST_SECTION,
+		},
+	},
+	{
+		append: {
 			marker: ABILITY_CONFIG_ENTRY_MARKER,
 			optionKey: "abilityEntries",
 		},
@@ -695,8 +732,36 @@ function getOptionalStringArrayProperty(
 	return undefined;
 }
 
+function getOptionalBooleanProperty(
+	entryName: string,
+	elementIndex: number,
+	objectLiteral: ts.ObjectLiteralExpression,
+	key: string,
+): boolean | undefined {
+	for (const property of objectLiteral.properties) {
+		if (!ts.isPropertyAssignment(property)) {
+			continue;
+		}
+		const propertyName = getPropertyNameText(property.name);
+		if (propertyName !== key) {
+			continue;
+		}
+		if (property.initializer.kind === ts.SyntaxKind.TrueKeyword) {
+			return true;
+		}
+		if (property.initializer.kind === ts.SyntaxKind.FalseKeyword) {
+			return false;
+		}
+		throw new Error(
+			`${entryName}[${elementIndex}] must use a boolean literal for "${key}" in scripts/block-config.ts.`,
+		);
+	}
+
+	return undefined;
+}
+
 function isMissingRequiredInventoryValue(
-	value: string | string[] | undefined,
+	value: InventoryEntryFieldValue,
 ): boolean {
 	return (
 		value === undefined || (typeof value === "string" && value.length === 0)
@@ -710,10 +775,10 @@ function formatMissingRequiredInventoryFields(keys: readonly string[]): string {
 }
 
 function assertParsedInventoryEntry<T extends object>(
-	entry: Record<string, string | string[] | undefined>,
+	entry: Record<string, InventoryEntryFieldValue>,
 	descriptor: InventoryEntryParserDescriptor,
 	elementIndex: number,
-): asserts entry is Record<string, string | string[] | undefined> & T {
+): asserts entry is Record<string, InventoryEntryFieldValue> & T {
 	const missingRequiredKeys = descriptor.fields
 		.filter(
 			(field) =>
@@ -740,7 +805,7 @@ function parseInventoryEntries<T extends object>(
 			);
 		}
 
-		const entry: Record<string, string | string[] | undefined> = {};
+		const entry: Record<string, InventoryEntryFieldValue> = {};
 		for (const field of descriptor.fields) {
 			const kind = field.kind ?? "string";
 			const value =
@@ -751,6 +816,13 @@ function parseInventoryEntries<T extends object>(
 							element,
 							field.key,
 						)
+					: kind === "boolean"
+						? getOptionalBooleanProperty(
+								descriptor.entryName,
+								elementIndex,
+								element,
+								field.key,
+							)
 					: getOptionalStringProperty(
 							descriptor.entryName,
 							elementIndex,
@@ -861,9 +933,11 @@ export function parseWorkspaceInventorySource(
 		hasContractsSection: false,
 		hasEditorPluginsSection: false,
 		hasPatternsSection: false,
+		hasPostMetaSection: false,
 		hasRestResourcesSection: false,
 		hasVariationsSection: false,
 		patterns: [],
+		postMeta: [],
 		restResources: [],
 		source,
 		variations: [],

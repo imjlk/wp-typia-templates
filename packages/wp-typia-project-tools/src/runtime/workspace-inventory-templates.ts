@@ -12,6 +12,8 @@ export const CONTRACT_CONFIG_ENTRY_MARKER =
 	"\t// wp-typia add contract entries";
 export const REST_RESOURCE_CONFIG_ENTRY_MARKER =
 	"\t// wp-typia add rest-resource entries";
+export const POST_META_CONFIG_ENTRY_MARKER =
+	"\t// wp-typia add post-meta entries";
 export const ABILITY_CONFIG_ENTRY_MARKER = "\t// wp-typia add ability entries";
 export const AI_FEATURE_CONFIG_ENTRY_MARKER =
 	"\t// wp-typia add ai-feature entries";
@@ -169,6 +171,27 @@ export const REST_RESOURCES_CONST_SECTION = `
 
 export const REST_RESOURCES: WorkspaceRestResourceConfig[] = [
 \t// wp-typia add rest-resource entries
+];
+`;
+
+export const POST_META_INTERFACE_SECTION = `
+
+export interface WorkspacePostMetaConfig {
+\tmetaKey: string;
+\tphpFile: string;
+\tpostType: string;
+\tschemaFile: string;
+\tshowInRest: boolean;
+\tslug: string;
+\tsourceTypeName: string;
+\ttypesFile: string;
+}
+`;
+
+export const POST_META_CONST_SECTION = `
+
+export const POST_META: WorkspacePostMetaConfig[] = [
+\t// wp-typia add post-meta entries
 ];
 `;
 

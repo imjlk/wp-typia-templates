@@ -508,6 +508,11 @@ export const BLOCKS: WorkspaceBlockConfig[] = [
       marker: "\t// wp-typia add rest-resource entries",
     },
     {
+      constName: "POST_META",
+      interfaceName: "WorkspacePostMetaConfig",
+      marker: "\t// wp-typia add post-meta entries",
+    },
+    {
       constName: "ABILITIES",
       interfaceName: "WorkspaceAbilityConfig",
       marker: "\t// wp-typia add ability entries",
@@ -664,6 +669,9 @@ export const CONTRACTS = [
 export const REST_RESOURCES = [
   { apiFile: "src/rest/products/api.ts", clientFile: "src/rest/products/client.ts", dataFile: "src/rest/products/data.ts", methods: [ "list", "read" ], namespace: "demo-space/v1", openApiFile: "src/rest/products/openapi.json", phpFile: "inc/rest/products.php", slug: "products", typesFile: "src/rest/products/types.ts", validatorsFile: "src/rest/products/validators.ts" },
 ];
+export const POST_META = [
+  { metaKey: "_demo_space_integration_state", phpFile: "inc/post-meta/integration-state.php", postType: "post", schemaFile: "src/post-meta/integration-state/meta.schema.json", showInRest: true, slug: "integration-state", sourceTypeName: "IntegrationStateMeta", typesFile: "src/post-meta/integration-state/types.ts" },
+];
 export const ABILITIES = [
   { clientFile: "src/abilities/review-workflow/client.ts", configFile: "src/abilities/review-workflow/config.ts", dataFile: "src/abilities/review-workflow/data.ts", inputSchemaFile: "src/abilities/review-workflow/input.schema.json", inputTypeName: "ReviewInput", outputSchemaFile: "src/abilities/review-workflow/output.schema.json", outputTypeName: "ReviewOutput", phpFile: "inc/abilities/review-workflow.php", slug: "review-workflow", typesFile: "src/abilities/review-workflow/types.ts" },
 ];
@@ -711,6 +719,12 @@ export const EDITOR_PLUGINS = [
     namespace: "demo-space/v1",
     slug: "products",
   });
+  expect(inventory.postMeta[0]).toMatchObject({
+    metaKey: "_demo_space_integration_state",
+    postType: "post",
+    showInRest: true,
+    slug: "integration-state",
+  });
   expect(inventory.abilities[0]).toMatchObject({
     inputTypeName: "ReviewInput",
     outputTypeName: "ReviewOutput",
@@ -738,6 +752,7 @@ export const EDITOR_PLUGINS = [
     hasContractsSection: inventory.hasContractsSection,
     hasEditorPluginsSection: inventory.hasEditorPluginsSection,
     hasPatternsSection: inventory.hasPatternsSection,
+    hasPostMetaSection: inventory.hasPostMetaSection,
     hasRestResourcesSection: inventory.hasRestResourcesSection,
     hasVariationsSection: inventory.hasVariationsSection,
   }).toEqual({
@@ -750,6 +765,7 @@ export const EDITOR_PLUGINS = [
     hasContractsSection: true,
     hasEditorPluginsSection: true,
     hasPatternsSection: true,
+    hasPostMetaSection: true,
     hasRestResourcesSection: true,
     hasVariationsSection: true,
   });

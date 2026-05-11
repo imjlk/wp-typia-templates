@@ -78,6 +78,12 @@ describe("first-party TUI interaction models", () => {
 			"namespace",
 			"methods",
 		]);
+		expect(getVisibleAddFieldNames({ kind: "post-meta" })).toEqual([
+			"kind",
+			"name",
+			"post-type",
+			"type",
+		]);
 		expect(getVisibleAddFieldNames({ kind: "ability" })).toEqual([
 			"kind",
 			"name",
@@ -245,6 +251,24 @@ describe("first-party TUI interaction models", () => {
 			kind: "contract",
 			name: "external-retrieve-response",
 			type: "ExternalRetrieveResponse",
+		});
+
+		expect(
+			sanitizeAddSubmitValues({
+				"hide-from-rest": true,
+				"meta-key": " _demo_space_integration_state ",
+				kind: "post-meta",
+				name: "integration-state",
+				"post-type": " post ",
+				type: " IntegrationStateMeta ",
+			}),
+		).toEqual({
+			"hide-from-rest": true,
+			"meta-key": "_demo_space_integration_state",
+			kind: "post-meta",
+			name: "integration-state",
+			"post-type": "post",
+			type: "IntegrationStateMeta",
 		});
 
 		expect(

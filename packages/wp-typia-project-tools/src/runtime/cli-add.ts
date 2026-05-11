@@ -36,6 +36,7 @@ export {
 	runAddHookedBlockCommand,
 	runAddIntegrationEnvCommand,
 	runAddPatternCommand,
+	runAddPostMetaCommand,
 	runAddRestResourceCommand,
 	runAddVariationCommand,
 } from "./cli-add-workspace.js";

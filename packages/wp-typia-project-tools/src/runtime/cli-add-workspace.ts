@@ -621,6 +621,11 @@ export { runAddRestResourceCommand } from "./cli-add-workspace-rest.js";
  */
 export { runAddContractCommand } from "./cli-add-workspace-contract.js";
 /**
+ * Re-export the typed post-meta contract scaffold workflow from the focused
+ * post-meta runtime helper module.
+ */
+export { runAddPostMetaCommand } from "./cli-add-workspace-post-meta.js";
+/**
  * Re-export the typed workflow ability scaffold workflow from the focused
  * ability runtime helper module.
  */

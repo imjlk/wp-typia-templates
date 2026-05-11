@@ -7,6 +7,7 @@ import {
 	MANUAL_REST_CONTRACT_HTTP_METHOD_IDS,
 	REST_RESOURCE_METHOD_IDS,
 	REST_RESOURCE_NAMESPACE_PATTERN,
+	assertValidPostMetaPostType,
 	isGeneratedRestResourceRoutePatternCompatible,
 	resolveEditorPluginSlotAlias,
 } from "./cli-add-shared.js";
@@ -25,6 +26,7 @@ import {
 	WORKSPACE_EDITOR_PLUGIN_EDITOR_ASSET,
 	WORKSPACE_EDITOR_PLUGIN_EDITOR_SCRIPT,
 	WORKSPACE_EDITOR_PLUGIN_EDITOR_STYLE,
+	WORKSPACE_POST_META_GLOB,
 	WORKSPACE_REST_RESOURCE_GLOB,
 } from "./cli-doctor-workspace-shared.js";
 import { escapeRegex } from "./php-utils.js";
@@ -194,6 +196,102 @@ function checkWorkspaceRestResourceBootstrap(
 		hasServerGlob && hasRegisterHook
 			? "REST resource PHP loader hook is present"
 			: "Missing REST resource PHP require glob or init hook",
+	);
+}
+
+function getWorkspacePostMetaRequiredFiles(
+	postMeta: WorkspaceInventory["postMeta"][number],
+): string[] {
+	return Array.from(
+		new Set([
+			postMeta.phpFile,
+			postMeta.schemaFile,
+			postMeta.typesFile,
+		]),
+	);
+}
+
+function checkWorkspacePostMetaConfig(
+	postMeta: WorkspaceInventory["postMeta"][number],
+): DoctorCheck {
+	let hasPostType = false;
+	try {
+		hasPostType = assertValidPostMetaPostType(postMeta.postType) === postMeta.postType;
+	} catch {
+		hasPostType = false;
+	}
+	const hasMetaKey =
+		typeof postMeta.metaKey === "string" &&
+		postMeta.metaKey.trim().length > 0 &&
+		!/\s/u.test(postMeta.metaKey);
+	const hasRestExposure = typeof postMeta.showInRest === "boolean";
+
+	return createDoctorCheck(
+		`Post meta config ${postMeta.slug}`,
+		hasPostType && hasMetaKey && hasRestExposure ? "pass" : "fail",
+		hasPostType && hasMetaKey && hasRestExposure
+			? `Post meta ${postMeta.metaKey} targets ${postMeta.postType}`
+			: "Post meta postType, metaKey, or showInRest configuration is invalid",
+	);
+}
+
+function checkWorkspacePostMetaBootstrap(
+	projectDir: string,
+	packageName: string,
+	phpPrefix: string,
+): DoctorCheck {
+	const bootstrapPath = resolveWorkspaceBootstrapPath(projectDir, packageName);
+	if (!fs.existsSync(bootstrapPath)) {
+		return createDoctorCheck(
+			"Post meta bootstrap",
+			"fail",
+			`Missing ${path.basename(bootstrapPath)}`,
+		);
+	}
+
+	const source = fs.readFileSync(bootstrapPath, "utf8");
+	const registerFunctionName = `${phpPrefix}_register_post_meta_contracts`;
+	const registerHook = `add_action( 'init', '${registerFunctionName}', 20 );`;
+	const hasServerGlob = source.includes(WORKSPACE_POST_META_GLOB);
+	const hasRegisterHook = source.includes(registerHook);
+
+	return createDoctorCheck(
+		"Post meta bootstrap",
+		hasServerGlob && hasRegisterHook ? "pass" : "fail",
+		hasServerGlob && hasRegisterHook
+			? "Post meta PHP loader hook is present"
+			: "Missing post meta PHP require glob or init hook",
+	);
+}
+
+function checkWorkspacePostMetaPhp(
+	projectDir: string,
+	postMeta: WorkspaceInventory["postMeta"][number],
+): DoctorCheck {
+	const phpPath = path.join(projectDir, postMeta.phpFile);
+	if (!fs.existsSync(phpPath)) {
+		return createDoctorCheck(
+			`Post meta PHP ${postMeta.slug}`,
+			"fail",
+			`Missing ${postMeta.phpFile}`,
+		);
+	}
+
+	const source = fs.readFileSync(phpPath, "utf8");
+	const hasRegisterPostMeta = source.includes("register_post_meta");
+	const hasPostType = source.includes(postMeta.postType);
+	const hasMetaKey = source.includes(postMeta.metaKey);
+	const hasSchemaFile = source.includes(postMeta.schemaFile);
+	const hasRestExposure = source.includes("'show_in_rest'");
+
+	return createDoctorCheck(
+		`Post meta PHP ${postMeta.slug}`,
+		hasRegisterPostMeta && hasPostType && hasMetaKey && hasSchemaFile && hasRestExposure
+			? "pass"
+			: "fail",
+		hasRegisterPostMeta && hasPostType && hasMetaKey && hasSchemaFile && hasRestExposure
+			? "Post meta registration, schema path, and REST exposure flag are wired"
+			: "Missing register_post_meta, post type, meta key, schema path, or show_in_rest wiring",
 	);
 }
 
@@ -713,6 +811,27 @@ export function getWorkspaceFeatureDoctorChecks(
 				getWorkspaceRestResourceRequiredFiles(restResource),
 			),
 		);
+	}
+
+	if (inventory.postMeta.length > 0) {
+		checks.push(
+			checkWorkspacePostMetaBootstrap(
+				workspace.projectDir,
+				workspace.packageName,
+				workspace.workspace.phpPrefix,
+			),
+		);
+	}
+	for (const postMeta of inventory.postMeta) {
+		checks.push(checkWorkspacePostMetaConfig(postMeta));
+		checks.push(
+			checkExistingFiles(
+				workspace.projectDir,
+				`Post meta ${postMeta.slug}`,
+				getWorkspacePostMetaRequiredFiles(postMeta),
+			),
+		);
+		checks.push(checkWorkspacePostMetaPhp(workspace.projectDir, postMeta));
 	}
 
 	if (inventory.abilities.length > 0) {

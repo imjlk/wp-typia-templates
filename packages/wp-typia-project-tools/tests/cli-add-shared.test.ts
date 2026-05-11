@@ -13,6 +13,7 @@ import {
   assertAdminViewDoesNotExist,
   assertAiFeatureDoesNotExist,
   assertContractDoesNotExist,
+  assertPostMetaDoesNotExist,
   assertRestResourceDoesNotExist,
   assertScaffoldDoesNotExist,
   assertVariationDoesNotExist,
@@ -24,6 +25,8 @@ import {
   assertValidRestResourceMethods,
   assertValidRestResourceNamespace,
   assertValidTypeScriptIdentifier,
+  assertValidPostMetaPostType,
+  resolvePostMetaKey,
   resolveManualRestContractPathPattern,
   resolveRestResourceNamespace,
 } from '../src/runtime/cli-add-validation.js';
@@ -63,9 +66,11 @@ function createEmptyInventory(
     hasContractsSection: false,
     hasEditorPluginsSection: false,
     hasPatternsSection: false,
+    hasPostMetaSection: false,
     hasRestResourcesSection: false,
     hasVariationsSection: false,
     patterns: [],
+    postMeta: [],
     restResources: [],
     source: '',
     variations: [],
@@ -117,6 +122,7 @@ test('focused add runtime modules own their helper categories', () => {
   expect(validationSource).toContain('export function assertValidGeneratedSlug');
   expect(validationSource).toContain('export function assertValidTypeScriptIdentifier');
   expect(validationSource).toContain('export function assertValidRestResourceMethods');
+  expect(validationSource).toContain('export function assertValidPostMetaPostType');
   expect(validationSource).toContain('export function assertValidEditorPluginSlot');
   expect(filesystemSource).toContain('export async function snapshotWorkspaceFiles');
   expect(filesystemSource).toContain('export async function rollbackWorkspaceMutation');
@@ -189,6 +195,15 @@ test('focused validation helpers normalize REST namespaces, methods, and manual 
   expect(resolveManualRestContractPathPattern('external-record', ' records ')).toBe(
     '/records',
   );
+  expect(assertValidPostMetaPostType('example_post_type')).toBe(
+    'example_post_type',
+  );
+  expect(
+    resolvePostMetaKey({
+      phpPrefix: 'demo_space',
+      slug: 'integration-state',
+    }),
+  ).toBe('_demo_space_integration_state');
 
   expect(() => assertValidRestResourceNamespace('')).toThrow(
     'REST resource namespace is required. Use `--namespace <vendor/v1>` or let the workspace default apply.',
@@ -208,6 +223,16 @@ test('focused validation helpers normalize REST namespaces, methods, and manual 
   expect(() =>
     resolveManualRestContractPathPattern('external-record', '   '),
   ).toThrow('Manual REST contract path is required');
+  expect(() => assertValidPostMetaPostType('Example Post')).toThrow(
+    'Post meta post type must use a WordPress post type key',
+  );
+  expect(() =>
+    resolvePostMetaKey({
+      metaKey: 'bad key',
+      phpPrefix: 'demo_space',
+      slug: 'integration-state',
+    }),
+  ).toThrow('Post meta key must not contain whitespace');
 });
 
 test('focused validation helpers accept TypeScript identifiers and reject malformed type names', () => {
@@ -364,6 +389,51 @@ test('focused collision helpers check every REST resource filesystem target', ()
     ),
   ).toThrow(
     'A REST resource bootstrap already exists at inc/rest/products.php. Choose a different name.',
+  );
+});
+
+test('focused collision helpers check post meta filesystem and inventory targets', () => {
+  const projectDir = path.join(tempRoot, 'post-meta-collision');
+  const phpPath = path.join(projectDir, 'inc', 'post-meta', 'integration-state.php');
+  fs.mkdirSync(path.dirname(phpPath), { recursive: true });
+  fs.writeFileSync(phpPath, '<?php\n', 'utf8');
+
+  expect(() =>
+    assertPostMetaDoesNotExist(
+      projectDir,
+      'integration-state',
+      'post',
+      '_demo_space_integration_state',
+      createEmptyInventory(),
+    ),
+  ).toThrow(
+    'A post meta bootstrap already exists at inc/post-meta/integration-state.php. Choose a different name.',
+  );
+
+  fs.rmSync(projectDir, { force: true, recursive: true });
+  expect(() =>
+    assertPostMetaDoesNotExist(
+      projectDir,
+      'alternate-state',
+      'post',
+      '_demo_space_integration_state',
+      createEmptyInventory({
+        postMeta: [
+          {
+            metaKey: '_demo_space_integration_state',
+            phpFile: 'inc/post-meta/integration-state.php',
+            postType: 'post',
+            schemaFile: 'src/post-meta/integration-state/meta.schema.json',
+            showInRest: true,
+            slug: 'integration-state',
+            sourceTypeName: 'IntegrationStateMeta',
+            typesFile: 'src/post-meta/integration-state/types.ts',
+          },
+        ],
+      }),
+    ),
+  ).toThrow(
+    'A post meta inventory entry already registers _demo_space_integration_state for post. Choose a different meta key or post type.',
   );
 });
 

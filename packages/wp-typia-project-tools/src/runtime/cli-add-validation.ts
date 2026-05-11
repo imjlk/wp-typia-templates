@@ -23,6 +23,7 @@ import {
 } from "./cli-add-types.js";
 
 const WORKSPACE_GENERATED_SLUG_PATTERN = /^[a-z][a-z0-9-]*$/;
+const WORDPRESS_POST_TYPE_PATTERN = /^[a-z0-9_][a-z0-9_-]*$/u;
 const TYPESCRIPT_IDENTIFIER_PATTERN = /^[A-Za-z_$][A-Za-z0-9_$]*$/u;
 const TYPESCRIPT_RESERVED_IDENTIFIERS = new Set([
 	"abstract",
@@ -214,6 +215,57 @@ export function resolveRestResourceNamespace(
 	namespace?: string,
 ): string {
 	return assertValidRestResourceNamespace(namespace ?? `${workspaceNamespace}/v1`);
+}
+
+/**
+ * Validate a WordPress post type key used as post-meta scope.
+ *
+ * @param postType Raw post type key from CLI input.
+ * @returns The trimmed post type key.
+ * @throws {Error} When the key is empty or contains unsupported characters.
+ */
+export function assertValidPostMetaPostType(postType: string): string {
+	const trimmed = postType.trim();
+	if (!trimmed) {
+		throw new Error(
+			"`wp-typia add post-meta` requires --post-type <post-type>.",
+		);
+	}
+	if (!WORDPRESS_POST_TYPE_PATTERN.test(trimmed)) {
+		throw new Error(
+			"Post meta post type must use a WordPress post type key such as `post` or `example_post_type`.",
+		);
+	}
+
+	return trimmed;
+}
+
+/**
+ * Resolve a post-meta key from explicit input or the workspace slug default.
+ *
+ * @param options Optional explicit meta key plus workspace prefix and slug.
+ * @returns A validated post-meta key.
+ * @throws {Error} When the key is empty or contains whitespace/control characters.
+ */
+export function resolvePostMetaKey({
+	metaKey,
+	phpPrefix,
+	slug,
+}: {
+	metaKey?: string;
+	phpPrefix: string;
+	slug: string;
+}): string {
+	const resolvedMetaKey = metaKey ?? `_${toSnakeCase(`${phpPrefix}_${slug}`)}`;
+	const trimmed = resolvedMetaKey.trim();
+	if (!trimmed) {
+		throw new Error("Post meta key cannot be empty.");
+	}
+	if (/[\s\0]/u.test(trimmed)) {
+		throw new Error("Post meta key must not contain whitespace or control characters.");
+	}
+
+	return trimmed;
 }
 
 /**

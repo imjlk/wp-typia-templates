@@ -206,6 +206,7 @@ export {
 	runAddEditorPluginCommand,
 	runAddHookedBlockCommand,
 	runAddPatternCommand,
+	runAddPostMetaCommand,
 	runDoctor,
 	runAddVariationCommand,
 	runScaffoldFlow,

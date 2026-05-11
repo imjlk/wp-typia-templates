@@ -161,6 +161,7 @@ wp-typia add contract external-retrieve-response --type ExternalRetrieveResponse
 wp-typia add rest-resource snapshots --namespace my-plugin/v1 --methods list,read,create
 wp-typia add rest-resource snapshots --namespace my-plugin/v1 --methods read,update --route-pattern '/snapshots/(?P<id>[\d]+)' --permission-callback my_plugin_can_manage_snapshots
 wp-typia add rest-resource external-record --manual --namespace legacy/v1 --method GET --auth authenticated --path '/records/(?P<id>[\d]+)'
+wp-typia add post-meta integration-state --post-type post --type IntegrationStateMeta
 wp-typia add editor-plugin review-workflow --slot sidebar
 wp-typia add editor-plugin seo-notes --slot document-setting-panel
 wp-typia add hooked-block counter-card --anchor core/post-content --position after
@@ -181,6 +182,9 @@ wp-typia add hooked-block counter-card --anchor core/post-content --position aft
 - Need generated REST contracts to fit an existing controller or permission
   model? Add `--route-pattern`, `--permission-callback`, or `--controller-class`
   while keeping generated OpenAPI and client paths aligned.
+- Need typed post meta as shared integration state? Use
+  `wp-typia add post-meta <name> --post-type <post-type>` to generate a
+  TypeScript shape, schema artifact, and `register_post_meta()` helper.
 - Need schema evolution for a long-lived block? Enable `--with-migration-ui`.
 - Need smoke tests for external/manual payloads? Use `@wp-typia/block-runtime/schema-test`
   to assert responses against generated `*.schema.json` contract artifacts.

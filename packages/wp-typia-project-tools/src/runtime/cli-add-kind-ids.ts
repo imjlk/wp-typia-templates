@@ -15,6 +15,7 @@ export const ADD_KIND_IDS = [
 	"binding-source",
 	"contract",
 	"rest-resource",
+	"post-meta",
 	"ability",
 	"ai-feature",
 	"hooked-block",

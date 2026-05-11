@@ -80,6 +80,13 @@ type RestResourcePlanCompatibility = ExpectTrue<
   >
 >;
 
+type PostMetaPlanCompatibility = ExpectTrue<
+  IsEqual<
+    Awaited<ReturnType<AddKindExecutionPlanFor<'post-meta'>['execute']>>,
+    Parameters<AddKindExecutionPlanFor<'post-meta'>['getValues']>[0]
+  >
+>;
+
 type AbilityPlanCompatibility = ExpectTrue<
   IsEqual<
     Awaited<ReturnType<AddKindExecutionPlanFor<'ability'>['execute']>>,
@@ -132,6 +139,7 @@ const addKindPlanCompatibilityChecks = {
   'binding-source': true,
   contract: true,
   'rest-resource': true,
+  'post-meta': true,
   ability: true,
   'ai-feature': true,
   'hooked-block': true,
@@ -148,6 +156,7 @@ const addKindPlanCompatibilityChecks = {
   'binding-source': BindingSourcePlanCompatibility;
   contract: ContractPlanCompatibility;
   'rest-resource': RestResourcePlanCompatibility;
+  'post-meta': PostMetaPlanCompatibility;
   ability: AbilityPlanCompatibility;
   'ai-feature': AiFeaturePlanCompatibility;
   'hooked-block': HookedBlockPlanCompatibility;
@@ -167,6 +176,7 @@ test('preserves compile-time compatibility between execute and getValues for eve
     'binding-source': true,
     contract: true,
     'rest-resource': true,
+    'post-meta': true,
     ability: true,
     'ai-feature': true,
     'hooked-block': true,
@@ -230,6 +240,12 @@ test('keeps shared visible-field groups aligned for refactored add kinds', () =>
   expect(getAddVisibleFieldNames({ kind: 'contract' })).toEqual([
     'kind',
     'name',
+    'type',
+  ]);
+  expect(getAddVisibleFieldNames({ kind: 'post-meta' })).toEqual([
+    'kind',
+    'name',
+    'post-type',
     'type',
   ]);
   expect(getAddVisibleFieldNames({ kind: 'block', template: 'basic' })).toEqual(
@@ -296,6 +312,12 @@ const warnLinePlanFixtures = {
     flags: {},
     name: 'sample-rest-resource',
   },
+  'post-meta': {
+    flags: {
+      'post-type': 'post',
+    },
+    name: 'sample-post-meta',
+  },
   style: {
     flags: {
       block: 'sample-block',
@@ -357,6 +379,7 @@ test('passes the warning line printer through every add-kind execution plan', as
     'editor-plugin': true,
     'hooked-block': true,
     pattern: true,
+    'post-meta': true,
     'rest-resource': true,
     style: true,
     transform: true,

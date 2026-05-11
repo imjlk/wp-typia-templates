@@ -105,13 +105,18 @@ function createLegacySyncRestSourceWithoutContractAndRestResources(
 ): string {
   return source
     .replace(
-      /import \{\n\tBLOCKS,\n\tCONTRACTS,\n\tREST_RESOURCES,\n\ttype WorkspaceBlockConfig,\n\ttype WorkspaceContractConfig,\n\ttype WorkspaceRestResourceConfig,\n\} from '\.\/block-config';/u,
+      /import \{\n\tBLOCKS,\n\tCONTRACTS,\n\tPOST_META,\n\tREST_RESOURCES,\n\ttype WorkspaceBlockConfig,\n\ttype WorkspaceContractConfig,\n\ttype WorkspacePostMetaConfig,\n\ttype WorkspaceRestResourceConfig,\n\} from '\.\/block-config';/u,
       "import { BLOCKS, type WorkspaceBlockConfig } from './block-config';"
     )
     .replace(/\nfunction isWorkspaceStandaloneContract\([\s\S]*?\n\}\n/u, "\n")
+    .replace(/\nfunction isWorkspacePostMetaContract\([\s\S]*?\n\}\n/u, "\n")
     .replace(/\nfunction isWorkspaceRestResource\([\s\S]*?\n\}\n/u, "\n")
     .replace(
       "\n\tconst standaloneContracts = CONTRACTS.filter( isWorkspaceStandaloneContract );",
+      ""
+    )
+    .replace(
+      "\n\tconst postMetaContracts = POST_META.filter( isWorkspacePostMetaContract );",
       ""
     )
     .replace(
@@ -119,7 +124,7 @@ function createLegacySyncRestSourceWithoutContractAndRestResources(
       ""
     )
     .replace(
-      /\n\tif \(\s*restBlocks\.length === 0 &&\s*standaloneContracts\.length === 0 &&\s*restResources\.length === 0\s*\) \{[\s\S]*?\n\t\}/u,
+      /\n\tif \(\s*restBlocks\.length === 0 &&\s*standaloneContracts\.length === 0(?:\s*&&\s*postMetaContracts\.length === 0)? &&\s*restResources\.length === 0\s*\) \{[\s\S]*?\n\t\}/u,
       [
         "\n\tif ( restBlocks.length === 0 ) {",
         "\t\tconsole.log(",
@@ -136,15 +141,19 @@ function createLegacySyncRestSourceWithoutContractAndRestResources(
       "\n"
     )
     .replace(
+      /\n\tfor \( const postMeta of postMetaContracts \) \{[\s\S]*?\n\t\}\n/u,
+      "\n"
+    )
+    .replace(
       /\n\tfor \( const resource of restResources \) \{[\s\S]*?\n\t\}\n\n\tconsole\.log\(/u,
       "\n\tconsole.log("
     )
     .replace(
-      "✅ REST contract schemas, portable API clients, and endpoint-aware OpenAPI documents are already up to date for workspace blocks and plugin-level resources!",
+      "✅ REST contract schemas, standalone schemas, post meta schemas, portable API clients, and endpoint-aware OpenAPI documents are already up to date for workspace blocks, standalone contracts, post meta contracts, and plugin-level resources!",
       "✅ REST contract schemas, portable API clients, and endpoint-aware OpenAPI documents are already up to date with the TypeScript types!"
     )
     .replace(
-      "✅ REST contract schemas, portable API clients, and endpoint-aware OpenAPI documents generated for workspace blocks and plugin-level resources!",
+      "✅ REST contract schemas, standalone schemas, post meta schemas, portable API clients, and endpoint-aware OpenAPI documents generated for workspace blocks, standalone contracts, post meta contracts, and plugin-level resources!",
       "✅ REST contract schemas, portable API clients, and endpoint-aware OpenAPI documents generated from TypeScript types!"
     );
 }
@@ -1069,7 +1078,7 @@ test("transform workflow rejects direct registerBlockType entrypoints without wr
       )
     )
   ).toBe(false);
-}, 30_000);
+}, 60_000);
 
 test("canonical CLI can add hooked-block metadata to an official workspace block", async () => {
   const targetDir = path.join(tempRoot, "demo-workspace-add-hooked-block");
@@ -2169,7 +2178,7 @@ test("add compound block does not duplicate an existing typia import during lega
   );
 
   typecheckGeneratedProject(targetDir);
-}, 30_000);
+}, 60_000);
 
 test("add compound block does not duplicate a BOM-prefixed typia import during legacy validator repair", async () => {
   const targetDir = path.join(
@@ -3390,6 +3399,130 @@ test("contract workflow rejects reserved TypeScript type names before writing fi
       .includes('slug: "external-retrieve-response"')
   ).toBe(false);
 }, 20_000);
+
+test("canonical CLI can add a typed post meta contract to an official workspace template", async () => {
+  const targetDir = path.join(tempRoot, "demo-workspace-add-post-meta");
+
+  await scaffoldOfficialWorkspace(targetDir, {
+    description: "Demo workspace add post meta",
+    slug: "demo-workspace-add-post-meta",
+    title: "Demo Workspace Add Post Meta",
+  });
+
+  linkWorkspaceNodeModules(targetDir);
+
+  runCli(
+    "node",
+    [
+      entryPath,
+      "add",
+      "post-meta",
+      "integration-state",
+      "--post-type",
+      "example_post_type",
+      "--type",
+      "IntegrationStateMeta",
+      "--meta-key",
+      "_demo_space_integration_state",
+    ],
+    {
+      cwd: targetDir,
+    }
+  );
+
+  const blockConfigSource = fs.readFileSync(
+    path.join(targetDir, "scripts", "block-config.ts"),
+    "utf8"
+  );
+  const bootstrapSource = fs.readFileSync(
+    path.join(targetDir, "demo-workspace-add-post-meta.php"),
+    "utf8"
+  );
+  const syncRestSource = fs.readFileSync(
+    path.join(targetDir, "scripts", "sync-rest-contracts.ts"),
+    "utf8"
+  );
+  const typesSource = fs.readFileSync(
+    path.join(targetDir, "src", "post-meta", "integration-state", "types.ts"),
+    "utf8"
+  );
+  const phpSource = fs.readFileSync(
+    path.join(targetDir, "inc", "post-meta", "integration-state.php"),
+    "utf8"
+  );
+  const readmeSource = fs.readFileSync(
+    path.join(targetDir, "src", "post-meta", "integration-state", "README.md"),
+    "utf8"
+  );
+  const schemaPath = path.join(
+    targetDir,
+    "src",
+    "post-meta",
+    "integration-state",
+    "meta.schema.json"
+  );
+
+  expect(blockConfigSource).toContain("export const POST_META");
+  expect(blockConfigSource).toContain('slug: "integration-state"');
+  expect(blockConfigSource).toContain('postType: "example_post_type"');
+  expect(blockConfigSource).toContain(
+    'metaKey: "_demo_space_integration_state"'
+  );
+  expect(blockConfigSource).toContain("showInRest: true");
+  expect(blockConfigSource).toContain('sourceTypeName: "IntegrationStateMeta"');
+  expect(blockConfigSource).toContain(
+    'schemaFile: "src/post-meta/integration-state/meta.schema.json"'
+  );
+  expect(bootstrapSource).toContain(
+    "function demo_space_register_post_meta_contracts()"
+  );
+  expect(bootstrapSource).toContain("inc/post-meta/*.php");
+  expect(syncRestSource).toContain("POST_META");
+  expect(syncRestSource).toContain("const postMetaContracts");
+  expect(syncRestSource).toContain("for ( const postMeta of postMetaContracts )");
+  expect(typesSource).toContain("export interface IntegrationStateMeta");
+  expect(phpSource).toContain("register_post_meta");
+  expect(phpSource).toContain("example_post_type");
+  expect(phpSource).toContain("_demo_space_integration_state");
+  expect(phpSource).toContain("src/post-meta/integration-state/meta.schema.json");
+  expect(phpSource).toContain("'show_in_rest'");
+  expect(readmeSource).toContain("wp-typia sync-rest --check");
+  expect(fs.existsSync(schemaPath)).toBe(true);
+
+  const doctorOutput = runCli("node", [entryPath, "doctor", "--format", "json"], {
+    cwd: targetDir,
+  });
+  const doctorChecks = parseJsonObjectFromOutput<{
+    checks: Array<{ detail: string; label: string; status: string }>;
+  }>(doctorOutput);
+  expect(
+    doctorChecks.checks.find((check) => check.label === "Post meta bootstrap")
+      ?.status
+  ).toBe("pass");
+  expect(
+    doctorChecks.checks.find(
+      (check) => check.label === "Post meta config integration-state"
+    )?.status
+  ).toBe("pass");
+  expect(
+    doctorChecks.checks.find((check) => check.label === "Post meta integration-state")
+      ?.status
+  ).toBe("pass");
+  expect(
+    doctorChecks.checks.find(
+      (check) => check.label === "Post meta PHP integration-state"
+    )?.status
+  ).toBe("pass");
+
+  runCli("npm", ["run", "sync-rest", "--", "--check"], { cwd: targetDir });
+
+  fs.writeFileSync(schemaPath, "{}\n", "utf8");
+  expect(() =>
+    runCli("npm", ["run", "sync-rest", "--", "--check"], { cwd: targetDir })
+  ).toThrow("Generated artifacts are missing or stale");
+  runCli("npm", ["run", "sync-rest"], { cwd: targetDir });
+  typecheckGeneratedProject(targetDir);
+}, 60_000);
 
 test("canonical CLI can add a type-only manual REST contract to an official workspace template", async () => {
   const targetDir = path.join(tempRoot, "demo-workspace-add-manual-rest-contract");

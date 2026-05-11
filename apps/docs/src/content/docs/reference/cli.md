@@ -200,6 +200,7 @@ wp-typia add binding-source <name> --block <block-slug|namespace/block-slug> --a
 wp-typia add contract <name> --type <ExportedTypeName>
 wp-typia add rest-resource <name> --namespace <vendor/v1> --methods list,read,create
 wp-typia add rest-resource <name> --namespace <vendor/v1> --methods read,update --route-pattern '/records/(?P<id>[\d]+)' --permission-callback my_plugin_can_manage_records
+wp-typia add post-meta <name> --post-type post --type IntegrationStateMeta
 wp-typia add ability <name>
 wp-typia add ai-feature <name> --namespace <vendor/v1>
 wp-typia add editor-plugin <name> --slot sidebar
@@ -227,6 +228,9 @@ Common flags:
 | `--controller-class <ClassName>`                                 | PHP controller class wrapper for generated REST resource route callbacks.                                                                                                      |
 | `--controller-extends <BaseClass>`                               | Optional base class for generated REST resource controller wrappers.                                                                                                           |
 | `--type <ExportedTypeName>`                                      | Exported TypeScript type or interface for standalone contract schema artifacts.                                                                                                |
+| `--post-type <post-type>`                                        | WordPress post type key for post-meta contract scaffolds.                                                                                                                      |
+| `--meta-key <meta-key>`                                          | Optional WordPress meta key for post-meta workflows. Defaults to `_<phpPrefix>_<name>`.                                                                                        |
+| `--hide-from-rest`                                               | Keep generated post-meta registration out of REST/editor responses.                                                                                                            |
 | `--source <locator>`                                             | Optional data source locator for admin-view workflows. Current public support includes `rest-resource:products`, `core-data:postType/post`, and `core-data:taxonomy/category`. |
 | `--external-layer-source <source>`                               | Compose an external layer package on top of a built-in block template.                                                                                                         |
 | `--external-layer-id <id>`                                       | Select a specific external layer.                                                                                                                                              |
@@ -256,6 +260,12 @@ named type in `scripts/block-config.ts`, and generate
 `src/contracts/<name>.schema.json`. They do not create PHP route glue. Use them
 for external WordPress routes, PHP assertions, or smoke tests that need a stable
 runtime schema before a full `rest-resource` or manual REST contract exists.
+
+Post-meta contract scaffolds create `src/post-meta/<name>/types.ts`, generate
+`meta.schema.json`, and wire `inc/post-meta/<name>.php` with a
+`register_post_meta()` helper for the declared `--post-type`. Run
+`wp-typia sync-rest --check` after editing the TypeScript shape to catch stale
+meta schema artifacts before shipping.
 
 Admin-view scaffolds can optionally bind to a generated data source with
 `--source`. For example, `rest-resource:products` points at a matching
