@@ -58,6 +58,7 @@ export const hookedBlockAddKindEntry =
         }),
         missingNameMessage: HOOKED_BLOCK_MISSING_NAME_MESSAGE,
         name,
+        warnLine: context.warnLine,
       });
     },
     sortOrder: 110,

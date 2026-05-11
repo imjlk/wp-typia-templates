@@ -217,26 +217,108 @@ test('keeps shared visible-field groups aligned for refactored add kinds', () =>
   ]);
 });
 
-test('passes the warning line printer through the pattern execution plan', async () => {
-  const warnLine = () => {};
-  const context = {
-    addRuntime: {
-      runAddPatternCommand: async ({ cwd, patternName }) => ({
-        patternSlug: patternName,
-        projectDir: cwd,
-      }),
-    } as AddKindExecutionContext['addRuntime'],
-    cwd: '/tmp/wp-typia-pattern-test',
+const warnLinePlanFixtures = {
+  'admin-view': {
     flags: {},
-    getOrCreatePrompt: async () => {
-      throw new Error('pattern add-kind should not prompt in this test');
+    name: 'sample-admin-view',
+  },
+  ability: {
+    flags: {},
+    name: 'sample-ability',
+  },
+  'ai-feature': {
+    flags: {},
+    name: 'sample-ai-feature',
+  },
+  'binding-source': {
+    flags: {},
+    name: 'sample-binding-source',
+  },
+  block: {
+    flags: {},
+    name: 'sample-block',
+  },
+  'editor-plugin': {
+    flags: {},
+    name: 'sample-editor-plugin',
+  },
+  'hooked-block': {
+    flags: {
+      anchor: 'core/post-content',
+      position: 'after',
     },
-    isInteractiveSession: false,
+    name: 'sample-block',
+  },
+  pattern: {
+    flags: {},
     name: 'sample-pattern',
-    warnLine,
-  } satisfies AddKindExecutionContext;
+  },
+  'rest-resource': {
+    flags: {},
+    name: 'sample-rest-resource',
+  },
+  style: {
+    flags: {
+      block: 'sample-block',
+    },
+    name: 'sample-style',
+  },
+  transform: {
+    flags: {
+      from: 'core/paragraph',
+      to: 'sample/block',
+    },
+    name: 'sample-transform',
+  },
+  variation: {
+    flags: {
+      block: 'sample-block',
+    },
+    name: 'sample-variation',
+  },
+} satisfies Record<
+  AddKindId,
+  {
+    flags: Record<string, unknown>;
+    name: string;
+  }
+>;
 
-  const plan = await ADD_KIND_REGISTRY.pattern.prepareExecution(context);
+test('passes the warning line printer through every add-kind execution plan', async () => {
+  const warnLine = () => {};
+  const planWarnLineResults = Object.fromEntries(
+    await Promise.all(
+      ADD_KIND_IDS.map(async (kind) => {
+        const fixture = warnLinePlanFixtures[kind];
+        const plan = await ADD_KIND_REGISTRY[kind].prepareExecution({
+          addRuntime: {} as AddKindExecutionContext['addRuntime'],
+          cwd: `/tmp/wp-typia-${kind}-test`,
+          flags: fixture.flags,
+          getOrCreatePrompt: async () => {
+            throw new Error(`${kind} add-kind should not prompt in this test`);
+          },
+          isInteractiveSession: false,
+          name: fixture.name,
+          warnLine,
+        });
 
-  expect(plan.warnLine).toBe(warnLine);
+        return [kind, plan.warnLine === warnLine];
+      }),
+    ),
+  );
+
+  expect(planWarnLineResults).toEqual({
+    'admin-view': true,
+    ability: true,
+    'ai-feature': true,
+    'binding-source': true,
+    block: true,
+    'editor-plugin': true,
+    'hooked-block': true,
+    pattern: true,
+    'rest-resource': true,
+    style: true,
+    transform: true,
+    variation: true,
+  });
 });

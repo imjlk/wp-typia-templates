@@ -46,6 +46,7 @@ export const editorPluginAddKindEntry =
         }),
         missingNameMessage: EDITOR_PLUGIN_MISSING_NAME_MESSAGE,
         name,
+        warnLine: context.warnLine,
       });
     },
     sortOrder: 120,

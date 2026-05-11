@@ -59,6 +59,7 @@ export const transformAddKindEntry =
         }),
         missingNameMessage: TRANSFORM_MISSING_NAME_MESSAGE,
         name,
+        warnLine: context.warnLine,
       });
     },
     sortOrder: 50,

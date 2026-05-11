@@ -62,6 +62,7 @@ export const bindingSourceAddKindEntry =
         }),
         missingNameMessage: BINDING_SOURCE_MISSING_NAME_MESSAGE,
         name,
+        warnLine: context.warnLine,
       });
     },
     sortOrder: 70,

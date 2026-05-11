@@ -50,6 +50,7 @@ export const restResourceAddKindEntry =
         }),
         missingNameMessage: REST_RESOURCE_MISSING_NAME_MESSAGE,
         name,
+        warnLine: context.warnLine,
       });
     },
     sortOrder: 80,
