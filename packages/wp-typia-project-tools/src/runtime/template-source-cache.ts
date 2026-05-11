@@ -4,6 +4,17 @@ import { promises as fsp } from 'node:fs'
 import path from 'node:path'
 import { getNodeErrorCode, pathExists } from './fs-async.js'
 import {
+  CACHE_MARKER_FILE,
+  CACHE_PRUNE_MARKER_FILE,
+  externalTemplateCacheMetadataMatches,
+  formatExternalTemplateCacheEntryMarker,
+  formatExternalTemplateCachePruneMarker,
+  isExternalTemplateCacheEntryFreshForTtl,
+  parseExternalTemplateCacheEntryMarker,
+  parseExternalTemplateCachePruneMarker,
+  type ExternalTemplateCacheMetadata,
+} from './template-source-cache-markers.js'
+import {
   getExternalTemplateCacheNowMs,
   getExternalTemplateCacheRoot,
   isExternalTemplateCacheEnabled,
@@ -20,24 +31,9 @@ export {
 } from './template-source-cache-policy.js'
 
 /**
- * Marker file written after a cache entry is fully populated.
- */
-const CACHE_MARKER_FILE = 'wp-typia-template-cache.json'
-
-/**
- * Marker file written after a full TTL prune scan completes.
- */
-const CACHE_PRUNE_MARKER_FILE = 'wp-typia-template-cache-prune.json'
-
-/**
  * Private directory mode used for cache roots and entries on POSIX platforms.
  */
 const PRIVATE_CACHE_DIRECTORY_MODE = 0o700
-
-/**
- * Marker value used when URL-like metadata cannot be safely normalized.
- */
-const REDACTED_CACHE_METADATA_VALUE = '[redacted]'
 
 /**
  * Filesystem errors that mean another writer published the same cache entry.
@@ -56,11 +52,6 @@ const CACHE_UNAVAILABLE_ERROR_CODES = new Set([
 ])
 
 /**
- * Metadata fields that may contain credentialed or signed URLs.
- */
-const URL_LIKE_METADATA_KEY = /(url|uri|registry|tarball)/iu
-
-/**
  * Cache namespaces must stay within one path segment under the cache root.
  */
 const SAFE_CACHE_NAMESPACE_SEGMENT = /^[A-Za-z0-9_.-]+$/u
@@ -75,11 +66,6 @@ function createTemporaryCacheEntryDirName(cacheKey: string): string {
   // staging directory before the final atomic rename publishes the cache entry.
   return `.tmp-${cacheKey}-${process.pid}-${Date.now()}-${randomUUID()}`
 }
-
-/**
- * Serializable metadata recorded in the cache marker for diagnostics.
- */
-type ExternalTemplateCacheMetadata = Record<string, string | null>
 
 /**
  * Describes a deterministic external template cache entry.
@@ -283,34 +269,6 @@ async function ensurePrivateCacheDirectory(directory: string): Promise<boolean> 
   }
 }
 
-function sanitizeCacheMetadataValue(key: string, value: string): string {
-  if (!URL_LIKE_METADATA_KEY.test(key)) {
-    return value
-  }
-
-  try {
-    const url = new URL(value)
-    url.username = ''
-    url.password = ''
-    url.search = ''
-    url.hash = ''
-    return url.toString()
-  } catch {
-    return REDACTED_CACHE_METADATA_VALUE
-  }
-}
-
-function sanitizeCacheMetadata(
-  metadata: ExternalTemplateCacheMetadata,
-): ExternalTemplateCacheMetadata {
-  return Object.fromEntries(
-    Object.entries(metadata).map(([key, value]) => [
-      key,
-      value === null ? null : sanitizeCacheMetadataValue(key, value),
-    ]),
-  )
-}
-
 function resolveCacheNamespaceDir(
   cacheRoot: string,
   namespace: string,
@@ -380,46 +338,6 @@ async function isReusableCacheEntry(
   )
 }
 
-function parseCacheMarkerMetadata(
-  markerText: string,
-): { createdAtMs: number; metadata: ExternalTemplateCacheMetadata } | null {
-  let marker: unknown
-  try {
-    marker = JSON.parse(markerText)
-  } catch {
-    return null
-  }
-  if (typeof marker !== 'object' || marker === null || Array.isArray(marker)) {
-    return null
-  }
-
-  const rawMetadata = (marker as { metadata?: unknown }).metadata
-  if (
-    typeof rawMetadata !== 'object' ||
-    rawMetadata === null ||
-    Array.isArray(rawMetadata)
-  ) {
-    return null
-  }
-
-  const metadata: ExternalTemplateCacheMetadata = {}
-  for (const [key, value] of Object.entries(rawMetadata)) {
-    if (typeof value !== 'string' && value !== null) {
-      return null
-    }
-    metadata[key] = value
-  }
-
-  const rawCreatedAt = (marker as { createdAt?: unknown }).createdAt
-  const createdAtMs =
-    typeof rawCreatedAt === 'string' ? Date.parse(rawCreatedAt) : 0
-
-  return {
-    createdAtMs: Number.isFinite(createdAtMs) ? createdAtMs : 0,
-    metadata,
-  }
-}
-
 async function readCacheEntryMarker(
   markerPath: string,
 ): Promise<{
@@ -427,25 +345,12 @@ async function readCacheEntryMarker(
   metadata: ExternalTemplateCacheMetadata
 } | null> {
   try {
-    return parseCacheMarkerMetadata(await fsp.readFile(markerPath, 'utf8'))
+    return parseExternalTemplateCacheEntryMarker(
+      await fsp.readFile(markerPath, 'utf8'),
+    )
   } catch {
     return null
   }
-}
-
-function cacheMetadataMatches(
-  actual: ExternalTemplateCacheMetadata,
-  expected: ExternalTemplateCacheMetadata,
-): boolean {
-  return Object.entries(expected).every(([key, value]) => actual[key] === value)
-}
-
-function isCacheEntryFreshForTtl(
-  createdAtMs: number,
-  nowMs: number,
-  ttlMs: number | null,
-): boolean {
-  return ttlMs === null || createdAtMs >= nowMs - ttlMs
 }
 
 async function getReusableCacheEntryMarker(
@@ -476,7 +381,8 @@ async function isReusableFreshCacheEntry(
     sourceDir,
   )
   return (
-    marker !== null && isCacheEntryFreshForTtl(marker.createdAtMs, nowMs, ttlMs)
+    marker !== null &&
+    isExternalTemplateCacheEntryFreshForTtl(marker.createdAtMs, nowMs, ttlMs)
   )
 }
 
@@ -512,48 +418,6 @@ function getCachePruneMarkerPath(cacheRoot: string): string {
   return path.join(cacheRoot, CACHE_PRUNE_MARKER_FILE)
 }
 
-function parseCachePruneMarker(markerText: string): {
-  prunedAtMs: number
-  pruneIntervalMs: number | null
-  ttlMs: number
-} | null {
-  let marker: unknown
-  try {
-    marker = JSON.parse(markerText)
-  } catch {
-    return null
-  }
-  if (typeof marker !== 'object' || marker === null || Array.isArray(marker)) {
-    return null
-  }
-
-  const rawPrunedAt = (marker as { prunedAt?: unknown }).prunedAt
-  const prunedAtMs =
-    typeof rawPrunedAt === 'string' ? Date.parse(rawPrunedAt) : Number.NaN
-  const rawPruneIntervalMs = (marker as { pruneIntervalMs?: unknown })
-    .pruneIntervalMs
-  const rawTtlMs = (marker as { ttlMs?: unknown }).ttlMs
-  if (typeof rawTtlMs !== 'number' || !Number.isFinite(rawTtlMs)) {
-    return null
-  }
-  if (!Number.isFinite(prunedAtMs)) {
-    return null
-  }
-  if (
-    rawPruneIntervalMs !== null &&
-    (typeof rawPruneIntervalMs !== 'number' ||
-      !Number.isFinite(rawPruneIntervalMs))
-  ) {
-    return null
-  }
-
-  return {
-    prunedAtMs,
-    pruneIntervalMs: rawPruneIntervalMs ?? null,
-    ttlMs: rawTtlMs,
-  }
-}
-
 async function shouldSkipExternalTemplateCachePrune({
   cacheRoot,
   force,
@@ -578,7 +442,7 @@ async function shouldSkipExternalTemplateCachePrune({
     return false
   }
 
-  const marker = parseCachePruneMarker(markerText)
+  const marker = parseExternalTemplateCachePruneMarker(markerText)
   if (
     !marker ||
     marker.ttlMs !== ttlMs ||
@@ -605,15 +469,11 @@ async function writeExternalTemplateCachePruneMarker({
   try {
     await fsp.writeFile(
       getCachePruneMarkerPath(cacheRoot),
-      `${JSON.stringify(
-        {
-          prunedAt: new Date(nowMs).toISOString(),
-          pruneIntervalMs,
-          ttlMs,
-        },
-        null,
-        2,
-      )}\n`,
+      formatExternalTemplateCachePruneMarker({
+        nowMs,
+        pruneIntervalMs,
+        ttlMs,
+      }),
       'utf8',
     )
   } catch {
@@ -807,8 +667,15 @@ export async function findReusableExternalTemplateSourceCache(
     )
     if (
       !marker ||
-      !isCacheEntryFreshForTtl(marker.createdAtMs, nowMs, ttlMs) ||
-      !cacheMetadataMatches(marker.metadata, descriptor.metadata)
+      !isExternalTemplateCacheEntryFreshForTtl(
+        marker.createdAtMs,
+        nowMs,
+        ttlMs,
+      ) ||
+      !externalTemplateCacheMetadataMatches(
+        marker.metadata,
+        descriptor.metadata,
+      )
     ) {
       continue
     }
@@ -871,7 +738,11 @@ export async function resolveExternalTemplateSourceCache(
   )
   if (
     existingMarker &&
-    isCacheEntryFreshForTtl(existingMarker.createdAtMs, nowMs, ttlMs)
+    isExternalTemplateCacheEntryFreshForTtl(
+      existingMarker.createdAtMs,
+      nowMs,
+      ttlMs,
+    )
   ) {
     return {
       cacheHit: true,
@@ -905,16 +776,12 @@ export async function resolveExternalTemplateSourceCache(
     }
     await fsp.writeFile(
       path.join(temporaryEntryDir, CACHE_MARKER_FILE),
-      `${JSON.stringify(
-        {
-          createdAt: new Date().toISOString(),
-          key: cacheKey,
-          metadata: sanitizeCacheMetadata(descriptor.metadata),
-          namespace: descriptor.namespace,
-        },
-        null,
-        2,
-      )}\n`,
+      formatExternalTemplateCacheEntryMarker({
+        cacheKey,
+        createdAt: new Date(),
+        metadata: descriptor.metadata,
+        namespace: descriptor.namespace,
+      }),
       'utf8',
     )
     await fsp.rename(temporaryEntryDir, entryDir)
