@@ -231,6 +231,9 @@ export function assertValidPostMetaPostType(postType: string): string {
 			"`wp-typia add post-meta` requires --post-type <post-type>.",
 		);
 	}
+	if (trimmed.length > 20) {
+		throw new Error("Post meta post type must be 20 characters or fewer.");
+	}
 	if (!WORDPRESS_POST_TYPE_PATTERN.test(trimmed)) {
 		throw new Error(
 			"Post meta post type must use a WordPress post type key such as `post` or `example_post_type`.",
@@ -261,7 +264,7 @@ export function resolvePostMetaKey({
 	if (!trimmed) {
 		throw new Error("Post meta key cannot be empty.");
 	}
-	if (/[\s\0]/u.test(trimmed)) {
+	if (/[\p{Cc}\s]/u.test(trimmed)) {
 		throw new Error("Post meta key must not contain whitespace or control characters.");
 	}
 

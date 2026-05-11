@@ -1,4 +1,8 @@
-import { readOptionalStrictStringFlag, requireStrictStringFlag } from '../cli-string-flags';
+import {
+  readOptionalDashedOrCamelStringFlag,
+  readOptionalStrictStringFlag,
+  requireStrictStringFlag,
+} from '../cli-string-flags';
 import {
   createNamedExecutionPlan,
   defineAddKindRegistryEntry,
@@ -11,17 +15,6 @@ const POST_META_MISSING_NAME_MESSAGE =
   '`wp-typia add post-meta` requires <name>. Usage: wp-typia add post-meta <name> --post-type <post-type> [--type <ExportedTypeName>] [--meta-key <meta-key>].';
 const POST_META_MISSING_POST_TYPE_MESSAGE =
   '`wp-typia add post-meta` requires --post-type <post-type>. Usage: wp-typia add post-meta <name> --post-type <post-type>.';
-
-function readOptionalDashedOrCamelStringFlag(
-  flags: Record<string, unknown>,
-  dashedName: string,
-  camelName: string,
-): string | undefined {
-  return (
-    readOptionalStrictStringFlag(flags, dashedName) ??
-    readOptionalStrictStringFlag(flags, camelName)
-  );
-}
 
 export const postMetaAddKindEntry =
   defineAddKindRegistryEntry<AddPostMetaResult>({

@@ -226,9 +226,19 @@ test('focused validation helpers normalize REST namespaces, methods, and manual 
   expect(() => assertValidPostMetaPostType('Example Post')).toThrow(
     'Post meta post type must use a WordPress post type key',
   );
+  expect(() => assertValidPostMetaPostType('twenty_one_characters')).toThrow(
+    'Post meta post type must be 20 characters or fewer.',
+  );
   expect(() =>
     resolvePostMetaKey({
       metaKey: 'bad key',
+      phpPrefix: 'demo_space',
+      slug: 'integration-state',
+    }),
+  ).toThrow('Post meta key must not contain whitespace');
+  expect(() =>
+    resolvePostMetaKey({
+      metaKey: '_bad\u007fkey',
       phpPrefix: 'demo_space',
       slug: 'integration-state',
     }),

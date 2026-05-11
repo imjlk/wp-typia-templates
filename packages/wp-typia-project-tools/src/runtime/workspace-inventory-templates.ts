@@ -12,6 +12,9 @@ export const CONTRACT_CONFIG_ENTRY_MARKER =
 	"\t// wp-typia add contract entries";
 export const REST_RESOURCE_CONFIG_ENTRY_MARKER =
 	"\t// wp-typia add rest-resource entries";
+/**
+ * Marker used to append generated post-meta entries into `POST_META`.
+ */
 export const POST_META_CONFIG_ENTRY_MARKER =
 	"\t// wp-typia add post-meta entries";
 export const ABILITY_CONFIG_ENTRY_MARKER = "\t// wp-typia add ability entries";
@@ -174,6 +177,9 @@ export const REST_RESOURCES: WorkspaceRestResourceConfig[] = [
 ];
 `;
 
+/**
+ * Template inserted when repairing `WorkspacePostMetaConfig` in block-config.
+ */
 export const POST_META_INTERFACE_SECTION = `
 
 export interface WorkspacePostMetaConfig {
@@ -188,6 +194,9 @@ export interface WorkspacePostMetaConfig {
 }
 `;
 
+/**
+ * Template inserted when repairing the `POST_META` inventory array.
+ */
 export const POST_META_CONST_SECTION = `
 
 export const POST_META: WorkspacePostMetaConfig[] = [

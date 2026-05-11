@@ -229,7 +229,8 @@ export interface RunAddContractCommandOptions {
  * `_<phpPrefix>_<postMetaName>`.
  * @property postMetaName Human-entered post-meta contract name normalized into
  * a stable slug.
- * @property postType WordPress post type key that owns the generated meta key.
+ * @property postType WordPress post type key, 20 characters or fewer, that owns
+ * the generated meta key.
  * @property typeName Optional exported TypeScript type or interface name.
  * Defaults to `<PascalName>Meta`.
  */
@@ -238,7 +239,7 @@ export interface RunAddPostMetaCommandOptions {
 	hideFromRest?: boolean;
 	metaKey?: string;
 	postMetaName: string;
-	postType?: string;
+	postType: string;
 	typeName?: string;
 }
 

@@ -67,7 +67,7 @@ export async function runAddPostMetaCommand({
 		typeName ?? `${toPascalCase(postMetaSlug)}Meta`,
 		ADD_POST_META_USAGE,
 	);
-	const resolvedPostType = assertValidPostMetaPostType(postType ?? "");
+	const resolvedPostType = assertValidPostMetaPostType(postType);
 	const resolvedMetaKey = resolvePostMetaKey({
 		metaKey,
 		phpPrefix: workspace.workspace.phpPrefix,

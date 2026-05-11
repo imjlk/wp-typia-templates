@@ -50,6 +50,17 @@ export function readOptionalStrictStringFlag(
   return readOptionalCliStringFlagValue(flags, name, 'strict');
 }
 
+export function readOptionalDashedOrCamelStringFlag(
+  flags: Record<string, unknown>,
+  dashedName: string,
+  camelName: string,
+): string | undefined {
+  return (
+    readOptionalStrictStringFlag(flags, dashedName) ??
+    readOptionalStrictStringFlag(flags, camelName)
+  );
+}
+
 export function requireStrictStringFlag(
   flags: Record<string, unknown>,
   name: string,

@@ -4,6 +4,14 @@ import { toTitleCase } from "./string-case.js";
 
 /**
  * Render one `POST_META` inventory entry for `scripts/block-config.ts`.
+ *
+ * @param options Metadata used to render the inventory entry.
+ * @param options.metaKey WordPress meta key registered by the generated PHP.
+ * @param options.postMetaSlug Stable post-meta contract slug.
+ * @param options.postType WordPress post type scoped to the meta key.
+ * @param options.showInRest Whether the meta key is exposed to REST/editor APIs.
+ * @param options.sourceTypeName Exported TypeScript interface name.
+ * @returns Formatted TypeScript object literal for the `POST_META` array.
  */
 export function buildPostMetaConfigEntry(options: {
 	metaKey: string;
@@ -28,6 +36,10 @@ export function buildPostMetaConfigEntry(options: {
 
 /**
  * Render a starter TypeScript post-meta contract.
+ *
+ * @param postMetaSlug Stable post-meta contract slug used to build the title.
+ * @param sourceTypeName Exported TypeScript interface name to emit.
+ * @returns Generated TypeScript source for the post-meta contract.
  */
 export function buildPostMetaTypesSource(
 	postMetaSlug: string,
@@ -52,6 +64,13 @@ export interface ${sourceTypeName} {
 
 /**
  * Render smoke-test guidance beside the generated TypeScript contract.
+ *
+ * @param options Metadata used to render the README content.
+ * @param options.metaKey WordPress meta key registered by the generated PHP.
+ * @param options.postMetaSlug Stable post-meta contract slug.
+ * @param options.postType WordPress post type scoped to the meta key.
+ * @param options.sourceTypeName Exported TypeScript interface name.
+ * @returns Generated README content for the post-meta contract directory.
  */
 export function buildPostMetaReadmeSource(options: {
 	metaKey: string;
@@ -82,6 +101,15 @@ the meta key only when \`showInRest\` is enabled in \`scripts/block-config.ts\`.
 /**
  * Render the PHP module loaded by the workspace bootstrap to register the post
  * meta key with the schema generated from TypeScript.
+ *
+ * @param options Metadata used to render the PHP module.
+ * @param options.metaKey WordPress meta key to register.
+ * @param options.phpPrefix Workspace PHP function prefix.
+ * @param options.postMetaSlug Stable post-meta contract slug.
+ * @param options.postType WordPress post type scoped to the meta key.
+ * @param options.showInRest Whether `register_post_meta()` exposes REST schema.
+ * @param options.textDomain Workspace text domain used for descriptions.
+ * @returns Generated PHP source for registering the post-meta contract.
  */
 export function buildPostMetaPhpSource(options: {
 	metaKey: string;

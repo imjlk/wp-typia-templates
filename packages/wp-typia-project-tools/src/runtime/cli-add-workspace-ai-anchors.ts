@@ -250,15 +250,19 @@ function replaceBlockConfigImportForAiFeatures(
 
 	const hasContracts = importSource.includes("CONTRACTS");
 	const hasContractConfig = importSource.includes("WorkspaceContractConfig");
+	const hasPostMeta = importSource.includes("POST_META");
+	const hasPostMetaConfig = importSource.includes("WorkspacePostMetaConfig");
 	const replacement = [
 		"import {",
 		"\tAI_FEATURES,",
 		"\tBLOCKS,",
 		...(hasContracts ? ["\tCONTRACTS,"] : []),
+		...(hasPostMeta ? ["\tPOST_META,"] : []),
 		"\tREST_RESOURCES,",
 		"\ttype WorkspaceAiFeatureConfig,",
 		"\ttype WorkspaceBlockConfig,",
 		...(hasContractConfig ? ["\ttype WorkspaceContractConfig,"] : []),
+		...(hasPostMetaConfig ? ["\ttype WorkspacePostMetaConfig,"] : []),
 		"\ttype WorkspaceRestResourceConfig,",
 		"} from './block-config';",
 	].join("\n");
@@ -274,18 +278,36 @@ function replaceAiFeatureSyncSummaryCopy(
 		"workspace blocks, standalone contracts, and plugin-level resources";
 	const standaloneAiSummary =
 		"workspace blocks, standalone contracts, plugin-level resources, and AI features";
+	const standalonePostMetaSummary =
+		"workspace blocks, standalone contracts, post meta contracts, and plugin-level resources";
+	const standalonePostMetaAiSummary =
+		"workspace blocks, standalone contracts, post meta contracts, plugin-level resources, and AI features";
+	const postMetaSummary =
+		"workspace blocks, post meta contracts, and plugin-level resources";
+	const postMetaAiSummary =
+		"workspace blocks, post meta contracts, plugin-level resources, and AI features";
 	const restResourceSummary = "workspace blocks and plugin-level resources";
 	const restResourceAiSummary =
 		"workspace blocks, plugin-level resources, and AI features";
 
+	if (nextSource.includes(standalonePostMetaSummary)) {
+		return nextSource
+			.split(standalonePostMetaSummary)
+			.join(standalonePostMetaAiSummary);
+	}
 	if (nextSource.includes(standaloneSummary)) {
 		return nextSource.split(standaloneSummary).join(standaloneAiSummary);
+	}
+	if (nextSource.includes(postMetaSummary)) {
+		return nextSource.split(postMetaSummary).join(postMetaAiSummary);
 	}
 	if (nextSource.includes(restResourceSummary)) {
 		return nextSource.split(restResourceSummary).join(restResourceAiSummary);
 	}
 	if (
 		nextSource.includes(standaloneAiSummary) ||
+		nextSource.includes(standalonePostMetaAiSummary) ||
+		nextSource.includes(postMetaAiSummary) ||
 		nextSource.includes(restResourceAiSummary)
 	) {
 		return nextSource;
@@ -299,6 +321,60 @@ function replaceAiFeatureSyncSummaryCopy(
 		].join(" "),
 	);
 }
+
+function formatNoResourcesSubject(subjects: readonly string[]): string {
+	if (subjects.length <= 2) {
+		return subjects.join(" or ");
+	}
+
+	const lastSubject = subjects[subjects.length - 1];
+	return `${subjects.slice(0, -1).join(", ")}, or ${lastSubject}`;
+}
+
+function buildAiFeatureNoResourcesGuard({
+	hasPostMeta,
+	hasStandaloneContracts,
+}: {
+	hasPostMeta: boolean;
+	hasStandaloneContracts: boolean;
+}): string {
+	const condition = ["restBlocks.length === 0"];
+	if (hasStandaloneContracts) {
+		condition[condition.length - 1] = `${condition[condition.length - 1]} &&`;
+		condition.push("standaloneContracts.length === 0");
+	}
+	if (hasPostMeta) {
+		condition[condition.length - 1] = `${condition[condition.length - 1]} &&`;
+		condition.push("postMetaContracts.length === 0");
+	}
+	condition[condition.length - 1] = `${condition[condition.length - 1]} &&`;
+	condition.push("restResources.length === 0 &&");
+	condition.push("aiFeatures.length === 0");
+
+	const noResourcesSubject = formatNoResourcesSubject([
+		"REST-enabled workspace blocks",
+		...(hasStandaloneContracts ? ["standalone contracts"] : []),
+		...(hasPostMeta ? ["post meta contracts"] : []),
+		"plugin-level REST resources",
+		"AI features",
+	]);
+
+	return [
+		"if (",
+		...condition.map((line) => `\t\t${line}`),
+		"\t) {",
+		"\t\tconsole.log(",
+		"\t\t\toptions.check",
+		`\t\t\t\t? 'ℹ️ No ${noResourcesSubject} are registered yet. \`sync-rest --check\` is already clean.'`,
+		`\t\t\t\t: 'ℹ️ No ${noResourcesSubject} are registered yet.'`,
+		"\t\t);",
+		"\t\treturn;",
+		"\t}",
+	].join("\n");
+}
+
+const NO_RESOURCES_GUARD_PATTERN =
+	/if \(\s*restBlocks\.length === 0(?:\s*&&\s*standaloneContracts\.length === 0)?(?:\s*&&\s*postMetaContracts\.length === 0)?\s*&&\s*restResources\.length === 0(?:\s*&&\s*aiFeatures\.length === 0)?\s*\) \{[\s\S]*?\n\t\treturn;\n\t\}/u;
 
 /**
  * Patch `scripts/sync-rest-contracts.ts` after sync-project wiring so AI feature REST artifacts join the split sync flow.
@@ -369,35 +445,15 @@ export async function ensureAiFeatureSyncRestAnchors(
 		nextSource = replaceRequiredSyncRestSource(
 			nextSource,
 			"aiFeatures.length === 0",
-			nextSource.includes("const standaloneContracts = CONTRACTS.filter")
-				? /if \(\s*restBlocks\.length === 0 &&\s*standaloneContracts\.length === 0 &&\s*restResources\.length === 0\s*\) \{[\s\S]*?\n\t\treturn;\n\t\}/u
-				: /if \( restBlocks.length === 0 && restResources.length === 0 \) \{[\s\S]*?\n\t\treturn;\n\t\}/u,
-			nextSource.includes("const standaloneContracts = CONTRACTS.filter")
-				? [
-						"if (",
-						"\t\trestBlocks.length === 0 &&",
-						"\t\tstandaloneContracts.length === 0 &&",
-						"\t\trestResources.length === 0 &&",
-						"\t\taiFeatures.length === 0",
-						"\t) {",
-						"\t\tconsole.log(",
-						"\t\t\toptions.check",
-						"\t\t\t\t? 'ℹ️ No REST-enabled workspace blocks, standalone contracts, plugin-level REST resources, or AI features are registered yet. `sync-rest --check` is already clean.'",
-						"\t\t\t\t: 'ℹ️ No REST-enabled workspace blocks, standalone contracts, plugin-level REST resources, or AI features are registered yet.'",
-						"\t\t);",
-						"\t\treturn;",
-						"\t}",
-					].join("\n")
-				: [
-						"if ( restBlocks.length === 0 && restResources.length === 0 && aiFeatures.length === 0 ) {",
-						"\t\tconsole.log(",
-						"\t\t\toptions.check",
-						"\t\t\t\t? 'ℹ️ No REST-enabled workspace blocks, plugin-level REST resources, or AI features are registered yet. `sync-rest --check` is already clean.'",
-						"\t\t\t\t: 'ℹ️ No REST-enabled workspace blocks, plugin-level REST resources, or AI features are registered yet.'",
-						"\t\t);",
-						"\t\treturn;",
-						"\t}",
-					].join("\n"),
+			NO_RESOURCES_GUARD_PATTERN,
+			buildAiFeatureNoResourcesGuard({
+				hasPostMeta: nextSource.includes(
+					"const postMetaContracts = POST_META.filter( isWorkspacePostMetaContract );",
+				),
+				hasStandaloneContracts: nextSource.includes(
+					"const standaloneContracts = CONTRACTS.filter( isWorkspaceStandaloneContract );",
+				),
+			}),
 			"no-resources guard",
 			syncRestScriptPath,
 		);

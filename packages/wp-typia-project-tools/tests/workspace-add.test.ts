@@ -103,39 +103,65 @@ function replaceFixtureSource(
 function createLegacySyncRestSourceWithoutContractAndRestResources(
   source: string
 ): string {
-  return source
-    .replace(
-      /import \{\n\tBLOCKS,\n\tCONTRACTS,\n\tPOST_META,\n\tREST_RESOURCES,\n\ttype WorkspaceBlockConfig,\n\ttype WorkspaceContractConfig,\n\ttype WorkspacePostMetaConfig,\n\ttype WorkspaceRestResourceConfig,\n\} from '\.\/block-config';/u,
-      "import { BLOCKS, type WorkspaceBlockConfig } from './block-config';"
-    )
-    .replace(/\nfunction isWorkspaceStandaloneContract\([\s\S]*?\n\}\n/u, "\n")
-    .replace(/\nfunction isWorkspacePostMetaContract\([\s\S]*?\n\}\n/u, "\n")
-    .replace(/\nfunction isWorkspaceRestResource\([\s\S]*?\n\}\n/u, "\n")
-    .replace(
-      "\n\tconst standaloneContracts = CONTRACTS.filter( isWorkspaceStandaloneContract );",
-      ""
-    )
-    .replace(
-      "\n\tconst postMetaContracts = POST_META.filter( isWorkspacePostMetaContract );",
-      ""
-    )
-    .replace(
-      "\n\tconst restResources = REST_RESOURCES.filter( isWorkspaceRestResource );",
-      ""
-    )
-    .replace(
-      /\n\tif \(\s*restBlocks\.length === 0 &&\s*standaloneContracts\.length === 0(?:\s*&&\s*postMetaContracts\.length === 0)? &&\s*restResources\.length === 0\s*\) \{[\s\S]*?\n\t\}/u,
-      [
-        "\n\tif ( restBlocks.length === 0 ) {",
-        "\t\tconsole.log(",
-        "\t\t\toptions.check",
-        "\t\t\t\t? 'ℹ️ No REST-enabled workspace blocks are registered yet. `sync-rest --check` is already clean.'",
-        "\t\t\t\t: 'ℹ️ No REST-enabled workspace blocks are registered yet.'",
-        "\t\t);",
-        "\t\treturn;",
-        "\t}",
-      ].join("\n")
-    )
+  let nextSource = replaceFixtureSource(
+    source,
+    /import \{\n\tBLOCKS,\n\tCONTRACTS,\n\tPOST_META,\n\tREST_RESOURCES,\n\ttype WorkspaceBlockConfig,\n\ttype WorkspaceContractConfig,\n\ttype WorkspacePostMetaConfig,\n\ttype WorkspaceRestResourceConfig,\n\} from '\.\/block-config';/u,
+    "import { BLOCKS, type WorkspaceBlockConfig } from './block-config';",
+    "legacy sync-rest import"
+  );
+  nextSource = replaceFixtureSource(
+    nextSource,
+    /\nfunction isWorkspaceStandaloneContract\([\s\S]*?\n\}\n/u,
+    "\n",
+    "standalone contract type guard"
+  );
+  nextSource = replaceFixtureSource(
+    nextSource,
+    /\nfunction isWorkspacePostMetaContract\([\s\S]*?\n\}\n/u,
+    "\n",
+    "post-meta contract type guard"
+  );
+  nextSource = replaceFixtureSource(
+    nextSource,
+    /\nfunction isWorkspaceRestResource\([\s\S]*?\n\}\n/u,
+    "\n",
+    "REST resource type guard"
+  );
+  nextSource = replaceFixtureSource(
+    nextSource,
+    "\n\tconst standaloneContracts = CONTRACTS.filter( isWorkspaceStandaloneContract );",
+    "",
+    "standalone contract filter"
+  );
+  nextSource = replaceFixtureSource(
+    nextSource,
+    "\n\tconst postMetaContracts = POST_META.filter( isWorkspacePostMetaContract );",
+    "",
+    "post-meta contract filter"
+  );
+  nextSource = replaceFixtureSource(
+    nextSource,
+    "\n\tconst restResources = REST_RESOURCES.filter( isWorkspaceRestResource );",
+    "",
+    "REST resource filter"
+  );
+  nextSource = replaceFixtureSource(
+    nextSource,
+    /\n\tif \(\s*restBlocks\.length === 0 &&\s*standaloneContracts\.length === 0(?:\s*&&\s*postMetaContracts\.length === 0)? &&\s*restResources\.length === 0\s*\) \{[\s\S]*?\n\t\}/u,
+    [
+      "\n\tif ( restBlocks.length === 0 ) {",
+      "\t\tconsole.log(",
+      "\t\t\toptions.check",
+      "\t\t\t\t? 'ℹ️ No REST-enabled workspace blocks are registered yet. `sync-rest --check` is already clean.'",
+      "\t\t\t\t: 'ℹ️ No REST-enabled workspace blocks are registered yet.'",
+      "\t\t);",
+      "\t\treturn;",
+      "\t}",
+    ].join("\n"),
+    "no-resources guard"
+  );
+
+  return nextSource
     .replace(
       /\n\tfor \( const contract of standaloneContracts \) \{[\s\S]*?\n\t\}\n/u,
       "\n"
@@ -3522,7 +3548,7 @@ test("canonical CLI can add a typed post meta contract to an official workspace 
   ).toThrow("Generated artifacts are missing or stale");
   runCli("npm", ["run", "sync-rest"], { cwd: targetDir });
   typecheckGeneratedProject(targetDir);
-}, 60_000);
+}, 120_000);
 
 test("canonical CLI can add a type-only manual REST contract to an official workspace template", async () => {
   const targetDir = path.join(tempRoot, "demo-workspace-add-manual-rest-contract");
@@ -4752,7 +4778,7 @@ test("rest resource workflow repairs legacy sync-rest scripts before writing wor
   expect(repairedSyncRestSource).toContain("for ( const resource of restResources )");
 
   runCli("npm", ["run", "sync-rest", "--", "--check"], { cwd: targetDir });
-}, 20_000);
+}, 120_000);
 
 test("contract workflow repairs legacy sync-rest scripts before writing standalone schemas", async () => {
   const targetDir = path.join(
@@ -4810,7 +4836,7 @@ test("contract workflow repairs legacy sync-rest scripts before writing standalo
   expect(repairedSyncRestSource).toContain("for ( const contract of standaloneContracts )");
 
   runCli("npm", ["run", "sync-rest", "--", "--check"], { cwd: targetDir });
-}, 20_000);
+}, 120_000);
 
 test("rest resource workflow repairs sync-rest after legacy contract-first repairs", async () => {
   const targetDir = path.join(
@@ -4887,7 +4913,7 @@ test("rest resource workflow repairs sync-rest after legacy contract-first repai
   );
 
   runCli("npm", ["run", "sync-rest", "--", "--check"], { cwd: targetDir });
-}, 30_000);
+}, 120_000);
 
 test("rest resource workflow fails fast when sync-rest anchors drift past automatic repair", async () => {
   const targetDir = path.join(

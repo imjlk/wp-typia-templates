@@ -15,6 +15,16 @@ const POST_META_SERVER_GLOB = "/inc/post-meta/*.php";
 const NO_RESOURCES_GUARD_PATTERN =
 	/if \(\s*restBlocks\.length === 0(?:\s*&&\s*standaloneContracts\.length === 0)?(?:\s*&&\s*postMetaContracts\.length === 0)?(?:\s*&&\s*restResources\.length === 0)?(?:\s*&&\s*aiFeatures\.length === 0)?\s*\) \{[\s\S]*?\n\t\treturn;\n\t\}/u;
 
+/**
+ * Ensure the workspace bootstrap loads generated post-meta PHP modules.
+ *
+ * Inserts the generated loader function, appends its `init` hook, and rejects
+ * incompatible existing loader functions that omit the generated post-meta glob.
+ *
+ * @param workspace Resolved official workspace metadata and paths.
+ * @returns A promise that resolves after the bootstrap has been patched.
+ * @throws {Error} When the bootstrap cannot be read, written, or safely patched.
+ */
 export async function ensurePostMetaBootstrapAnchors(
 	workspace: WorkspaceProject,
 ): Promise<void> {
@@ -312,6 +322,16 @@ function insertPostMetaSyncLoop(
 	);
 }
 
+/**
+ * Ensure `scripts/sync-rest-contracts.ts` handles post-meta schema contracts.
+ *
+ * Patches inventory imports, type guards, no-resource checks, sync loops, and
+ * success copy so generated post-meta schemas participate in REST contract sync.
+ *
+ * @param workspace Resolved official workspace metadata and paths.
+ * @returns A promise that resolves after the sync script has been patched.
+ * @throws {Error} When expected anchors are missing or file IO fails.
+ */
 export async function ensurePostMetaSyncScriptAnchors(
 	workspace: WorkspaceProject,
 ): Promise<void> {
