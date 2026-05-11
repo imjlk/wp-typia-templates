@@ -81,6 +81,10 @@ const templatesCommandSource = fs.readFileSync(
   path.join(packageRoot, 'src', 'commands', 'templates.ts'),
   'utf8',
 );
+const outputAdaptersSource = fs.readFileSync(
+  path.join(packageRoot, 'src', 'commands', 'output-adapters.ts'),
+  'utf8',
+);
 const mcpCommandSource = fs.readFileSync(
   path.join(packageRoot, 'src', 'commands', 'mcp.ts'),
   'utf8',
@@ -935,7 +939,7 @@ process.exit(0);
     expect(migrateCommandSource).toContain(
       'buildCommandOptions(MIGRATE_OPTION_METADATA)',
     );
-    expect(migrateCommandSource).toContain('resolveMigratePrintLine');
+    expect(migrateCommandSource).toContain('resolveCommandPrintLine');
     expect(migrateCommandSource).toMatch(
       /executeMigrateCommand\(\{[\s\S]*printLine,/,
     );
@@ -970,6 +974,33 @@ process.exit(0);
     );
     expect(nodeFallbackHelpSource).toContain(
       'optionMetadata: TEMPLATES_OPTION_METADATA',
+    );
+  });
+
+  test('passes explicit output adapters from Bunli command handlers into runtime bridges', () => {
+    expect(outputAdaptersSource).toContain('resolveCommandOutputAdapters');
+    expect(outputAdaptersSource).toContain('process.stdout.write');
+    expect(outputAdaptersSource).toContain('process.stderr.write');
+
+    expect(addCommandSource).toContain('resolveCommandOutputAdapters');
+    expect(addCommandSource).toMatch(
+      /executeAddCommand\(\{[\s\S]*printLine,[\s\S]*warnLine,/,
+    );
+    expect(createCommandSource).toContain('resolveCommandOutputAdapters');
+    expect(createCommandSource).toMatch(
+      /executeCreateCommand\(\{[\s\S]*printLine,[\s\S]*warnLine,/,
+    );
+    expect(initCommandSource).toContain('resolveCommandOutputAdapters');
+    expect(initCommandSource).toMatch(
+      /executeInitCommand\([\s\S]*\{[\s\S]*printLine,[\s\S]*warnLine,/,
+    );
+    expect(migrateCommandSource).toContain('resolveCommandPrintLine');
+    expect(migrateCommandSource).toMatch(
+      /executeMigrateCommand\(\{[\s\S]*printLine,/,
+    );
+    expect(templatesCommandSource).toContain('resolveCommandPrintLine');
+    expect(templatesCommandSource).toMatch(
+      /executeTemplatesCommand\(\{[\s\S]*\},\s*printLine\)/,
     );
   });
 

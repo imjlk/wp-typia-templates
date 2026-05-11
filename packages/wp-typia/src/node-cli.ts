@@ -371,6 +371,7 @@ const NODE_FALLBACK_COMMAND_DISPATCHERS = {
   templates: async ({
     mergedFlags,
     positionals,
+    printLine,
   }: NodeFallbackDispatchContext) => {
     const subcommand = positionals[1];
     const templateId =
@@ -402,7 +403,7 @@ const NODE_FALLBACK_COMMAND_DISPATCHERS = {
         id: templateId,
         subcommand: resolvedSubcommand,
       },
-    });
+    }, printLine);
   },
 } satisfies Record<
   NodeFallbackExecutableCommandName,

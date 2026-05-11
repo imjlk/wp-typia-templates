@@ -14,6 +14,7 @@ import {
 } from "../cli-diagnostic-output";
 import { buildMissingCreateProjectDirDetailLines } from "../cli-error-messages";
 import { getCreateDefaults } from "../config";
+import { resolveCommandOutputAdapters } from "./output-adapters";
 import { resolveBundledModuleHref } from "../render-loader";
 import { executeCreateCommand } from "../runtime-bridge";
 import {
@@ -43,6 +44,7 @@ export const createCommand = defineCommand({
 	description: "Scaffold a new wp-typia project.",
 	handler: async (args) => {
 		const prefersStructuredOutput = prefersStructuredCliOutput(args);
+		const { printLine, warnLine } = resolveCommandOutputAdapters(args);
 		const projectDir = args.positional[0];
 		if (!projectDir) {
 			emitCliDiagnosticFailure(args, {
@@ -58,7 +60,9 @@ export const createCommand = defineCommand({
 				emitOutput: !prefersStructuredOutput,
 				flags: args.flags as Record<string, unknown>,
 				interactive: prefersStructuredOutput ? false : undefined,
+				printLine,
 				projectDir,
+				warnLine,
 			});
 			if (prefersStructuredOutput) {
 				args.output(

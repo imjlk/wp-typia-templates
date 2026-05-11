@@ -11,6 +11,7 @@ import {
 	emitCliDiagnosticFailure,
 	prefersStructuredCliOutput,
 } from "../cli-diagnostic-output";
+import { resolveCommandPrintLine } from "./output-adapters";
 import { executeTemplatesCommand, listTemplatesForRuntime } from "../runtime-bridge";
 
 export const templatesCommand = defineCommand({
@@ -24,6 +25,7 @@ export const templatesCommand = defineCommand({
 				? "inspect"
 				: subcommand;
 		const prefersStructuredOutput = prefersStructuredCliOutput(args);
+		const printLine = resolveCommandPrintLine(args);
 
 		try {
 			if (prefersStructuredOutput) {
@@ -57,7 +59,7 @@ export const templatesCommand = defineCommand({
 
 			await executeTemplatesCommand({
 				flags: { id, subcommand: effectiveSubcommand },
-			});
+			}, printLine);
 		} catch (error) {
 			emitCliDiagnosticFailure(args, {
 				command: "templates",
