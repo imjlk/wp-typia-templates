@@ -193,6 +193,16 @@ function getSyncScriptEnv() {
 \treturn env;
 }
 
+function getOptionalNodeErrorCode( error: unknown ): string | undefined {
+\treturn typeof error === 'object' && error !== null && 'code' in error
+\t\t? String( ( error as { code: unknown } ).code )
+\t\t: undefined;
+}
+
+function isFileNotFoundError( error: unknown ): boolean {
+\treturn getOptionalNodeErrorCode( error ) === 'ENOENT';
+}
+
 function runSyncScript( scriptPath: string, options: SyncCliOptions ) {
 \tconst args = [ scriptPath ];
 \tif ( options.check ) {
@@ -207,7 +217,7 @@ function runSyncScript( scriptPath: string, options: SyncCliOptions ) {
 \t} );
 
 \tif ( result.error ) {
-\t\tif ( ( result.error as NodeJS.ErrnoException ).code === 'ENOENT' ) {
+\t\tif ( isFileNotFoundError( result.error ) ) {
 \t\t\tthrow new Error(
 \t\t\t\t'Unable to resolve \`tsx\` for project sync. Install project dependencies or rerun the command through your package manager.'
 \t\t\t);
