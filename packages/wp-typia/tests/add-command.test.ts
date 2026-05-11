@@ -657,6 +657,7 @@ describe('wp-typia add command bridge', () => {
       'transform',
       'pattern',
       'binding-source',
+      'contract',
       'rest-resource',
       'ability',
       'ai-feature',

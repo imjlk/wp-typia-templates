@@ -222,6 +222,29 @@ const REST_RESOURCE_COLLISION_DESCRIPTOR: ScaffoldCollisionDescriptor<
 	},
 };
 
+const CONTRACT_COLLISION_DESCRIPTOR: ScaffoldCollisionDescriptor<
+	SlugCollisionContext,
+	WorkspaceInventory["contracts"][number]
+> = {
+	filesystemCollisions: [
+		{
+			label: "A standalone contract",
+			relativePath: ({ slug }) => path.join("src", "contracts", `${slug}.ts`),
+		},
+		{
+			label: "A standalone contract schema",
+			relativePath: ({ slug }) =>
+				path.join("src", "contracts", `${slug}.schema.json`),
+		},
+	],
+	inventoryCollision: {
+		entries: (inventory) => inventory.contracts,
+		exists: (entry, { slug }) => entry.slug === slug,
+		message: ({ slug }) =>
+			`A standalone contract inventory entry already exists for ${slug}. Choose a different name.`,
+	},
+};
+
 const ADMIN_VIEW_COLLISION_DESCRIPTOR: ScaffoldCollisionDescriptor<
 	SlugCollisionContext,
 	WorkspaceInventory["adminViews"][number]
@@ -441,6 +464,28 @@ export function assertRestResourceDoesNotExist(
 	assertAddKindScaffoldDoesNotExist({
 		context: { slug: restResourceSlug },
 		descriptor: REST_RESOURCE_COLLISION_DESCRIPTOR,
+		inventory,
+		projectDir,
+	});
+}
+
+/**
+ * Ensure a standalone contract scaffold does not already exist on disk or in
+ * inventory.
+ *
+ * @param projectDir Absolute workspace root used to resolve scaffold paths.
+ * @param contractSlug Normalized contract slug that would be created.
+ * @param inventory Current workspace inventory used for duplicate detection.
+ * @throws {Error} When contract files or inventory entry already exist.
+ */
+export function assertContractDoesNotExist(
+	projectDir: string,
+	contractSlug: string,
+	inventory: WorkspaceInventory,
+): void {
+	assertAddKindScaffoldDoesNotExist({
+		context: { slug: contractSlug },
+		descriptor: CONTRACT_COLLISION_DESCRIPTOR,
 		inventory,
 		projectDir,
 	});

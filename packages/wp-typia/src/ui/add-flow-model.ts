@@ -38,6 +38,7 @@ export const addFlowSchema = z.object({
   slot: z.string().optional(),
   source: z.string().optional(),
   template: z.string().optional(),
+  type: z.string().optional(),
   to: z.string().optional(),
 });
 
@@ -60,6 +61,7 @@ const ADD_FIELD_HEIGHTS: Record<AddFieldName, number> = {
   slot: FIRST_PARTY_SELECT_FIELD_BODY_HEIGHT,
   source: FIRST_PARTY_TEXT_FIELD_BODY_HEIGHT,
   template: FIRST_PARTY_SELECT_FIELD_BODY_HEIGHT,
+  type: FIRST_PARTY_TEXT_FIELD_BODY_HEIGHT,
   to: FIRST_PARTY_TEXT_FIELD_BODY_HEIGHT,
 };
 

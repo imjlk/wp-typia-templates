@@ -3197,6 +3197,87 @@ test("binding source rollback restores an existing src/bindings/index.js registr
   ).toBe(false);
 }, 15_000);
 
+test("canonical CLI can add a standalone contract to an official workspace template", async () => {
+  const targetDir = path.join(tempRoot, "demo-workspace-add-contract");
+
+  await scaffoldProject({
+    projectDir: targetDir,
+    templateId: workspaceTemplatePackageManifest.name,
+    packageManager: "npm",
+    noInstall: true,
+    answers: {
+      author: "Test Runner",
+      description: "Demo workspace add contract",
+      namespace: "demo-space",
+      phpPrefix: "demo_space",
+      slug: "demo-workspace-add-contract",
+      textDomain: "demo-space",
+      title: "Demo Workspace Add Contract",
+    },
+  });
+
+  linkWorkspaceNodeModules(targetDir);
+
+  runCli(
+    "node",
+    [
+      entryPath,
+      "add",
+      "contract",
+      "external-retrieve-response",
+      "--type",
+      "ExternalRetrieveResponse",
+    ],
+    {
+      cwd: targetDir,
+    }
+  );
+
+  const blockConfigSource = fs.readFileSync(
+    path.join(targetDir, "scripts", "block-config.ts"),
+    "utf8"
+  );
+  const syncRestSource = fs.readFileSync(
+    path.join(targetDir, "scripts", "sync-rest-contracts.ts"),
+    "utf8"
+  );
+  const typesSource = fs.readFileSync(
+    path.join(targetDir, "src", "contracts", "external-retrieve-response.ts"),
+    "utf8"
+  );
+  const schemaPath = path.join(
+    targetDir,
+    "src",
+    "contracts",
+    "external-retrieve-response.schema.json"
+  );
+
+  expect(blockConfigSource).toContain("export const CONTRACTS");
+  expect(blockConfigSource).toContain('slug: "external-retrieve-response"');
+  expect(blockConfigSource).toContain('sourceTypeName: "ExternalRetrieveResponse"');
+  expect(blockConfigSource).toContain(
+    'schemaFile: "src/contracts/external-retrieve-response.schema.json"'
+  );
+  expect(typesSource).toContain("export interface ExternalRetrieveResponse");
+  expect(syncRestSource).toContain("const standaloneContracts");
+  expect(syncRestSource).toContain("contract.schemaFile");
+  expect(fs.existsSync(schemaPath)).toBe(true);
+  expect(
+    fs.existsSync(
+      path.join(targetDir, "inc", "rest", "external-retrieve-response.php")
+    )
+  ).toBe(false);
+
+  runCli("npm", ["run", "sync", "--", "--check"], { cwd: targetDir });
+
+  fs.writeFileSync(schemaPath, "{}\n", "utf8");
+  expect(() =>
+    runCli("npm", ["run", "sync", "--", "--check"], { cwd: targetDir })
+  ).toThrow("Sync script failed");
+  runCli("npm", ["run", "sync"], { cwd: targetDir });
+  typecheckGeneratedProject(targetDir);
+}, 30_000);
+
 test("canonical CLI can add a plugin-level REST resource to an official workspace template", async () => {
   const targetDir = path.join(tempRoot, "demo-workspace-add-rest-resource");
 
@@ -4017,18 +4098,23 @@ test("rest resource workflow repairs legacy sync-rest scripts before writing wor
   const legacySyncRestSource = fs
     .readFileSync(syncRestScriptPath, "utf8")
     .replace(
-      /import \{\n\tBLOCKS,\n\tREST_RESOURCES,\n\ttype WorkspaceBlockConfig,\n\ttype WorkspaceRestResourceConfig,\n\} from '\.\/block-config';/u,
+      /import \{\n\tBLOCKS,\n\tCONTRACTS,\n\tREST_RESOURCES,\n\ttype WorkspaceBlockConfig,\n\ttype WorkspaceContractConfig,\n\ttype WorkspaceRestResourceConfig,\n\} from '\.\/block-config';/u,
       "import { BLOCKS, type WorkspaceBlockConfig } from './block-config';"
     )
+    .replace(/\nfunction isWorkspaceStandaloneContract\([\s\S]*?\n\}\n/u, "\n")
     .replace(/\nfunction isWorkspaceRestResource\([\s\S]*?\n\}\n/u, "\n")
+    .replace(
+      "\n\tconst standaloneContracts = CONTRACTS.filter( isWorkspaceStandaloneContract );",
+      ""
+    )
     .replace(
       "\n\tconst restResources = REST_RESOURCES.filter( isWorkspaceRestResource );",
       ""
     )
     .replace(
-      /if \( restBlocks.length === 0 && restResources.length === 0 \) \{[\s\S]*?\n\t\}/u,
+      /\n\tif \(\n\t\trestBlocks\.length === 0 &&\n\t\tstandaloneContracts\.length === 0 &&\n\t\trestResources\.length === 0\n\t\) \{[\s\S]*?\n\t\}/u,
       [
-        "if ( restBlocks.length === 0 ) {",
+        "\n\tif ( restBlocks.length === 0 ) {",
         "\t\tconsole.log(",
         "\t\t\toptions.check",
         "\t\t\t\t? 'ℹ️ No REST-enabled workspace blocks are registered yet. `sync-rest --check` is already clean.'",
@@ -4038,6 +4124,7 @@ test("rest resource workflow repairs legacy sync-rest scripts before writing wor
         "\t}",
       ].join("\n")
     )
+    .replace(/\n\tfor \( const contract of standaloneContracts \) \{[\s\S]*?\n\t\}\n/u, "\n")
     .replace(
       /\n\tfor \( const resource of restResources \) \{[\s\S]*?\n\t\}\n\n\tconsole\.log\(/u,
       "\n\tconsole.log("
@@ -4066,6 +4153,95 @@ test("rest resource workflow repairs legacy sync-rest scripts before writing wor
     "plugin-level REST resources are registered yet"
   );
   expect(repairedSyncRestSource).toContain("for ( const resource of restResources )");
+
+  runCli("npm", ["run", "sync-rest", "--", "--check"], { cwd: targetDir });
+}, 20_000);
+
+test("contract workflow repairs legacy sync-rest scripts before writing standalone schemas", async () => {
+  const targetDir = path.join(
+    tempRoot,
+    "demo-workspace-contract-legacy-sync-rest"
+  );
+
+  await scaffoldProject({
+    projectDir: targetDir,
+    templateId: workspaceTemplatePackageManifest.name,
+    packageManager: "npm",
+    noInstall: true,
+    answers: {
+      author: "Test Runner",
+      description: "Demo workspace contract legacy sync rest",
+      namespace: "demo-space",
+      phpPrefix: "demo_space",
+      slug: "demo-workspace-contract-legacy-sync-rest",
+      textDomain: "demo-space",
+      title: "Demo Workspace Contract Legacy Sync Rest",
+    },
+  });
+
+  linkWorkspaceNodeModules(targetDir);
+
+  const syncRestScriptPath = path.join(
+    targetDir,
+    "scripts",
+    "sync-rest-contracts.ts"
+  );
+  const legacySyncRestSource = fs
+    .readFileSync(syncRestScriptPath, "utf8")
+    .replace(
+      /import \{\n\tBLOCKS,\n\tCONTRACTS,\n\tREST_RESOURCES,\n\ttype WorkspaceBlockConfig,\n\ttype WorkspaceContractConfig,\n\ttype WorkspaceRestResourceConfig,\n\} from '\.\/block-config';/u,
+      "import { BLOCKS, type WorkspaceBlockConfig } from './block-config';"
+    )
+    .replace(/\nfunction isWorkspaceStandaloneContract\([\s\S]*?\n\}\n/u, "\n")
+    .replace(/\nfunction isWorkspaceRestResource\([\s\S]*?\n\}\n/u, "\n")
+    .replace(
+      "\n\tconst standaloneContracts = CONTRACTS.filter( isWorkspaceStandaloneContract );",
+      ""
+    )
+    .replace(
+      "\n\tconst restResources = REST_RESOURCES.filter( isWorkspaceRestResource );",
+      ""
+    )
+    .replace(
+      /\n\tif \(\n\t\trestBlocks\.length === 0 &&\n\t\tstandaloneContracts\.length === 0 &&\n\t\trestResources\.length === 0\n\t\) \{[\s\S]*?\n\t\}/u,
+      [
+        "\n\tif ( restBlocks.length === 0 ) {",
+        "\t\tconsole.log(",
+        "\t\t\toptions.check",
+        "\t\t\t\t? 'ℹ️ No REST-enabled workspace blocks are registered yet. `sync-rest --check` is already clean.'",
+        "\t\t\t\t: 'ℹ️ No REST-enabled workspace blocks are registered yet.'",
+        "\t\t);",
+        "\t\treturn;",
+        "\t}",
+      ].join("\n")
+    )
+    .replace(/\n\tfor \( const contract of standaloneContracts \) \{[\s\S]*?\n\t\}\n/u, "\n")
+    .replace(
+      /\n\tfor \( const resource of restResources \) \{[\s\S]*?\n\t\}\n\n\tconsole\.log\(/u,
+      "\n\tconsole.log("
+    );
+  fs.writeFileSync(syncRestScriptPath, legacySyncRestSource, "utf8");
+
+  runCli(
+    "node",
+    [
+      entryPath,
+      "add",
+      "contract",
+      "external-response",
+      "--type",
+      "ExternalResponse",
+    ],
+    { cwd: targetDir }
+  );
+
+  const repairedSyncRestSource = fs.readFileSync(syncRestScriptPath, "utf8");
+  expect(repairedSyncRestSource).toContain("CONTRACTS");
+  expect(repairedSyncRestSource).toContain("function isWorkspaceStandaloneContract(");
+  expect(repairedSyncRestSource).toContain(
+    "const standaloneContracts = CONTRACTS.filter( isWorkspaceStandaloneContract );"
+  );
+  expect(repairedSyncRestSource).toContain("for ( const contract of standaloneContracts )");
 
   runCli("npm", ["run", "sync-rest", "--", "--check"], { cwd: targetDir });
 }, 20_000);

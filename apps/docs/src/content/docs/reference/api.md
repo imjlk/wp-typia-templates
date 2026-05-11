@@ -700,6 +700,19 @@ The built-in `persistence` template adds another predictable layer:
 
 For persistence-capable scaffolds, the endpoint manifest authored in TypeScript is the canonical description of the REST surface and the primary input to `syncRestOpenApi()`. `src/api-client.ts` is the generated portable endpoint-definition artifact, `src/transport.ts` is the first-class runtime seam for editor/frontend transport wiring, `src/api.ts` is the typed call helper layer that composes those two pieces, and `src/data.ts` is the additive React/data wrapper layer built on `@wp-typia/rest/react`. `src/api.openapi.json` is the canonical endpoint-aware REST document, `src/api-schemas/*.schema.json` files remain the runtime contract artifacts, and `src/api-schemas/*.openapi.json` files remain available as per-contract compatibility fragments. Persistence scaffolds now split durable reads from session-only bootstrap state: `/state` remains the durable persisted-state surface, while `/bootstrap` returns fresh write-access data such as REST nonces or public signed-token metadata. `sync-rest` is intentionally no longer auto-healing: it fails fast when the type-derived metadata layer is stale, and the supported recovery path is `sync` or `sync-types` first.
 
+Standalone contracts use the same schema-generation path without endpoint
+metadata. `wp-typia add contract external-retrieve-response --type
+ExternalRetrieveResponse` creates `src/contracts/external-retrieve-response.ts`,
+registers the type in `CONTRACTS`, and keeps
+`src/contracts/external-retrieve-response.schema.json` fresh through
+`sync-rest` and `sync --check`. Use standalone contracts for external routes,
+smoke/integration fixtures, or PHP-side assertions when wp-typia should own the
+wire schema but should not generate a WordPress REST route. Generated
+`rest-resource` scaffolds add route metadata, clients, OpenAPI, and PHP glue on
+top of the same TypeScript-to-schema foundation; manual REST contract workflows
+can reference the same stable schema files when route ownership stays outside
+the scaffold.
+
 ```ts
 await syncRestOpenApi({
   manifest: REST_ENDPOINT_MANIFEST,

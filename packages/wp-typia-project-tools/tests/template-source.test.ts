@@ -1988,6 +1988,7 @@ test("official workspace template scaffolds through the local npm template resol
   expect(blockConfigSource).toContain(
     "// wp-typia add binding-source entries"
   );
+  expect(blockConfigSource).toContain("// wp-typia add contract entries");
   expect(packageJson.scripts.sync).toBe("tsx scripts/sync-project.ts");
   expect(packageJson.scripts.build).toBe(
     "npm run sync -- --check && node scripts/build-workspace.mjs build"

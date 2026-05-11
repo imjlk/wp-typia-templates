@@ -16,6 +16,7 @@ export type AddFieldName =
   | 'kind'
   | 'name'
   | 'source'
+  | 'type'
   | 'template'
   | 'block'
   | 'from'
@@ -84,6 +85,9 @@ export type AddAbilityResult = Awaited<
 export type AddBindingSourceResult = Awaited<
   ReturnType<AddRuntime['runAddBindingSourceCommand']>
 >;
+export type AddContractResult = Awaited<
+  ReturnType<AddRuntime['runAddContractCommand']>
+>;
 export type AddBlockResult = Awaited<ReturnType<AddRuntime['runAddBlockCommand']>>;
 export type AddEditorPluginResult = Awaited<
   ReturnType<AddRuntime['runAddEditorPluginCommand']>
@@ -119,6 +123,7 @@ export type AddKindExecutionResultById = {
   'ai-feature': AddAiFeatureResult;
   'binding-source': AddBindingSourceResult;
   block: AddBlockResult;
+  contract: AddContractResult;
   'editor-plugin': AddEditorPluginResult;
   'hooked-block': AddHookedBlockResult;
   'integration-env': AddIntegrationEnvResult;
@@ -152,6 +157,11 @@ export const NAME_SOURCE_VISIBLE_FIELDS = [
   'kind',
   'name',
   'source',
+] as const satisfies ReadonlyArray<AddFieldName>;
+export const NAME_TYPE_VISIBLE_FIELDS = [
+  'kind',
+  'name',
+  'type',
 ] as const satisfies ReadonlyArray<AddFieldName>;
 export const NAME_BLOCK_ATTRIBUTE_VISIBLE_FIELDS = [
   'kind',

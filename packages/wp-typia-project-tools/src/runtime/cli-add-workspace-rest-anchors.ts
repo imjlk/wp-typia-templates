@@ -93,6 +93,366 @@ function replaceRequiredSyncRestSource(
 	return nextSource.replace(anchor, replacement);
 }
 
+function getSyncRestPatchErrorMessage(
+	functionName: string,
+	syncRestScriptPath: string,
+	anchorDescription: string,
+	subject: string,
+): string {
+	return [
+		`${functionName} could not patch ${path.basename(syncRestScriptPath)}.`,
+		`Missing expected ${anchorDescription} anchor in scripts/sync-rest-contracts.ts.`,
+		`Restore the generated template or add the ${subject} wiring manually before retrying.`,
+	].join(" ");
+}
+
+function replaceBlockConfigImportForContracts(
+	nextSource: string,
+	syncRestScriptPath: string,
+): string {
+	const importPatterns = [
+		/^import\s*\{\n(?:\t[^\n]*\n)+\} from ["']\.\/block-config["'];?$/mu,
+		/^import\s*\{[^\n]*\}\s*from\s*["']\.\/block-config["'];?$/mu,
+	];
+	const importMatch =
+		importPatterns.map((pattern) => pattern.exec(nextSource)).find(Boolean) ??
+		null;
+
+	if (!importMatch) {
+		throw new Error(
+			getSyncRestPatchErrorMessage(
+				"ensureContractSyncScriptAnchors",
+				syncRestScriptPath,
+				"block-config import",
+				"CONTRACTS",
+			),
+		);
+	}
+
+	const importSource = importMatch[0];
+	if (
+		importSource.includes("CONTRACTS") &&
+		importSource.includes("WorkspaceContractConfig")
+	) {
+		return nextSource;
+	}
+	if (
+		!importSource.includes("BLOCKS") ||
+		!importSource.includes("WorkspaceBlockConfig")
+	) {
+		throw new Error(
+			getSyncRestPatchErrorMessage(
+				"ensureContractSyncScriptAnchors",
+				syncRestScriptPath,
+				"BLOCKS import",
+				"CONTRACTS",
+			),
+		);
+	}
+
+	const hasRestResources = importSource.includes("REST_RESOURCES");
+	const hasRestResourceConfig = importSource.includes("WorkspaceRestResourceConfig");
+	const replacement = [
+		"import {",
+		"\tBLOCKS,",
+		"\tCONTRACTS,",
+		...(hasRestResources ? ["\tREST_RESOURCES,"] : []),
+		"\ttype WorkspaceBlockConfig,",
+		"\ttype WorkspaceContractConfig,",
+		...(hasRestResourceConfig ? ["\ttype WorkspaceRestResourceConfig,"] : []),
+		"} from './block-config';",
+	].join("\n");
+
+	return nextSource.replace(importSource, replacement);
+}
+
+function replaceRequiredContractSyncRestSource(
+	nextSource: string,
+	target: string,
+	anchor: string | RegExp,
+	replacement: string,
+	anchorDescription: string,
+	syncRestScriptPath: string,
+): string {
+	if (nextSource.includes(target)) {
+		return nextSource;
+	}
+
+	const hasAnchor =
+		typeof anchor === "string" ? nextSource.includes(anchor) : anchor.test(nextSource);
+	if (!hasAnchor) {
+		throw new Error(
+			getSyncRestPatchErrorMessage(
+				"ensureContractSyncScriptAnchors",
+				syncRestScriptPath,
+				anchorDescription,
+				"CONTRACTS",
+			),
+		);
+	}
+
+	return nextSource.replace(anchor, replacement);
+}
+
+function buildContractNoResourcesGuard(hasRestResources: boolean): string {
+	const condition = hasRestResources
+		? [
+				"restBlocks.length === 0 &&",
+				"standaloneContracts.length === 0 &&",
+				"restResources.length === 0",
+			]
+		: [
+				"restBlocks.length === 0 &&",
+				"standaloneContracts.length === 0",
+			];
+
+	return [
+		"if (",
+		...condition.map((line) => `\t\t${line}`),
+		"\t) {",
+		"\t\tconsole.log(",
+		"\t\t\toptions.check",
+		hasRestResources
+			? "\t\t\t\t? 'ℹ️ No REST-enabled workspace blocks, standalone contracts, or plugin-level REST resources are registered yet. `sync-rest --check` is already clean.'"
+			: "\t\t\t\t? 'ℹ️ No REST-enabled workspace blocks or standalone contracts are registered yet. `sync-rest --check` is already clean.'",
+		hasRestResources
+			? "\t\t\t\t: 'ℹ️ No REST-enabled workspace blocks, standalone contracts, or plugin-level REST resources are registered yet.'"
+			: "\t\t\t\t: 'ℹ️ No REST-enabled workspace blocks or standalone contracts are registered yet.'",
+		"\t\t);",
+		"\t\treturn;",
+		"\t}",
+	].join("\n");
+}
+
+const NO_RESOURCES_GUARD_PATTERN =
+	/if \(\s*restBlocks\.length === 0(?:\s*&&\s*standaloneContracts\.length === 0)?(?:\s*&&\s*restResources\.length === 0)?\s*\) \{[\s\S]*?\n\t\treturn;\n\t\}/u;
+
+function replaceNoResourcesGuard(
+	nextSource: string,
+	replacement: string,
+	functionName: string,
+	syncRestScriptPath: string,
+	subject: string,
+): string {
+	if (!NO_RESOURCES_GUARD_PATTERN.test(nextSource)) {
+		throw new Error(
+			getSyncRestPatchErrorMessage(
+				functionName,
+				syncRestScriptPath,
+				"no-resources guard",
+				subject,
+			),
+		);
+	}
+
+	return nextSource.replace(NO_RESOURCES_GUARD_PATTERN, replacement);
+}
+
+function insertStandaloneContractFilter(nextSource: string, syncRestScriptPath: string): string {
+	if (nextSource.includes("const standaloneContracts = CONTRACTS.filter")) {
+		return nextSource;
+	}
+
+	const restResourcesFilter =
+		"const restResources = REST_RESOURCES.filter( isWorkspaceRestResource );";
+	if (nextSource.includes(restResourcesFilter)) {
+		return nextSource.replace(
+			restResourcesFilter,
+			[
+				"const standaloneContracts = CONTRACTS.filter( isWorkspaceStandaloneContract );",
+				restResourcesFilter,
+			].join("\n\t"),
+		);
+	}
+
+	const restBlocksFilter = "const restBlocks = BLOCKS.filter( isRestEnabledBlock );";
+	return replaceRequiredContractSyncRestSource(
+		nextSource,
+		"const standaloneContracts = CONTRACTS.filter",
+		restBlocksFilter,
+		[
+			restBlocksFilter,
+			"const standaloneContracts = CONTRACTS.filter( isWorkspaceStandaloneContract );",
+		].join("\n\t"),
+		"restBlocks filter",
+		syncRestScriptPath,
+	);
+}
+
+function insertStandaloneContractNoResourcesGuard(
+	nextSource: string,
+	syncRestScriptPath: string,
+): string {
+	const hasRestResources = nextSource.includes(
+		"const restResources = REST_RESOURCES.filter( isWorkspaceRestResource );",
+	);
+
+	return replaceNoResourcesGuard(
+		nextSource,
+		buildContractNoResourcesGuard(hasRestResources),
+		"ensureContractSyncScriptAnchors",
+		syncRestScriptPath,
+		"CONTRACTS",
+	);
+}
+
+function buildRestResourceNoResourcesGuard(hasStandaloneContracts: boolean): string {
+	const condition = hasStandaloneContracts
+		? [
+				"restBlocks.length === 0 &&",
+				"standaloneContracts.length === 0 &&",
+				"restResources.length === 0",
+			]
+		: [
+				"restBlocks.length === 0 &&",
+				"restResources.length === 0",
+			];
+
+	return [
+		"if (",
+		...condition.map((line) => `\t\t${line}`),
+		"\t) {",
+		"\t\tconsole.log(",
+		"\t\t\toptions.check",
+		hasStandaloneContracts
+			? "\t\t\t\t? 'ℹ️ No REST-enabled workspace blocks, standalone contracts, or plugin-level REST resources are registered yet. `sync-rest --check` is already clean.'"
+			: "\t\t\t\t? 'ℹ️ No REST-enabled workspace blocks or plugin-level REST resources are registered yet. `sync-rest --check` is already clean.'",
+		hasStandaloneContracts
+			? "\t\t\t\t: 'ℹ️ No REST-enabled workspace blocks, standalone contracts, or plugin-level REST resources are registered yet.'"
+			: "\t\t\t\t: 'ℹ️ No REST-enabled workspace blocks or plugin-level REST resources are registered yet.'",
+		"\t\t);",
+		"\t\treturn;",
+		"\t}",
+	].join("\n");
+}
+
+function insertRestResourceNoResourcesGuard(
+	nextSource: string,
+	syncRestScriptPath: string,
+): string {
+	const hasStandaloneContracts = nextSource.includes(
+		"const standaloneContracts = CONTRACTS.filter( isWorkspaceStandaloneContract );",
+	);
+
+	return replaceNoResourcesGuard(
+		nextSource,
+		buildRestResourceNoResourcesGuard(hasStandaloneContracts),
+		"ensureRestResourceSyncScriptAnchors",
+		syncRestScriptPath,
+		"REST_RESOURCES",
+	);
+}
+
+function insertStandaloneContractSyncLoop(
+	nextSource: string,
+	syncRestScriptPath: string,
+): string {
+	if (nextSource.includes("for ( const contract of standaloneContracts )")) {
+		return nextSource;
+	}
+
+	const loopSource = [
+		"\tfor ( const contract of standaloneContracts ) {",
+		"\t\tawait syncTypeSchemas(",
+		"\t\t\t{",
+		"\t\t\t\tjsonSchemaFile: contract.schemaFile,",
+		"\t\t\t\tsourceTypeName: contract.sourceTypeName,",
+		"\t\t\t\ttypesFile: contract.typesFile,",
+		"\t\t\t},",
+		"\t\t\t{",
+		"\t\t\t\tcheck: options.check,",
+		"\t\t\t}",
+		"\t\t);",
+		"\t}",
+	].join("\n");
+	const resourceLoopAnchor = "\n\tfor ( const resource of restResources ) {";
+	if (nextSource.includes(resourceLoopAnchor)) {
+		return nextSource.replace(
+			resourceLoopAnchor,
+			`\n${loopSource}\n${resourceLoopAnchor}`,
+		);
+	}
+
+	const consoleLogPattern = /\n\tconsole\.log\(\n\t\toptions\.check/u;
+	return replaceRequiredContractSyncRestSource(
+		nextSource,
+		"for ( const contract of standaloneContracts )",
+		consoleLogPattern,
+		[
+			"",
+			loopSource,
+			"",
+			"\tconsole.log(",
+			"\t\toptions.check",
+		].join("\n"),
+		"success log insertion point",
+		syncRestScriptPath,
+	);
+}
+
+export async function ensureContractSyncScriptAnchors(
+	workspace: WorkspaceProject,
+): Promise<void> {
+	const syncRestScriptPath = path.join(workspace.projectDir, "scripts", "sync-rest-contracts.ts");
+
+	await patchFile(syncRestScriptPath, (source) => {
+		let nextSource = replaceBlockConfigImportForContracts(
+			source,
+			syncRestScriptPath,
+		);
+		const helperInsertionAnchor = "async function assertTypeArtifactsCurrent";
+
+		nextSource = replaceRequiredContractSyncRestSource(
+			nextSource,
+			"function isWorkspaceStandaloneContract(",
+			helperInsertionAnchor,
+			[
+				"function isWorkspaceStandaloneContract(",
+				"\tcontract: WorkspaceContractConfig",
+				"): contract is WorkspaceContractConfig & {",
+				"\tschemaFile: string;",
+				"\tsourceTypeName: string;",
+				"\ttypesFile: string;",
+				"} {",
+				"\treturn (",
+				"\t\ttypeof contract.schemaFile === 'string' &&",
+				"\t\ttypeof contract.sourceTypeName === 'string' &&",
+				"\t\ttypeof contract.typesFile === 'string'",
+				"\t);",
+				"}",
+				"",
+				"async function assertTypeArtifactsCurrent",
+			].join("\n"),
+			"type artifact assertion helper",
+			syncRestScriptPath,
+		);
+		nextSource = insertStandaloneContractFilter(nextSource, syncRestScriptPath);
+		nextSource = insertStandaloneContractNoResourcesGuard(
+			nextSource,
+			syncRestScriptPath,
+		);
+		nextSource = insertStandaloneContractSyncLoop(nextSource, syncRestScriptPath);
+		nextSource = nextSource.replace(
+			"✅ REST contract schemas, portable API clients, and endpoint-aware OpenAPI documents are already up to date for workspace blocks and plugin-level resources!",
+			"✅ REST contract schemas, standalone schemas, portable API clients, and endpoint-aware OpenAPI documents are already up to date for workspace blocks, standalone contracts, and plugin-level resources!",
+		);
+		nextSource = nextSource.replace(
+			"✅ REST contract schemas, portable API clients, and endpoint-aware OpenAPI documents generated for workspace blocks and plugin-level resources!",
+			"✅ REST contract schemas, standalone schemas, portable API clients, and endpoint-aware OpenAPI documents generated for workspace blocks, standalone contracts, and plugin-level resources!",
+		);
+		nextSource = nextSource.replace(
+			"✅ REST contract schemas, portable API clients, and endpoint-aware OpenAPI documents are already up to date with the TypeScript types!",
+			"✅ REST contract schemas, standalone schemas, portable API clients, and endpoint-aware OpenAPI documents are already up to date with the TypeScript types!",
+		);
+		nextSource = nextSource.replace(
+			"✅ REST contract schemas, portable API clients, and endpoint-aware OpenAPI documents generated from TypeScript types!",
+			"✅ REST contract schemas, standalone schemas, portable API clients, and endpoint-aware OpenAPI documents generated from TypeScript types!",
+		);
+
+		return nextSource;
+	});
+}
+
 export async function ensureRestResourceSyncScriptAnchors(
 	workspace: WorkspaceProject,
 ): Promise<void> {
@@ -103,7 +463,6 @@ export async function ensureRestResourceSyncScriptAnchors(
 		const importAnchor = "import { BLOCKS, type WorkspaceBlockConfig } from './block-config';";
 		const helperInsertionAnchor = "async function assertTypeArtifactsCurrent";
 		const restBlocksAnchor = "const restBlocks = BLOCKS.filter( isRestEnabledBlock );";
-		const noResourcesPattern = /if \( restBlocks.length === 0 \) \{[\s\S]*?\n\t\treturn;\n\t\}/u;
 		const consoleLogPattern = /\n\tconsole\.log\(\n\t\toptions\.check/u;
 
 		nextSource = replaceRequiredSyncRestSource(
@@ -164,21 +523,8 @@ export async function ensureRestResourceSyncScriptAnchors(
 			syncRestScriptPath,
 		);
 
-		nextSource = replaceRequiredSyncRestSource(
+		nextSource = insertRestResourceNoResourcesGuard(
 			nextSource,
-			"restBlocks.length === 0 && restResources.length === 0",
-			noResourcesPattern,
-			[
-				"if ( restBlocks.length === 0 && restResources.length === 0 ) {",
-				"\t\tconsole.log(",
-				"\t\t\toptions.check",
-				"\t\t\t\t? 'ℹ️ No REST-enabled workspace blocks or plugin-level REST resources are registered yet. `sync-rest --check` is already clean.'",
-				"\t\t\t\t: 'ℹ️ No REST-enabled workspace blocks or plugin-level REST resources are registered yet.'",
-				"\t\t);",
-				"\t\treturn;",
-				"\t}",
-			].join("\n"),
-			"no-resources guard",
 			syncRestScriptPath,
 		);
 

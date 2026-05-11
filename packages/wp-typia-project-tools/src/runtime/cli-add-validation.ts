@@ -19,6 +19,7 @@ import {
 } from "./cli-add-types.js";
 
 const WORKSPACE_GENERATED_SLUG_PATTERN = /^[a-z][a-z0-9-]*$/;
+const TYPESCRIPT_IDENTIFIER_PATTERN = /^[A-Za-z_$][A-Za-z0-9_$]*$/u;
 /**
  * Namespace format accepted by plugin-level REST resources.
  */
@@ -44,6 +45,33 @@ export function assertValidGeneratedSlug(label: string, slug: string, usage: str
 	}
 
 	return slug;
+}
+
+/**
+ * Validate a source type name used by generated schema artifact workflows.
+ *
+ * @param label Human-readable field label used in error messages.
+ * @param value TypeScript identifier candidate from CLI input or defaults.
+ * @param usage CLI usage hint shown when the identifier is empty.
+ * @returns The trimmed, validated TypeScript identifier.
+ * @throws {Error} When the value is empty or not a TypeScript identifier.
+ */
+export function assertValidTypeScriptIdentifier(
+	label: string,
+	value: string,
+	usage: string,
+): string {
+	const trimmed = value.trim();
+	if (!trimmed) {
+		throw new Error(`${label} is required. Use \`${usage}\`.`);
+	}
+	if (!TYPESCRIPT_IDENTIFIER_PATTERN.test(trimmed)) {
+		throw new Error(
+			`${label} must be a valid TypeScript identifier, such as ExternalRetrieveResponse.`,
+		);
+	}
+
+	return trimmed;
 }
 
 /**

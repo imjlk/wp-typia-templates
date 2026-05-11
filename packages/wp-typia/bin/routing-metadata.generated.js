@@ -45,6 +45,7 @@ export const longValueOptions = Object.freeze([
   '--text-domain',
   '--to',
   '--to-migration-version',
+  '--type',
   '--variant',
 ]);
 export const reservedCommands = Object.freeze([

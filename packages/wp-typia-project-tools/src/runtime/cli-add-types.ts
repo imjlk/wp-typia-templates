@@ -176,6 +176,20 @@ export interface RunAddBindingSourceCommandOptions {
 }
 
 /**
+ * Options for `wp-typia add contract`.
+ *
+ * @property contractName Human-entered contract name normalized into a stable slug.
+ * @property cwd Working directory used to resolve the nearest official workspace.
+ * @property typeName Optional exported TypeScript type or interface name. Defaults
+ * to the PascalCase version of `contractName`.
+ */
+export interface RunAddContractCommandOptions {
+	contractName: string;
+	cwd?: string;
+	typeName?: string;
+}
+
+/**
  * Options for `wp-typia add rest-resource`.
  *
  * @property cwd Working directory used to resolve the nearest official workspace.

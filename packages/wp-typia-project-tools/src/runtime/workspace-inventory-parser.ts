@@ -15,6 +15,9 @@ import {
 	BINDING_SOURCES_CONST_SECTION,
 	BINDING_SOURCES_INTERFACE_SECTION,
 	BINDING_SOURCE_CONFIG_ENTRY_MARKER,
+	CONTRACTS_CONST_SECTION,
+	CONTRACTS_INTERFACE_SECTION,
+	CONTRACT_CONFIG_ENTRY_MARKER,
 	BLOCK_CONFIG_ENTRY_MARKER,
 	BLOCK_STYLES_CONST_SECTION,
 	BLOCK_STYLES_INTERFACE_SECTION,
@@ -43,6 +46,7 @@ import type {
 	WorkspaceBlockInventoryEntry,
 	WorkspaceBlockStyleInventoryEntry,
 	WorkspaceBlockTransformInventoryEntry,
+	WorkspaceContractInventoryEntry,
 	WorkspaceEditorPluginInventoryEntry,
 	WorkspaceInventory,
 	WorkspaceInventoryAppendOptionKey,
@@ -328,6 +332,33 @@ export const INVENTORY_SECTIONS: readonly InventorySectionDescriptor[] = [
 		value: {
 			name: "BINDING_SOURCES",
 			section: BINDING_SOURCES_CONST_SECTION,
+		},
+	},
+	{
+		append: {
+			marker: CONTRACT_CONFIG_ENTRY_MARKER,
+			optionKey: "contractEntries",
+		},
+		interface: {
+			name: "WorkspaceContractConfig",
+			section: CONTRACTS_INTERFACE_SECTION,
+		},
+		parse: {
+			entriesKey: "contracts",
+			entry: defineInventoryEntryParser<WorkspaceContractInventoryEntry>()({
+				entryName: "CONTRACTS",
+				fields: [
+					{ key: "schemaFile", required: true },
+					{ key: "slug", required: true },
+					{ key: "sourceTypeName", required: true },
+					{ key: "typesFile", required: true },
+				],
+			}),
+			hasSectionKey: "hasContractsSection",
+		},
+		value: {
+			name: "CONTRACTS",
+			section: CONTRACTS_CONST_SECTION,
 		},
 	},
 	{
@@ -763,6 +794,7 @@ export function parseWorkspaceInventorySource(
 			sourceFile,
 			BLOCK_INVENTORY_SECTION,
 		).entries,
+		contracts: [],
 		editorPlugins: [],
 		hasAbilitiesSection: false,
 		hasAdminViewsSection: false,
@@ -770,6 +802,7 @@ export function parseWorkspaceInventorySource(
 		hasBindingSourcesSection: false,
 		hasBlockStylesSection: false,
 		hasBlockTransformsSection: false,
+		hasContractsSection: false,
 		hasEditorPluginsSection: false,
 		hasPatternsSection: false,
 		hasRestResourcesSection: false,

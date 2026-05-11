@@ -498,6 +498,11 @@ export const BLOCKS: WorkspaceBlockConfig[] = [
       marker: "\t// wp-typia add binding-source entries",
     },
     {
+      constName: "CONTRACTS",
+      interfaceName: "WorkspaceContractConfig",
+      marker: "\t// wp-typia add contract entries",
+    },
+    {
       constName: "REST_RESOURCES",
       interfaceName: "WorkspaceRestResourceConfig",
       marker: "\t// wp-typia add rest-resource entries",
@@ -653,6 +658,9 @@ export const PATTERNS = [
 export const BINDING_SOURCES = [
   { attribute: "content", block: "counter-card", editorFile: "src/bindings/hero-data/editor.ts", serverFile: "src/bindings/hero-data/server.php", slug: "hero-data" },
 ];
+export const CONTRACTS = [
+  { schemaFile: "src/contracts/external-response.schema.json", slug: "external-response", sourceTypeName: "ExternalResponse", typesFile: "src/contracts/external-response.ts" },
+];
 export const REST_RESOURCES = [
   { apiFile: "src/rest/products/api.ts", clientFile: "src/rest/products/client.ts", dataFile: "src/rest/products/data.ts", methods: [ "list", "read" ], namespace: "demo-space/v1", openApiFile: "src/rest/products/openapi.json", phpFile: "inc/rest/products.php", slug: "products", typesFile: "src/rest/products/types.ts", validatorsFile: "src/rest/products/validators.ts" },
 ];
@@ -693,6 +701,11 @@ export const EDITOR_PLUGINS = [
     block: "counter-card",
     slug: "hero-data",
   });
+  expect(inventory.contracts[0]).toMatchObject({
+    schemaFile: "src/contracts/external-response.schema.json",
+    slug: "external-response",
+    sourceTypeName: "ExternalResponse",
+  });
   expect(inventory.restResources[0]).toMatchObject({
     methods: ["list", "read"],
     namespace: "demo-space/v1",
@@ -722,6 +735,7 @@ export const EDITOR_PLUGINS = [
     hasBindingSourcesSection: inventory.hasBindingSourcesSection,
     hasBlockStylesSection: inventory.hasBlockStylesSection,
     hasBlockTransformsSection: inventory.hasBlockTransformsSection,
+    hasContractsSection: inventory.hasContractsSection,
     hasEditorPluginsSection: inventory.hasEditorPluginsSection,
     hasPatternsSection: inventory.hasPatternsSection,
     hasRestResourcesSection: inventory.hasRestResourcesSection,
@@ -733,6 +747,7 @@ export const EDITOR_PLUGINS = [
     hasBindingSourcesSection: true,
     hasBlockStylesSection: true,
     hasBlockTransformsSection: true,
+    hasContractsSection: true,
     hasEditorPluginsSection: true,
     hasPatternsSection: true,
     hasRestResourcesSection: true,

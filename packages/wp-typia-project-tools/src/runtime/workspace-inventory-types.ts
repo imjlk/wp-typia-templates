@@ -40,6 +40,20 @@ export interface WorkspaceBindingSourceInventoryEntry {
 }
 
 /**
+ * Standalone TypeScript contract entry parsed from `scripts/block-config.ts`.
+ *
+ * These contracts generate JSON Schema artifacts without owning a WordPress REST
+ * route, so smoke tests and external integrations can reference stable schema
+ * names from the workspace inventory.
+ */
+export interface WorkspaceContractInventoryEntry {
+	schemaFile: string;
+	slug: string;
+	sourceTypeName: string;
+	typesFile: string;
+}
+
+/**
  * REST-resource entry parsed from `scripts/block-config.ts`.
  *
  * Each file path is stored relative to the workspace root so doctor checks and
@@ -135,6 +149,7 @@ export interface WorkspaceInventory {
 	blocks: WorkspaceBlockInventoryEntry[];
 	blockStyles: WorkspaceBlockStyleInventoryEntry[];
 	blockTransforms: WorkspaceBlockTransformInventoryEntry[];
+	contracts: WorkspaceContractInventoryEntry[];
 	abilities: WorkspaceAbilityInventoryEntry[];
 	aiFeatures: WorkspaceAiFeatureInventoryEntry[];
 	hasAbilitiesSection: boolean;
@@ -143,6 +158,7 @@ export interface WorkspaceInventory {
 	hasAiFeaturesSection: boolean;
 	hasBlockStylesSection: boolean;
 	hasBlockTransformsSection: boolean;
+	hasContractsSection: boolean;
 	hasEditorPluginsSection: boolean;
 	hasPatternsSection: boolean;
 	hasRestResourcesSection: boolean;
@@ -185,6 +201,7 @@ export type WorkspaceInventoryUpdateOptions = {
 	blockStyleEntries?: string[];
 	blockTransformEntries?: string[];
 	bindingSourceEntries?: string[];
+	contractEntries?: string[];
 	editorPluginEntries?: string[];
 	patternEntries?: string[];
 	restResourceEntries?: string[];

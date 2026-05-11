@@ -90,6 +90,11 @@ export const ADD_OPTION_METADATA = {
       'Optional built-in block family for the new block; interactive flows let you choose it when omitted and non-interactive runs default to basic.',
     type: 'string',
   },
+  type: {
+    description:
+      'Exported TypeScript type or interface name for standalone contract workflows.',
+    type: 'string',
+  },
   to: {
     description:
       'Target workspace block slug or full block name for transform workflows.',
