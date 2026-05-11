@@ -3,11 +3,13 @@ import { z } from 'zod';
 import {
   ADD_KIND_IDS,
   type AddFieldName,
+  getAddHiddenBooleanSubmitFieldNames,
   getAddHiddenStringSubmitFieldNames,
   getAddVisibleFieldNames as getRegisteredAddVisibleFieldNames,
   isAddPersistenceTemplate as isRegisteredAddPersistenceTemplate,
 } from '../add-kind-registry';
 import {
+  appendTruthyBooleanFields,
   appendNormalizedOptionalStringFields,
   sanitizeVisibleSubmitValues,
 } from './submit-value-sanitizers';
@@ -23,18 +25,25 @@ export const addFlowSchema = z.object({
   'alternate-render-targets': z.string().optional(),
   anchor: z.string().optional(),
   attribute: z.string().optional(),
+  auth: z.string().optional(),
   block: z.string().optional(),
+  'body-type': z.string().optional(),
   'data-storage': z.string().optional(),
   'external-layer-id': z.string().optional(),
   'external-layer-source': z.string().optional(),
   from: z.string().optional(),
   'inner-blocks-preset': z.string().optional(),
   kind: z.enum(ADD_KIND_IDS).default('block'),
+  manual: z.boolean().optional(),
+  method: z.string().optional(),
   methods: z.string().optional(),
   name: z.string().optional(),
   namespace: z.string().optional(),
+  path: z.string().optional(),
   'persistence-policy': z.string().optional(),
   position: z.string().optional(),
+  'query-type': z.string().optional(),
+  'response-type': z.string().optional(),
   slot: z.string().optional(),
   source: z.string().optional(),
   template: z.string().optional(),
@@ -105,7 +114,11 @@ export function sanitizeAddSubmitValues(
   );
 
   return appendNormalizedOptionalStringFields(
-    sanitized,
+    appendTruthyBooleanFields(
+      sanitized,
+      values,
+      getAddHiddenBooleanSubmitFieldNames(values.kind),
+    ),
     values,
     getAddHiddenStringSubmitFieldNames(values.kind),
   );

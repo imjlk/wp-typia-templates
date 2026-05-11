@@ -38,6 +38,15 @@ export const restResourceAddKindEntry =
       title: 'Added REST resource contract',
     },
     description: 'Add a generated or type-only REST resource contract',
+    hiddenBooleanSubmitFields: ['manual'],
+    hiddenStringSubmitFields: [
+      'auth',
+      'body-type',
+      'method',
+      'path',
+      'query-type',
+      'response-type',
+    ],
     nameLabel: 'REST resource name',
     async prepareExecution(context) {
       const name = requireAddKindName(

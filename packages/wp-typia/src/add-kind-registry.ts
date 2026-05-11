@@ -104,6 +104,16 @@ export function getAddHiddenStringSubmitFieldNames(kind?: string): string[] {
   return [...(hiddenStringSubmitFields ?? [])];
 }
 
+export function getAddHiddenBooleanSubmitFieldNames(kind?: string): string[] {
+  const resolvedKind = isAddKindId(kind) ? kind : 'block';
+  const entry = ADD_KIND_REGISTRY[resolvedKind];
+  const hiddenBooleanSubmitFields =
+    'hiddenBooleanSubmitFields' in entry
+      ? entry.hiddenBooleanSubmitFields
+      : undefined;
+  return [...(hiddenBooleanSubmitFields ?? [])];
+}
+
 export function getAddKindOptions() {
   return ADD_KIND_IDS.map((kind) => ({
     description: ADD_KIND_REGISTRY[kind].description,

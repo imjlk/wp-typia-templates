@@ -24,6 +24,20 @@ export function appendNormalizedOptionalStringFields(
   return sanitized;
 }
 
+export function appendTruthyBooleanFields(
+  sanitized: Record<string, unknown>,
+  values: Record<string, unknown>,
+  fieldNames: Iterable<string>,
+): Record<string, unknown> {
+  for (const fieldName of fieldNames) {
+    if (values[fieldName] === true) {
+      sanitized[fieldName] = true;
+    }
+  }
+
+  return sanitized;
+}
+
 export function sanitizeVisibleSubmitValues(
   values: Record<string, unknown>,
   fieldNames: Iterable<string>,

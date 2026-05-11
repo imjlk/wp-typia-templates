@@ -63,6 +63,7 @@ export type AddKindRegistryEntry<
     title: string;
   };
   description: string;
+  hiddenBooleanSubmitFields?: readonly string[];
   hiddenStringSubmitFields?: readonly string[];
   nameLabel: string;
   prepareExecution: (
