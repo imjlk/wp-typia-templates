@@ -276,6 +276,17 @@ the shared diagnostic block only when they fail.
 
 Compatibility note: `@wp-typia/project-tools` is the canonical programmatic package, `wp-typia` is the canonical CLI package, and `@wp-typia/block-runtime/*` is the maintained generated-project runtime helper surface.
 
+Deprecated synchronous helper policy: the `@wp-typia/project-tools` root still
+exports compatibility helpers such as `readWorkspaceInventory()` and
+`getWorkspaceBlockSelectOptions()`, while lower-level template-source modules
+still expose `getExternalTemplateEntry()`, `getDefaultCategory()`, and
+`getTemplateProjectType()`. Prefer the async replacements
+`readWorkspaceInventoryAsync()`, `getWorkspaceBlockSelectOptionsAsync()`,
+`findExternalTemplateEntry()`, `getDefaultCategoryAsync()`, and
+`getTemplateProjectTypeAsync()` for new async command paths. These synchronous
+helpers follow the same policy: Removal target: not currently scheduled. If
+removal is scheduled, the release notes will name the target version first.
+
 For the current generator architecture boundary, including the staged
 `BlockSpec` / `BlockGeneratorService` contract, the current phase status, and
 the split between emitter-owned built-in artifacts and Mustache-owned shared
