@@ -935,6 +935,13 @@ process.exit(0);
     expect(migrateCommandSource).toContain(
       'buildCommandOptions(MIGRATE_OPTION_METADATA)',
     );
+    expect(migrateCommandSource).toContain('resolveMigratePrintLine');
+    expect(migrateCommandSource).toMatch(
+      /executeMigrateCommand\(\{[\s\S]*printLine,/,
+    );
+    expect(nodeCliSource).toMatch(
+      /migrate:\s*async\s*\(\{[\s\S]*printLine,[\s\S]*executeMigrateCommand\(\{[\s\S]*printLine,/,
+    );
     expect(templatesCommandSource).toContain(
       'buildCommandOptions(TEMPLATES_OPTION_METADATA)',
     );

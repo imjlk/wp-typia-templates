@@ -345,6 +345,29 @@ describe('alternate-buffer completion output helpers', () => {
     expect(lines[0]).toContain('wp-typia migrate init');
   });
 
+  test('migrate help output uses the injected printLine without console fallback', async () => {
+    const originalLog = console.log;
+    const lines: string[] = [];
+    console.log = () => {
+      throw new Error('migrate help should use the injected printLine');
+    };
+
+    try {
+      await executeMigrateCommand({
+        cwd: tempRoot,
+        flags: {},
+        printLine: (line) => {
+          lines.push(line);
+        },
+      });
+    } finally {
+      console.log = originalLog;
+    }
+
+    expect(lines).toHaveLength(1);
+    expect(lines[0]).toContain('wp-typia migrate init');
+  });
+
   test('create progress formatter keeps fallback status lines readable', () => {
     expect(
       formatCreateProgressLine(

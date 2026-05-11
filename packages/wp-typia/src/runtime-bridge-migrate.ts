@@ -2,6 +2,7 @@ import type { ReadlinePrompt } from '@wp-typia/project-tools/cli-prompt';
 import type { AlternateBufferCompletionPayload } from './ui/alternate-buffer-lifecycle';
 import { buildMigrationCompletionPayload } from './runtime-bridge-output';
 import { readOptionalLooseStringFlag } from './cli-string-flags';
+import type { PrintLine } from './print-line';
 import {
   pushFlag,
   shouldWrapCliCommandError,
@@ -12,30 +13,32 @@ export type MigrateExecutionInput = {
   command?: string;
   cwd: string;
   flags: Record<string, unknown>;
+  printLine?: PrintLine;
   prompt?: ReadlinePrompt;
-  renderLine?: (line: string) => void;
+  renderLine?: PrintLine;
 };
 
 const loadMigrationsRuntime = () =>
   import('@wp-typia/project-tools/migrations');
+const defaultPrintLine: PrintLine = (line) => {
+  process.stdout.write(`${line}\n`);
+};
 
 export async function executeMigrateCommand({
   command,
   cwd,
   flags,
+  printLine = defaultPrintLine,
   prompt,
   renderLine,
 }: MigrateExecutionInput): Promise<AlternateBufferCompletionPayload | void> {
   try {
     const { formatMigrationHelpText, parseMigrationArgs, runMigrationCommand } =
       await loadMigrationsRuntime();
+    const outputLine = renderLine ?? printLine;
     if (!command) {
       const helpText = formatMigrationHelpText();
-      if (renderLine) {
-        renderLine(helpText);
-      } else {
-        console.log(helpText);
-      }
+      outputLine(helpText);
       return;
     }
 
@@ -73,11 +76,7 @@ export async function executeMigrateCommand({
     const lines: string[] | null = renderLine ? [] : null;
     const captureLine = (line: string) => {
       lines?.push(line);
-      if (renderLine) {
-        renderLine(line);
-        return;
-      }
-      console.log(line);
+      outputLine(line);
     };
     const result = await runMigrationCommand(parsed, cwd, {
       prompt,
