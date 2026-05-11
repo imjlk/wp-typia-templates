@@ -150,13 +150,17 @@ function replaceBlockConfigImportForContracts(
 		);
 	}
 
+	const hasAiFeatures = importSource.includes("AI_FEATURES");
+	const hasAiFeatureConfig = importSource.includes("WorkspaceAiFeatureConfig");
 	const hasRestResources = importSource.includes("REST_RESOURCES");
 	const hasRestResourceConfig = importSource.includes("WorkspaceRestResourceConfig");
 	const replacement = [
 		"import {",
+		...(hasAiFeatures ? ["\tAI_FEATURES,"] : []),
 		"\tBLOCKS,",
 		"\tCONTRACTS,",
 		...(hasRestResources ? ["\tREST_RESOURCES,"] : []),
+		...(hasAiFeatureConfig ? ["\ttype WorkspaceAiFeatureConfig,"] : []),
 		"\ttype WorkspaceBlockConfig,",
 		"\ttype WorkspaceContractConfig,",
 		...(hasRestResourceConfig ? ["\ttype WorkspaceRestResourceConfig,"] : []),
@@ -194,17 +198,33 @@ function replaceRequiredContractSyncRestSource(
 	return nextSource.replace(anchor, replacement);
 }
 
-function buildContractNoResourcesGuard(hasRestResources: boolean): string {
-	const condition = hasRestResources
-		? [
-				"restBlocks.length === 0 &&",
-				"standaloneContracts.length === 0 &&",
-				"restResources.length === 0",
-			]
-		: [
-				"restBlocks.length === 0 &&",
-				"standaloneContracts.length === 0",
-			];
+function buildContractNoResourcesGuard({
+	hasAiFeatures,
+	hasRestResources,
+}: {
+	hasAiFeatures: boolean;
+	hasRestResources: boolean;
+}): string {
+	const condition = [
+		"restBlocks.length === 0 &&",
+		...(hasRestResources
+			? [
+					"standaloneContracts.length === 0 &&",
+					"restResources.length === 0",
+				]
+			: ["standaloneContracts.length === 0"]),
+	];
+	if (hasAiFeatures) {
+		condition[condition.length - 1] = `${condition[condition.length - 1]} &&`;
+		condition.push("aiFeatures.length === 0");
+	}
+	const noResourcesSubject = hasAiFeatures
+		? hasRestResources
+			? "REST-enabled workspace blocks, standalone contracts, plugin-level REST resources, or AI features"
+			: "REST-enabled workspace blocks, standalone contracts, or AI features"
+		: hasRestResources
+			? "REST-enabled workspace blocks, standalone contracts, or plugin-level REST resources"
+			: "REST-enabled workspace blocks or standalone contracts";
 
 	return [
 		"if (",
@@ -212,12 +232,8 @@ function buildContractNoResourcesGuard(hasRestResources: boolean): string {
 		"\t) {",
 		"\t\tconsole.log(",
 		"\t\t\toptions.check",
-		hasRestResources
-			? "\t\t\t\t? 'ℹ️ No REST-enabled workspace blocks, standalone contracts, or plugin-level REST resources are registered yet. `sync-rest --check` is already clean.'"
-			: "\t\t\t\t? 'ℹ️ No REST-enabled workspace blocks or standalone contracts are registered yet. `sync-rest --check` is already clean.'",
-		hasRestResources
-			? "\t\t\t\t: 'ℹ️ No REST-enabled workspace blocks, standalone contracts, or plugin-level REST resources are registered yet.'"
-			: "\t\t\t\t: 'ℹ️ No REST-enabled workspace blocks or standalone contracts are registered yet.'",
+		`\t\t\t\t? 'ℹ️ No ${noResourcesSubject} are registered yet. \`sync-rest --check\` is already clean.'`,
+		`\t\t\t\t: 'ℹ️ No ${noResourcesSubject} are registered yet.'`,
 		"\t\t);",
 		"\t\treturn;",
 		"\t}",
@@ -225,7 +241,7 @@ function buildContractNoResourcesGuard(hasRestResources: boolean): string {
 }
 
 const NO_RESOURCES_GUARD_PATTERN =
-	/if \(\s*restBlocks\.length === 0(?:\s*&&\s*standaloneContracts\.length === 0)?(?:\s*&&\s*restResources\.length === 0)?\s*\) \{[\s\S]*?\n\t\treturn;\n\t\}/u;
+	/if \(\s*restBlocks\.length === 0(?:\s*&&\s*standaloneContracts\.length === 0)?(?:\s*&&\s*restResources\.length === 0)?(?:\s*&&\s*aiFeatures\.length === 0)?\s*\) \{[\s\S]*?\n\t\treturn;\n\t\}/u;
 
 function replaceNoResourcesGuard(
 	nextSource: string,
@@ -286,27 +302,49 @@ function insertStandaloneContractNoResourcesGuard(
 	const hasRestResources = nextSource.includes(
 		"const restResources = REST_RESOURCES.filter( isWorkspaceRestResource );",
 	);
+	const hasAiFeatures = nextSource.includes(
+		"const aiFeatures = AI_FEATURES.filter( isWorkspaceAiFeature );",
+	);
 
 	return replaceNoResourcesGuard(
 		nextSource,
-		buildContractNoResourcesGuard(hasRestResources),
+		buildContractNoResourcesGuard({
+			hasAiFeatures,
+			hasRestResources,
+		}),
 		"ensureContractSyncScriptAnchors",
 		syncRestScriptPath,
 		"CONTRACTS",
 	);
 }
 
-function buildRestResourceNoResourcesGuard(hasStandaloneContracts: boolean): string {
-	const condition = hasStandaloneContracts
-		? [
-				"restBlocks.length === 0 &&",
-				"standaloneContracts.length === 0 &&",
-				"restResources.length === 0",
-			]
-		: [
-				"restBlocks.length === 0 &&",
-				"restResources.length === 0",
-			];
+function buildRestResourceNoResourcesGuard({
+	hasAiFeatures,
+	hasStandaloneContracts,
+}: {
+	hasAiFeatures: boolean;
+	hasStandaloneContracts: boolean;
+}): string {
+	const condition = [
+		"restBlocks.length === 0 &&",
+		...(hasStandaloneContracts
+			? [
+					"standaloneContracts.length === 0 &&",
+					"restResources.length === 0",
+				]
+			: ["restResources.length === 0"]),
+	];
+	if (hasAiFeatures) {
+		condition[condition.length - 1] = `${condition[condition.length - 1]} &&`;
+		condition.push("aiFeatures.length === 0");
+	}
+	const noResourcesSubject = hasAiFeatures
+		? hasStandaloneContracts
+			? "REST-enabled workspace blocks, standalone contracts, plugin-level REST resources, or AI features"
+			: "REST-enabled workspace blocks, plugin-level REST resources, or AI features"
+		: hasStandaloneContracts
+			? "REST-enabled workspace blocks, standalone contracts, or plugin-level REST resources"
+			: "REST-enabled workspace blocks or plugin-level REST resources";
 
 	return [
 		"if (",
@@ -314,12 +352,8 @@ function buildRestResourceNoResourcesGuard(hasStandaloneContracts: boolean): str
 		"\t) {",
 		"\t\tconsole.log(",
 		"\t\t\toptions.check",
-		hasStandaloneContracts
-			? "\t\t\t\t? 'ℹ️ No REST-enabled workspace blocks, standalone contracts, or plugin-level REST resources are registered yet. `sync-rest --check` is already clean.'"
-			: "\t\t\t\t? 'ℹ️ No REST-enabled workspace blocks or plugin-level REST resources are registered yet. `sync-rest --check` is already clean.'",
-		hasStandaloneContracts
-			? "\t\t\t\t: 'ℹ️ No REST-enabled workspace blocks, standalone contracts, or plugin-level REST resources are registered yet.'"
-			: "\t\t\t\t: 'ℹ️ No REST-enabled workspace blocks or plugin-level REST resources are registered yet.'",
+		`\t\t\t\t? 'ℹ️ No ${noResourcesSubject} are registered yet. \`sync-rest --check\` is already clean.'`,
+		`\t\t\t\t: 'ℹ️ No ${noResourcesSubject} are registered yet.'`,
 		"\t\t);",
 		"\t\treturn;",
 		"\t}",
@@ -333,10 +367,16 @@ function insertRestResourceNoResourcesGuard(
 	const hasStandaloneContracts = nextSource.includes(
 		"const standaloneContracts = CONTRACTS.filter( isWorkspaceStandaloneContract );",
 	);
+	const hasAiFeatures = nextSource.includes(
+		"const aiFeatures = AI_FEATURES.filter( isWorkspaceAiFeature );",
+	);
 
 	return replaceNoResourcesGuard(
 		nextSource,
-		buildRestResourceNoResourcesGuard(hasStandaloneContracts),
+		buildRestResourceNoResourcesGuard({
+			hasAiFeatures,
+			hasStandaloneContracts,
+		}),
 		"ensureRestResourceSyncScriptAnchors",
 		syncRestScriptPath,
 		"REST_RESOURCES",
