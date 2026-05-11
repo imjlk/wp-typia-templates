@@ -4,6 +4,8 @@ import path from 'node:path';
 
 import { afterEach, describe, expect, test } from 'bun:test';
 
+import { CLI_DIAGNOSTIC_CODES } from '@wp-typia/project-tools/cli-diagnostics';
+
 import packageJson from '../package.json';
 import {
   buildMissingAddKindDetailLines,
@@ -103,10 +105,11 @@ describe('Node fallback CLI core routing', () => {
   });
 
   test('prints general help and marks no-command invocations as errors', async () => {
-    const result = await captureNodeCli([]);
+    const result = await captureNodeCli([], { entrypoint: true });
 
     expect(result.error).toBeUndefined();
     expect(result.exitCode).toBe(1);
+    expect(result.stderr).toBe('');
     expect(result.stdout).toContain(
       'No command provided. Run wp-typia --help for usage information.',
     );
@@ -116,6 +119,45 @@ describe('Node fallback CLI core routing', () => {
     );
     expect(result.stdout).toContain('Runtime: Node fallback');
     expect(result.stdout).toContain('Commands:');
+
+    const directResult = await captureNodeCli([]);
+    const directError = directResult.error as {
+      code?: string;
+      command?: string;
+      detailLines?: string[];
+    };
+
+    expect(directError.code).toBe(CLI_DIAGNOSTIC_CODES.INVALID_COMMAND);
+    expect(directError.command).toBe('wp-typia');
+    expect(directError.detailLines).toContain(
+      'No command provided. Run wp-typia --help for usage information.',
+    );
+    expect(directResult.stdout).toContain('Commands:');
+  });
+
+  test('serializes no-command failures when JSON output is requested', async () => {
+    const result = await captureNodeCli(['--format', 'json'], {
+      entrypoint: true,
+    });
+    const payload = JSON.parse(result.stderr) as {
+      error?: {
+        code?: string;
+        command?: string;
+        detailLines?: string[];
+        summary?: string;
+      };
+      ok?: boolean;
+    };
+
+    expect(result.error).toBeUndefined();
+    expect(result.exitCode).toBe(1);
+    expect(result.stdout).toBe('');
+    expect(payload.ok).toBe(false);
+    expect(payload.error?.code).toBe(CLI_DIAGNOSTIC_CODES.INVALID_COMMAND);
+    expect(payload.error?.command).toBe('wp-typia');
+    expect(payload.error?.detailLines).toContain(
+      'No command provided. Run wp-typia --help for usage information.',
+    );
   });
 
   test('routes explicit help flags and help targets to the fallback help renderers', async () => {
