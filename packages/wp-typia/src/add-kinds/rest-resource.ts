@@ -1,4 +1,7 @@
-import { readOptionalStrictStringFlag } from '../cli-string-flags';
+import {
+  readOptionalDashedOrCamelStringFlag,
+  readOptionalStrictStringFlag,
+} from '../cli-string-flags';
 import {
   createNamedExecutionPlan,
   defineAddKindRegistryEntry,
@@ -9,17 +12,6 @@ import {
 
 const REST_RESOURCE_MISSING_NAME_MESSAGE =
   '`wp-typia add rest-resource` requires <name>. Usage: wp-typia add rest-resource <name> [--namespace <vendor/v1>] [--methods <list,read,create,update,delete>] or wp-typia add rest-resource <name> --manual [--method GET] [--path /external].';
-
-function readOptionalDashedOrCamelStringFlag(
-  flags: Record<string, unknown>,
-  dashedName: string,
-  camelName: string,
-): string | undefined {
-  return (
-    readOptionalStrictStringFlag(flags, dashedName) ??
-    readOptionalStrictStringFlag(flags, camelName)
-  );
-}
 
 export const restResourceAddKindEntry =
   defineAddKindRegistryEntry<AddRestResourceResult>({
