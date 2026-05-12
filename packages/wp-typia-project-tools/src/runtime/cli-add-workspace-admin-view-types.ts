@@ -38,6 +38,13 @@ export type AdminViewSource =
 
 export type AdminViewRestResource = WorkspaceRestResourceInventoryEntry;
 
+export type AdminViewManualSettingsRestResource = AdminViewRestResource & {
+  bodyTypeName: string;
+  mode: 'manual';
+  queryTypeName: string;
+  responseTypeName: string;
+};
+
 export function isAdminViewCoreDataSource(
   source: AdminViewSource | undefined,
 ): source is AdminViewCoreDataSource {
@@ -48,6 +55,17 @@ export function isAdminViewRestResourceSource(
   source: AdminViewSource | undefined,
 ): source is AdminViewRestResourceSource {
   return source?.kind === ADMIN_VIEW_REST_SOURCE_KIND;
+}
+
+export function isAdminViewManualSettingsRestResource(
+  restResource: AdminViewRestResource | undefined,
+): restResource is AdminViewManualSettingsRestResource {
+  return (
+    restResource?.mode === 'manual' &&
+    typeof restResource.bodyTypeName === 'string' &&
+    typeof restResource.queryTypeName === 'string' &&
+    typeof restResource.responseTypeName === 'string'
+  );
 }
 
 export function formatAdminViewSourceLocator(source: AdminViewSource): string {

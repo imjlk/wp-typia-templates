@@ -79,6 +79,8 @@ export interface WorkspaceRestResourceInventoryEntry {
 	queryTypeName?: string;
 	responseTypeName?: string;
 	routePattern?: string;
+	secretFieldName?: string;
+	secretStateFieldName?: string;
 	slug: string;
 	typesFile: string;
 	validatorsFile: string;

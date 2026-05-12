@@ -462,6 +462,8 @@ export const INVENTORY_SECTIONS: readonly InventorySectionDescriptor[] = [
 					{ key: "queryTypeName" },
 					{ key: "responseTypeName" },
 					{ key: "routePattern" },
+					{ key: "secretFieldName" },
+					{ key: "secretStateFieldName" },
 					{ key: "slug", required: true },
 					{ key: "typesFile", required: true },
 					{ key: "validatorsFile", required: true },

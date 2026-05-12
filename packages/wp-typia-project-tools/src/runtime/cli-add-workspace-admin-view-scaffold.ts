@@ -20,10 +20,15 @@ import {
   buildCoreDataAdminViewScreenSource,
   buildDefaultAdminViewDataSource,
   buildRestAdminViewDataSource,
+  buildRestSettingsAdminViewConfigSource,
+  buildRestSettingsAdminViewDataSource,
+  buildRestSettingsAdminViewScreenSource,
+  buildRestSettingsAdminViewTypesSource,
 } from './cli-add-workspace-admin-view-templates.js';
 import {
   ADMIN_VIEWS_PHP_GLOB,
   isAdminViewCoreDataSource,
+  isAdminViewManualSettingsRestResource,
   type AdminViewCoreDataSource,
   type AdminViewRestResource,
   type AdminViewSource,
@@ -58,6 +63,7 @@ function detectJsonIndent(source: string): string | number {
 async function ensureAdminViewPackageDependencies(
   workspace: WorkspaceProject,
   adminViewSource: AdminViewSource | undefined,
+  restResource: AdminViewRestResource | undefined,
 ): Promise<void> {
   const packageJsonPath = path.join(workspace.projectDir, 'package.json');
   const wpTypiaDataViewsVersion = resolveManagedPackageVersionRange({
@@ -83,6 +89,7 @@ async function ensureAdminViewPackageDependencies(
       dependencies?: Record<string, string>;
       devDependencies?: Record<string, string>;
     };
+    const needsDataViews = !isAdminViewManualSettingsRestResource(restResource);
     const coreDataDependencies: Record<string, string> =
       isAdminViewCoreDataSource(adminViewSource)
         ? {
@@ -96,16 +103,24 @@ async function ensureAdminViewPackageDependencies(
         : {};
     const nextDependencies = {
       ...(packageJson.dependencies ?? {}),
-      '@wordpress/dataviews':
-        packageJson.dependencies?.['@wordpress/dataviews'] ??
-        wordpressDataViewsVersion,
+      ...(needsDataViews
+        ? {
+            '@wordpress/dataviews':
+              packageJson.dependencies?.['@wordpress/dataviews'] ??
+              wordpressDataViewsVersion,
+          }
+        : {}),
       ...coreDataDependencies,
     };
     const nextDevDependencies = {
       ...(packageJson.devDependencies ?? {}),
-      '@wp-typia/dataviews':
-        packageJson.devDependencies?.['@wp-typia/dataviews'] ??
-        wpTypiaDataViewsVersion,
+      ...(needsDataViews
+        ? {
+            '@wp-typia/dataviews':
+              packageJson.devDependencies?.['@wp-typia/dataviews'] ??
+              wpTypiaDataViewsVersion,
+          }
+        : {}),
     };
     if (
       JSON.stringify(nextDependencies) ===
@@ -357,6 +372,8 @@ export async function scaffoldAdminViewWorkspace(options: {
     'admin-views',
     adminViewSlug,
   );
+  const manualSettingsRestResource =
+    isAdminViewManualSettingsRestResource(restResource) ? restResource : undefined;
   const adminViewPhpPath = path.join(
     workspace.projectDir,
     'inc',
@@ -376,28 +393,44 @@ export async function scaffoldAdminViewWorkspace(options: {
     run: async () => {
       await fsp.mkdir(adminViewDir, { recursive: true });
       await fsp.mkdir(path.dirname(adminViewPhpPath), { recursive: true });
-      await ensureAdminViewPackageDependencies(workspace, parsedSource);
+      await ensureAdminViewPackageDependencies(workspace, parsedSource, restResource);
       await ensureAdminViewBootstrapAnchors(workspace);
       await ensureAdminViewBuildScriptAnchors(workspace);
       await ensureAdminViewWebpackAnchors(workspace);
       await fsp.writeFile(
         path.join(adminViewDir, 'types.ts'),
-        buildAdminViewTypesSource(adminViewSlug, restResource, coreDataSource),
+        manualSettingsRestResource
+          ? buildRestSettingsAdminViewTypesSource(
+              adminViewSlug,
+              manualSettingsRestResource,
+            )
+          : buildAdminViewTypesSource(adminViewSlug, restResource, coreDataSource),
         'utf8',
       );
       await fsp.writeFile(
         path.join(adminViewDir, 'config.ts'),
-        buildAdminViewConfigSource(
-          adminViewSlug,
-          workspace.workspace.textDomain,
-          parsedSource,
-          restResource,
-        ),
+        manualSettingsRestResource
+          ? buildRestSettingsAdminViewConfigSource(
+              adminViewSlug,
+              workspace.workspace.textDomain,
+              manualSettingsRestResource,
+            )
+          : buildAdminViewConfigSource(
+              adminViewSlug,
+              workspace.workspace.textDomain,
+              parsedSource,
+              restResource,
+            ),
         'utf8',
       );
       await fsp.writeFile(
         path.join(adminViewDir, 'data.ts'),
-        coreDataSource
+        manualSettingsRestResource
+          ? buildRestSettingsAdminViewDataSource(
+              adminViewSlug,
+              manualSettingsRestResource,
+            )
+          : coreDataSource
           ? buildCoreDataAdminViewDataSource(adminViewSlug, coreDataSource)
           : restResource
             ? buildRestAdminViewDataSource(adminViewSlug, restResource)
@@ -406,7 +439,12 @@ export async function scaffoldAdminViewWorkspace(options: {
       );
       await fsp.writeFile(
         path.join(adminViewDir, 'Screen.tsx'),
-        coreDataSource
+        manualSettingsRestResource
+          ? buildRestSettingsAdminViewScreenSource(
+              adminViewSlug,
+              workspace.workspace.textDomain,
+            )
+          : coreDataSource
           ? buildCoreDataAdminViewScreenSource(
               adminViewSlug,
               workspace.workspace.textDomain,
@@ -419,7 +457,9 @@ export async function scaffoldAdminViewWorkspace(options: {
       );
       await fsp.writeFile(
         path.join(adminViewDir, 'index.tsx'),
-        buildAdminViewEntrySource(adminViewSlug),
+        buildAdminViewEntrySource(adminViewSlug, {
+          includeDataViewsStyle: !manualSettingsRestResource,
+        }),
         'utf8',
       );
       await fsp.writeFile(

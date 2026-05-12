@@ -62,6 +62,8 @@ export interface WorkspaceRestResourceBaseConfig {
 	restManifest?: ReturnType<
 		typeof import( '@wp-typia/block-runtime/metadata-core' ).defineEndpointManifest
 	>;
+	secretFieldName?: string;
+	secretStateFieldName?: string;
 	slug: string;
 	typesFile: string;
 	validatorsFile: string;

@@ -7,6 +7,7 @@ import {
   ADMIN_VIEW_REST_SOURCE_KIND,
   ADMIN_VIEW_SOURCE_USAGE,
   isAdminViewCoreDataSource,
+  isAdminViewManualSettingsRestResource,
   isAdminViewRestResourceSource,
   type AdminViewCoreDataEntityKind,
   type AdminViewRestResource,
@@ -147,9 +148,17 @@ export function resolveRestResourceSource(
       }.`,
     );
   }
+  if (isAdminViewManualSettingsRestResource(restResource)) {
+    return restResource;
+  }
+  if (restResource.mode === 'manual') {
+    throw new Error(
+      `REST resource source "${source.slug}" must define a request body type before it can scaffold an admin settings form.`,
+    );
+  }
   if (!restResource.methods.includes('list')) {
     throw new Error(
-      `REST resource source "${source.slug}" must include the list method for DataViews pagination.`,
+      `REST resource source "${source.slug}" must include the list method for DataViews pagination or be a manual settings contract with a body type.`,
     );
   }
 

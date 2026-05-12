@@ -143,6 +143,8 @@ export interface WorkspaceRestResourceBaseConfig {
 \trestManifest?: ReturnType<
 \t\ttypeof import( '@wp-typia/block-runtime/metadata-core' ).defineEndpointManifest
 \t>;
+\tsecretFieldName?: string;
+\tsecretStateFieldName?: string;
 \tslug: string;
 \ttypesFile: string;
 \tvalidatorsFile: string;
