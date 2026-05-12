@@ -6,6 +6,7 @@ import {
   type AddKindId,
   type AddKindExecutionContext,
   type AddKindExecutionPlanFor,
+  getAddKindUsage,
   getAddVisibleFieldNames,
 } from '../src/add-kind-registry';
 
@@ -195,6 +196,13 @@ test('aggregates one registry entry for every canonical add kind', () => {
     expect(entry.description.length).toBeGreaterThan(0);
     expect(entry.usage).toContain(`wp-typia add ${kind}`);
   }
+});
+
+test('splits rest-resource usage by generated and manual modes', () => {
+  expect(getAddKindUsage('rest-resource').split('\n')).toEqual([
+    'Generated: wp-typia add rest-resource <name> [--namespace <vendor/v1>] [--methods <list,read,create,update,delete>] [--route-pattern <route-pattern>] [--permission-callback <callback>] [--controller-class <ClassName>] [--controller-extends <BaseClass>] [--dry-run]',
+    'Manual: wp-typia add rest-resource <name> --manual [--method <GET|POST|PUT|PATCH|DELETE>] [--auth <public|authenticated|public-write-protected>] [--path <route-pattern>] [--query-type <Type>] [--body-type <Type>] [--response-type <Type>] [--secret-field <field>] [--secret-state-field <field>] [--dry-run]',
+  ]);
 });
 
 test('keeps shared add-kind ids aligned with registry sort order', () => {
