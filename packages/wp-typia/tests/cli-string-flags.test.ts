@@ -65,6 +65,22 @@ test('dashed-or-camel string flags preserve rest-resource alias behavior', () =>
       '`--routePattern` requires a value.',
     );
   }
+
+  try {
+    readOptionalDashedOrCamelStringFlag(
+      { 'route-pattern': '   ', routePattern: '/ignored' },
+      'route-pattern',
+      'routePattern',
+    );
+    throw new Error('Expected dashed-or-camel flag reader to throw.');
+  } catch (error) {
+    expect((error as { code?: string }).code).toBe(
+      CLI_DIAGNOSTIC_CODES.MISSING_ARGUMENT,
+    );
+    expect((error as Error).message).toContain(
+      '`--route-pattern` requires a value.',
+    );
+  }
 });
 
 test('paired and required strict string flags keep current missing-argument diagnostics', () => {
