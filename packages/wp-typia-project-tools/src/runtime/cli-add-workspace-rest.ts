@@ -51,6 +51,14 @@ import {
 } from "./workspace-inventory.js";
 import { resolveWorkspaceProject } from "./workspace-project.js";
 
+const MANUAL_REST_REQUEST_BODY_FIELD_NAMES = new Set(["payload", "comment"]);
+const MANUAL_REST_RESPONSE_FIELD_NAMES = new Set([
+	"id",
+	"status",
+	"message",
+	"updatedAt",
+]);
+
 function buildRestResourceRouteRegistrations(
 	restResourceSlug: string,
 	methods: RestResourceMethodId[],
@@ -738,6 +746,26 @@ export async function runAddRestResourceCommand({
 					"wp-typia add rest-resource <name> --manual --method POST --secret-state-field <field>",
 				)
 			: undefined;
+		if (
+			resolvedSecretFieldName &&
+			MANUAL_REST_REQUEST_BODY_FIELD_NAMES.has(resolvedSecretFieldName)
+		) {
+			throw new Error(
+				`Manual REST contract secret field must not reuse scaffolded request body fields: ${Array.from(
+					MANUAL_REST_REQUEST_BODY_FIELD_NAMES,
+				).join(", ")}.`,
+			);
+		}
+		if (
+			resolvedSecretStateFieldName &&
+			MANUAL_REST_RESPONSE_FIELD_NAMES.has(resolvedSecretStateFieldName)
+		) {
+			throw new Error(
+				`Manual REST contract secret state field must not reuse scaffolded response fields: ${Array.from(
+					MANUAL_REST_RESPONSE_FIELD_NAMES,
+				).join(", ")}.`,
+			);
+		}
 		if (
 			resolvedSecretFieldName &&
 			resolvedSecretStateFieldName &&

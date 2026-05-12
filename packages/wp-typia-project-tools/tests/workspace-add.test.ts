@@ -3817,6 +3817,83 @@ test("manual REST contract workflow rejects duplicate type names before writing 
   ).toBe(false);
 }, 20_000);
 
+test("manual REST contract workflow rejects secret field name collisions before writing files", async () => {
+  const targetDir = path.join(
+    tempRoot,
+    "demo-workspace-add-manual-rest-contract-secret-collisions"
+  );
+
+  await scaffoldProject({
+    projectDir: targetDir,
+    templateId: workspaceTemplatePackageManifest.name,
+    packageManager: "npm",
+    noInstall: true,
+    answers: {
+      author: "Test Runner",
+      description: "Demo workspace manual rest secret collisions",
+      namespace: "demo-space",
+      phpPrefix: "demo_space",
+      slug: "demo-workspace-add-manual-rest-contract-secret-collisions",
+      textDomain: "demo-space",
+      title: "Demo Workspace Manual Rest Secret Collisions",
+    },
+  });
+
+  linkWorkspaceNodeModules(targetDir);
+
+  expect(
+    getCommandErrorMessage(() =>
+      runCli(
+        "node",
+        [
+          entryPath,
+          "add",
+          "rest-resource",
+          "external-record",
+          "--manual",
+          "--method",
+          "POST",
+          "--secret-field",
+          "payload",
+        ],
+        { cwd: targetDir }
+      )
+    )
+  ).toContain(
+    "Manual REST contract secret field must not reuse scaffolded request body fields"
+  );
+  expect(
+    fs.existsSync(path.join(targetDir, "src", "rest", "external-record"))
+  ).toBe(false);
+
+  expect(
+    getCommandErrorMessage(() =>
+      runCli(
+        "node",
+        [
+          entryPath,
+          "add",
+          "rest-resource",
+          "external-record",
+          "--manual",
+          "--method",
+          "POST",
+          "--secret-field",
+          "apiKey",
+          "--secret-state-field",
+          "status",
+        ],
+        { cwd: targetDir }
+      )
+    )
+  ).toContain(
+    "Manual REST contract secret state field must not reuse scaffolded response fields"
+  );
+  expect(
+    fs.existsSync(path.join(targetDir, "src", "rest", "external-record"))
+  ).toBe(false);
+}, 20_000);
+
 test("manual REST contract workflow rejects GET routes with body types before writing files", async () => {
   const targetDir = path.join(
     tempRoot,
