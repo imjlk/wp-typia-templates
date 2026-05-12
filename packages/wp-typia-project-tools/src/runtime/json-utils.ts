@@ -34,8 +34,13 @@ export function cloneJsonValue<T>(value: T): T {
 	return JSON.parse(JSON.stringify(value)) as T;
 }
 
+/**
+ * Optional metadata used to enrich JSON parse errors.
+ */
 export interface SafeJsonParseOptions {
+	/** Human-readable operation label included in parse failures. */
 	context?: string;
+	/** Source file path included in parse failures when available. */
 	filePath?: string;
 }
 
