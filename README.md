@@ -190,6 +190,8 @@ wp-typia add hooked-block counter-card --anchor core/post-content --position aft
   `wp-typia add admin-view <name> --source rest-resource:<manual-contract>`.
   Manual REST contracts with a request body scaffold a React form with loading,
   save, error, and secret-state messaging instead of a DataViews collection.
+  Keep that generated path for singleton settings routes without path
+  parameters; use custom UI for per-record routes such as `/(?P<id>...)`.
 - Need generated REST contracts to fit an existing controller or permission
   model? Add `--route-pattern`, `--permission-callback`, or `--controller-class`
   while keeping generated OpenAPI and client paths aligned.

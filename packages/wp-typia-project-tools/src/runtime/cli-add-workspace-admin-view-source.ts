@@ -14,6 +14,8 @@ import {
   type AdminViewSource,
 } from './cli-add-workspace-admin-view-types.js';
 
+const MANUAL_REST_ROUTE_PARAMETER_PATTERN = /\(\?P<[A-Za-z_][A-Za-z0-9_]*>/u;
+
 /**
  * Assert that admin-view package dependencies are available before file writes.
  *
@@ -149,6 +151,12 @@ export function resolveRestResourceSource(
     );
   }
   if (isAdminViewManualSettingsRestResource(restResource)) {
+    if (hasManualRestRouteParameters(restResource)) {
+      throw new Error(
+        `REST resource source "${source.slug}" uses route parameters and cannot scaffold a singleton admin settings form. Use a manual REST contract without path parameters or build a custom admin UI.`,
+      );
+    }
+
     return restResource;
   }
   if (restResource.mode === 'manual') {
@@ -163,6 +171,16 @@ export function resolveRestResourceSource(
   }
 
   return restResource;
+}
+
+function hasManualRestRouteParameters(
+  restResource: AdminViewRestResource,
+): boolean {
+  return [restResource.pathPattern, restResource.routePattern].some(
+    (pattern) =>
+      typeof pattern === 'string' &&
+      MANUAL_REST_ROUTE_PARAMETER_PATTERN.test(pattern),
+  );
 }
 
 export function resolveAdminViewCoreDataSource(

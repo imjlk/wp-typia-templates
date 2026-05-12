@@ -187,6 +187,8 @@ payload, including write-only secret fields declared with `--secret-field`.
 The generated screen keeps loading, save, error, and masked secret-state
 messaging in one replaceable component while calling the generated REST client
 helper from the contract.
+Because the generated form is a singleton settings surface, manual contracts
+with path parameters such as `/(?P<id>...)` should use custom UI instead.
 
 Current public scaffolds also support `core-data:<kind>/<name>` entity sources
 for a narrow first-wave boundary:

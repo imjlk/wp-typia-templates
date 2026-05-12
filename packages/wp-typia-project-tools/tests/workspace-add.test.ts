@@ -3908,6 +3908,73 @@ test("canonical CLI can add a typed admin settings screen from a manual REST con
   typecheckGeneratedProject(targetDir);
 }, 60_000);
 
+test("admin settings screens reject manual REST contracts with route parameters", async () => {
+  const targetDir = path.join(
+    tempRoot,
+    "demo-workspace-add-admin-settings-route-params"
+  );
+
+  await scaffoldProject({
+    projectDir: targetDir,
+    templateId: workspaceTemplatePackageManifest.name,
+    packageManager: "npm",
+    noInstall: true,
+    answers: {
+      author: "Test Runner",
+      description: "Demo workspace admin settings route params",
+      namespace: "demo-space",
+      phpPrefix: "demo_space",
+      slug: "demo-workspace-add-admin-settings-route-params",
+      textDomain: "demo-space",
+      title: "Demo Workspace Admin Settings Route Params",
+    },
+  });
+
+  linkWorkspaceNodeModules(targetDir);
+
+  runCli(
+    "node",
+    [
+      entryPath,
+      "add",
+      "rest-resource",
+      "integration-settings",
+      "--manual",
+      "--namespace",
+      "demo-space/v1",
+      "--method",
+      "POST",
+      "--path",
+      "/settings/(?P<id>[\\d]+)",
+    ],
+    { cwd: targetDir }
+  );
+
+  expect(
+    getCommandErrorMessage(() =>
+      runCli(
+        "node",
+        [
+          entryPath,
+          "add",
+          "admin-view",
+          "integration-settings",
+          "--source",
+          "rest-resource:integration-settings",
+        ],
+        { cwd: targetDir }
+      )
+    )
+  ).toContain(
+    'REST resource source "integration-settings" uses route parameters and cannot scaffold a singleton admin settings form'
+  );
+  expect(
+    fs.existsSync(
+      path.join(targetDir, "src", "admin-views", "integration-settings")
+    )
+  ).toBe(false);
+}, 30_000);
+
 test("manual REST contract workflow rejects duplicate type names before writing files", async () => {
   const targetDir = path.join(
     tempRoot,
