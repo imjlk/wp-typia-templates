@@ -833,7 +833,13 @@ export async function runAddRestResourceCommand({
 			);
 			await fsp.writeFile(
 				apiFilePath,
-				buildManualRestContractApiSource(),
+				buildManualRestContractApiSource({
+					...(resolvedBodyTypeName
+						? { bodyTypeName: resolvedBodyTypeName }
+						: {}),
+					queryTypeName: resolvedQueryTypeName,
+					restResourceSlug,
+				}),
 				"utf8",
 			);
 			await syncManualRestContractArtifacts({
@@ -866,11 +872,17 @@ export async function runAddRestResourceCommand({
 							: {}),
 						method: resolvedMethod,
 						namespace: resolvedNamespace,
-						pathPattern: resolvedPathPattern,
-						queryTypeName: resolvedQueryTypeName,
-						responseTypeName: resolvedResponseTypeName,
-						restResourceSlug,
-					}),
+					pathPattern: resolvedPathPattern,
+					queryTypeName: resolvedQueryTypeName,
+					responseTypeName: resolvedResponseTypeName,
+					restResourceSlug,
+					...(resolvedSecretFieldName
+						? { secretFieldName: resolvedSecretFieldName }
+						: {}),
+					...(resolvedSecretStateFieldName
+						? { secretStateFieldName: resolvedSecretStateFieldName }
+						: {}),
+				}),
 				],
 				transformSource: ensureBlockConfigCanAddRestManifests,
 			});

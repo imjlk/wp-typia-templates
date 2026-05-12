@@ -12,6 +12,10 @@ import {
 	resolveEditorPluginSlotAlias,
 } from "./cli-add-shared.js";
 import {
+	hasAdminViewManualSettingsRouteParameters,
+	isAdminViewManualSettingsRestResource,
+} from "./cli-add-workspace-admin-view-types.js";
+import {
 	checkExistingFiles,
 	createDoctorCheck,
 	resolveWorkspaceBootstrapPath,
@@ -660,14 +664,32 @@ function checkWorkspaceAdminViewConfig(
 	const restResource = restResourceSlug
 		? inventory.restResources.find((entry) => entry.slug === restResourceSlug)
 		: undefined;
-	const isValid = Boolean(restResource?.methods.includes("list")) || Boolean(coreDataSourceMatch);
+	const isListCapableRestResource = Boolean(restResource?.methods.includes("list"));
+	const isManualSettingsRestResource =
+		isAdminViewManualSettingsRestResource(restResource);
+	const hasManualSettingsRouteParameters =
+		isManualSettingsRestResource &&
+		hasAdminViewManualSettingsRouteParameters(restResource);
+	const isValid =
+		isListCapableRestResource ||
+		(isManualSettingsRestResource && !hasManualSettingsRouteParameters) ||
+		Boolean(coreDataSourceMatch);
+	const failDetail = hasManualSettingsRouteParameters
+		? `Admin view source ${source} uses route parameters or regex groups and cannot scaffold a singleton settings form`
+		: "Admin view source must use rest-resource:<slug> with a list-capable REST resource, a manual settings contract with a body type, or core-data:<postType|taxonomy>/<name>";
 
 	return createDoctorCheck(
 		`Admin view config ${adminView.slug}`,
 		isValid ? "pass" : "fail",
 		isValid
-			? `Admin view source ${source} is list-capable`
-			: "Admin view source must use rest-resource:<slug> with a list-capable REST resource or core-data:<postType|taxonomy>/<name>",
+			? `Admin view source ${source} is ${
+					isManualSettingsRestResource
+						? "settings-form capable"
+						: coreDataSourceMatch
+							? "core-data capable"
+							: "list-capable"
+				}`
+			: failDetail,
 	);
 }
 

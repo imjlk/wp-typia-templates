@@ -104,6 +104,8 @@ export function buildManualRestContractConfigEntry(options: {
 	queryTypeName: string;
 	responseTypeName: string;
 	restResourceSlug: string;
+	secretFieldName?: string;
+	secretStateFieldName?: string;
 }): string {
 	const pascalCase = toPascalCase(options.restResourceSlug);
 	const title = toTitleCase(options.restResourceSlug);
@@ -139,6 +141,12 @@ export function buildManualRestContractConfigEntry(options: {
 		indentMultiline(JSON.stringify(manifest, null, "\t"), "\t\t\t"),
 		"\t\t),",
 		`\t\tresponseTypeName: ${quoteTsString(options.responseTypeName)},`,
+		...(options.secretFieldName
+			? [`\t\tsecretFieldName: ${quoteTsString(options.secretFieldName)},`]
+			: []),
+		...(options.secretStateFieldName
+			? [`\t\tsecretStateFieldName: ${quoteTsString(options.secretStateFieldName)},`]
+			: []),
 		`\t\tslug: ${quoteTsString(options.restResourceSlug)},`,
 		`\t\ttypesFile: ${quoteTsString(`src/rest/${options.restResourceSlug}/api-types.ts`)},`,
 		`\t\tvalidatorsFile: ${quoteTsString(`src/rest/${options.restResourceSlug}/api-validators.ts`)},`,
@@ -269,10 +277,94 @@ ${validatorEntries.join("\n")}
 /**
  * Build the public API shim for a manual REST contract.
  *
+ * @param options Manual REST contract operation and request type metadata.
  * @returns TypeScript source that re-exports the generated endpoint client.
  */
-export function buildManualRestContractApiSource(): string {
-	return `export * from './api-client';
+export function buildManualRestContractApiSource(options: {
+	bodyTypeName?: string;
+	queryTypeName: string;
+	restResourceSlug: string;
+}): string {
+	const pascalCase = toPascalCase(options.restResourceSlug);
+	const operationId = `call${pascalCase}ManualRestContract`;
+	const requestTypeName = options.bodyTypeName
+		? `${pascalCase}ManualRestContractRequest`
+		: options.queryTypeName;
+	const requestTypeSource = options.bodyTypeName
+		? `export interface ${requestTypeName} {
+\tbody: ${options.bodyTypeName};
+\tquery: ${options.queryTypeName};
+}
+
+`
+		: "";
+	const typeImports = options.bodyTypeName
+		? [options.bodyTypeName, options.queryTypeName]
+		: [options.queryTypeName];
+
+	return `import {
+\tcallEndpoint,
+\tresolveRestRouteUrl,
+} from '@wp-typia/rest';
+
+import type {
+\t${typeImports.sort().join(",\n\t")},
+} from './api-types';
+import { ${operationId}Endpoint } from './api-client';
+
+export * from './api-client';
+
+${requestTypeSource}function resolveRestNonce(fallback?: string): string | undefined {
+\tif (typeof fallback === 'string' && fallback.length > 0) {
+\t\treturn fallback;
+\t}
+
+\tif (typeof window === 'undefined') {
+\t\treturn undefined;
+\t}
+
+\tconst wpApiSettings = (
+\t\twindow as typeof window & {
+\t\t\twpApiSettings?: { nonce?: string };
+\t\t}
+\t).wpApiSettings;
+
+\treturn typeof wpApiSettings?.nonce === 'string' &&
+\t\twpApiSettings.nonce.length > 0
+\t\t? wpApiSettings.nonce
+\t\t: undefined;
+}
+
+function resolveEndpointRouteOptions(request: ${requestTypeName}) {
+\tconst requestOptions = ${operationId}Endpoint.buildRequestOptions?.(request) ?? {};
+\tconst nonce = resolveRestNonce();
+\tconst requestHeaders = (
+\t\trequestOptions as { headers?: Record<string, string> }
+\t).headers;
+
+\treturn {
+\t\t...requestOptions,
+\t\theaders: nonce
+\t\t\t? {
+\t\t\t\t\t...(requestHeaders ?? {}),
+\t\t\t\t\t'X-WP-Nonce': nonce,
+\t\t\t\t}
+\t\t\t: requestHeaders,
+\t\tpath: undefined,
+\t\turl:
+\t\t\trequestOptions.url ??
+\t\t\tresolveRestRouteUrl(requestOptions.path ?? ${operationId}Endpoint.path),
+\t};
+}
+
+export const manualRestContractEndpoint = {
+\t...${operationId}Endpoint,
+\tbuildRequestOptions: resolveEndpointRouteOptions,
+};
+
+export function callManualRestContract(request: ${requestTypeName}) {
+\treturn callEndpoint(manualRestContractEndpoint, request);
+}
 `;
 }
 

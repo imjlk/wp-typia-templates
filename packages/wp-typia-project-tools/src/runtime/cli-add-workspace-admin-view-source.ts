@@ -6,7 +6,9 @@ import {
   ADMIN_VIEW_CORE_DATA_SOURCE_KIND,
   ADMIN_VIEW_REST_SOURCE_KIND,
   ADMIN_VIEW_SOURCE_USAGE,
+  hasAdminViewManualSettingsRouteParameters,
   isAdminViewCoreDataSource,
+  isAdminViewManualSettingsRestResource,
   isAdminViewRestResourceSource,
   type AdminViewCoreDataEntityKind,
   type AdminViewRestResource,
@@ -147,9 +149,23 @@ export function resolveRestResourceSource(
       }.`,
     );
   }
+  if (isAdminViewManualSettingsRestResource(restResource)) {
+    if (hasAdminViewManualSettingsRouteParameters(restResource)) {
+      throw new Error(
+        `REST resource source "${source.slug}" uses route parameters or regex groups and cannot scaffold a singleton admin settings form. Use a manual REST contract without path parameters or build a custom admin UI.`,
+      );
+    }
+
+    return restResource;
+  }
+  if (restResource.mode === 'manual') {
+    throw new Error(
+      `REST resource source "${source.slug}" must define a request body type before it can scaffold an admin settings form.`,
+    );
+  }
   if (!restResource.methods.includes('list')) {
     throw new Error(
-      `REST resource source "${source.slug}" must include the list method for DataViews pagination.`,
+      `REST resource source "${source.slug}" must include the list method for DataViews pagination or be a manual settings contract with a body type.`,
     );
   }
 

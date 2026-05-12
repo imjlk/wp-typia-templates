@@ -161,6 +161,7 @@ state, and pagination without changing default block scaffolds:
 ```sh
 wp-typia add admin-view products
 wp-typia add admin-view products --source rest-resource:products
+wp-typia add admin-view integration-settings --source rest-resource:integration-settings
 wp-typia add admin-view posts --source core-data:postType/post
 ```
 
@@ -179,6 +180,17 @@ to export individual endpoint helpers, or it can group them with
 `defineRestResource(...)` from `@wp-typia/rest` and let the admin view consume
 the same resource facade.
 
+When `--source rest-resource:<slug>` points at a manual REST settings contract
+with a request body, the scaffold generates a typed React form instead of a
+DataViews collection. Use that path for settings pages that submit one coherent
+payload, including write-only secret fields declared with `--secret-field`.
+The generated screen keeps loading, save, error, and masked secret-state
+messaging in one replaceable component while calling the generated REST client
+helper from the contract.
+Because the generated form is a singleton settings surface, manual contracts
+with path parameters or regex groups such as `/(?P<id>...)` should use custom
+UI instead.
+
 Current public scaffolds also support `core-data:<kind>/<name>` entity sources
 for a narrow first-wave boundary:
 
@@ -192,11 +204,15 @@ boundary on the WordPress entity store. The maintainer boundary in
 explains why this first implementation stays narrower than the REST-resource
 path.
 
-Prefer custom UI instead of DataViews when the interaction is primarily a
-guided flow, a canvas/editor experience, a dense dashboard with unrelated
-widgets, or a purpose-built form where table/list/grid view state is incidental.
-DataViews works best for browse, filter, search, sort, select, and paginate
-screens over one coherent collection.
+Choose the scaffold by the dominant interaction:
+
+- Use generated DataViews admin screens for browse, filter, search, sort,
+  select, and paginate screens over one coherent collection.
+- Use generated settings screens for one REST-backed settings payload, especially
+  when the contract owns secret/write-only fields.
+- Prefer custom UI when the interaction is a guided flow, canvas/editor
+  experience, dense dashboard with unrelated widgets, or a form whose layout
+  needs domain-specific behavior beyond the generated scaffold.
 
 ## Query Ownership
 

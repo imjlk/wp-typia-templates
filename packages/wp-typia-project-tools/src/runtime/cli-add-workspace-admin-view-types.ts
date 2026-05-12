@@ -17,6 +17,8 @@ export const ADMIN_VIEWS_ASSET = 'build/admin-views/index.asset.php';
 export const ADMIN_VIEWS_STYLE = 'build/admin-views/style-index.css';
 export const ADMIN_VIEWS_STYLE_RTL = 'build/admin-views/style-index-rtl.css';
 export const ADMIN_VIEWS_PHP_GLOB = '/inc/admin-views/*.php';
+const ADMIN_VIEW_MANUAL_REST_ROUTE_PARAMETER_PATTERN =
+  /(?:^|[^\\])\(/u;
 
 export interface AdminViewRestResourceSource {
   kind: typeof ADMIN_VIEW_REST_SOURCE_KIND;
@@ -38,6 +40,18 @@ export type AdminViewSource =
 
 export type AdminViewRestResource = WorkspaceRestResourceInventoryEntry;
 
+/**
+ * Manual REST resource metadata required to scaffold a typed admin settings
+ * screen. The type narrows a workspace REST inventory entry to manual
+ * contracts that expose request body, query, and response type names.
+ */
+export type AdminViewManualSettingsRestResource = AdminViewRestResource & {
+  bodyTypeName: string;
+  mode: 'manual';
+  queryTypeName: string;
+  responseTypeName: string;
+};
+
 export function isAdminViewCoreDataSource(
   source: AdminViewSource | undefined,
 ): source is AdminViewCoreDataSource {
@@ -48,6 +62,38 @@ export function isAdminViewRestResourceSource(
   source: AdminViewSource | undefined,
 ): source is AdminViewRestResourceSource {
   return source?.kind === ADMIN_VIEW_REST_SOURCE_KIND;
+}
+
+/**
+ * Return whether a REST inventory entry has the manual contract shape required
+ * by generated settings screens.
+ */
+export function isAdminViewManualSettingsRestResource(
+  restResource: AdminViewRestResource | undefined,
+): restResource is AdminViewManualSettingsRestResource {
+  return (
+    restResource?.mode === 'manual' &&
+    typeof restResource.bodyTypeName === 'string' &&
+    restResource.bodyTypeName.trim().length > 0 &&
+    typeof restResource.queryTypeName === 'string' &&
+    restResource.queryTypeName.trim().length > 0 &&
+    typeof restResource.responseTypeName === 'string' &&
+    restResource.responseTypeName.trim().length > 0
+  );
+}
+
+/**
+ * Return whether a REST inventory entry uses route regex groups that a
+ * generated singleton settings screen cannot satisfy with path input.
+ */
+export function hasAdminViewManualSettingsRouteParameters(
+  restResource: AdminViewRestResource | undefined,
+): boolean {
+  return [restResource?.pathPattern, restResource?.routePattern].some(
+    (pattern) =>
+      typeof pattern === 'string' &&
+      ADMIN_VIEW_MANUAL_REST_ROUTE_PARAMETER_PATTERN.test(pattern),
+  );
 }
 
 export function formatAdminViewSourceLocator(source: AdminViewSource): string {

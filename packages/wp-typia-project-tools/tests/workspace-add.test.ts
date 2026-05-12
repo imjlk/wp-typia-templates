@@ -1,7 +1,7 @@
 import { afterAll, describe, expect, test } from "bun:test";
 import * as fs from "node:fs";
 import * as path from "node:path";
-import { cleanupScaffoldTempRoot, createScaffoldTempRoot, entryPath, getCommandErrorMessage, linkWorkspaceNodeModules, parseJsonObjectFromOutput, runCli, runGeneratedScript, scaffoldOfficialWorkspace, templateLayerFixturePath, templateLayerWorkspaceAmbiguousFixturePath, templateLayerWorkspaceFixturePath, typecheckGeneratedProject, workspaceTemplatePackageManifest } from "./helpers/scaffold-test-harness.js";
+import { cleanupScaffoldTempRoot, createScaffoldTempRoot, entryPath, getCommandErrorMessage, linkWorkspaceNodeModules, parseJsonObjectFromOutput, runCapturedCli, runCli, runGeneratedScript, scaffoldOfficialWorkspace, templateLayerFixturePath, templateLayerWorkspaceAmbiguousFixturePath, templateLayerWorkspaceFixturePath, typecheckGeneratedProject, workspaceTemplatePackageManifest } from "./helpers/scaffold-test-harness.js";
 import { runAddBlockCommand } from "../src/runtime/cli-core.js";
 import { scaffoldProject } from "../src/runtime/index.js";
 
@@ -3768,6 +3768,328 @@ test("canonical CLI can add a type-only manual REST contract to an official work
   runCli("npm", ["run", "sync-rest"], { cwd: targetDir });
   typecheckGeneratedProject(targetDir);
 }, 60_000);
+
+test("canonical CLI can add a typed admin settings screen from a manual REST contract", async () => {
+  const targetDir = path.join(
+    tempRoot,
+    "demo-workspace-add-admin-settings-screen"
+  );
+
+  await scaffoldProject({
+    projectDir: targetDir,
+    templateId: workspaceTemplatePackageManifest.name,
+    packageManager: "npm",
+    noInstall: true,
+    answers: {
+      author: "Test Runner",
+      description: "Demo workspace add admin settings screen",
+      namespace: "demo-space",
+      phpPrefix: "demo_space",
+      slug: "demo-workspace-add-admin-settings-screen",
+      textDomain: "demo-space",
+      title: "Demo Workspace Add Admin Settings Screen",
+    },
+  });
+
+  linkWorkspaceNodeModules(targetDir);
+
+  runCli(
+    "node",
+    [
+      entryPath,
+      "add",
+      "rest-resource",
+      "integration-settings",
+      "--manual",
+      "--namespace",
+      "demo-space/v1",
+      "--method",
+      "POST",
+      "--path",
+      "/settings",
+      "--secret-field",
+      "apiKey",
+    ],
+    { cwd: targetDir }
+  );
+  fs.writeFileSync(
+    path.join(targetDir, "src", "rest", "integration-settings", "api.ts"),
+    "export * from './api-client';\n",
+    "utf8"
+  );
+  runCli(
+    "node",
+    [
+      entryPath,
+      "add",
+      "admin-view",
+      "integration-settings",
+      "--source",
+      "rest-resource:integration-settings",
+    ],
+    { cwd: targetDir }
+  );
+
+  const packageJson = JSON.parse(
+    fs.readFileSync(path.join(targetDir, "package.json"), "utf8")
+  ) as {
+    dependencies?: Record<string, string>;
+    devDependencies?: Record<string, string>;
+  };
+  const blockConfigSource = fs.readFileSync(
+    path.join(targetDir, "scripts", "block-config.ts"),
+    "utf8"
+  );
+  const apiSource = fs.readFileSync(
+    path.join(targetDir, "src", "rest", "integration-settings", "api.ts"),
+    "utf8"
+  );
+  const entrySource = fs.readFileSync(
+    path.join(targetDir, "src", "admin-views", "integration-settings", "index.tsx"),
+    "utf8"
+  );
+  const configSource = fs.readFileSync(
+    path.join(targetDir, "src", "admin-views", "integration-settings", "config.ts"),
+    "utf8"
+  );
+  const dataSource = fs.readFileSync(
+    path.join(targetDir, "src", "admin-views", "integration-settings", "data.ts"),
+    "utf8"
+  );
+  const screenSource = fs.readFileSync(
+    path.join(targetDir, "src", "admin-views", "integration-settings", "Screen.tsx"),
+    "utf8"
+  );
+
+  expect(packageJson.dependencies?.["@wordpress/dataviews"]).toBeUndefined();
+  expect(packageJson.devDependencies?.["@wp-typia/dataviews"]).toBeUndefined();
+  expect(blockConfigSource).toContain('source: "rest-resource:integration-settings"');
+  expect(blockConfigSource).toContain('secretFieldName: "apiKey"');
+  expect(blockConfigSource).toContain('secretStateFieldName: "hasApiKey"');
+  expect(apiSource).toContain("manualRestContractEndpoint");
+  expect(apiSource).toContain("callManualRestContract");
+  expect(apiSource).toContain("resolveRestRouteUrl");
+  expect(entrySource).not.toContain("@wordpress/dataviews/build-style/style.css");
+  expect(configSource).toContain("integrationSettingsSettingsConfig");
+  expect(configSource).toContain('secretFieldName: "apiKey"');
+  expect(configSource).toContain('secretStateFieldName: "hasApiKey"');
+  expect(dataSource).toContain("callManualRestContract");
+  expect(dataSource).toContain("saveIntegrationSettingsSettings");
+  expect(dataSource).not.toContain("apiKey: ''");
+  expect(dataSource).toContain("delete requestBody[\"apiKey\"]");
+  expect(dataSource).toContain("if (!result.isValid)");
+  expect(dataSource).not.toContain("!result.data");
+  expect(dataSource).toContain(
+    "body: requestBody as unknown as IntegrationSettingsSettingsRequest"
+  );
+  expect(screenSource).toContain("Typed settings screen");
+  expect(screenSource).toContain("TextControl");
+  expect(screenSource).toContain("TextareaControl");
+  expect(screenSource).toContain("Save settings");
+  expect(screenSource).toContain("A secret is currently configured");
+
+  const doctorOutput = runCli("node", [entryPath, "doctor", "--format", "json"], {
+    cwd: targetDir,
+  });
+  const doctorChecks = parseJsonObjectFromOutput<{
+    checks: Array<{ detail: string; label: string; status: string }>;
+  }>(doctorOutput);
+  expect(
+    doctorChecks.checks.find(
+      (check) => check.label === "Admin view config integration-settings"
+    )?.status
+  ).toBe("pass");
+  expect(
+    doctorChecks.checks.find(
+      (check) => check.label === "Admin view PHP integration-settings"
+    )?.status
+  ).toBe("pass");
+
+  runCli("npm", ["run", "sync-rest", "--", "--check"], { cwd: targetDir });
+  runCli("npm", ["run", "build"], { cwd: targetDir });
+  typecheckGeneratedProject(targetDir);
+}, 60_000);
+
+test("admin settings screens reject manual REST contracts with route parameters", async () => {
+  const targetDir = path.join(
+    tempRoot,
+    "demo-workspace-add-admin-settings-route-params"
+  );
+
+  await scaffoldProject({
+    projectDir: targetDir,
+    templateId: workspaceTemplatePackageManifest.name,
+    packageManager: "npm",
+    noInstall: true,
+    answers: {
+      author: "Test Runner",
+      description: "Demo workspace admin settings route params",
+      namespace: "demo-space",
+      phpPrefix: "demo_space",
+      slug: "demo-workspace-add-admin-settings-route-params",
+      textDomain: "demo-space",
+      title: "Demo Workspace Admin Settings Route Params",
+    },
+  });
+
+  linkWorkspaceNodeModules(targetDir);
+
+  runCli(
+    "node",
+    [
+      entryPath,
+      "add",
+      "rest-resource",
+      "integration-settings",
+      "--manual",
+      "--namespace",
+      "demo-space/v1",
+      "--method",
+      "POST",
+      "--path",
+      "/settings/([\\d]+)",
+    ],
+    { cwd: targetDir }
+  );
+
+  expect(
+    getCommandErrorMessage(() =>
+      runCli(
+        "node",
+        [
+          entryPath,
+          "add",
+          "admin-view",
+          "integration-settings",
+          "--source",
+          "rest-resource:integration-settings",
+        ],
+        { cwd: targetDir }
+      )
+    )
+  ).toContain(
+    'REST resource source "integration-settings" uses route parameters or regex groups and cannot scaffold a singleton admin settings form'
+  );
+  expect(
+    fs.existsSync(
+      path.join(targetDir, "src", "admin-views", "integration-settings")
+    )
+  ).toBe(false);
+
+  const blockConfigPath = path.join(targetDir, "scripts", "block-config.ts");
+  const blockConfigSource = fs.readFileSync(blockConfigPath, "utf8");
+  fs.writeFileSync(
+    blockConfigPath,
+    blockConfigSource.replace(
+      "\t// wp-typia add admin-view entries",
+      [
+        "\t{",
+        '\t\tfile: "src/admin-views/integration-settings/index.tsx",',
+        '\t\tphpFile: "inc/admin-views/integration-settings.php",',
+        '\t\tslug: "integration-settings",',
+        '\t\tsource: "rest-resource:integration-settings",',
+        "\t},",
+        "\t// wp-typia add admin-view entries",
+      ].join("\n")
+    ),
+    "utf8"
+  );
+
+  const doctorResult = runCapturedCli(
+    "node",
+    [entryPath, "doctor", "--format", "json"],
+    {
+      cwd: targetDir,
+    }
+  );
+  expect(doctorResult.status).toBe(1);
+  const doctorChecks = parseJsonObjectFromOutput<{
+    checks: Array<{ detail: string; label: string; status: string }>;
+  }>(doctorResult.stdout);
+  const configCheck = doctorChecks.checks.find(
+    (check) => check.label === "Admin view config integration-settings"
+  );
+  expect(configCheck?.status).toBe("fail");
+  expect(configCheck?.detail).toContain(
+    "uses route parameters or regex groups and cannot scaffold a singleton settings form"
+  );
+}, 30_000);
+
+test("admin settings screens require manual REST api shims to export the shared caller", async () => {
+  const targetDir = path.join(
+    tempRoot,
+    "demo-workspace-add-admin-settings-api-export"
+  );
+
+  await scaffoldProject({
+    projectDir: targetDir,
+    templateId: workspaceTemplatePackageManifest.name,
+    packageManager: "npm",
+    noInstall: true,
+    answers: {
+      author: "Test Runner",
+      description: "Demo workspace admin settings api export",
+      namespace: "demo-space",
+      phpPrefix: "demo_space",
+      slug: "demo-workspace-add-admin-settings-api-export",
+      textDomain: "demo-space",
+      title: "Demo Workspace Admin Settings API Export",
+    },
+  });
+
+  linkWorkspaceNodeModules(targetDir);
+
+  runCli(
+    "node",
+    [
+      entryPath,
+      "add",
+      "rest-resource",
+      "integration-settings",
+      "--manual",
+      "--namespace",
+      "demo-space/v1",
+      "--method",
+      "POST",
+      "--path",
+      "/settings",
+    ],
+    { cwd: targetDir }
+  );
+  fs.writeFileSync(
+    path.join(targetDir, "src", "rest", "integration-settings", "api.ts"),
+    [
+      "const callManualRestContract = 'local-only';",
+      "export * from './api-client';",
+      "",
+    ].join("\n"),
+    "utf8"
+  );
+
+  expect(
+    getCommandErrorMessage(() =>
+      runCli(
+        "node",
+        [
+          entryPath,
+          "add",
+          "admin-view",
+          "integration-settings",
+          "--source",
+          "rest-resource:integration-settings",
+        ],
+        { cwd: targetDir }
+      )
+    )
+  ).toContain(
+    'Manual REST resource source "integration-settings" must export callManualRestContract'
+  );
+  expect(
+    fs.existsSync(
+      path.join(targetDir, "src", "admin-views", "integration-settings")
+    )
+  ).toBe(false);
+}, 30_000);
 
 test("manual REST contract workflow rejects duplicate type names before writing files", async () => {
   const targetDir = path.join(

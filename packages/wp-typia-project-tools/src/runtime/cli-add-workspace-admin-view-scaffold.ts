@@ -20,14 +20,21 @@ import {
   buildCoreDataAdminViewScreenSource,
   buildDefaultAdminViewDataSource,
   buildRestAdminViewDataSource,
+  buildRestSettingsAdminViewConfigSource,
+  buildRestSettingsAdminViewDataSource,
+  buildRestSettingsAdminViewScreenSource,
+  buildRestSettingsAdminViewTypesSource,
 } from './cli-add-workspace-admin-view-templates.js';
 import {
   ADMIN_VIEWS_PHP_GLOB,
   isAdminViewCoreDataSource,
+  isAdminViewManualSettingsRestResource,
   type AdminViewCoreDataSource,
+  type AdminViewManualSettingsRestResource,
   type AdminViewRestResource,
   type AdminViewSource,
 } from './cli-add-workspace-admin-view-types.js';
+import { buildManualRestContractApiSource } from './cli-add-workspace-rest-source-emitters.js';
 import {
   getWorkspaceBootstrapPath,
   patchFile,
@@ -55,9 +62,59 @@ function detectJsonIndent(source: string): string | number {
   return indentMatch?.[1] ?? 2;
 }
 
+const LEGACY_MANUAL_REST_API_SOURCE_PATTERN =
+  /^\s*export\s+\*\s+from\s+["']\.\/api-client["'];?\s*$/u;
+const MANUAL_REST_API_DIRECT_CALL_EXPORT_PATTERN =
+  /(?:^|\n)\s*export\s+(?:(?:async\s+)?function|const|let|var)\s+callManualRestContract\b/u;
+const MANUAL_REST_API_NAMED_EXPORT_PATTERN =
+  /(?:^|\n)\s*export\s*\{([^}]*)\}/gu;
+
+function hasManualRestContractCallerExport(apiSource: string): boolean {
+  if (MANUAL_REST_API_DIRECT_CALL_EXPORT_PATTERN.test(apiSource)) {
+    return true;
+  }
+
+  return Array.from(
+    apiSource.matchAll(MANUAL_REST_API_NAMED_EXPORT_PATTERN),
+  ).some((match) =>
+    match[1].split(',').some((specifier) => {
+      const [localName, exportedName] = specifier.trim().split(/\s+as\s+/u);
+
+      return (exportedName ?? localName)?.trim() === 'callManualRestContract';
+    }),
+  );
+}
+
+async function ensureManualSettingsRestApiShim(
+  workspace: WorkspaceProject,
+  restResource: AdminViewManualSettingsRestResource,
+): Promise<void> {
+  const apiPath = path.join(workspace.projectDir, restResource.apiFile);
+  const apiSource = await fsp.readFile(apiPath, 'utf8');
+  if (hasManualRestContractCallerExport(apiSource)) {
+    return;
+  }
+  if (!LEGACY_MANUAL_REST_API_SOURCE_PATTERN.test(apiSource)) {
+    throw new Error(
+      `Manual REST resource source "${restResource.slug}" must export callManualRestContract from ${restResource.apiFile}. Restore the generated manual REST api.ts or update it before scaffolding a settings admin view.`,
+    );
+  }
+
+  await fsp.writeFile(
+    apiPath,
+    buildManualRestContractApiSource({
+      bodyTypeName: restResource.bodyTypeName,
+      queryTypeName: restResource.queryTypeName,
+      restResourceSlug: restResource.slug,
+    }),
+    'utf8',
+  );
+}
+
 async function ensureAdminViewPackageDependencies(
   workspace: WorkspaceProject,
   adminViewSource: AdminViewSource | undefined,
+  restResource: AdminViewRestResource | undefined,
 ): Promise<void> {
   const packageJsonPath = path.join(workspace.projectDir, 'package.json');
   const wpTypiaDataViewsVersion = resolveManagedPackageVersionRange({
@@ -83,6 +140,7 @@ async function ensureAdminViewPackageDependencies(
       dependencies?: Record<string, string>;
       devDependencies?: Record<string, string>;
     };
+    const needsDataViews = !isAdminViewManualSettingsRestResource(restResource);
     const coreDataDependencies: Record<string, string> =
       isAdminViewCoreDataSource(adminViewSource)
         ? {
@@ -96,16 +154,24 @@ async function ensureAdminViewPackageDependencies(
         : {};
     const nextDependencies = {
       ...(packageJson.dependencies ?? {}),
-      '@wordpress/dataviews':
-        packageJson.dependencies?.['@wordpress/dataviews'] ??
-        wordpressDataViewsVersion,
+      ...(needsDataViews
+        ? {
+            '@wordpress/dataviews':
+              packageJson.dependencies?.['@wordpress/dataviews'] ??
+              wordpressDataViewsVersion,
+          }
+        : {}),
       ...coreDataDependencies,
     };
     const nextDevDependencies = {
       ...(packageJson.devDependencies ?? {}),
-      '@wp-typia/dataviews':
-        packageJson.devDependencies?.['@wp-typia/dataviews'] ??
-        wpTypiaDataViewsVersion,
+      ...(needsDataViews
+        ? {
+            '@wp-typia/dataviews':
+              packageJson.devDependencies?.['@wp-typia/dataviews'] ??
+              wpTypiaDataViewsVersion,
+          }
+        : {}),
     };
     if (
       JSON.stringify(nextDependencies) ===
@@ -357,6 +423,11 @@ export async function scaffoldAdminViewWorkspace(options: {
     'admin-views',
     adminViewSlug,
   );
+  const manualSettingsRestResource =
+    isAdminViewManualSettingsRestResource(restResource) ? restResource : undefined;
+  const manualSettingsRestApiPath = manualSettingsRestResource
+    ? path.join(workspace.projectDir, manualSettingsRestResource.apiFile)
+    : undefined;
   const adminViewPhpPath = path.join(
     workspace.projectDir,
     'inc',
@@ -371,33 +442,56 @@ export async function scaffoldAdminViewWorkspace(options: {
       buildScriptPath,
       packageJsonPath,
       webpackConfigPath,
+      ...(manualSettingsRestApiPath ? [manualSettingsRestApiPath] : []),
     ],
     targetPaths: [adminViewDir, adminViewPhpPath],
     run: async () => {
       await fsp.mkdir(adminViewDir, { recursive: true });
       await fsp.mkdir(path.dirname(adminViewPhpPath), { recursive: true });
-      await ensureAdminViewPackageDependencies(workspace, parsedSource);
+      await ensureAdminViewPackageDependencies(workspace, parsedSource, restResource);
       await ensureAdminViewBootstrapAnchors(workspace);
       await ensureAdminViewBuildScriptAnchors(workspace);
       await ensureAdminViewWebpackAnchors(workspace);
+      if (manualSettingsRestResource) {
+        await ensureManualSettingsRestApiShim(
+          workspace,
+          manualSettingsRestResource,
+        );
+      }
       await fsp.writeFile(
         path.join(adminViewDir, 'types.ts'),
-        buildAdminViewTypesSource(adminViewSlug, restResource, coreDataSource),
+        manualSettingsRestResource
+          ? buildRestSettingsAdminViewTypesSource(
+              adminViewSlug,
+              manualSettingsRestResource,
+            )
+          : buildAdminViewTypesSource(adminViewSlug, restResource, coreDataSource),
         'utf8',
       );
       await fsp.writeFile(
         path.join(adminViewDir, 'config.ts'),
-        buildAdminViewConfigSource(
-          adminViewSlug,
-          workspace.workspace.textDomain,
-          parsedSource,
-          restResource,
-        ),
+        manualSettingsRestResource
+          ? buildRestSettingsAdminViewConfigSource(
+              adminViewSlug,
+              workspace.workspace.textDomain,
+              manualSettingsRestResource,
+            )
+          : buildAdminViewConfigSource(
+              adminViewSlug,
+              workspace.workspace.textDomain,
+              parsedSource,
+              restResource,
+            ),
         'utf8',
       );
       await fsp.writeFile(
         path.join(adminViewDir, 'data.ts'),
-        coreDataSource
+        manualSettingsRestResource
+          ? buildRestSettingsAdminViewDataSource(
+              adminViewSlug,
+              manualSettingsRestResource,
+            )
+          : coreDataSource
           ? buildCoreDataAdminViewDataSource(adminViewSlug, coreDataSource)
           : restResource
             ? buildRestAdminViewDataSource(adminViewSlug, restResource)
@@ -406,7 +500,12 @@ export async function scaffoldAdminViewWorkspace(options: {
       );
       await fsp.writeFile(
         path.join(adminViewDir, 'Screen.tsx'),
-        coreDataSource
+        manualSettingsRestResource
+          ? buildRestSettingsAdminViewScreenSource(
+              adminViewSlug,
+              workspace.workspace.textDomain,
+            )
+          : coreDataSource
           ? buildCoreDataAdminViewScreenSource(
               adminViewSlug,
               workspace.workspace.textDomain,
@@ -419,7 +518,9 @@ export async function scaffoldAdminViewWorkspace(options: {
       );
       await fsp.writeFile(
         path.join(adminViewDir, 'index.tsx'),
-        buildAdminViewEntrySource(adminViewSlug),
+        buildAdminViewEntrySource(adminViewSlug, {
+          includeDataViewsStyle: !manualSettingsRestResource,
+        }),
         'utf8',
       );
       await fsp.writeFile(
