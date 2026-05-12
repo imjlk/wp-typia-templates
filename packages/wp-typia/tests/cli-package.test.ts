@@ -97,6 +97,10 @@ const nodeFallbackHelpSource = fs.readFileSync(
   path.join(packageRoot, 'src', 'node-fallback', 'help.ts'),
   'utf8',
 );
+const nodeFallbackErrorsSource = fs.readFileSync(
+  path.join(packageRoot, 'src', 'node-fallback', 'errors.ts'),
+  'utf8',
+);
 const cliSource = fs.readFileSync(
   path.join(packageRoot, 'src', 'cli.ts'),
   'utf8',
@@ -241,7 +245,8 @@ describe('wp-typia package', () => {
     expect(migrateCommandSource).not.toMatch(
       /typeof\s+Bun\s*!==\s*["']undefined["']/,
     );
-    expect(nodeCliSource).toContain('process.exitCode = 1');
+    expect(nodeFallbackErrorsSource).toContain('process.exitCode = 1');
+    expect(nodeCliSource).toContain('handleNodeFallbackEntrypointError');
     expect(nodeCliSource).not.toMatch(/process\.exit\s*\(\s*1\s*\)/);
     expect(cliSource).toContain('process.exitCode = 1');
     expect(cliSource).not.toMatch(/process\.exit\s*\(\s*1\s*\)/);

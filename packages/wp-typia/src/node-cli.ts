@@ -1,11 +1,4 @@
-import packageJson from '../package.json';
-import {
-  CLI_DIAGNOSTIC_CODES,
-  createCliCommandError,
-  formatCliDiagnosticError,
-  isCliDiagnosticError,
-  serializeCliDiagnosticError,
-} from '@wp-typia/project-tools/cli-diagnostics';
+import { createCliCommandError } from '@wp-typia/project-tools/cli-diagnostics';
 import {
   ALL_COMMAND_OPTION_METADATA,
   ADD_OPTION_METADATA,
@@ -15,15 +8,10 @@ import {
   parseCommandArgvWithMetadata,
   resolveCommandOptionValues,
 } from './command-option-metadata';
-import { prefersStructuredCliArgv } from './cli-diagnostic-output';
 import {
   normalizeCliOutputFormatArgv,
   validateCliOutputFormatArgv,
 } from './cli-output-format';
-import {
-  getTemplateById,
-  listTemplates,
-} from '@wp-typia/project-tools/cli-templates';
 import {
   getAddBlockDefaults,
   getCreateDefaults,
@@ -34,11 +22,9 @@ import {
 import { extractWpTypiaConfigOverride } from './config-override';
 import type { PrintLine } from './print-line';
 import {
-  executeDoctorCommand,
   executeInitCommand,
   executeMigrateCommand,
   executeSyncCommand,
-  executeTemplatesCommand,
 } from './runtime-bridge';
 import {
   buildStructuredInitSuccessPayload,
@@ -46,25 +32,28 @@ import {
   printCompletionPayload,
 } from './runtime-bridge-output';
 import { resolveSyncExecutionTarget } from './runtime-bridge-sync';
-import {
-  normalizeWpTypiaArgv,
-  resolveCanonicalCommandContext,
-} from './command-contract';
+import { normalizeWpTypiaArgv } from './command-contract';
+import { dispatchNodeFallbackDoctor } from './node-fallback/doctor';
 import { dispatchNodeFallbackAdd } from './node-fallback/dispatchers/add';
 import { dispatchNodeFallbackCreate } from './node-fallback/dispatchers/create';
 import {
+  createNodeFallbackNoCommandCliError,
+  handleNodeFallbackEntrypointError,
+  throwUnsupportedNodeFallbackCommand,
+} from './node-fallback/errors';
+import {
   NODE_FALLBACK_HELP_RENDERERS,
-  NODE_FALLBACK_NO_COMMAND_REASON_LINE,
-  STANDALONE_GUIDANCE_LINE,
   renderGeneralHelp,
   renderNoCommandHelp,
 } from './node-fallback/help';
+import { dispatchNodeFallbackTemplates } from './node-fallback/templates';
 import type {
   NodeFallbackCommandDispatcher,
   NodeFallbackDispatchContext,
   NodeFallbackExecutableCommandName,
   NodeFallbackGlobalFlags,
 } from './node-fallback/types';
+import { renderNodeFallbackVersion } from './node-fallback/version';
 
 const NODE_FALLBACK_OPTION_PARSER = buildCommandOptionParser(
   ALL_COMMAND_OPTION_METADATA,
@@ -76,24 +65,6 @@ const printLine: PrintLine = (line) => {
 const warnLine: PrintLine = (line) => {
   console.warn(line);
 };
-
-function createNoCommandCliError() {
-  return createCliCommandError({
-    code: CLI_DIAGNOSTIC_CODES.INVALID_COMMAND,
-    command: 'wp-typia',
-    detailLines: [NODE_FALLBACK_NO_COMMAND_REASON_LINE],
-    summary: 'No command was provided.',
-  });
-}
-
-function isNoCommandCliDiagnostic(error: unknown): boolean {
-  return (
-    isCliDiagnosticError(error) &&
-    error.code === CLI_DIAGNOSTIC_CODES.INVALID_COMMAND &&
-    error.command === 'wp-typia' &&
-    error.detailLines.includes(NODE_FALLBACK_NO_COMMAND_REASON_LINE)
-  );
-}
 
 export function hasFlagBeforeTerminator(argv: string[], flag: string): boolean {
   for (const arg of argv) {
@@ -172,129 +143,10 @@ function parseArgv(argv: string[]) {
   });
 }
 
-function renderVersion(
-  options: {
-    format?: string;
-  } = {},
-) {
-  if (options.format === 'json') {
-    printLine(
-      JSON.stringify(
-        {
-          ok: true,
-          data: {
-            type: 'version',
-            name: packageJson.name,
-            version: packageJson.version,
-          },
-        },
-        null,
-        2,
-      ),
-    );
-    return;
-  }
-
-  printLine(`wp-typia ${packageJson.version}`);
-}
-
-function renderTemplatesJson(
-  flags: NodeFallbackGlobalFlags,
-  subcommand: string,
-) {
-  if (subcommand === 'list') {
-    printLine(
-      JSON.stringify(
-        {
-          templates: listTemplates(),
-        },
-        null,
-        2,
-      ),
-    );
-    return;
-  }
-
-  const templateId = flags.id;
-  if (!templateId) {
-    throw createCliCommandError({
-      code: CLI_DIAGNOSTIC_CODES.MISSING_ARGUMENT,
-      command: 'templates',
-      detailLines: ['`wp-typia templates inspect` requires <template-id>.'],
-    });
-  }
-  const template = getTemplateById(templateId);
-  if (!template) {
-    throw createCliCommandError({
-      code: CLI_DIAGNOSTIC_CODES.INVALID_ARGUMENT,
-      command: 'templates',
-      detailLines: [`Unknown template "${templateId}".`],
-    });
-  }
-  printLine(
-    JSON.stringify(
-      {
-        template,
-      },
-      null,
-      2,
-    ),
-  );
-}
-
-function renderUnsupportedCommand(command: string) {
-  throw createCliCommandError({
-    code: CLI_DIAGNOSTIC_CODES.UNSUPPORTED_COMMAND,
-    command: command,
-    detailLines: [
-      [
-        `The Bun-free fallback runtime does not support \`${command}\` yet.`,
-        'Supported without Bun: `--version`, `--help`, non-interactive `create`/`init`/`add`/`migrate`, `doctor`, `sync`, `templates list`, and `templates inspect`.',
-        `Install Bun 1.3.11+ or use \`bunx wp-typia ...\` for the full Bunli-powered runtime. ${STANDALONE_GUIDANCE_LINE}`,
-      ].join(' '),
-    ],
-    summary: 'This command requires the Bun-powered runtime.',
-  });
-}
-
-async function renderDoctorJson(): Promise<void> {
-  const [
-    { getDoctorChecks },
-    { createCliCommandError, getDoctorFailureDetailLines },
-  ] = await Promise.all([
-    import('@wp-typia/project-tools/cli-doctor'),
-    import('@wp-typia/project-tools/cli-diagnostics'),
-  ]);
-  const checks = await getDoctorChecks(process.cwd());
-  printLine(
-    JSON.stringify(
-      {
-        checks,
-      },
-      null,
-      2,
-    ),
-  );
-  if (checks.some((check) => check.status === 'fail')) {
-    throw createCliCommandError({
-      code: CLI_DIAGNOSTIC_CODES.DOCTOR_CHECK_FAILED,
-      command: 'doctor',
-      detailLines: getDoctorFailureDetailLines(checks),
-      summary: 'One or more doctor checks failed.',
-    });
-  }
-}
-
 const NODE_FALLBACK_COMMAND_DISPATCHERS = {
   add: dispatchNodeFallbackAdd,
   create: dispatchNodeFallbackCreate,
-  doctor: async ({ cwd, mergedFlags }: NodeFallbackDispatchContext) => {
-    if (mergedFlags.format === 'json') {
-      await renderDoctorJson();
-      return;
-    }
-    await executeDoctorCommand(cwd);
-  },
+  doctor: dispatchNodeFallbackDoctor,
   init: async ({
     cwd,
     mergedFlags,
@@ -388,43 +240,7 @@ const NODE_FALLBACK_COMMAND_DISPATCHERS = {
       });
     }
   },
-  templates: async ({
-    mergedFlags,
-    positionals,
-    printLine,
-  }: NodeFallbackDispatchContext) => {
-    const subcommand = positionals[1];
-    const templateId =
-      typeof mergedFlags.id === 'string'
-        ? mergedFlags.id
-        : (positionals[2] as string | undefined);
-    const resolvedSubcommand = templateId ? 'inspect' : (subcommand ?? 'list');
-    if (resolvedSubcommand !== 'list' && resolvedSubcommand !== 'inspect') {
-      throw createCliCommandError({
-        code: CLI_DIAGNOSTIC_CODES.INVALID_COMMAND,
-        command: 'templates',
-        detailLines: [
-          `Unknown templates subcommand "${resolvedSubcommand}". Expected list or inspect.`,
-        ],
-      });
-    }
-    if (mergedFlags.format === 'json') {
-      renderTemplatesJson(
-        {
-          format: mergedFlags.format as string | undefined,
-          id: templateId,
-        },
-        resolvedSubcommand,
-      );
-      return;
-    }
-    await executeTemplatesCommand({
-      flags: {
-        id: templateId,
-        subcommand: resolvedSubcommand,
-      },
-    }, printLine);
-  },
+  templates: dispatchNodeFallbackTemplates,
 } satisfies Record<
   NodeFallbackExecutableCommandName,
   NodeFallbackCommandDispatcher
@@ -452,7 +268,7 @@ export async function runNodeCli(argv = process.argv.slice(2)): Promise<void> {
     hasFlagBeforeTerminator(cliArgv, '--version') || command === 'version';
 
   if (cliArgv.length === 0) {
-    const noCommandError = createNoCommandCliError();
+    const noCommandError = createNodeFallbackNoCommandCliError();
     if (rawMergedFlags.format !== 'json') {
       renderNoCommandHelp(printLine);
     }
@@ -482,7 +298,7 @@ export async function runNodeCli(argv = process.argv.slice(2)): Promise<void> {
   }
 
   if (versionRequested) {
-    renderVersion({
+    renderNodeFallbackVersion(printLine, {
       format:
         typeof rawMergedFlags.format === 'string'
           ? rawMergedFlags.format
@@ -515,41 +331,15 @@ export async function runNodeCli(argv = process.argv.slice(2)): Promise<void> {
     return;
   }
 
-  renderUnsupportedCommand(command ?? '(missing)');
+  throwUnsupportedNodeFallbackCommand(command ?? '(missing)');
 }
 
 export async function runNodeCliEntrypoint(
   argv = process.argv.slice(2),
 ): Promise<void> {
-  const prefersStructuredErrorOutput = prefersStructuredCliArgv(argv);
-
   try {
     await runNodeCli(argv);
   } catch (error) {
-    if (prefersStructuredErrorOutput) {
-      const diagnostic = createCliCommandError({
-        command: resolveCanonicalCommandContext(argv),
-        error,
-      });
-      process.stderr.write(
-        `${JSON.stringify(
-          {
-            ok: false,
-            error: serializeCliDiagnosticError(diagnostic),
-          },
-          null,
-          2,
-        )}\n`,
-      );
-      process.exitCode = 1;
-      return;
-    }
-    if (isNoCommandCliDiagnostic(error)) {
-      // Human no-command output already includes the explanatory line and help.
-      process.exitCode = 1;
-      return;
-    }
-    console.error(`Error: ${await formatCliDiagnosticError(error)}`);
-    process.exitCode = 1;
+    await handleNodeFallbackEntrypointError(error, argv);
   }
 }

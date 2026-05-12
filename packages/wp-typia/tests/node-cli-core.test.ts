@@ -242,6 +242,22 @@ describe('Node fallback CLI core routing', () => {
       path.join(packageRoot, 'src', 'node-fallback', 'help.ts'),
       'utf8',
     );
+    const versionSource = fs.readFileSync(
+      path.join(packageRoot, 'src', 'node-fallback', 'version.ts'),
+      'utf8',
+    );
+    const templatesSource = fs.readFileSync(
+      path.join(packageRoot, 'src', 'node-fallback', 'templates.ts'),
+      'utf8',
+    );
+    const doctorSource = fs.readFileSync(
+      path.join(packageRoot, 'src', 'node-fallback', 'doctor.ts'),
+      'utf8',
+    );
+    const errorsSource = fs.readFileSync(
+      path.join(packageRoot, 'src', 'node-fallback', 'errors.ts'),
+      'utf8',
+    );
     const cliErrorMessagesSource = fs.readFileSync(
       path.join(packageRoot, 'src', 'cli-error-messages.ts'),
       'utf8',
@@ -257,8 +273,19 @@ describe('Node fallback CLI core routing', () => {
     expect(nodeCliSource).toContain(
       "from './node-fallback/dispatchers/create'",
     );
+    expect(nodeCliSource).toContain("from './node-fallback/doctor'");
+    expect(nodeCliSource).toContain("from './node-fallback/errors'");
     expect(nodeCliSource).toContain("from './node-fallback/help'");
+    expect(nodeCliSource).toContain("from './node-fallback/templates'");
+    expect(nodeCliSource).toContain("from './node-fallback/version'");
     expect(nodeCliSource).not.toContain('formatAddHelpText');
+    expect(nodeCliSource).not.toContain('function renderVersion');
+    expect(nodeCliSource).not.toContain('function renderTemplatesJson');
+    expect(nodeCliSource).not.toContain('function renderDoctorJson');
+    expect(nodeCliSource).not.toContain('formatCliDiagnosticError');
+    expect(nodeCliSource).not.toContain('serializeCliDiagnosticError');
+    expect(nodeCliSource).not.toContain('getTemplateById');
+    expect(nodeCliSource).not.toContain('getDoctorChecks');
     expect(addDispatcherSource).toContain(
       'export async function dispatchNodeFallbackAdd',
     );
@@ -288,6 +315,20 @@ describe('Node fallback CLI core routing', () => {
     );
     expect(helpSource).toContain("import { printBlock } from '../print-block'");
     expect(helpSource).not.toContain('export function printBlock');
+    expect(versionSource).toContain('export function renderNodeFallbackVersion');
+    expect(versionSource).toContain("import packageJson from '../../package.json'");
+    expect(templatesSource).toContain(
+      'export async function dispatchNodeFallbackTemplates',
+    );
+    expect(templatesSource).toContain('function renderNodeFallbackTemplatesJson');
+    expect(doctorSource).toContain(
+      'export async function dispatchNodeFallbackDoctor',
+    );
+    expect(doctorSource).toContain('function renderNodeFallbackDoctorJson');
+    expect(errorsSource).toContain(
+      'export async function handleNodeFallbackEntrypointError',
+    );
+    expect(errorsSource).toContain('throwUnsupportedNodeFallbackCommand');
     expect(printBlockSource).toContain(
       'export function printBlock(printLine: PrintLine, lines: string[])',
     );
