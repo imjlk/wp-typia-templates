@@ -8,8 +8,9 @@ import { promises as fsp } from "node:fs";
  * `readJsonFileSync`, or `readJsonFile` so malformed JSON reports the file path
  * and operation context. Raw `JSON.parse` remains intentional for trusted
  * in-memory clones, subprocess output, test fixtures, generated workspace
- * script templates that embed their own path-aware parse handling, and
- * cache/discovery probes that immediately catch malformed documents to
+ * script templates that embed their own path-aware parse handling,
+ * package-version manifest cache probes with colocated path-aware wrappers,
+ * and cache/discovery probes that immediately catch malformed documents to
  * continue with fallback behavior.
  *
  * This module also re-exports JSON cloning helpers from
