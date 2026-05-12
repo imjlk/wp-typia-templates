@@ -103,6 +103,14 @@ by using `createCliDiagnosticCodeError(code, message)` in shared runtime code or
 `inferCliDiagnosticCode()` classification is retained only as a compatibility
 fallback for legacy or third-party errors.
 
+Treat every regex in `inferCliDiagnosticCode()` as coupled to the exact
+project-tools runtime validation message it matches. Rewording one of those
+messages can silently change, downgrade, or remove the diagnostic code returned
+to JSON consumers. When adding a new user-facing runtime validation failure, use
+a diagnostic-coded error at the throw site instead of extending the fallback
+classifier, unless the failure truly comes from legacy or untyped code that
+cannot carry a code yet.
+
 Shorthand references like `npx wp-typia` and `bunx wp-typia` should still map
 to the canonical `create` surface in docs and review notes.
 
