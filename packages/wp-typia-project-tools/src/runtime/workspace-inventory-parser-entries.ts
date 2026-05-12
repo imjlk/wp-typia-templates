@@ -191,6 +191,17 @@ function parseInventoryEntries<T extends object>(
 	});
 }
 
+/**
+ * Parse one descriptor-backed inventory section from a TypeScript source file.
+ *
+ * The generic `T` is the typed entry shape returned in `entries`. The
+ * `descriptor` supplies the exported array name, parser field metadata, and
+ * whether the section is required; this helper uses `findExportedArrayLiteral`
+ * and `parseInventoryEntries` to guarantee object-literal entries and literal
+ * field values. It returns parsed entries plus a `found` flag, and throws when
+ * required exports are missing, descriptors cannot resolve an export name, or
+ * exported values are not array literals.
+ */
 export function parseInventorySection<T extends object>(
 	sourceFile: ts.SourceFile,
 	descriptor: InventorySectionDescriptor,

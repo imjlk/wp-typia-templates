@@ -62,6 +62,14 @@ import type {
 	WorkspaceVariationInventoryEntry,
 } from "./workspace-inventory-types.js";
 
+/**
+ * Descriptor for the required `BLOCKS` inventory section.
+ *
+ * Runtime readers use its `parse` contract to require the exported `BLOCKS`
+ * array and validate required block entry fields; mutation helpers use its
+ * `append` marker to insert generated block entries without duplicating section
+ * knowledge.
+ */
 export const BLOCK_INVENTORY_SECTION: InventorySectionDescriptor = {
 	append: {
 		marker: BLOCK_CONFIG_ENTRY_MARKER,
@@ -84,6 +92,14 @@ export const BLOCK_INVENTORY_SECTION: InventorySectionDescriptor = {
 	},
 };
 
+/**
+ * Descriptors for optional workspace inventory sections beyond `BLOCKS`.
+ *
+ * Each descriptor centralizes append markers, exported interface/value repair
+ * sections, parser entry metadata such as `entriesKey` and `entryName`, and
+ * optional section flags so add, doctor, read, and mutation flows share one
+ * runtime contract when adding new inventory domains.
+ */
 export const INVENTORY_SECTIONS: readonly InventorySectionDescriptor[] = [
 	{
 		append: {

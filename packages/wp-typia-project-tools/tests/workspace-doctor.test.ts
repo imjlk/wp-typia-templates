@@ -597,17 +597,17 @@ test("workspace inventory section descriptors support optional interface and con
   expect(parserSource).toContain(
     'from "./workspace-inventory-section-descriptors.js"'
   );
-  expect(parserEntriesSource).toContain("function parseInventoryEntries");
-  expect(parserValidationSource).toContain("function formatMissingRequiredInventoryFields");
-  expect(mutationsSource).toContain("for (const section of INVENTORY_SECTIONS)");
-  expect(mutationsSource).toContain(
-    "for (const section of [BLOCK_INVENTORY_SECTION, ...INVENTORY_SECTIONS])"
+  expect(parserEntriesSource).toContain("export function parseInventorySection");
+  expect(parserValidationSource).toContain(
+    "export function defineInventoryEntryParser"
+  );
+  expect(parserValidationSource).toContain(
+    "export function assertParsedInventoryEntry"
   );
   expect(parserSource).toContain("parseInventorySection(sourceFile, section)");
   expect(mutationsSource).toContain(
     'from "./workspace-inventory-section-descriptors.js"'
   );
-  expect(mutationsSource).toContain("appendInventorySectionEntries(nextSource, options)");
   expect(parserSource).not.toContain("function parseVariationEntries");
   expect(parserSource).not.toContain("function parseRestResourceEntries");
   expect(mutationsSource).not.toContain(

@@ -4,8 +4,14 @@ import type {
 	WorkspaceInventorySectionFlagKey,
 } from "./workspace-inventory-types.js";
 
+/**
+ * Literal value shape accepted by descriptor-driven inventory entry fields.
+ */
 export type InventoryEntryFieldValue = string | string[] | boolean | undefined;
 
+/**
+ * Context passed to custom field validators while parsing one inventory entry.
+ */
 export type InventoryEntryFieldValidationContext = {
 	elementIndex: number;
 	entryName: string;
@@ -22,6 +28,12 @@ type InventoryEntryFieldDescriptor = {
 	) => void;
 };
 
+/**
+ * Runtime parser contract for one exported inventory array.
+ *
+ * `entryName` is used in diagnostics and `fields` defines the literal values,
+ * required flags, and custom validators accepted for each object entry.
+ */
 export type InventoryEntryParserDescriptor = {
 	entryName: string;
 	fields: readonly InventoryEntryFieldDescriptor[];
@@ -85,6 +97,13 @@ type RequiredInventoryEntryFieldsMarkedRequired<
 				requiredInventoryEntryFieldsMustSetRequiredTrue: RequiredInventoryEntryKey<T>;
 			};
 
+/**
+ * Shared descriptor contract for generated workspace inventory sections.
+ *
+ * Callers rely on `append` markers when inserting generated entries, `parse`
+ * metadata when reading exported arrays, and `interface`/`value` sections when
+ * repairing older `scripts/block-config.ts` files.
+ */
 export type InventorySectionDescriptor = {
 	/** Optional marker metadata used when appending generated entries. */
 	append?: {
@@ -111,6 +130,13 @@ export type InventorySectionDescriptor = {
 	};
 };
 
+/**
+ * Define a typed inventory entry parser while enforcing required fields at
+ * compile time.
+ *
+ * The returned descriptor is consumed by `parseInventorySection` to extract
+ * literal field values and run runtime validators.
+ */
 export function defineInventoryEntryParser<T extends object>() {
 	return <
 		const TFields extends readonly TypedInventoryEntryFieldDescriptor<T>[],
@@ -137,6 +163,13 @@ function formatMissingRequiredInventoryFields(keys: readonly string[]): string {
 		: `required fields ${keys.map((key) => `"${key}"`).join(", ")}`;
 }
 
+/**
+ * Assert that a parsed inventory entry contains every required descriptor
+ * field.
+ *
+ * Missing `undefined` values and empty strings throw with diagnostics tied to
+ * the original exported inventory array name and element index.
+ */
 export function assertParsedInventoryEntry<T extends object>(
 	entry: Record<string, InventoryEntryFieldValue>,
 	descriptor: InventoryEntryParserDescriptor,
