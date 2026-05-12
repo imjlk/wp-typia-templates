@@ -597,6 +597,9 @@ test("workspace inventory section descriptors support optional interface and con
   expect(parserSource).toContain(
     'from "./workspace-inventory-section-descriptors.js"'
   );
+  expect(parserSource).toMatch(
+    /export\s*\{\s*BLOCK_INVENTORY_SECTION,\s*INVENTORY_SECTIONS,\s*\}\s*from\s+"\.\/workspace-inventory-section-descriptors\.js";/u
+  );
   expect(parserEntriesSource).toContain("export function parseInventorySection");
   expect(parserValidationSource).toContain(
     "export function defineInventoryEntryParser"

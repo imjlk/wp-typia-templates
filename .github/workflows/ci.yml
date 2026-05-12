@@ -33,6 +33,7 @@ jobs:
           php-version: ${{ env.PHP_VERSION }}
           coverage: none
           tools: composer:v2
+          github-token: ''
 
       - name: Setup workspace toolchain
         uses: ./.github/actions/setup-bun-workspace
