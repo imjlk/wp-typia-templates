@@ -2,6 +2,7 @@ import readline from "node:readline";
 
 type ValidateInput = (value: string) => boolean | string;
 type PromptQuestion = (query: string) => Promise<string>;
+export type PromptLinePrinter = (line: string) => void;
 
 interface PromptOption<T extends string> {
 	hint?: string;
@@ -16,6 +17,16 @@ export interface ReadlinePrompt {
 	close(): void;
 	select<T extends string>(message: string, options: PromptOption<T>[], defaultValue?: number): Promise<T>;
 	text(message: string, defaultValue: string, validate?: ValidateInput): Promise<string>;
+}
+
+/**
+ * Output adapters used by prompt rendering and validation feedback.
+ */
+export interface ReadlinePromptOutput {
+	/** Render one informational prompt line. */
+	printLine?: PromptLinePrinter;
+	/** Render one validation or selection error line. */
+	errorLine?: PromptLinePrinter;
 }
 
 /**
@@ -40,15 +51,16 @@ export interface ReadlineQuestionAdapter {
 /**
  * Create the default readline-backed prompt implementation for the CLI.
  *
+ * @param output Optional line printers for prompt and validation output.
  * @returns A prompt adapter that reads from stdin and writes to stdout.
  */
-export function createReadlinePrompt(): ReadlinePrompt {
+export function createReadlinePrompt(output: ReadlinePromptOutput = {}): ReadlinePrompt {
 	const rl = readline.createInterface({
 		input: process.stdin,
 		output: process.stdout,
 	});
 
-	return createReadlinePromptWithInterface(rl);
+	return createReadlinePromptWithInterface(rl, output);
 }
 
 /**
@@ -56,10 +68,15 @@ export function createReadlinePrompt(): ReadlinePrompt {
  *
  * This keeps the production CLI path unchanged while letting tests validate
  * retry behavior without stubbing global stdin/stdout.
+ *
+ * @param rl Readline-compatible question adapter.
+ * @param output Optional line printers for prompt and validation output.
  */
 export function createReadlinePromptWithInterface(
 	rl: ReadlineQuestionAdapter,
+	output: ReadlinePromptOutput = {},
 ): ReadlinePrompt {
+	const { errorLine, printLine } = resolveReadlinePromptOutput(output);
 	const askQuestion: PromptQuestion = (query) =>
 		new Promise<string>((resolve) => {
 			rl.question(query, resolve);
@@ -74,7 +91,7 @@ export function createReadlinePromptWithInterface(
 				if (validate) {
 					const result = validate(value);
 					if (result !== true) {
-						console.error(formatValidationError(message, result, defaultValue));
+						errorLine(formatValidationError(message, result, defaultValue));
 						continue;
 					}
 				}
@@ -92,7 +109,7 @@ export function createReadlinePromptWithInterface(
 			}
 
 			const resolvedDefaultIndex = getResolvedDefaultIndex(options, defaultValue);
-			renderSelectPrompt(message, options, resolvedDefaultIndex);
+			renderSelectPrompt(message, options, resolvedDefaultIndex, printLine);
 
 			while (true) {
 				const answer = normalizePromptAnswer(
@@ -109,17 +126,35 @@ export function createReadlinePromptWithInterface(
 				}
 
 				if (isPromptHelpToken(answer)) {
-					renderSelectPrompt(message, options, resolvedDefaultIndex);
+					renderSelectPrompt(message, options, resolvedDefaultIndex, printLine);
 					continue;
 				}
 
-				console.error(formatInvalidSelectionError(answer, options, resolvedDefaultIndex));
+				errorLine(formatInvalidSelectionError(answer, options, resolvedDefaultIndex));
 			}
 		},
 		close(): void {
 			rl.close();
 		},
 	};
+}
+
+function resolveReadlinePromptOutput({
+	errorLine,
+	printLine,
+}: ReadlinePromptOutput): Required<ReadlinePromptOutput> {
+	return {
+		errorLine: errorLine ?? writePromptErrorLine,
+		printLine: printLine ?? writePromptLine,
+	};
+}
+
+function writePromptLine(line: string): void {
+	process.stdout.write(`${line}\n`);
+}
+
+function writePromptErrorLine(line: string): void {
+	process.stderr.write(`${line}\n`);
 }
 
 function normalizePromptAnswer(value: string): string {
@@ -162,9 +197,10 @@ function renderSelectPrompt<T extends string>(
 	message: string,
 	options: PromptOption<T>[],
 	defaultIndex: number,
+	printLine: PromptLinePrinter,
 ): void {
-	console.log(message);
-	console.log(
+	printLine(message);
+	printLine(
 		"  Enter a number, option label, or option value. Press Enter to keep the default, or type ? to list choices again.",
 	);
 	options.forEach((option, index) => {
@@ -173,9 +209,9 @@ function renderSelectPrompt<T extends string>(
 			normalizePromptToken(option.label) === normalizePromptToken(option.value)
 				? ""
 				: ` [${option.value}]`;
-		console.log(`  ${index + 1}. ${option.label}${valueHint}${defaultMarker}`);
+		printLine(`  ${index + 1}. ${option.label}${valueHint}${defaultMarker}`);
 		if (option.hint) {
-			console.log(`     ${option.hint}`);
+			printLine(`     ${option.hint}`);
 		}
 	});
 }
