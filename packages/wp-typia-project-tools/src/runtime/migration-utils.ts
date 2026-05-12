@@ -14,6 +14,7 @@ import type {
   JsonObject,
 } from './migration-types.js';
 import { isPlainObject, type UnknownRecord } from './object-utils.js';
+import { readJsonFileSync } from './json-utils.js';
 export { cloneJsonValue } from './json-utils.js';
 
 const MIGRATION_VERSION_LABEL_PATTERN = /^v([1-9]\d*)$/;
@@ -100,7 +101,9 @@ export function createTransformFixtureValue(
 }
 
 export function readJson<T = unknown>(filePath: string): T {
-  return JSON.parse(fs.readFileSync(filePath, 'utf8')) as T;
+  return readJsonFileSync<T>(filePath, {
+    context: 'migration JSON file',
+  });
 }
 
 export function renderPhpValue(value: unknown, indentLevel: number): string {

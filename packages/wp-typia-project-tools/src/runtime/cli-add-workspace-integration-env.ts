@@ -13,6 +13,7 @@ import {
 	type PackageManagerId,
 } from "./package-managers.js";
 import { pathExists, readOptionalUtf8File } from "./fs-async.js";
+import { readJsonFile } from "./json-utils.js";
 import { executeWorkspaceMutationPlan } from "./cli-add-workspace-mutation.js";
 import { resolveWorkspaceProject } from "./workspace-project.js";
 import { toTitleCase } from "./string-case.js";
@@ -347,9 +348,9 @@ async function mutatePackageJson(
 	mutate: (packageJson: IntegrationEnvPackageJson) => void,
 ) {
 	const packageJsonPath = path.join(projectDir, "package.json");
-	const packageJson = JSON.parse(
-		await fsp.readFile(packageJsonPath, "utf8"),
-	) as IntegrationEnvPackageJson;
+	const packageJson = await readJsonFile<IntegrationEnvPackageJson>(packageJsonPath, {
+		context: "integration env package manifest",
+	});
 
 	mutate(packageJson);
 

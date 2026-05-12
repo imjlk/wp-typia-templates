@@ -12,6 +12,7 @@ import {
 	formatRunScript,
 	type PackageManagerId,
 } from "./package-managers.js";
+import { readJsonFile } from "./json-utils.js";
 import {
 	OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE,
 	SHARED_TEST_PRESET_TEMPLATE_ROOT,
@@ -110,7 +111,9 @@ async function mutatePackageJson(
 	mutate: (packageJson: PackageJsonShape) => void,
 ): Promise<void> {
 	const packageJsonPath = path.join(projectDir, "package.json");
-	const packageJson = JSON.parse(await fsp.readFile(packageJsonPath, "utf8")) as PackageJsonShape;
+	const packageJson = await readJsonFile<PackageJsonShape>(packageJsonPath, {
+		context: "local dev package manifest",
+	});
 
 	mutate(packageJson);
 

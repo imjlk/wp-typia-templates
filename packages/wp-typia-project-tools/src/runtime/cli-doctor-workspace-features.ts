@@ -33,6 +33,7 @@ import {
 	WORKSPACE_POST_META_GLOB,
 	WORKSPACE_REST_RESOURCE_GLOB,
 } from "./cli-doctor-workspace-shared.js";
+import { readJsonFileSync } from "./json-utils.js";
 import { escapeRegex } from "./php-utils.js";
 
 import type { DoctorCheck } from "./cli-doctor.js";
@@ -329,10 +330,12 @@ function checkWorkspaceAbilityConfig(
 	}
 
 	try {
-		const config = JSON.parse(fs.readFileSync(configPath, "utf8")) as {
+		const config = readJsonFileSync<{
 			abilityId?: unknown;
 			category?: { slug?: unknown };
-		};
+		}>(configPath, {
+			context: "workspace ability config",
+		});
 		const abilityId =
 			typeof config.abilityId === "string" ? config.abilityId.trim() : "";
 		const categorySlug =

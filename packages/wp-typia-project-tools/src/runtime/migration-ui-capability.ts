@@ -4,6 +4,7 @@ import path from "node:path";
 import { getPackageVersions } from "./package-versions.js";
 import { formatPackageExecCommand } from "./package-managers.js";
 import type { PackageManagerId } from "./package-managers.js";
+import { readJsonFile } from "./json-utils.js";
 import { seedProjectMigrations } from "./migrations.js";
 import { copyInterpolatedDirectory } from "./template-render.js";
 import {
@@ -33,7 +34,9 @@ async function mutatePackageJson(
 	mutate: (packageJson: PackageJsonShape) => void,
 ): Promise<void> {
 	const packageJsonPath = path.join(projectDir, "package.json");
-	const packageJson = JSON.parse(await fsp.readFile(packageJsonPath, "utf8")) as PackageJsonShape;
+	const packageJson = await readJsonFile<PackageJsonShape>(packageJsonPath, {
+		context: "migration UI package manifest",
+	});
 	mutate(packageJson);
 	await fsp.writeFile(packageJsonPath, `${JSON.stringify(packageJson, null, "\t")}\n`, "utf8");
 }

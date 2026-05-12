@@ -1,5 +1,7 @@
 import fs from "node:fs";
 
+import { safeJsonParse } from "./json-utils.js";
+
 export const TEMPLATE_SOURCE_TIMEOUT_CODE = "template-source-timeout" as const;
 export const TEMPLATE_SOURCE_TOO_LARGE_CODE = "template-source-too-large" as const;
 
@@ -219,15 +221,9 @@ export async function readJsonResponseWithLimit(
 	},
 ): Promise<Record<string, unknown>> {
 	const buffer = await readResponseBodyWithLimit(response, options);
-	try {
-		return JSON.parse(buffer.toString("utf8")) as Record<string, unknown>;
-	} catch (error) {
-		throw new Error(
-			`Failed to parse ${options.label}: ${
-				error instanceof Error ? error.message : String(error)
-			}`,
-		);
-	}
+	return safeJsonParse<Record<string, unknown>>(buffer.toString("utf8"), {
+		context: options.label,
+	});
 }
 
 export async function readBufferResponseWithLimit(

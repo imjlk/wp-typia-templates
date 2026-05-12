@@ -3,6 +3,7 @@ import { createRequire } from 'node:module';
 import path from 'node:path';
 
 import { getOptionalNodeErrorCode } from './fs-async.js';
+import { safeJsonParse } from './json-utils.js';
 import { PROJECT_TOOLS_PACKAGE_ROOT } from './template-registry.js';
 
 interface PackageManifest {
@@ -142,7 +143,10 @@ function readPackageManifest(
     return null;
   }
 
-  return JSON.parse(location.source) as PackageManifest;
+  return safeJsonParse<PackageManifest>(location.source, {
+    context: 'package version manifest',
+    filePath: location.packageJsonPath,
+  });
 }
 
 function tryReadPackageManifest(

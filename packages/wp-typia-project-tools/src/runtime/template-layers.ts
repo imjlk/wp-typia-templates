@@ -2,6 +2,7 @@ import path from "node:path";
 import { promises as fsp } from "node:fs";
 
 import { pathExists } from "./fs-async.js";
+import { readJsonFile } from "./json-utils.js";
 import { isPlainObject } from "./object-utils.js";
 import {
 	getBuiltInSharedTemplateLayerDir,
@@ -123,9 +124,9 @@ export async function loadExternalTemplateLayerManifest(
 		return null;
 	}
 
-	const raw = JSON.parse(
-		await fsp.readFile(manifestPath, "utf8"),
-	) as Record<string, unknown>;
+	const raw = await readJsonFile<Record<string, unknown>>(manifestPath, {
+		context: "template layer manifest",
+	});
 	if (!isPlainObject(raw)) {
 		throw new Error(`${TEMPLATE_LAYER_MANIFEST_FILENAME} must export a JSON object.`);
 	}

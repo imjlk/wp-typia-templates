@@ -5,6 +5,7 @@ import type {
 	WorkspaceInventory,
 } from "./workspace-inventory.js";
 import { readOptionalUtf8File } from "./fs-async.js";
+import { safeJsonParse } from "./json-utils.js";
 
 /**
  * Resolve an existing workspace block inventory entry by slug.
@@ -53,7 +54,10 @@ export async function readWorkspaceBlockJson(
 	let blockJson: Record<string, unknown>;
 	try {
 		blockJson = parseScaffoldBlockMetadata<Record<string, unknown>>(
-			JSON.parse(source),
+			safeJsonParse(source, {
+				context: "workspace block metadata",
+				filePath: blockJsonPath,
+			}),
 		);
 	} catch (error) {
 		throw new Error(

@@ -11,6 +11,7 @@ import {
 	type PackageManagerId,
 } from "./package-managers.js";
 import { getPackageVersions } from "./package-versions.js";
+import { readJsonFileSync } from "./json-utils.js";
 import type {
 	InitDependencyChange,
 	InitPackageManagerFieldChange,
@@ -43,9 +44,10 @@ export function readProjectPackageJson(
 		return null;
 	}
 
-	const source = fs.readFileSync(packageJsonPath, "utf8");
 	try {
-		return JSON.parse(source) as ProjectPackageJson;
+		return readJsonFileSync<ProjectPackageJson>(packageJsonPath, {
+			context: "project package manifest",
+		});
 	} catch (error) {
 		const message = error instanceof Error ? error.message : String(error);
 		throw createCliDiagnosticCodeError(

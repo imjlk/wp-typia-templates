@@ -21,6 +21,7 @@ import type { BuiltInTemplateId } from "./template-registry.js";
 import { getScaffoldTemplateVariableGroups } from "./scaffold-template-variable-groups.js";
 import type { GeneratedPackageJson } from "./package-json-types.js";
 import { pathExists } from "./fs-async.js";
+import { readJsonFile, readJsonFileSync } from "./json-utils.js";
 
 const EPHEMERAL_NODE_MODULES_LINK_TYPE = process.platform === "win32" ? "junction" : "dir";
 
@@ -53,7 +54,9 @@ function readGeneratedPackageJson(projectDir: string): GeneratedPackageJson | nu
 		return null;
 	}
 
-	return JSON.parse(fs.readFileSync(packageJsonPath, "utf8")) as GeneratedPackageJson;
+	return readJsonFileSync<GeneratedPackageJson>(packageJsonPath, {
+		context: "generated package manifest",
+	});
 }
 
 /**
@@ -170,9 +173,9 @@ export async function applyWorkspaceMigrationCapability(
 	packageManager: PackageManagerId,
 ): Promise<void> {
 	const packageJsonPath = path.join(projectDir, "package.json");
-	const packageJson = JSON.parse(
-		await fsp.readFile(packageJsonPath, "utf8"),
-	) as GeneratedPackageJson;
+	const packageJson = await readJsonFile<GeneratedPackageJson>(packageJsonPath, {
+		context: "workspace package manifest",
+	});
 	const wpTypiaPackageVersion = getPackageVersions().wpTypiaPackageVersion;
 	const canonicalCliSpecifier =
 		wpTypiaPackageVersion === "^0.0.0"

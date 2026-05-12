@@ -11,6 +11,7 @@ import {
 	WORKSPACE_BINDING_EDITOR_SCRIPT,
 	WORKSPACE_BINDING_SERVER_GLOB,
 } from "./cli-doctor-workspace-shared.js";
+import { readJsonFileSync } from "./json-utils.js";
 import { escapeRegex } from "./php-utils.js";
 
 import type { DoctorCheck } from "./cli-doctor.js";
@@ -109,7 +110,9 @@ function checkWorkspaceBindingTarget(
 	const issues: string[] = [];
 	try {
 		const blockJson = parseScaffoldBlockMetadata<Record<string, unknown> & { attributes?: unknown }>(
-			JSON.parse(fs.readFileSync(blockJsonPath, "utf8")),
+			readJsonFileSync(blockJsonPath, {
+				context: "workspace block metadata",
+			}),
 		);
 		const attributes = blockJson.attributes;
 		if (!attributes || typeof attributes !== "object" || Array.isArray(attributes)) {
