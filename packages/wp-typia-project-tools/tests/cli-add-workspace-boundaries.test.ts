@@ -69,6 +69,26 @@ test('cli-add-workspace delegates asset, rest-resource, post-meta, ai-feature, a
     path.join(runtimeRoot, 'cli-add-workspace-admin-view-templates.ts'),
     'utf8',
   );
+  const adminViewCoreDataTemplatesSource = fs.readFileSync(
+    path.join(runtimeRoot, 'cli-add-workspace-admin-view-templates-core-data.ts'),
+    'utf8',
+  );
+  const adminViewDefaultTemplatesSource = fs.readFileSync(
+    path.join(runtimeRoot, 'cli-add-workspace-admin-view-templates-default.ts'),
+    'utf8',
+  );
+  const adminViewRestTemplatesSource = fs.readFileSync(
+    path.join(runtimeRoot, 'cli-add-workspace-admin-view-templates-rest.ts'),
+    'utf8',
+  );
+  const adminViewSettingsTemplatesSource = fs.readFileSync(
+    path.join(runtimeRoot, 'cli-add-workspace-admin-view-templates-settings.ts'),
+    'utf8',
+  );
+  const adminViewSharedTemplatesSource = fs.readFileSync(
+    path.join(runtimeRoot, 'cli-add-workspace-admin-view-templates-shared.ts'),
+    'utf8',
+  );
   const adminViewScaffoldSource = fs.readFileSync(
     path.join(runtimeRoot, 'cli-add-workspace-admin-view-scaffold.ts'),
     'utf8',
@@ -267,6 +287,21 @@ test('cli-add-workspace delegates asset, rest-resource, post-meta, ai-feature, a
     'export function buildAdminViewScreenSource(',
   );
   expect(adminViewTemplatesSource).toContain(
+    'export function buildAdminViewPhpSource(',
+  );
+  expect(adminViewDefaultTemplatesSource).toContain(
+    'export function buildDefaultAdminViewDataSource(',
+  );
+  expect(adminViewRestTemplatesSource).toContain(
+    'export function buildRestAdminViewDataSource(',
+  );
+  expect(adminViewCoreDataTemplatesSource).toContain(
+    'export function buildCoreDataAdminViewDataSource(',
+  );
+  expect(adminViewSettingsTemplatesSource).toContain(
+    'export function buildRestSettingsAdminViewScreenSource(',
+  );
+  expect(adminViewSharedTemplatesSource).toContain(
     'export function buildAdminViewPhpSource(',
   );
   expect(adminViewTemplatesSource).not.toContain(
