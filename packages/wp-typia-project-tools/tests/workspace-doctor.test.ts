@@ -563,6 +563,18 @@ test("workspace inventory section descriptors support optional interface and con
     path.join(import.meta.dir, "..", "src", "runtime", "workspace-inventory-parser.ts"),
     "utf8"
   );
+  const parserEntriesSource = fs.readFileSync(
+    path.join(import.meta.dir, "..", "src", "runtime", "workspace-inventory-parser-entries.ts"),
+    "utf8"
+  );
+  const parserValidationSource = fs.readFileSync(
+    path.join(import.meta.dir, "..", "src", "runtime", "workspace-inventory-parser-validation.ts"),
+    "utf8"
+  );
+  const sectionDescriptorSource = fs.readFileSync(
+    path.join(import.meta.dir, "..", "src", "runtime", "workspace-inventory-section-descriptors.ts"),
+    "utf8"
+  );
   const mutationsSource = fs.readFileSync(
     path.join(import.meta.dir, "..", "src", "runtime", "workspace-inventory-mutations.ts"),
     "utf8"
@@ -575,18 +587,26 @@ test("workspace inventory section descriptors support optional interface and con
   expect(barrelSource).toContain('from "./workspace-inventory-parser.js"');
   expect(barrelSource).toContain('from "./workspace-inventory-mutations.js"');
   expect(templatesSource).toContain("export const VARIATIONS_INTERFACE_SECTION");
-  expect(parserSource).toContain(
+  expect(sectionDescriptorSource).toContain(
     "export const INVENTORY_SECTIONS: readonly InventorySectionDescriptor[]"
   );
-  expect(parserSource).toContain("append?: {");
-  expect(parserSource).toContain("interface?: {");
-  expect(parserSource).toContain("parse?: {");
-  expect(parserSource).toContain("value?: {");
+  expect(parserValidationSource).toContain("append?: {");
+  expect(parserValidationSource).toContain("interface?: {");
+  expect(parserValidationSource).toContain("parse?: {");
+  expect(parserValidationSource).toContain("value?: {");
+  expect(parserSource).toContain(
+    'from "./workspace-inventory-section-descriptors.js"'
+  );
+  expect(parserEntriesSource).toContain("function parseInventoryEntries");
+  expect(parserValidationSource).toContain("function formatMissingRequiredInventoryFields");
   expect(mutationsSource).toContain("for (const section of INVENTORY_SECTIONS)");
   expect(mutationsSource).toContain(
     "for (const section of [BLOCK_INVENTORY_SECTION, ...INVENTORY_SECTIONS])"
   );
   expect(parserSource).toContain("parseInventorySection(sourceFile, section)");
+  expect(mutationsSource).toContain(
+    'from "./workspace-inventory-section-descriptors.js"'
+  );
   expect(mutationsSource).toContain("appendInventorySectionEntries(nextSource, options)");
   expect(parserSource).not.toContain("function parseVariationEntries");
   expect(parserSource).not.toContain("function parseRestResourceEntries");

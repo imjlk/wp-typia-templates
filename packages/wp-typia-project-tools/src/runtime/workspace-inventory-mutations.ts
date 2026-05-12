@@ -5,7 +5,7 @@ import { escapeRegex } from "./php-utils.js";
 import {
 	BLOCK_INVENTORY_SECTION,
 	INVENTORY_SECTIONS,
-} from "./workspace-inventory-parser.js";
+} from "./workspace-inventory-section-descriptors.js";
 import { WORKSPACE_COMPATIBILITY_CONFIG_FIELD } from "./workspace-inventory-templates.js";
 import type { WorkspaceInventoryUpdateOptions } from "./workspace-inventory-types.js";
 
