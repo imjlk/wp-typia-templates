@@ -52,6 +52,9 @@ secondary imports compared with the core package roots and primary subpaths.
 - `@wp-typia/block-runtime/schema-test`
   Test helpers for validating smoke/integration response payloads against
   generated JSON Schema artifacts.
+- `@wp-typia/block-runtime/typia-tags`
+  Type-only Typia tag namespace that includes wp-typia metadata tags such as
+  `Secret`, `WriteOnly`, `Source`, and `Selector`.
 - `@wp-typia/block-runtime/metadata-core`
   Metadata sync and endpoint manifest helpers.
 - `@wp-typia/block-runtime/metadata-analysis`
@@ -540,6 +543,7 @@ Generated projects can also import shared runtime helpers from `@wp-typia/block-
 - `@wp-typia/block-runtime/validation`
 - `@wp-typia/block-runtime/editor`
 - `@wp-typia/block-runtime/identifiers`
+- `@wp-typia/block-runtime/typia-tags`
 
 Use `@wp-typia/block-runtime/metadata-core` for metadata sync and
 `@wp-typia/block-runtime/*` for generated-project runtime helpers.

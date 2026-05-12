@@ -26,6 +26,11 @@
       "import": "./dist/schema-test.js",
       "default": "./dist/schema-test.js"
     },
+    "./typia-tags": {
+      "types": "./dist/typia-tags.d.ts",
+      "import": "./dist/typia-tags.js",
+      "default": "./dist/typia-tags.js"
+    },
     "./migration-types": {
       "types": "./dist/migration-types.d.ts",
       "import": "./dist/migration-types.js",

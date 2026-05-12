@@ -52,6 +52,8 @@ export function createBlockJsonAttribute(
 	if (node.constraints.multipleOf !== null) reasons.push("multipleOf");
 	if (node.constraints.pattern !== null) reasons.push("pattern");
 	if (node.constraints.typeTag !== null) reasons.push("typeTag");
+	if (node.wp.secret) reasons.push("secret");
+	if (node.wp.writeOnly) reasons.push("writeOnly");
 	if (node.kind === "array" && node.items !== undefined) reasons.push("items");
 	if (node.kind === "object" && node.properties !== undefined)
 		reasons.push("properties");
@@ -109,8 +111,13 @@ export function createManifestAttribute(node: AttributeNode): ManifestAttribute 
 			enum: node.enumValues ? [...node.enumValues] : null,
 			hasDefault: node.defaultValue !== undefined,
 			...(node.wp.selector !== null ? { selector: node.wp.selector } : {}),
+			...(node.wp.secret ? { secret: true } : {}),
+			...(node.wp.secretStateField !== null
+				? { secretStateField: node.wp.secretStateField }
+				: {}),
 			...(node.wp.source !== null ? { source: node.wp.source } : {}),
 			type: getWordPressKind(node),
+			...(node.wp.writeOnly ? { writeOnly: true } : {}),
 		},
 	};
 }

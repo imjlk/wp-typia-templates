@@ -23,8 +23,10 @@ const SUPPORTED_TAGS = new Set([
 	"MultipleOf",
 	"Pattern",
 	"Selector",
+	"Secret",
 	"Source",
 	"Type",
+	"WriteOnly",
 ]);
 
 export function mergePrimitiveIntersection(
@@ -279,6 +281,18 @@ export function applyTag(
 		case "Selector":
 			node.wp.selector = parseStringLikeArgument(arg, tagName, pathLabel);
 			return;
+		case "Secret": {
+			const secretStateField = parseStringLikeArgument(arg, tagName, pathLabel);
+			if (!secretStateField) {
+				throw new Error(
+					`Tag "Secret" expects a non-empty masked state field at ${pathLabel}`,
+				);
+			}
+			node.wp.secret = true;
+			node.wp.secretStateField = secretStateField;
+			node.wp.writeOnly = true;
+			return;
+		}
 		case "Source":
 			node.wp.source = parseWordPressAttributeSource(arg, pathLabel);
 			return;
@@ -336,6 +350,11 @@ export function applyTag(
 				pathLabel,
 			);
 			return;
+		case "WriteOnly": {
+			const writeOnly = parseBooleanArgument(arg, tagName, pathLabel);
+			node.wp.writeOnly = node.wp.secret ? true : writeOnly;
+			return;
+		}
 		default:
 			return;
 	}
@@ -412,6 +431,20 @@ function parseStringLikeArgument(
 	if (typeof value !== "string") {
 		throw new Error(
 			`Tag "${tagName}" expects a string literal at ${pathLabel}`,
+		);
+	}
+	return value;
+}
+
+function parseBooleanArgument(
+	node: ts.TypeNode,
+	tagName: string,
+	pathLabel: string,
+): boolean {
+	const value = extractLiteralValue(node);
+	if (typeof value !== "boolean") {
+		throw new Error(
+			`Tag "${tagName}" expects a boolean literal at ${pathLabel}`,
 		);
 	}
 	return value;

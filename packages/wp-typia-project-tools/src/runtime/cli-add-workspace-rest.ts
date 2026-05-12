@@ -51,6 +51,14 @@ import {
 } from "./workspace-inventory.js";
 import { resolveWorkspaceProject } from "./workspace-project.js";
 
+const MANUAL_REST_REQUEST_BODY_FIELD_NAMES = new Set(["payload", "comment"]);
+const MANUAL_REST_RESPONSE_FIELD_NAMES = new Set([
+	"id",
+	"status",
+	"message",
+	"updatedAt",
+]);
+
 function buildRestResourceRouteRegistrations(
 	restResourceSlug: string,
 	methods: RestResourceMethodId[],
@@ -634,6 +642,8 @@ export async function runAddRestResourceCommand({
 	restResourceName,
 	responseTypeName,
 	routePattern,
+	secretFieldName,
+	secretStateFieldName,
 }: RunAddRestResourceCommandOptions): Promise<{
 	auth?: ManualRestContractAuthId;
 	bodyTypeName?: string;
@@ -650,6 +660,8 @@ export async function runAddRestResourceCommand({
 	restResourceSlug: string;
 	responseTypeName?: string;
 	routePattern?: string;
+	secretFieldName?: string;
+	secretStateFieldName?: string;
 }> {
 	const workspace = resolveWorkspaceProject(cwd);
 	const restResourceSlug = assertValidGeneratedSlug(
@@ -710,6 +722,59 @@ export async function runAddRestResourceCommand({
 				"Manual REST contract GET routes cannot define a body type. Remove --body-type or use POST, PUT, or PATCH.",
 			);
 		}
+		if (secretStateFieldName && !secretFieldName) {
+			throw new Error(
+				"Manual REST contract --secret-state-field requires --secret-field.",
+			);
+		}
+		if (secretFieldName && !resolvedBodyTypeName) {
+			throw new Error(
+				"Manual REST contract secret fields require a request body. Use POST, PUT, or PATCH so a request body is generated.",
+			);
+		}
+		const resolvedSecretFieldName = secretFieldName
+			? assertValidTypeScriptIdentifier(
+					"Manual REST contract secret field",
+					secretFieldName,
+					"wp-typia add rest-resource <name> --manual --method POST --secret-field <field>",
+				)
+			: undefined;
+		const resolvedSecretStateFieldName = resolvedSecretFieldName
+			? assertValidTypeScriptIdentifier(
+					"Manual REST contract secret state field",
+					secretStateFieldName ?? `has${toPascalCase(resolvedSecretFieldName)}`,
+					"wp-typia add rest-resource <name> --manual --method POST --secret-state-field <field>",
+				)
+			: undefined;
+		if (
+			resolvedSecretFieldName &&
+			MANUAL_REST_REQUEST_BODY_FIELD_NAMES.has(resolvedSecretFieldName)
+		) {
+			throw new Error(
+				`Manual REST contract secret field must not reuse scaffolded request body fields: ${Array.from(
+					MANUAL_REST_REQUEST_BODY_FIELD_NAMES,
+				).join(", ")}.`,
+			);
+		}
+		if (
+			resolvedSecretStateFieldName &&
+			MANUAL_REST_RESPONSE_FIELD_NAMES.has(resolvedSecretStateFieldName)
+		) {
+			throw new Error(
+				`Manual REST contract secret state field must not reuse scaffolded response fields: ${Array.from(
+					MANUAL_REST_RESPONSE_FIELD_NAMES,
+				).join(", ")}.`,
+			);
+		}
+		if (
+			resolvedSecretFieldName &&
+			resolvedSecretStateFieldName &&
+			resolvedSecretFieldName === resolvedSecretStateFieldName
+		) {
+			throw new Error(
+				"Manual REST contract secret state field must be different from the raw secret field.",
+			);
+		}
 		const manualTypeNames = [
 			resolvedQueryTypeName,
 			resolvedResponseTypeName,
@@ -746,6 +811,12 @@ export async function runAddRestResourceCommand({
 					queryTypeName: resolvedQueryTypeName,
 					responseTypeName: resolvedResponseTypeName,
 					restResourceSlug,
+					...(resolvedSecretFieldName
+						? { secretFieldName: resolvedSecretFieldName }
+						: {}),
+					...(resolvedSecretStateFieldName
+						? { secretStateFieldName: resolvedSecretStateFieldName }
+						: {}),
 				}),
 				"utf8",
 			);
@@ -818,6 +889,12 @@ export async function runAddRestResourceCommand({
 				queryTypeName: resolvedQueryTypeName,
 				restResourceSlug,
 				responseTypeName: resolvedResponseTypeName,
+				...(resolvedSecretFieldName
+					? { secretFieldName: resolvedSecretFieldName }
+					: {}),
+				...(resolvedSecretStateFieldName
+					? { secretStateFieldName: resolvedSecretStateFieldName }
+					: {}),
 			};
 		} catch (error) {
 			await rollbackWorkspaceMutation(mutationSnapshot);

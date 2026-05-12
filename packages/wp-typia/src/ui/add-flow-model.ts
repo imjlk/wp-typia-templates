@@ -51,6 +51,8 @@ export const addFlowSchema = z.object({
   'query-type': z.string().optional(),
   'response-type': z.string().optional(),
   'route-pattern': z.string().optional(),
+  'secret-field': z.string().optional(),
+  'secret-state-field': z.string().optional(),
   slot: z.string().optional(),
   source: z.string().optional(),
   template: z.string().optional(),

@@ -199,6 +199,40 @@ describe('command option metadata helpers', () => {
     expect(parsed.positionals).toEqual(['transform', 'quote-to-counter']);
   });
 
+  test('parses manual REST secret flags from shared add metadata', () => {
+    const parsed = parseCommandArgvWithMetadata(
+      [
+        'rest-resource',
+        'integration-settings',
+        '--manual',
+        '--method',
+        'POST',
+        '--secret-field',
+        'apiKey',
+        '--secret-state-field',
+        'hasApiKey',
+      ],
+      {
+        extraBooleanOptionNames: ['help', 'version'],
+        parser: buildCommandOptionParser(
+          GLOBAL_OPTION_METADATA,
+          ADD_OPTION_METADATA,
+        ),
+      },
+    );
+
+    expect(parsed.flags).toEqual({
+      manual: true,
+      method: 'POST',
+      'secret-field': 'apiKey',
+      'secret-state-field': 'hasApiKey',
+    });
+    expect(parsed.positionals).toEqual([
+      'rest-resource',
+      'integration-settings',
+    ]);
+  });
+
   test('parses sync preview flags from shared metadata', () => {
     const parsed = parseCommandArgvWithMetadata(['--dry-run', '--check'], {
       extraBooleanOptionNames: ['help', 'version'],

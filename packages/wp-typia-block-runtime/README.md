@@ -29,6 +29,7 @@ import { collectPersistentBlockIdentityRepairs } from '@wp-typia/block-runtime/i
 import { assertResponseMatchesSchema } from '@wp-typia/block-runtime/schema-test';
 import { createNestedAttributeUpdater } from '@wp-typia/block-runtime/validation';
 import { runSyncBlockMetadata } from '@wp-typia/block-runtime/metadata-core';
+import type { tags } from '@wp-typia/block-runtime/typia-tags';
 ```
 
 `wp-typia` remains the CLI package.

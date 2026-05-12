@@ -42,6 +42,11 @@ export const restResourceAddKindEntry =
           ? [
               `Route: ${values.method} /${values.namespace}${values.pathPattern}`,
               `Auth: ${values.auth}`,
+              ...(values.secretFieldName
+                ? [
+                    `Secret field: ${values.secretFieldName} -> ${values.secretStateFieldName}`,
+                  ]
+                : []),
             ]
           : [
               `Methods: ${values.methods}`,
@@ -72,6 +77,8 @@ export const restResourceAddKindEntry =
       'query-type',
       'response-type',
       'route-pattern',
+      'secret-field',
+      'secret-state-field',
     ],
     nameLabel: 'REST resource name',
     async prepareExecution(context) {
@@ -117,6 +124,16 @@ export const restResourceAddKindEntry =
         'route-pattern',
         'routePattern',
       );
+      const secretFieldName = readOptionalDashedOrCamelStringFlag(
+        context.flags,
+        'secret-field',
+        'secretField',
+      );
+      const secretStateFieldName = readOptionalDashedOrCamelStringFlag(
+        context.flags,
+        'secret-state-field',
+        'secretStateField',
+      );
 
       return createNamedExecutionPlan(context, {
         execute: ({ cwd, name }) =>
@@ -136,6 +153,8 @@ export const restResourceAddKindEntry =
             restResourceName: name,
             responseTypeName,
             routePattern,
+            secretFieldName,
+            secretStateFieldName,
           }),
         getValues: (result) => ({
           auth: result.auth ?? '',
@@ -148,6 +167,8 @@ export const restResourceAddKindEntry =
           permissionCallback: result.permissionCallback ?? '',
           restResourceSlug: result.restResourceSlug,
           routePattern: result.routePattern ?? '',
+          secretFieldName: result.secretFieldName ?? '',
+          secretStateFieldName: result.secretStateFieldName ?? '',
         }),
         missingNameMessage: REST_RESOURCE_MISSING_NAME_MESSAGE,
         name,
@@ -157,6 +178,6 @@ export const restResourceAddKindEntry =
     sortOrder: 80,
     supportsDryRun: true,
     usage:
-      'wp-typia add rest-resource <name> [--namespace <vendor/v1>] [--methods <list,read,create,update,delete>] [--route-pattern <route-pattern>] [--permission-callback <callback>] [--controller-class <ClassName>] [--controller-extends <BaseClass>] [--manual --method <GET|POST|PUT|PATCH|DELETE> --auth <public|authenticated|public-write-protected> --path <route-pattern> --query-type <Type> --body-type <Type> --response-type <Type>] [--dry-run]',
+      'wp-typia add rest-resource <name> [--namespace <vendor/v1>] [--methods <list,read,create,update,delete>] [--route-pattern <route-pattern>] [--permission-callback <callback>] [--controller-class <ClassName>] [--controller-extends <BaseClass>] [--manual --method <GET|POST|PUT|PATCH|DELETE> --auth <public|authenticated|public-write-protected> --path <route-pattern> --query-type <Type> --body-type <Type> --response-type <Type> --secret-field <field> --secret-state-field <field>] [--dry-run]',
     visibleFieldNames: () => NAME_NAMESPACE_METHODS_VISIBLE_FIELDS,
   });

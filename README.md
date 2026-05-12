@@ -161,6 +161,7 @@ wp-typia add contract external-retrieve-response --type ExternalRetrieveResponse
 wp-typia add rest-resource snapshots --namespace my-plugin/v1 --methods list,read,create
 wp-typia add rest-resource snapshots --namespace my-plugin/v1 --methods read,update --route-pattern '/snapshots/(?P<id>[\d]+)' --permission-callback my_plugin_can_manage_snapshots
 wp-typia add rest-resource external-record --manual --namespace legacy/v1 --method GET --auth authenticated --path '/records/(?P<id>[\d]+)'
+wp-typia add rest-resource integration-settings --manual --namespace my-plugin/v1 --method POST --secret-field apiKey
 wp-typia add post-meta integration-state --post-type post --type IntegrationStateMeta
 wp-typia add editor-plugin review-workflow --slot sidebar
 wp-typia add editor-plugin seo-notes --slot document-setting-panel
@@ -179,6 +180,11 @@ wp-typia add hooked-block counter-card --anchor core/post-content --position aft
 - Need to describe a REST route owned by another plugin or legacy controller?
   Use `wp-typia add rest-resource <name> --manual` to generate TypeScript
   contracts, schemas, OpenAPI, and clients without PHP route glue.
+- Need settings contracts that accept secrets without returning them? Add
+  `--secret-field <field>` to a manual REST contract. The request body gets a
+  `tags.Secret<"has<Field>">` write-only field from
+  `@wp-typia/block-runtime/typia-tags`, while the response scaffold exposes
+  only a masked boolean such as `hasApiKey`.
 - Need generated REST contracts to fit an existing controller or permission
   model? Add `--route-pattern`, `--permission-callback`, or `--controller-class`
   while keeping generated OpenAPI and client paths aligned.

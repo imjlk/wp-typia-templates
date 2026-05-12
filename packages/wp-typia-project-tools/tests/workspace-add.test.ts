@@ -3622,6 +3622,8 @@ test("canonical CLI can add a type-only manual REST contract to an official work
       "ExternalRecordRequest",
       "--response-type",
       "ExternalRecordResponse",
+      "--secret-field",
+      "apiKey",
     ],
     {
       cwd: targetDir,
@@ -3660,6 +3662,14 @@ test("canonical CLI can add a type-only manual REST contract to an official work
     "api-schemas",
     "response.schema.json"
   );
+  const requestSchemaPath = path.join(
+    targetDir,
+    "src",
+    "rest",
+    "external-record",
+    "api-schemas",
+    "request.schema.json"
+  );
 
   expect(blockConfigSource).toContain('slug: "external-record"');
   expect(blockConfigSource).toContain("mode: 'manual'");
@@ -3681,7 +3691,11 @@ test("canonical CLI can add a type-only manual REST contract to an official work
   expect(syncRestSource).toContain("REST_RESOURCES.filter( isWorkspaceRestResource )");
   expect(typesSource).toContain("export interface ExternalRecordQuery");
   expect(typesSource).toContain("export interface ExternalRecordRequest");
+  expect(typesSource).toContain("apiKey?: string");
+  expect(typesSource).toContain('tags.Secret< "hasApiKey" >');
   expect(typesSource).toContain("export interface ExternalRecordResponse");
+  expect(typesSource).toContain("hasApiKey: boolean");
+  expect(typesSource).not.toContain("apiKey: boolean");
   expect(validatorsSource).toContain("query:");
   expect(validatorsSource).toContain("request:");
   expect(validatorsSource).toContain("response:");
@@ -3701,7 +3715,24 @@ test("canonical CLI can add a type-only manual REST contract to an official work
     "/legacy/v1/records/(?P<id>[\\\\d]+(?:-[\\\\d]+)*)"
   );
   expect(openApiSource).toContain('"x-typia-authIntent": "authenticated"');
+  expect(openApiSource).toContain('"writeOnly": true');
+  expect(openApiSource).toContain('"x-wp-typia-secret": true');
+  expect(openApiSource).toContain('"x-wp-typia-secretStateField": "hasApiKey"');
   expect(fs.existsSync(responseSchemaPath)).toBe(true);
+  expect(fs.existsSync(requestSchemaPath)).toBe(true);
+  const requestSchema = JSON.parse(
+    fs.readFileSync(requestSchemaPath, "utf8")
+  ) as { properties: Record<string, Record<string, unknown>> };
+  const responseSchema = JSON.parse(
+    fs.readFileSync(responseSchemaPath, "utf8")
+  ) as { properties: Record<string, unknown> };
+  expect(requestSchema.properties.apiKey).toMatchObject({
+    writeOnly: true,
+    "x-wp-typia-secret": true,
+    "x-wp-typia-secretStateField": "hasApiKey",
+  });
+  expect(responseSchema.properties).toHaveProperty("hasApiKey");
+  expect(responseSchema.properties).not.toHaveProperty("apiKey");
   expect(
     fs.existsSync(path.join(targetDir, "inc", "rest", "external-record.php"))
   ).toBe(false);
@@ -3736,7 +3767,7 @@ test("canonical CLI can add a type-only manual REST contract to an official work
   ).toThrow("Generated artifacts are missing or stale");
   runCli("npm", ["run", "sync-rest"], { cwd: targetDir });
   typecheckGeneratedProject(targetDir);
-}, 30_000);
+}, 60_000);
 
 test("manual REST contract workflow rejects duplicate type names before writing files", async () => {
   const targetDir = path.join(
@@ -3781,6 +3812,83 @@ test("manual REST contract workflow rejects duplicate type names before writing 
       )
     )
   ).toContain("Manual REST contract type names must be unique");
+  expect(
+    fs.existsSync(path.join(targetDir, "src", "rest", "external-record"))
+  ).toBe(false);
+}, 20_000);
+
+test("manual REST contract workflow rejects secret field name collisions before writing files", async () => {
+  const targetDir = path.join(
+    tempRoot,
+    "demo-workspace-add-manual-rest-contract-secret-collisions"
+  );
+
+  await scaffoldProject({
+    projectDir: targetDir,
+    templateId: workspaceTemplatePackageManifest.name,
+    packageManager: "npm",
+    noInstall: true,
+    answers: {
+      author: "Test Runner",
+      description: "Demo workspace manual rest secret collisions",
+      namespace: "demo-space",
+      phpPrefix: "demo_space",
+      slug: "demo-workspace-add-manual-rest-contract-secret-collisions",
+      textDomain: "demo-space",
+      title: "Demo Workspace Manual Rest Secret Collisions",
+    },
+  });
+
+  linkWorkspaceNodeModules(targetDir);
+
+  expect(
+    getCommandErrorMessage(() =>
+      runCli(
+        "node",
+        [
+          entryPath,
+          "add",
+          "rest-resource",
+          "external-record",
+          "--manual",
+          "--method",
+          "POST",
+          "--secret-field",
+          "payload",
+        ],
+        { cwd: targetDir }
+      )
+    )
+  ).toContain(
+    "Manual REST contract secret field must not reuse scaffolded request body fields"
+  );
+  expect(
+    fs.existsSync(path.join(targetDir, "src", "rest", "external-record"))
+  ).toBe(false);
+
+  expect(
+    getCommandErrorMessage(() =>
+      runCli(
+        "node",
+        [
+          entryPath,
+          "add",
+          "rest-resource",
+          "external-record",
+          "--manual",
+          "--method",
+          "POST",
+          "--secret-field",
+          "apiKey",
+          "--secret-state-field",
+          "status",
+        ],
+        { cwd: targetDir }
+      )
+    )
+  ).toContain(
+    "Manual REST contract secret state field must not reuse scaffolded response fields"
+  );
   expect(
     fs.existsSync(path.join(targetDir, "src", "rest", "external-record"))
   ).toBe(false);

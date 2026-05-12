@@ -154,6 +154,8 @@ export function buildManualRestContractConfigEntry(options: {
  * @param options.queryTypeName Exported query type name.
  * @param options.responseTypeName Exported response type name.
  * @param options.restResourceSlug Normalized workspace REST contract slug.
+ * @param options.secretFieldName Optional raw secret field included only in the request body.
+ * @param options.secretStateFieldName Optional masked response boolean field.
  * @returns TypeScript source for `api-types.ts`.
  */
 export function buildManualRestContractTypesSource(options: {
@@ -161,10 +163,12 @@ export function buildManualRestContractTypesSource(options: {
 	queryTypeName: string;
 	responseTypeName: string;
 	restResourceSlug: string;
+	secretFieldName?: string;
+	secretStateFieldName?: string;
 }): string {
 	const title = toTitleCase(options.restResourceSlug);
 	const lines = [
-		"import { tags } from 'typia';",
+		"import type { tags } from '@wp-typia/block-runtime/typia-tags';",
 		"",
 		`export interface ${options.queryTypeName} {`,
 		"\tid?: string & tags.MinLength< 1 >;",
@@ -173,9 +177,17 @@ export function buildManualRestContractTypesSource(options: {
 	];
 
 	if (options.bodyTypeName) {
+		const secretLines =
+			options.secretFieldName && options.secretStateFieldName
+				? [
+						`\t${options.secretFieldName}?: string & tags.MinLength< 1 > & tags.MaxLength< 4096 > & tags.Secret< ${quoteTsString(options.secretStateFieldName)} >;`,
+						`\t// ${options.secretFieldName} is write-only: persist it server-side and expose ${options.secretStateFieldName} in responses instead of returning the raw value.`,
+					]
+				: [];
 		lines.push(
 			"",
 			`export interface ${options.bodyTypeName} {`,
+			...secretLines,
 			"\tpayload: string & tags.MinLength< 1 >;",
 			"\tcomment?: string & tags.MaxLength< 500 >;",
 			"}",
@@ -185,6 +197,12 @@ export function buildManualRestContractTypesSource(options: {
 	lines.push(
 		"",
 		`export interface ${options.responseTypeName} {`,
+		...(options.secretStateFieldName
+			? [
+					`\t${options.secretStateFieldName}: boolean;`,
+					`\t// Raw secret fields such as ${options.secretFieldName ?? "the request secret"} must never be returned in this response.`,
+				]
+			: []),
 		"\tid: string & tags.MinLength< 1 >;",
 		"\tstatus: 'ok' | 'error';",
 		"\tmessage?: string;",

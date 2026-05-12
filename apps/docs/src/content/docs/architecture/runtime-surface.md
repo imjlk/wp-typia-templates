@@ -34,6 +34,7 @@ This document is descriptive, not normative. For support guarantees, see
   Generated-project helper root.
 - `@wp-typia/block-runtime/migration-types`
 - `@wp-typia/block-runtime/schema-core`
+- `@wp-typia/block-runtime/typia-tags`
 - `@wp-typia/block-runtime/metadata-core`
 - `@wp-typia/block-runtime/metadata-analysis`
 - `@wp-typia/block-runtime/metadata-model`
@@ -66,6 +67,7 @@ This document is descriptive, not normative. For support guarantees, see
 - `@wp-typia/project-tools/typia-llm`
 - `@wp-typia/block-runtime/migration-types`
 - `@wp-typia/block-runtime/schema-core`
+- `@wp-typia/block-runtime/typia-tags`
 - `@wp-typia/block-runtime/metadata-core`
 - `@wp-typia/block-runtime/blocks`
 - `@wp-typia/block-runtime/defaults`

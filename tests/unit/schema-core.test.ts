@@ -127,7 +127,12 @@ describe("schema-core", () => {
 					discriminator: "kind",
 				},
 			},
-			wp: { type: "object" },
+			wp: {
+				secret: true,
+				secretStateField: "hasTarget",
+				type: "object",
+				writeOnly: true,
+			},
 		});
 
 		const schema = manifestAttributeToJsonSchema(attribute);
@@ -135,6 +140,9 @@ describe("schema-core", () => {
 		expect(schema.discriminator).toEqual({ propertyName: "kind" });
 		expect(Array.isArray(schema.oneOf)).toBe(true);
 		expect((schema.oneOf as unknown[]).length).toBe(2);
+		expect(schema.writeOnly).toBe(true);
+		expect(schema["x-wp-typia-secret"]).toBe(true);
+		expect(schema["x-wp-typia-secretStateField"]).toBe("hasTarget");
 	});
 
 	test("manifestAttributeToJsonSchema rejects discriminated union branches that are not objects", () => {

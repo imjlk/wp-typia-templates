@@ -136,6 +136,16 @@ export const ADD_OPTION_METADATA = {
       'Generated REST resource item route pattern relative to the REST namespace.',
     type: 'string',
   },
+  'secret-field': {
+    description:
+      'Write-only request body field for manual settings REST contracts.',
+    type: 'string',
+  },
+  'secret-state-field': {
+    description:
+      'Masked response boolean field for --secret-field; defaults to has<SecretField>.',
+    type: 'string',
+  },
   service: {
     description:
       'Optional local service starter for integration-env workflows (none or docker-compose).',

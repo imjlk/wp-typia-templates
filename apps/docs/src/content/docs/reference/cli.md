@@ -200,6 +200,7 @@ wp-typia add binding-source <name> --block <block-slug|namespace/block-slug> --a
 wp-typia add contract <name> --type <ExportedTypeName>
 wp-typia add rest-resource <name> --namespace <vendor/v1> --methods list,read,create
 wp-typia add rest-resource <name> --namespace <vendor/v1> --methods read,update --route-pattern '/records/(?P<id>[\d]+)' --permission-callback my_plugin_can_manage_records
+wp-typia add rest-resource integration-settings --manual --namespace <vendor/v1> --method POST --secret-field apiKey
 wp-typia add post-meta <name> --post-type post --type IntegrationStateMeta
 wp-typia add ability <name>
 wp-typia add ai-feature <name> --namespace <vendor/v1>
@@ -227,6 +228,8 @@ Common flags:
 | `--permission-callback <callback>`                               | PHP permission callback for generated REST resource route registrations.                                                                                                       |
 | `--controller-class <ClassName>`                                 | PHP controller class wrapper for generated REST resource route callbacks.                                                                                                      |
 | `--controller-extends <BaseClass>`                               | Optional base class for generated REST resource controller wrappers.                                                                                                           |
+| `--secret-field <field>`                                         | Write-only request body field for manual settings REST contracts.                                                                                                              |
+| `--secret-state-field <field>`                                   | Masked response boolean field for `--secret-field`; defaults to `has<SecretField>`.                                                                                            |
 | `--type <ExportedTypeName>`                                      | Exported TypeScript type or interface for standalone contract schema artifacts.                                                                                                |
 | `--post-type <post-type>`                                        | WordPress post type key for post-meta contract scaffolds.                                                                                                                      |
 | `--meta-key <meta-key>`                                          | Optional WordPress meta key for post-meta workflows. Defaults to `_<phpPrefix>_<name>`.                                                                                        |
@@ -260,6 +263,14 @@ named type in `scripts/block-config.ts`, and generate
 `src/contracts/<name>.schema.json`. They do not create PHP route glue. Use them
 for external WordPress routes, PHP assertions, or smoke tests that need a stable
 runtime schema before a full `rest-resource` or manual REST contract exists.
+
+Manual REST settings contracts can declare write-only secrets with
+`--secret-field <field>`. The generated request type marks that property with
+`tags.Secret<"has<Field>">` from
+`@wp-typia/block-runtime/typia-tags`, generated request schemas/OpenAPI include
+`writeOnly: true`, and the response scaffold exposes only the masked state
+field such as `hasApiKey`. Edit the PHP route owner to persist the raw secret
+server-side and never return it from response/client artifacts.
 
 Post-meta contract scaffolds create `src/post-meta/<name>/types.ts`, generate
 `meta.schema.json`, and wire `inc/post-meta/<name>.php` with a

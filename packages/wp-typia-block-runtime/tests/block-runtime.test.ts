@@ -371,4 +371,118 @@ describe("@wp-typia/block-runtime", () => {
 			rmSync(projectRoot, { force: true, recursive: true });
 		}
 	});
+
+	test("REST schemas and OpenAPI document write-only secret fields", async () => {
+		const { defineEndpointManifest, syncRestOpenApi, syncTypeSchemas } =
+			await import("@wp-typia/block-runtime/metadata-core");
+		const packageRoot = resolve(import.meta.dir, "..");
+		const projectRoot = mkdtempSync(resolve(packageRoot, ".tmp-secret-schema-"));
+
+		try {
+			writeFileSync(
+				resolve(projectRoot, "api-types.ts"),
+				[
+					"import type { tags } from '@wp-typia/block-runtime/typia-tags';",
+					"",
+					"export interface SettingsUpdateRequest {",
+					"\tapiKey?: string & tags.MinLength< 1 > & tags.Secret< 'hasApiKey' >;",
+					"\twebhookSecret?: string & tags.WriteOnly< true >;",
+					"}",
+					"",
+					"export interface SettingsResponse {",
+					"\thasApiKey: boolean;",
+					"\twebhookConfigured: boolean;",
+					"}",
+					"",
+				].join("\n"),
+				"utf8",
+			);
+
+			await syncTypeSchemas({
+				jsonSchemaFile: "request.schema.json",
+				openApiFile: "request.openapi.json",
+				projectRoot,
+				sourceTypeName: "SettingsUpdateRequest",
+				typesFile: "api-types.ts",
+			});
+			await syncTypeSchemas({
+				jsonSchemaFile: "response.schema.json",
+				projectRoot,
+				sourceTypeName: "SettingsResponse",
+				typesFile: "api-types.ts",
+			});
+			await syncRestOpenApi({
+				manifest: defineEndpointManifest({
+					contracts: {
+						request: {
+							sourceTypeName: "SettingsUpdateRequest",
+						},
+						response: {
+							sourceTypeName: "SettingsResponse",
+						},
+					},
+					endpoints: [
+						{
+							auth: "authenticated",
+							bodyContract: "request",
+							method: "POST",
+							operationId: "updateSettings",
+							path: "/demo/v1/settings",
+							responseContract: "response",
+							tags: ["Settings"],
+							wordpressAuth: {
+								mechanism: "rest-nonce",
+							},
+						},
+					],
+				}),
+				openApiFile: "api.openapi.json",
+				projectRoot,
+				typesFile: "api-types.ts",
+			});
+
+			const requestSchema = JSON.parse(
+				readFileSync(resolve(projectRoot, "request.schema.json"), "utf8"),
+			) as {
+				properties: Record<string, Record<string, unknown>>;
+			};
+			const responseSchema = JSON.parse(
+				readFileSync(resolve(projectRoot, "response.schema.json"), "utf8"),
+			) as {
+				properties: Record<string, unknown>;
+			};
+			const openApi = JSON.parse(
+				readFileSync(resolve(projectRoot, "api.openapi.json"), "utf8"),
+			) as {
+				components: {
+					schemas: Record<string, { properties: Record<string, Record<string, unknown>> }>;
+				};
+			};
+
+			expect(requestSchema.properties.apiKey).toMatchObject({
+				"description":
+					"Write-only secret value. Responses should expose only masked state.",
+				writeOnly: true,
+				"x-wp-typia-secret": true,
+				"x-wp-typia-secretStateField": "hasApiKey",
+			});
+			expect(requestSchema.properties.webhookSecret).toMatchObject({
+				writeOnly: true,
+			});
+			expect(responseSchema.properties).not.toHaveProperty("apiKey");
+			expect(responseSchema.properties).toHaveProperty("hasApiKey");
+			expect(
+				openApi.components.schemas.SettingsUpdateRequest.properties.apiKey,
+			).toMatchObject({
+				writeOnly: true,
+				"x-wp-typia-secret": true,
+				"x-wp-typia-secretStateField": "hasApiKey",
+			});
+			expect(
+				openApi.components.schemas.SettingsResponse.properties,
+			).not.toHaveProperty("apiKey");
+		} finally {
+			rmSync(projectRoot, { force: true, recursive: true });
+		}
+	});
 });
