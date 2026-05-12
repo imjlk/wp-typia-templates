@@ -3877,6 +3877,8 @@ test("canonical CLI can add a typed admin settings screen from a manual REST con
   expect(dataSource).toContain("saveIntegrationSettingsSettings");
   expect(dataSource).not.toContain("apiKey: ''");
   expect(dataSource).toContain("delete requestBody[\"apiKey\"]");
+  expect(dataSource).toContain("if (!result.isValid)");
+  expect(dataSource).not.toContain("!result.data");
   expect(dataSource).toContain(
     "body: requestBody as unknown as IntegrationSettingsSettingsRequest"
   );

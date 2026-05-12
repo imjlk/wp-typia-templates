@@ -640,7 +640,7 @@ ${requestBodySource}
 \t\tbody: requestBody as unknown as ${pascalName}SettingsRequest,
 \t\tquery: query as ${pascalName}SettingsQuery,
 \t});
-\tif (!result.isValid || !result.data) {
+\tif (!result.isValid) {
 \t\tconst message =
 \t\t\tresult.validationTarget === 'request'
 \t\t\t\t? 'Settings request failed validation.'
@@ -648,7 +648,7 @@ ${requestBodySource}
 \t\tthrow new Error(formatValidationError(message, result.errors));
 \t}
 
-\treturn result.data;
+\treturn result.data as ${pascalName}SettingsResponse;
 }
 `;
 }
