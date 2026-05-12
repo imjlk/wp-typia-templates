@@ -54,7 +54,7 @@ secondary imports compared with the core package roots and primary subpaths.
   generated JSON Schema artifacts.
 - `@wp-typia/block-runtime/typia-tags`
   Type-only Typia tag namespace that includes wp-typia metadata tags such as
-  `Secret`, `Source`, and `Selector`.
+  `Secret`, `WriteOnly`, `Source`, and `Selector`.
 - `@wp-typia/block-runtime/metadata-core`
   Metadata sync and endpoint manifest helpers.
 - `@wp-typia/block-runtime/metadata-analysis`

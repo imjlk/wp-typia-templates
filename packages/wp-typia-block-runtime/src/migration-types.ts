@@ -42,10 +42,24 @@ export interface ManifestWpMetadata {
 	enum?: JsonValue[] | null;
 	hasDefault?: boolean;
 	selector?: string | null;
+	/**
+	 * Marks a field as containing sensitive data such as an API key or token.
+	 * Secret fields are normally paired with `writeOnly` and excluded from
+	 * response contracts.
+	 */
 	secret?: boolean;
+	/**
+	 * Optional companion response field that exposes masked state for a secret,
+	 * for example `hasApiKey`, without returning the raw value.
+	 */
 	secretStateField?: string | null;
 	source?: "html" | "text" | "rich-text" | null;
 	type?: string | null;
+	/**
+	 * Marks a field as accepted in writes but not returned to clients. When
+	 * combined with `secret`, generated schemas describe the field as sensitive
+	 * and write-only.
+	 */
 	writeOnly?: boolean;
 }
 

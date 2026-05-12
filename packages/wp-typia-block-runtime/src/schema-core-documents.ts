@@ -180,14 +180,6 @@ function manifestUnionToJsonSchema(union: ManifestUnionMetadata): JsonSchemaObje
 export function manifestAttributeToJsonSchema(
 	attribute: ManifestAttribute,
 ): JsonSchemaObject {
-	if (attribute.ts.union) {
-		const schema = manifestUnionToJsonSchema(attribute.ts.union);
-		if (attribute.typia.hasDefault) {
-			schema.default = attribute.typia.defaultValue ?? null;
-		}
-		return schema;
-	}
-
 	const schema: JsonSchemaObject = {};
 	const enumValues = Array.isArray(attribute.wp.enum) ? attribute.wp.enum : null;
 	if (enumValues && enumValues.length > 0) {
@@ -233,9 +225,10 @@ export function manifestAttributeToJsonSchema(
 		}
 		case "union":
 			if (attribute.ts.union) {
-				return manifestUnionToJsonSchema(attribute.ts.union);
+				Object.assign(schema, manifestUnionToJsonSchema(attribute.ts.union));
+			} else {
+				schema.oneOf = [];
 			}
-			schema.oneOf = [];
 			break;
 		default:
 			schema.type = attribute.wp.type ?? "string";

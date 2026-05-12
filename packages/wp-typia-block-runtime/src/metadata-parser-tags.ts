@@ -350,9 +350,11 @@ export function applyTag(
 				pathLabel,
 			);
 			return;
-		case "WriteOnly":
-			node.wp.writeOnly = parseBooleanArgument(arg, tagName, pathLabel);
+		case "WriteOnly": {
+			const writeOnly = parseBooleanArgument(arg, tagName, pathLabel);
+			node.wp.writeOnly = node.wp.secret ? true : writeOnly;
 			return;
+		}
 		default:
 			return;
 	}

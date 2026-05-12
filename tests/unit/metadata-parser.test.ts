@@ -25,7 +25,9 @@ function createParserFixtureRoot(): string {
 			'  export type Minimum<T extends number> = T & { readonly __minimum?: unique symbol };',
 			'  export type MinLength<T extends number> = T & { readonly __minLength?: unique symbol };',
 			'  export type Selector<T extends string> = T & { readonly __selector?: unique symbol };',
+			'  export type Secret<T extends string> = T & { readonly __secret?: unique symbol };',
 			'  export type Source<T extends string> = T & { readonly __source?: unique symbol };',
+			'  export type WriteOnly<T extends boolean> = T & { readonly __writeOnly?: unique symbol };',
 			"}",
 			"",
 		].join("\n"),
@@ -63,6 +65,7 @@ function createParserFixtureRoot(): string {
 			"  status: Status;",
 			"  body: EmailBody | SmsBody;",
 			'  excerpt: string & tags.Source<"text"> & tags.Selector<".demo__excerpt">;',
+			'  secret: string & tags.Secret<"hasSecret"> & tags.WriteOnly<false>;',
 			"  settings: { enabled: boolean } & tags.Default<{ enabled: true }>;",
 			'  labels: string[] & tags.Default<["one", "two"]>;',
 			"}",
@@ -129,6 +132,13 @@ describe("metadata-parser", () => {
 				secretStateField: null,
 				source: "text",
 				writeOnly: false,
+			});
+			expect(parserDemo.properties?.secret.wp).toEqual({
+				selector: null,
+				secret: true,
+				secretStateField: "hasSecret",
+				source: null,
+				writeOnly: true,
 			});
 
 			expect(parserDemo.properties?.settings.defaultValue).toEqual({
