@@ -97,6 +97,13 @@ export function buildAdminViewConfigSource(
   return buildDefaultAdminViewConfigSource(adminViewSlug, textDomain);
 }
 
+/**
+ * Delegates default admin-view screen generation to buildDefaultAdminViewScreenSource.
+ *
+ * @param adminViewSlug - Slug for the generated admin view.
+ * @param textDomain - WordPress i18n text domain for generated labels.
+ * @returns Generated TSX source for the default admin-view screen.
+ */
 export function buildAdminViewScreenSource(
   adminViewSlug: string,
   textDomain: string,
@@ -104,6 +111,13 @@ export function buildAdminViewScreenSource(
   return buildDefaultAdminViewScreenSource(adminViewSlug, textDomain);
 }
 
+/**
+ * Delegates admin-view PHP registration generation to buildSharedAdminViewPhpSource.
+ *
+ * @param adminViewSlug - Slug for the generated admin view.
+ * @param workspace - Workspace project metadata for PHP prefixes and paths.
+ * @returns Generated PHP source for registering and enqueueing the admin view.
+ */
 export function buildAdminViewPhpSource(
   adminViewSlug: string,
   workspace: WorkspaceProject,

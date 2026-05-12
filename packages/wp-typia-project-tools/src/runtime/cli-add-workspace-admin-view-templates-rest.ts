@@ -3,6 +3,13 @@ import { type AdminViewRestResource } from './cli-add-workspace-admin-view-types
 import { getAdminViewRelativeModuleSpecifier } from './cli-add-workspace-admin-view-templates-shared.js';
 import { toCamelCase, toPascalCase } from './string-case.js';
 
+/**
+ * Builds TypeScript item and dataset types for a REST-backed admin view.
+ *
+ * @param adminViewSlug - Admin-view slug used to derive generated type names.
+ * @param restResource - REST resource metadata used for imported record types.
+ * @returns Generated TypeScript source for REST admin-view types.
+ */
 export function buildRestAdminViewTypesSource(
   adminViewSlug: string,
   restResource: AdminViewRestResource,
@@ -30,6 +37,13 @@ export interface ${dataSetTypeName} {
 `;
 }
 
+/**
+ * Builds a DataViews config module for a REST-backed admin view.
+ *
+ * @param adminViewSlug - Admin-view slug used to derive generated identifiers.
+ * @param textDomain - WordPress i18n text domain for generated labels.
+ * @returns Generated TypeScript source for the REST DataViews config.
+ */
 export function buildRestAdminViewConfigSource(
   adminViewSlug: string,
   textDomain: string,
@@ -67,6 +81,13 @@ export const ${dataViewsName} = defineDataViews<${itemTypeName}>({
 `;
 }
 
+/**
+ * Builds a REST list data module with pagination mapping for an admin view.
+ *
+ * @param adminViewSlug - Admin-view slug used to derive generated identifiers.
+ * @param restResource - REST resource metadata used for generated imports.
+ * @returns Generated TypeScript source for REST data loading.
+ */
 export function buildRestAdminViewDataSource(
   adminViewSlug: string,
   restResource: AdminViewRestResource,

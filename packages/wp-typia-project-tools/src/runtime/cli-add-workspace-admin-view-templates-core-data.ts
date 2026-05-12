@@ -2,6 +2,13 @@ import { quoteTsString } from './cli-add-shared.js';
 import { type AdminViewCoreDataSource } from './cli-add-workspace-admin-view-types.js';
 import { toCamelCase, toPascalCase, toTitleCase } from './string-case.js';
 
+/**
+ * Builds TypeScript item and dataset types for a core-data-backed admin view.
+ *
+ * @param adminViewSlug - Admin-view slug used to derive generated type names.
+ * @param coreDataSource - WordPress core-data entity source for the admin view.
+ * @returns Generated TypeScript source for core-data admin-view types.
+ */
 export function buildCoreDataAdminViewTypesSource(
   adminViewSlug: string,
   coreDataSource: AdminViewCoreDataSource,
@@ -80,6 +87,14 @@ export interface ${dataSetTypeName} {
 `;
 }
 
+/**
+ * Builds a DataViews config module for a core-data-backed admin view.
+ *
+ * @param adminViewSlug - Admin-view slug used to derive generated identifiers.
+ * @param textDomain - WordPress i18n text domain for generated labels.
+ * @param coreDataSource - WordPress core-data entity source for field selection.
+ * @returns Generated TypeScript source for the core-data DataViews config.
+ */
 export function buildCoreDataAdminViewConfigSource(
   adminViewSlug: string,
   textDomain: string,
@@ -141,7 +156,7 @@ export function buildCoreDataAdminViewConfigSource(
 \t\t},
 \t\ttitle: {
 \t\t\tenableGlobalSearch: true,
-\t\t\tlabel: __( 'Name', ${quoteTsString(textDomain)} ),
+\t\t\tlabel: __( 'Title', ${quoteTsString(textDomain)} ),
 \t\t\tschema: { type: 'string' },
 \t\t},
 \t\tupdatedAt: {
@@ -180,6 +195,13 @@ ${additionalFieldsSource}
 `;
 }
 
+/**
+ * Builds data hooks for loading records from the WordPress core-data store.
+ *
+ * @param adminViewSlug - Admin-view slug used to derive generated identifiers.
+ * @param coreDataSource - WordPress core-data entity source for generated hooks.
+ * @returns Generated TypeScript source for core-data data access.
+ */
 export function buildCoreDataAdminViewDataSource(
   adminViewSlug: string,
   coreDataSource: AdminViewCoreDataSource,
@@ -397,6 +419,13 @@ export function ${useAdminViewDataName}(view: DataViewsView<${itemTypeName}>) {
 `;
 }
 
+/**
+ * Builds the React screen module for a core-data-backed admin view.
+ *
+ * @param adminViewSlug - Admin-view slug used to derive generated identifiers.
+ * @param textDomain - WordPress i18n text domain for generated labels.
+ * @returns Generated TSX source for the core-data admin-view screen.
+ */
 export function buildCoreDataAdminViewScreenSource(
   adminViewSlug: string,
   textDomain: string,

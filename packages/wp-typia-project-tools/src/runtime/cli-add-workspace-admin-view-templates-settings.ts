@@ -3,6 +3,13 @@ import { type AdminViewManualSettingsRestResource } from './cli-add-workspace-ad
 import { getAdminViewRelativeModuleSpecifier } from './cli-add-workspace-admin-view-templates-shared.js';
 import { toCamelCase, toPascalCase, toTitleCase } from './string-case.js';
 
+/**
+ * Builds TypeScript request, response, and form-state types for REST settings.
+ *
+ * @param adminViewSlug - Admin-view slug used to derive generated type names.
+ * @param restResource - Manual REST settings resource metadata for imports.
+ * @returns Generated TypeScript source for REST settings types.
+ */
 export function buildRestSettingsAdminViewTypesSource(
   adminViewSlug: string,
   restResource: AdminViewManualSettingsRestResource,
@@ -33,6 +40,14 @@ export interface ${loadResultTypeName} {
 `;
 }
 
+/**
+ * Builds display metadata for a manual REST settings form admin screen.
+ *
+ * @param adminViewSlug - Admin-view slug used to derive generated identifiers.
+ * @param textDomain - WordPress i18n text domain for generated labels.
+ * @param restResource - Manual REST settings metadata, including secret fields.
+ * @returns Generated TypeScript source for settings form configuration.
+ */
 export function buildRestSettingsAdminViewConfigSource(
   adminViewSlug: string,
   textDomain: string,
@@ -92,6 +107,13 @@ ${secretFieldSource}
 `;
 }
 
+/**
+ * Builds load and save helpers for a manual REST settings form.
+ *
+ * @param adminViewSlug - Admin-view slug used to derive generated identifiers.
+ * @param restResource - Manual REST settings metadata for API imports and secret handling.
+ * @returns Generated TypeScript source for settings data helpers.
+ */
 export function buildRestSettingsAdminViewDataSource(
   adminViewSlug: string,
   restResource: AdminViewManualSettingsRestResource,
@@ -170,6 +192,13 @@ ${requestBodySource}
 `;
 }
 
+/**
+ * Builds the React form screen for a manual REST settings admin view.
+ *
+ * @param adminViewSlug - Admin-view slug used to derive generated identifiers.
+ * @param textDomain - WordPress i18n text domain for generated labels.
+ * @returns Generated TSX source for the REST settings screen.
+ */
 export function buildRestSettingsAdminViewScreenSource(
   adminViewSlug: string,
   textDomain: string,

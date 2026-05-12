@@ -13,6 +13,13 @@ import { quotePhpString } from './php-utils.js';
 import { toPascalCase, toTitleCase } from './string-case.js';
 import { type WorkspaceProject } from './workspace-project.js';
 
+/**
+ * Resolves a relative module specifier from an admin-view module to a workspace file.
+ *
+ * @param adminViewSlug - Admin-view slug that determines the generated source directory.
+ * @param workspaceFile - Workspace file path to import from the admin-view module.
+ * @returns Relative extensionless module specifier for generated TypeScript imports.
+ */
 export function getAdminViewRelativeModuleSpecifier(
   adminViewSlug: string,
   workspaceFile: string,
@@ -27,6 +34,13 @@ export function getAdminViewRelativeModuleSpecifier(
     : `./${relativeModulePath}`;
 }
 
+/**
+ * Builds one workspace admin-view config entry.
+ *
+ * @param adminViewSlug - Admin-view slug used for generated file paths.
+ * @param source - Optional source metadata stored with the config entry.
+ * @returns Generated TypeScript object entry for the admin-view registry.
+ */
 export function buildAdminViewConfigEntry(
   adminViewSlug: string,
   source: AdminViewSource | undefined,
@@ -45,6 +59,12 @@ export function buildAdminViewConfigEntry(
     .join('\n');
 }
 
+/**
+ * Builds the admin-view registry source that imports generated view entries.
+ *
+ * @param adminViewSlugs - Ordered admin-view slugs to import into the registry.
+ * @returns Generated TypeScript source for the admin-view registry module.
+ */
 export function buildAdminViewRegistrySource(adminViewSlugs: string[]): string {
   const importLines = adminViewSlugs
     .map((adminViewSlug) => `import './${adminViewSlug}';`)
@@ -53,6 +73,13 @@ export function buildAdminViewRegistrySource(adminViewSlugs: string[]): string {
   return `${importLines}${importLines ? '\n\n' : ''}// wp-typia add admin-view entries\n`;
 }
 
+/**
+ * Builds the generated admin-view browser entrypoint.
+ *
+ * @param adminViewSlug - Admin-view slug used to derive component and root ids.
+ * @param options - Optional entrypoint generation flags.
+ * @returns Generated TSX source for mounting the admin-view screen.
+ */
 export function buildAdminViewEntrySource(
   adminViewSlug: string,
   options: { includeDataViewsStyle?: boolean } = {},
@@ -89,6 +116,11 @@ if (document.readyState === 'loading') {
 `;
 }
 
+/**
+ * Builds shared SCSS for generated admin-view screens.
+ *
+ * @returns Generated SCSS source for admin-view layouts and settings forms.
+ */
 export function buildAdminViewStyleSource(): string {
   return `.wp-typia-admin-view-screen {
 \tbox-sizing: border-box;
@@ -146,6 +178,13 @@ export function buildAdminViewStyleSource(): string {
 `;
 }
 
+/**
+ * Builds the PHP registration module for a generated admin-view page.
+ *
+ * @param adminViewSlug - Admin-view slug used for hooks, handles, and root ids.
+ * @param workspace - Workspace metadata used for PHP prefixes and text domains.
+ * @returns Generated PHP source for registering and enqueueing the admin view.
+ */
 export function buildAdminViewPhpSource(
   adminViewSlug: string,
   workspace: WorkspaceProject,

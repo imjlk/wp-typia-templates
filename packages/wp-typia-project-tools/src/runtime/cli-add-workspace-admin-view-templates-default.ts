@@ -1,6 +1,12 @@
 import { quoteTsString } from './cli-add-shared.js';
 import { toCamelCase, toPascalCase, toTitleCase } from './string-case.js';
 
+/**
+ * Builds starter item and dataset types for the default admin-view variant.
+ *
+ * @param adminViewSlug - Admin-view slug used to derive generated type names.
+ * @returns Generated TypeScript source for default admin-view types.
+ */
 export function buildDefaultAdminViewTypesSource(adminViewSlug: string): string {
   const pascalName = toPascalCase(adminViewSlug);
   const itemTypeName = `${pascalName}AdminViewItem`;
@@ -26,6 +32,13 @@ export interface ${dataSetTypeName} {
 `;
 }
 
+/**
+ * Builds a DataViews config module for the default admin-view variant.
+ *
+ * @param adminViewSlug - Admin-view slug used to derive generated identifiers.
+ * @param textDomain - WordPress i18n text domain for generated labels.
+ * @returns Generated TypeScript source for the default DataViews config.
+ */
 export function buildDefaultAdminViewConfigSource(
   adminViewSlug: string,
   textDomain: string,
@@ -96,6 +109,12 @@ export const ${dataViewsName} = defineDataViews<${itemTypeName}>({
 `;
 }
 
+/**
+ * Builds an in-memory starter data module for the default admin-view variant.
+ *
+ * @param adminViewSlug - Admin-view slug used to derive generated identifiers.
+ * @returns Generated TypeScript source for starter data loading.
+ */
 export function buildDefaultAdminViewDataSource(adminViewSlug: string): string {
   const pascalName = toPascalCase(adminViewSlug);
   const camelName = toCamelCase(adminViewSlug);
@@ -179,6 +198,13 @@ export async function ${fetchName}(
 `;
 }
 
+/**
+ * Builds the React screen module for the default admin-view variant.
+ *
+ * @param adminViewSlug - Admin-view slug used to derive generated identifiers.
+ * @param textDomain - WordPress i18n text domain for generated labels.
+ * @returns Generated TSX source for the default admin-view screen.
+ */
 export function buildAdminViewScreenSource(
   adminViewSlug: string,
   textDomain: string,

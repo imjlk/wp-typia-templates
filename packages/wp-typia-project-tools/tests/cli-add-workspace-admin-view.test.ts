@@ -128,3 +128,15 @@ test('admin-view template barrel delegates to focused variant emitters', () => {
     ),
   );
 });
+
+test('core-data admin-view config labels post title fields as title', () => {
+  const postTypeSource: AdminViewCoreDataSource = {
+    entityKind: 'postType',
+    entityName: 'post',
+    kind: 'core-data',
+  };
+
+  expect(
+    buildCoreDataAdminViewConfigSource('posts', 'demo-space', postTypeSource),
+  ).toContain('label: __( \'Title\', "demo-space" )');
+});
