@@ -5,6 +5,7 @@ import {
 	parsePackageManagerField,
 	type PackageManagerId,
 } from "./package-managers.js";
+import { readJsonFileSync } from "./json-utils.js";
 
 export const WORKSPACE_TEMPLATE_PACKAGE = "@wp-typia/create-workspace-template";
 
@@ -48,15 +49,9 @@ export function parseWorkspacePackageJson(projectDirOrManifestPath: string): Wor
 			? projectDirOrManifestPath
 			: path.join(projectDirOrManifestPath, "package.json");
 
-	try {
-		return JSON.parse(fs.readFileSync(packageJsonPath, "utf8")) as WorkspacePackageJson;
-	} catch (error) {
-		throw new Error(
-			`Failed to parse workspace package manifest at ${packageJsonPath}: ${
-				error instanceof Error ? error.message : String(error)
-			}`,
-		);
-	}
+	return readJsonFileSync<WorkspacePackageJson>(packageJsonPath, {
+		context: "workspace package manifest",
+	});
 }
 
 function getWorkspaceMetadataIssues(packageJson: WorkspacePackageJson): string[] {

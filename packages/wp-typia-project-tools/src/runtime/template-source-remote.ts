@@ -13,6 +13,11 @@ import {
 import { copyRawDirectory } from './template-render.js'
 import { createManagedTempRoot } from './temp-roots.js'
 import { pathExists } from './fs-async.js'
+import {
+  readJsonFile,
+  readJsonFileSync,
+  safeJsonParse,
+} from './json-utils.js'
 import type {
   ResolvedTemplateSource,
   SeedSource,
@@ -60,10 +65,9 @@ function readRemoteBlockJson(blockDir: string): Record<string, unknown> {
     path.join(sourceRoot, 'block.json'),
   ]) {
     if (fs.existsSync(candidate)) {
-      return JSON.parse(fs.readFileSync(candidate, 'utf8')) as Record<
-        string,
-        unknown
-      >
+      return readJsonFileSync<Record<string, unknown>>(candidate, {
+        context: 'remote block metadata',
+      })
     }
   }
 
@@ -79,10 +83,9 @@ async function readRemoteBlockJsonAsync(
     path.join(sourceRoot, 'block.json'),
   ]) {
     if (await pathExists(candidate)) {
-      return JSON.parse(await fsp.readFile(candidate, 'utf8')) as Record<
-        string,
-        unknown
-      >
+      return readJsonFile<Record<string, unknown>>(candidate, {
+        context: 'remote block metadata',
+      })
     }
   }
 
@@ -144,9 +147,12 @@ function readTemplatePackageJson(
         maxBytes: getExternalTemplatePackageJsonMaxBytes(),
       })
       return {
-        packageJson: JSON.parse(fs.readFileSync(candidate, 'utf8')) as {
+        packageJson: safeJsonParse<{
           wpTypia?: { projectType?: unknown }
-        },
+        }>(fs.readFileSync(candidate, 'utf8'), {
+          context: 'template metadata file',
+          filePath: candidate,
+        }),
         sourcePath: candidate,
       }
     } catch (error) {
@@ -181,9 +187,12 @@ async function readTemplatePackageJsonAsync(
         maxBytes: getExternalTemplatePackageJsonMaxBytes(),
       })
       return {
-        packageJson: JSON.parse(await fsp.readFile(candidate, 'utf8')) as {
+        packageJson: safeJsonParse<{
           wpTypia?: { projectType?: unknown }
-        },
+        }>(await fsp.readFile(candidate, 'utf8'), {
+          context: 'template metadata file',
+          filePath: candidate,
+        }),
         sourcePath: candidate,
       }
     } catch (error) {
@@ -444,12 +453,12 @@ async function patchRemotePackageJson(
   needsInteractivity: boolean,
 ): Promise<void> {
   const packageJsonPath = path.join(templateDir, 'package.json.mustache')
-  const packageJson = JSON.parse(
-    await fsp.readFile(packageJsonPath, 'utf8'),
-  ) as {
+  const packageJson = await readJsonFile<{
     dependencies?: Record<string, string>
     devDependencies?: Record<string, string>
-  }
+  }>(packageJsonPath, {
+    context: 'remote package template manifest',
+  })
   const existingDependencies = { ...(packageJson.dependencies ?? {}) }
   const existingDevDependencies = { ...(packageJson.devDependencies ?? {}) }
 

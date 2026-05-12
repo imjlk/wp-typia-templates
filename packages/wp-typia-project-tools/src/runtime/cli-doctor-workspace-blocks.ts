@@ -14,6 +14,7 @@ import {
 	HOOKED_BLOCK_ANCHOR_PATTERN,
 	HOOKED_BLOCK_POSITION_SET,
 } from "./hooked-blocks.js";
+import { readJsonFileSync } from "./json-utils.js";
 import {
 	hasExecutablePattern,
 	hasUncommentedPattern,
@@ -115,7 +116,9 @@ function readWorkspaceBlockIframeMetadata(
 
 	try {
 		const document = parseScaffoldBlockMetadata<WorkspaceBlockIframeMetadata>(
-			JSON.parse(fs.readFileSync(blockJsonPath, "utf8")),
+			readJsonFileSync(blockJsonPath, {
+				context: "workspace block metadata",
+			}),
 		);
 		return {
 			blockJsonRelativePath,
@@ -304,7 +307,9 @@ function checkWorkspaceBlockMetadata(
 	let blockJson: { name: string; textdomain?: string };
 	try {
 		blockJson = parseScaffoldBlockMetadata<{ textdomain?: string }>(
-			JSON.parse(fs.readFileSync(blockJsonPath, "utf8")),
+			readJsonFileSync(blockJsonPath, {
+				context: "workspace block metadata",
+			}),
 		);
 	} catch (error) {
 		return createDoctorCheck(
@@ -350,7 +355,9 @@ function checkWorkspaceBlockHooks(
 	let blockJson: Record<string, unknown> & { blockHooks?: unknown };
 	try {
 		blockJson = parseScaffoldBlockMetadata<Record<string, unknown> & { blockHooks?: unknown }>(
-			JSON.parse(fs.readFileSync(blockJsonPath, "utf8")),
+			readJsonFileSync(blockJsonPath, {
+				context: "workspace block metadata",
+			}),
 		);
 	} catch (error) {
 		return createDoctorCheck(

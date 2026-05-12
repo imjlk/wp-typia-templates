@@ -10,6 +10,7 @@ import {
 import type { PackageManagerId } from "./package-managers.js";
 import type { GeneratedPackageJson } from "./package-json-types.js";
 import { readOptionalUtf8File } from "./fs-async.js";
+import { safeJsonParse } from "./json-utils.js";
 
 const LOCKFILES: Record<PackageManagerId, string[]> = {
 	bun: ["bun.lock", "bun.lockb"],
@@ -57,7 +58,10 @@ export async function normalizePackageJson(
 	}
 
 	const packageManager = getPackageManager(packageManagerId);
-	const packageJson = JSON.parse(packageJsonSource) as GeneratedPackageJson;
+	const packageJson = safeJsonParse<GeneratedPackageJson>(packageJsonSource, {
+		context: "generated package manifest",
+		filePath: packageJsonPath,
+	});
 	if (packageManagerId === "npm") {
 		delete packageJson.packageManager;
 	} else {

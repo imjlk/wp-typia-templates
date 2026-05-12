@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { readJsonFileSync } from "./json-utils.js";
 import { getBuiltInTemplateMetadataDefaults } from "./template-defaults.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -17,9 +18,11 @@ function resolveValidProjectToolsPackageRoot(
 	}
 
 	try {
-		const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf8")) as {
+		const packageJson = readJsonFileSync<{
 			name?: string;
-		};
+		}>(packageJsonPath, {
+			context: "project-tools package manifest override",
+		});
 		return packageJson.name === PROJECT_TOOLS_PACKAGE_NAME
 			? candidateRoot
 			: undefined;
@@ -52,12 +55,15 @@ export function resolvePackageRoot(startDir: string): string {
 		const packageJsonPath = path.join(currentDir, "package.json");
 		if (fs.existsSync(packageJsonPath)) {
 			try {
-				const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf8")) as { name?: string };
+				const packageJson = readJsonFileSync<{ name?: string }>(packageJsonPath, {
+					context: "project-tools package root discovery manifest",
+				});
 				if (packageJson.name === PROJECT_TOOLS_PACKAGE_NAME) {
 					return currentDir;
 				}
 			} catch {
-				// Ignore malformed package.json while walking upward.
+				// Ignore malformed package.json while walking upward; discovery should
+				// keep searching parent directories instead of failing on unrelated files.
 			}
 		}
 

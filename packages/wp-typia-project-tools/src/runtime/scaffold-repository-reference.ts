@@ -1,8 +1,8 @@
-import fs from "node:fs";
 import { createRequire } from "node:module";
 import path from "node:path";
 
 import { getOptionalNodeErrorCode } from "./fs-async.js";
+import { readJsonFileSync } from "./json-utils.js";
 import { PROJECT_TOOLS_PACKAGE_ROOT } from "./template-registry.js";
 
 interface RepositoryPackageManifest {
@@ -26,9 +26,9 @@ function readRepositoryPackageManifest(
 	packageJsonPath: string,
 ): RepositoryPackageManifest | null {
 	try {
-		return JSON.parse(
-			fs.readFileSync(packageJsonPath, "utf8"),
-		) as RepositoryPackageManifest;
+		return readJsonFileSync<RepositoryPackageManifest>(packageJsonPath, {
+			context: "repository package manifest",
+		});
 	} catch (error) {
 		if (getOptionalNodeErrorCode(error) === "ENOENT") {
 			return null;

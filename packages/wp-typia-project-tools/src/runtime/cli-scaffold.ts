@@ -33,6 +33,7 @@ import {
 } from "./scaffold-onboarding.js";
 import { formatNonEmptyTargetDirectoryError } from "./scaffold-bootstrap.js";
 import { pathExists } from "./fs-async.js";
+import { readJsonFile } from "./json-utils.js";
 import {
 	OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE,
 	isBuiltInTemplateId,
@@ -782,11 +783,11 @@ export async function runScaffoldFlow({
 		let availableScripts: string[] | undefined;
 		if (!dryRun) {
 			try {
-				const parsedPackageJson = JSON.parse(
-					await fsp.readFile(path.join(projectDir, "package.json"), "utf8"),
-				) as {
+				const parsedPackageJson = await readJsonFile<{
 					scripts?: unknown;
-				};
+				}>(path.join(projectDir, "package.json"), {
+					context: "generated package manifest",
+				});
 				const scripts =
 					parsedPackageJson.scripts &&
 					typeof parsedPackageJson.scripts === "object" &&

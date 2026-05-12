@@ -10,6 +10,7 @@ import {
 	appendPhpSnippetBeforeClosingTag,
 	insertPhpSnippetBeforeWorkspaceAnchors,
 } from "./cli-add-workspace-mutation.js";
+import { readJsonFile } from "./json-utils.js";
 import { hasPhpFunctionDefinition } from "./php-utils.js";
 import type { WorkspaceProject } from "./workspace-project.js";
 
@@ -67,12 +68,12 @@ export async function ensureAiFeaturePackageScripts(
 	addedSyncAiScript: boolean;
 }> {
 	const packageJsonPath = path.join(workspace.projectDir, "package.json");
-	const packageJson = JSON.parse(
-		await fsp.readFile(packageJsonPath, "utf8"),
-	) as {
+	const packageJson = await readJsonFile<{
 		devDependencies?: Record<string, string>;
 		scripts?: Record<string, string>;
-	};
+	}>(packageJsonPath, {
+		context: "workspace package manifest",
+	});
 
 	const nextScripts = {
 		...(packageJson.scripts ?? {}),

@@ -9,6 +9,7 @@ import {
 	readWorkspaceInventoryAsync,
 } from "./workspace-inventory.js";
 import { pathExists, readOptionalUtf8File } from "./fs-async.js";
+import { readJsonFile } from "./json-utils.js";
 import {
 	buildAbilityClientSource,
 	buildAbilityConfigEntry,
@@ -250,12 +251,12 @@ async function ensureAbilityPackageScripts(
 	workspace: WorkspaceProject,
 ): Promise<void> {
 	const packageJsonPath = path.join(workspace.projectDir, "package.json");
-	const packageJson = JSON.parse(
-		await fsp.readFile(packageJsonPath, "utf8"),
-	) as {
+	const packageJson = await readJsonFile<{
 		dependencies?: Record<string, string>;
 		scripts?: Record<string, string>;
-	};
+	}>(packageJsonPath, {
+		context: "workspace package manifest",
+	});
 
 	const nextScripts = {
 		...(packageJson.scripts ?? {}),

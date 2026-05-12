@@ -3,6 +3,7 @@ import path from 'node:path';
 
 import type { WorkspaceProject } from './workspace-project.js';
 import { pathExists, readOptionalUtf8File } from './fs-async.js';
+import { safeJsonParse } from './json-utils.js';
 import {
   appendWorkspaceInventoryEntries,
   readWorkspaceInventoryAsync,
@@ -136,10 +137,13 @@ async function ensureAdminViewPackageDependencies(
   });
 
   await patchFile(packageJsonPath, (source) => {
-    const packageJson = JSON.parse(source) as {
+    const packageJson = safeJsonParse<{
       dependencies?: Record<string, string>;
       devDependencies?: Record<string, string>;
-    };
+    }>(source, {
+      context: 'admin view package manifest',
+      filePath: packageJsonPath,
+    });
     const needsDataViews = !isAdminViewManualSettingsRestResource(restResource);
     const coreDataDependencies: Record<string, string> =
       isAdminViewCoreDataSource(adminViewSource)

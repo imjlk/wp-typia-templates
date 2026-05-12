@@ -437,7 +437,23 @@ async function reconcileGeneratedArtifact( options: {
 }
 
 async function loadJsonDocument( filePath: string ) {
-\tconst decoded = JSON.parse( await readFile( filePath, 'utf8' ) ) as unknown;
+\tlet source: string;
+\ttry {
+\t\tsource = await readFile( filePath, 'utf8' );
+\t} catch ( error ) {
+\t\tthrow new Error(
+\t\t\t\`Failed to read AI schema document at \${ filePath }: \${ error instanceof Error ? error.message : String( error ) }\`
+\t\t);
+\t}
+
+\tlet decoded: unknown;
+\ttry {
+\t\tdecoded = JSON.parse( source ) as unknown;
+\t} catch ( error ) {
+\t\tthrow new Error(
+\t\t\t\`Failed to parse AI schema document at \${ filePath }: \${ error instanceof Error ? error.message : String( error ) }\`
+\t\t);
+\t}
 \tif ( ! decoded || typeof decoded !== 'object' || Array.isArray( decoded ) ) {
 \t\tthrow new Error( \`Expected \${ filePath } to decode to a JSON object.\` );
 \t}

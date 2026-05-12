@@ -26,6 +26,7 @@ import {
   createCliDiagnosticCodeError,
 } from './cli-diagnostics.js'
 import { pathExists } from './fs-async.js'
+import { readJsonFile, readJsonFileSync } from './json-utils.js'
 import {
   OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE,
   OFFICIAL_WORKSPACE_TEMPLATE_ALIAS,
@@ -328,9 +329,9 @@ function resolveInstalledNpmTemplateSource(
         continue
       }
 
-      const manifest = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8')) as {
-        name?: string
-      }
+      const manifest = readJsonFileSync<{ name?: string }>(packageJsonPath, {
+        context: 'workspace template package manifest',
+      })
       if (manifest.name === locator.name) {
         return {
           blockDir: packageDir,
@@ -396,9 +397,9 @@ export function isOfficialWorkspaceTemplateSeed(seed: SeedSource): boolean {
   }
 
   try {
-    const packageJson = JSON.parse(
-      fs.readFileSync(packageJsonPath, 'utf8'),
-    ) as { name?: string }
+    const packageJson = readJsonFileSync<{ name?: string }>(packageJsonPath, {
+      context: 'workspace template seed manifest',
+    })
     return packageJson.name === OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE
   } catch {
     return false
@@ -420,9 +421,12 @@ export async function isOfficialWorkspaceTemplateSeedAsync(
   }
 
   try {
-    const packageJson = JSON.parse(
-      await fsp.readFile(packageJsonPath, 'utf8'),
-    ) as { name?: string }
+    const packageJson = await readJsonFile<{ name?: string }>(
+      packageJsonPath,
+      {
+        context: 'workspace template seed manifest',
+      },
+    )
     return packageJson.name === OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE
   } catch {
     return false

@@ -11,6 +11,7 @@ import {
 
 import { projectWordPressAiSchema } from "./ai-artifacts.js";
 import { isFileNotFoundError } from "./fs-async.js";
+import { readJsonFile } from "./json-utils.js";
 import type { JsonSchemaDocument } from "./schema-core.js";
 
 interface AiFeatureTemplateVariablesLike {
@@ -222,7 +223,9 @@ export async function syncAiFeatureSchemaArtifact({
 		"feature-result.schema.json",
 	);
 	const responseSchema = assertJsonObject(
-		JSON.parse(await readFile(sourceSchemaPath, "utf8")) as unknown,
+		await readJsonFile(sourceSchemaPath, {
+			context: "AI feature response schema",
+		}),
 		sourceSchemaPath,
 	);
 	const aiSchema = projectWordPressAiSchema(responseSchema);

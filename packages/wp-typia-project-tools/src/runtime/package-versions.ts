@@ -142,7 +142,15 @@ function readPackageManifest(
     return null;
   }
 
-  return JSON.parse(location.source) as PackageManifest;
+  try {
+    return JSON.parse(location.source) as PackageManifest;
+  } catch (error) {
+    throw new Error(
+      `Failed to parse package version manifest at ${
+        location.packageJsonPath
+      }: ${error instanceof Error ? error.message : String(error)}`,
+    );
+  }
 }
 
 function tryReadPackageManifest(

@@ -1,6 +1,8 @@
 import fs from "node:fs";
 import path from "node:path";
 
+import { readJsonFileSync } from "./json-utils.js";
+
 export type PackageManagerId = "bun" | "npm" | "pnpm" | "yarn";
 
 export interface PackageManagerDefinition {
@@ -103,13 +105,17 @@ function readPackageManagerField(projectDir: string): string | undefined {
 			return undefined;
 		}
 
-		const manifest = JSON.parse(fs.readFileSync(packageJsonPath, "utf8")) as {
+		const manifest = readJsonFileSync<{
 			packageManager?: unknown;
-		};
+		}>(packageJsonPath, {
+			context: "package manager manifest",
+		});
 		return typeof manifest.packageManager === "string"
 			? manifest.packageManager
 			: undefined;
 	} catch {
+		// Package manager inference intentionally falls back to lockfile signals
+		// when package.json is absent or malformed.
 		return undefined;
 	}
 }
