@@ -1,0 +1,199 @@
+import { promises as fsp } from "node:fs";
+import path from "node:path";
+
+import { ensureBlockConfigCanAddRestManifests } from "./cli-add-block-legacy-validator.js";
+import {
+	assertValidRestResourceMethods,
+	getWorkspaceBootstrapPath,
+	resolveGeneratedRestResourceRoutePattern,
+	resolveOptionalPhpCallbackReference,
+	resolveOptionalPhpClassReference,
+	rollbackWorkspaceMutation,
+	type WorkspaceMutationSnapshot,
+	snapshotWorkspaceFiles,
+} from "./cli-add-shared.js";
+import {
+	ensureRestResourceBootstrapAnchors,
+	ensureRestResourceSyncScriptAnchors,
+} from "./cli-add-workspace-rest-anchors.js";
+import { buildRestResourcePhpSource } from "./cli-add-workspace-rest-php-templates.js";
+import {
+	buildRestResourceApiSource,
+	buildRestResourceConfigEntry,
+	buildRestResourceDataSource,
+	buildRestResourceTypesSource,
+	buildRestResourceValidatorsSource,
+} from "./cli-add-workspace-rest-source-emitters.js";
+import {
+	type GeneratedRestResourceScaffoldOptions,
+	type RunAddRestResourceCommandResult,
+} from "./cli-add-workspace-rest-types.js";
+import { syncRestResourceArtifacts } from "./rest-resource-artifacts.js";
+import { toPascalCase, toTitleCase } from "./string-case.js";
+import { appendWorkspaceInventoryEntries } from "./workspace-inventory.js";
+
+/**
+ * Scaffold generated TypeScript, PHP, schema, and inventory files for a
+ * workspace-owned REST resource.
+ *
+ * @param options Resolved workspace and raw generated-mode command options.
+ * @returns Resolved scaffold metadata for the generated REST resource.
+ */
+export async function scaffoldGeneratedRestResource({
+	controllerClass,
+	controllerExtends,
+	methods,
+	namespace,
+	permissionCallback,
+	restResourceSlug,
+	routePattern,
+	workspace,
+}: GeneratedRestResourceScaffoldOptions): Promise<RunAddRestResourceCommandResult> {
+	const blockConfigPath = path.join(workspace.projectDir, "scripts", "block-config.ts");
+	const syncRestScriptPath = path.join(workspace.projectDir, "scripts", "sync-rest-contracts.ts");
+	const restResourceDir = path.join(workspace.projectDir, "src", "rest", restResourceSlug);
+	const typesFilePath = path.join(restResourceDir, "api-types.ts");
+	const validatorsFilePath = path.join(restResourceDir, "api-validators.ts");
+	const apiFilePath = path.join(restResourceDir, "api.ts");
+	const resolvedMethods = assertValidRestResourceMethods(methods);
+	const resolvedRoutePattern = resolveGeneratedRestResourceRoutePattern(
+		restResourceSlug,
+		routePattern,
+	);
+	const hasCustomRoutePattern =
+		typeof routePattern === "string" && routePattern.trim().length > 0;
+	const resolvedPermissionCallback = resolveOptionalPhpCallbackReference(
+		"Generated REST resource permission callback",
+		permissionCallback,
+	);
+	const resolvedControllerClass = resolveOptionalPhpClassReference(
+		"Generated REST resource controller class",
+		controllerClass,
+	);
+	const resolvedControllerExtends = resolveOptionalPhpClassReference(
+		"Generated REST resource controller base class",
+		controllerExtends,
+	);
+	if (resolvedControllerExtends && !resolvedControllerClass) {
+		throw new Error(
+			"Generated REST resource controller base class requires --controller-class.",
+		);
+	}
+	const bootstrapPath = getWorkspaceBootstrapPath(workspace);
+	const dataFilePath = path.join(restResourceDir, "data.ts");
+	const phpFilePath = path.join(workspace.projectDir, "inc", "rest", `${restResourceSlug}.php`);
+	const mutationSnapshot: WorkspaceMutationSnapshot = {
+		fileSources: await snapshotWorkspaceFiles([
+			blockConfigPath,
+			bootstrapPath,
+			syncRestScriptPath,
+		]),
+		snapshotDirs: [],
+		targetPaths: [restResourceDir, phpFilePath],
+	};
+
+	try {
+		await fsp.mkdir(restResourceDir, { recursive: true });
+		await fsp.mkdir(path.dirname(phpFilePath), { recursive: true });
+		await ensureRestResourceBootstrapAnchors(workspace);
+		await ensureRestResourceSyncScriptAnchors(workspace);
+		await fsp.writeFile(
+			typesFilePath,
+			buildRestResourceTypesSource(restResourceSlug, resolvedMethods),
+			"utf8",
+		);
+		await fsp.writeFile(
+			validatorsFilePath,
+			buildRestResourceValidatorsSource(restResourceSlug, resolvedMethods),
+			"utf8",
+		);
+		await fsp.writeFile(
+			apiFilePath,
+			buildRestResourceApiSource(restResourceSlug, resolvedMethods),
+			"utf8",
+		);
+		await fsp.writeFile(
+			dataFilePath,
+			buildRestResourceDataSource(restResourceSlug, resolvedMethods),
+			"utf8",
+		);
+		await fsp.writeFile(
+			phpFilePath,
+			buildRestResourcePhpSource(
+				restResourceSlug,
+				namespace,
+				workspace.workspace.phpPrefix,
+				resolvedMethods,
+				{
+					...(resolvedControllerClass
+						? { controllerClass: resolvedControllerClass }
+						: {}),
+					...(resolvedControllerExtends
+						? { controllerExtends: resolvedControllerExtends }
+						: {}),
+					...(resolvedPermissionCallback
+						? { permissionCallback: resolvedPermissionCallback }
+						: {}),
+					routePattern: resolvedRoutePattern,
+				},
+			),
+			"utf8",
+		);
+		await syncRestResourceArtifacts({
+			clientFile: `src/rest/${restResourceSlug}/api-client.ts`,
+			methods: resolvedMethods,
+			outputDir: restResourceDir,
+			projectDir: workspace.projectDir,
+			typesFile: `src/rest/${restResourceSlug}/api-types.ts`,
+			validatorsFile: `src/rest/${restResourceSlug}/api-validators.ts`,
+			variables: {
+				namespace,
+				pascalCase: toPascalCase(restResourceSlug),
+				...(hasCustomRoutePattern ? { routePattern: resolvedRoutePattern } : {}),
+				slugKebabCase: restResourceSlug,
+				title: toTitleCase(restResourceSlug),
+			},
+		});
+		await appendWorkspaceInventoryEntries(workspace.projectDir, {
+			restResourceEntries: [
+				buildRestResourceConfigEntry({
+					...(resolvedControllerClass
+						? { controllerClass: resolvedControllerClass }
+						: {}),
+					...(resolvedControllerExtends
+						? { controllerExtends: resolvedControllerExtends }
+						: {}),
+					methods: resolvedMethods,
+					namespace,
+					...(resolvedPermissionCallback
+						? { permissionCallback: resolvedPermissionCallback }
+						: {}),
+					restResourceSlug,
+					...(hasCustomRoutePattern ? { routePattern: resolvedRoutePattern } : {}),
+				}),
+			],
+			transformSource: ensureBlockConfigCanAddRestManifests,
+		});
+
+		return {
+			...(resolvedControllerClass
+				? { controllerClass: resolvedControllerClass }
+				: {}),
+			...(resolvedControllerExtends
+				? { controllerExtends: resolvedControllerExtends }
+				: {}),
+			methods: resolvedMethods,
+			mode: "generated",
+			namespace,
+			...(resolvedPermissionCallback
+				? { permissionCallback: resolvedPermissionCallback }
+				: {}),
+			projectDir: workspace.projectDir,
+			restResourceSlug,
+			...(hasCustomRoutePattern ? { routePattern: resolvedRoutePattern } : {}),
+		};
+	} catch (error) {
+		await rollbackWorkspaceMutation(mutationSnapshot);
+		throw error;
+	}
+}

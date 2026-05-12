@@ -13,18 +13,34 @@ test('cli-add-workspace delegates asset, rest-resource, post-meta, ai-feature, a
     path.join(runtimeRoot, 'cli-add-workspace-assets.ts'),
     'utf8',
   );
-  const restSource = fs.readFileSync(
-    path.join(runtimeRoot, 'cli-add-workspace-rest.ts'),
-    'utf8',
-  );
-  const restAnchorsSource = fs.readFileSync(
-    path.join(runtimeRoot, 'cli-add-workspace-rest-anchors.ts'),
-    'utf8',
-  );
-  const restSourceEmittersSource = fs.readFileSync(
-    path.join(runtimeRoot, 'cli-add-workspace-rest-source-emitters.ts'),
-    'utf8',
-  );
+	const restSource = fs.readFileSync(
+		path.join(runtimeRoot, 'cli-add-workspace-rest.ts'),
+		'utf8',
+	);
+	const restGeneratedSource = fs.readFileSync(
+		path.join(runtimeRoot, 'cli-add-workspace-rest-generated.ts'),
+		'utf8',
+	);
+	const restManualSource = fs.readFileSync(
+		path.join(runtimeRoot, 'cli-add-workspace-rest-manual.ts'),
+		'utf8',
+	);
+	const restPhpTemplatesSource = fs.readFileSync(
+		path.join(runtimeRoot, 'cli-add-workspace-rest-php-templates.ts'),
+		'utf8',
+	);
+	const restAnchorsSource = fs.readFileSync(
+		path.join(runtimeRoot, 'cli-add-workspace-rest-anchors.ts'),
+		'utf8',
+	);
+	const restSourceEmittersSource = fs.readFileSync(
+		path.join(runtimeRoot, 'cli-add-workspace-rest-source-emitters.ts'),
+		'utf8',
+	);
+	const restTypesSource = fs.readFileSync(
+		path.join(runtimeRoot, 'cli-add-workspace-rest-types.ts'),
+		'utf8',
+	);
   const postMetaSource = fs.readFileSync(
     path.join(runtimeRoot, 'cli-add-workspace-post-meta.ts'),
     'utf8',
@@ -177,21 +193,41 @@ test('cli-add-workspace delegates asset, rest-resource, post-meta, ai-feature, a
   expect(assetsSource).toContain(
     'export async function runAddEditorPluginCommand(',
   );
-  expect(restSource).toContain('from "./cli-add-workspace-rest-anchors.js"');
-  expect(restSource).toContain(
-    'from "./cli-add-workspace-rest-source-emitters.js"',
-  );
-  expect(restSource).not.toContain('function buildRestResourceTypesSource(');
-  expect(restSource).not.toContain(
-    'async function ensureRestResourceBootstrapAnchors(',
-  );
-  expect(restSource).toContain('function buildRestResourcePhpSource(');
-  expect(restSource).toContain(
-    'export async function runAddRestResourceCommand(',
-  );
-  expect(restSourceEmittersSource).toContain(
-    'function buildRestResourceTypesSource(',
-  );
+	expect(restSource).toContain(
+		'from "./cli-add-workspace-rest-generated.js"',
+	);
+	expect(restSource).toContain('from "./cli-add-workspace-rest-manual.js"');
+	expect(restSource).toContain('from "./cli-add-workspace-rest-types.js"');
+	expect(restSource).not.toContain('function buildRestResourceTypesSource(');
+	expect(restSource).not.toContain('function buildRestResourcePhpSource(');
+	expect(restSource).not.toContain(
+		'async function ensureRestResourceBootstrapAnchors(',
+	);
+	expect(restSource).not.toContain('syncManualRestContractArtifacts');
+	expect(restSource).not.toContain('syncRestResourceArtifacts');
+	expect(restSource).toContain(
+		'export async function runAddRestResourceCommand(',
+	);
+	expect(restGeneratedSource).toContain(
+		'export async function scaffoldGeneratedRestResource(',
+	);
+	expect(restGeneratedSource).toContain(
+		'from "./cli-add-workspace-rest-php-templates.js"',
+	);
+	expect(restGeneratedSource).toContain('syncRestResourceArtifacts');
+	expect(restManualSource).toContain(
+		'export async function scaffoldManualRestContract(',
+	);
+	expect(restManualSource).toContain('syncManualRestContractArtifacts');
+	expect(restPhpTemplatesSource).toContain(
+		'export function buildRestResourcePhpSource(',
+	);
+	expect(restTypesSource).toContain(
+		'export interface RunAddRestResourceCommandResult',
+	);
+	expect(restSourceEmittersSource).toContain(
+		'function buildRestResourceTypesSource(',
+	);
   expect(restSourceEmittersSource).toContain(
     'function buildRestResourceApiSource(',
   );
