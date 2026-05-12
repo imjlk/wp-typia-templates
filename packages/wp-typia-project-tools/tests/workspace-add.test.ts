@@ -1,7 +1,7 @@
 import { afterAll, describe, expect, test } from "bun:test";
 import * as fs from "node:fs";
 import * as path from "node:path";
-import { cleanupScaffoldTempRoot, createScaffoldTempRoot, entryPath, getCommandErrorMessage, linkWorkspaceNodeModules, parseJsonObjectFromOutput, runCli, runGeneratedScript, scaffoldOfficialWorkspace, templateLayerFixturePath, templateLayerWorkspaceAmbiguousFixturePath, templateLayerWorkspaceFixturePath, typecheckGeneratedProject, workspaceTemplatePackageManifest } from "./helpers/scaffold-test-harness.js";
+import { cleanupScaffoldTempRoot, createScaffoldTempRoot, entryPath, getCommandErrorMessage, linkWorkspaceNodeModules, parseJsonObjectFromOutput, runCapturedCli, runCli, runGeneratedScript, scaffoldOfficialWorkspace, templateLayerFixturePath, templateLayerWorkspaceAmbiguousFixturePath, templateLayerWorkspaceFixturePath, typecheckGeneratedProject, workspaceTemplatePackageManifest } from "./helpers/scaffold-test-harness.js";
 import { runAddBlockCommand } from "../src/runtime/cli-core.js";
 import { scaffoldProject } from "../src/runtime/index.js";
 
@@ -3967,6 +3967,120 @@ test("admin settings screens reject manual REST contracts with route parameters"
     )
   ).toContain(
     'REST resource source "integration-settings" uses route parameters and cannot scaffold a singleton admin settings form'
+  );
+  expect(
+    fs.existsSync(
+      path.join(targetDir, "src", "admin-views", "integration-settings")
+    )
+  ).toBe(false);
+
+  const blockConfigPath = path.join(targetDir, "scripts", "block-config.ts");
+  const blockConfigSource = fs.readFileSync(blockConfigPath, "utf8");
+  fs.writeFileSync(
+    blockConfigPath,
+    blockConfigSource.replace(
+      "\t// wp-typia add admin-view entries",
+      [
+        "\t{",
+        '\t\tfile: "src/admin-views/integration-settings/index.tsx",',
+        '\t\tphpFile: "inc/admin-views/integration-settings.php",',
+        '\t\tslug: "integration-settings",',
+        '\t\tsource: "rest-resource:integration-settings",',
+        "\t},",
+        "\t// wp-typia add admin-view entries",
+      ].join("\n")
+    ),
+    "utf8"
+  );
+
+  const doctorResult = runCapturedCli(
+    "node",
+    [entryPath, "doctor", "--format", "json"],
+    {
+      cwd: targetDir,
+    }
+  );
+  expect(doctorResult.status).toBe(1);
+  const doctorChecks = parseJsonObjectFromOutput<{
+    checks: Array<{ detail: string; label: string; status: string }>;
+  }>(doctorResult.stdout);
+  const configCheck = doctorChecks.checks.find(
+    (check) => check.label === "Admin view config integration-settings"
+  );
+  expect(configCheck?.status).toBe("fail");
+  expect(configCheck?.detail).toContain(
+    "uses route parameters and cannot scaffold a singleton settings form"
+  );
+}, 30_000);
+
+test("admin settings screens require manual REST api shims to export the shared caller", async () => {
+  const targetDir = path.join(
+    tempRoot,
+    "demo-workspace-add-admin-settings-api-export"
+  );
+
+  await scaffoldProject({
+    projectDir: targetDir,
+    templateId: workspaceTemplatePackageManifest.name,
+    packageManager: "npm",
+    noInstall: true,
+    answers: {
+      author: "Test Runner",
+      description: "Demo workspace admin settings api export",
+      namespace: "demo-space",
+      phpPrefix: "demo_space",
+      slug: "demo-workspace-add-admin-settings-api-export",
+      textDomain: "demo-space",
+      title: "Demo Workspace Admin Settings API Export",
+    },
+  });
+
+  linkWorkspaceNodeModules(targetDir);
+
+  runCli(
+    "node",
+    [
+      entryPath,
+      "add",
+      "rest-resource",
+      "integration-settings",
+      "--manual",
+      "--namespace",
+      "demo-space/v1",
+      "--method",
+      "POST",
+      "--path",
+      "/settings",
+    ],
+    { cwd: targetDir }
+  );
+  fs.writeFileSync(
+    path.join(targetDir, "src", "rest", "integration-settings", "api.ts"),
+    [
+      "const callManualRestContract = 'local-only';",
+      "export * from './api-client';",
+      "",
+    ].join("\n"),
+    "utf8"
+  );
+
+  expect(
+    getCommandErrorMessage(() =>
+      runCli(
+        "node",
+        [
+          entryPath,
+          "add",
+          "admin-view",
+          "integration-settings",
+          "--source",
+          "rest-resource:integration-settings",
+        ],
+        { cwd: targetDir }
+      )
+    )
+  ).toContain(
+    'Manual REST resource source "integration-settings" must export callManualRestContract'
   );
   expect(
     fs.existsSync(

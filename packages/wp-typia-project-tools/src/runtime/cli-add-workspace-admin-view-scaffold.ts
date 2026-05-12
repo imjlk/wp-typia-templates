@@ -64,6 +64,26 @@ function detectJsonIndent(source: string): string | number {
 
 const LEGACY_MANUAL_REST_API_SOURCE_PATTERN =
   /^\s*export\s+\*\s+from\s+["']\.\/api-client["'];?\s*$/u;
+const MANUAL_REST_API_DIRECT_CALL_EXPORT_PATTERN =
+  /(?:^|\n)\s*export\s+(?:(?:async\s+)?function|const|let|var)\s+callManualRestContract\b/u;
+const MANUAL_REST_API_NAMED_EXPORT_PATTERN =
+  /(?:^|\n)\s*export\s*\{([^}]*)\}/gu;
+
+function hasManualRestContractCallerExport(apiSource: string): boolean {
+  if (MANUAL_REST_API_DIRECT_CALL_EXPORT_PATTERN.test(apiSource)) {
+    return true;
+  }
+
+  return Array.from(
+    apiSource.matchAll(MANUAL_REST_API_NAMED_EXPORT_PATTERN),
+  ).some((match) =>
+    match[1].split(',').some((specifier) => {
+      const [localName, exportedName] = specifier.trim().split(/\s+as\s+/u);
+
+      return (exportedName ?? localName)?.trim() === 'callManualRestContract';
+    }),
+  );
+}
 
 async function ensureManualSettingsRestApiShim(
   workspace: WorkspaceProject,
@@ -71,7 +91,7 @@ async function ensureManualSettingsRestApiShim(
 ): Promise<void> {
   const apiPath = path.join(workspace.projectDir, restResource.apiFile);
   const apiSource = await fsp.readFile(apiPath, 'utf8');
-  if (/\bcallManualRestContract\b/u.test(apiSource)) {
+  if (hasManualRestContractCallerExport(apiSource)) {
     return;
   }
   if (!LEGACY_MANUAL_REST_API_SOURCE_PATTERN.test(apiSource)) {
