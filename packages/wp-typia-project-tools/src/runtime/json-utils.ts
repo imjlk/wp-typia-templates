@@ -13,13 +13,26 @@ import { promises as fsp } from "node:fs";
  * and cache/discovery probes that immediately catch malformed documents to
  * continue with fallback behavior.
  *
- * This module also re-exports JSON cloning helpers from
- * `@wp-typia/block-runtime`. That adapter keeps the existing project-tools
- * module path stable while the runtime implementation lives in block-runtime.
+ * This module keeps `cloneJsonValue` local instead of re-exporting the
+ * block-runtime helper so Bunli CLI bundles that only need project-tools JSON
+ * readers do not need to resolve the block-runtime subpath at runtime.
  *
  * @module
  */
-export * from "@wp-typia/block-runtime/json-utils";
+
+/**
+ * Create a deep clone of a JSON-serializable value.
+ *
+ * @remarks
+ * Values that are not JSON-serializable, such as functions, `undefined`,
+ * `BigInt`, class instances, and `Date` objects, are not preserved faithfully.
+ *
+ * @param value JSON-compatible data to clone.
+ * @returns A deep-cloned copy created with `JSON.parse(JSON.stringify(...))`.
+ */
+export function cloneJsonValue<T>(value: T): T {
+	return JSON.parse(JSON.stringify(value)) as T;
+}
 
 export interface SafeJsonParseOptions {
 	context?: string;
