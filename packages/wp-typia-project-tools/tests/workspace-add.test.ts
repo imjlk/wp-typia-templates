@@ -3812,6 +3812,11 @@ test("canonical CLI can add a typed admin settings screen from a manual REST con
     ],
     { cwd: targetDir }
   );
+  fs.writeFileSync(
+    path.join(targetDir, "src", "rest", "integration-settings", "api.ts"),
+    "export * from './api-client';\n",
+    "utf8"
+  );
   runCli(
     "node",
     [

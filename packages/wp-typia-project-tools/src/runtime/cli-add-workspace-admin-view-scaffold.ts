@@ -30,9 +30,11 @@ import {
   isAdminViewCoreDataSource,
   isAdminViewManualSettingsRestResource,
   type AdminViewCoreDataSource,
+  type AdminViewManualSettingsRestResource,
   type AdminViewRestResource,
   type AdminViewSource,
 } from './cli-add-workspace-admin-view-types.js';
+import { buildManualRestContractApiSource } from './cli-add-workspace-rest-source-emitters.js';
 import {
   getWorkspaceBootstrapPath,
   patchFile,
@@ -58,6 +60,35 @@ import {
 function detectJsonIndent(source: string): string | number {
   const indentMatch = /\n([ \t]+)"/u.exec(source);
   return indentMatch?.[1] ?? 2;
+}
+
+const LEGACY_MANUAL_REST_API_SOURCE_PATTERN =
+  /^\s*export\s+\*\s+from\s+["']\.\/api-client["'];?\s*$/u;
+
+async function ensureManualSettingsRestApiShim(
+  workspace: WorkspaceProject,
+  restResource: AdminViewManualSettingsRestResource,
+): Promise<void> {
+  const apiPath = path.join(workspace.projectDir, restResource.apiFile);
+  const apiSource = await fsp.readFile(apiPath, 'utf8');
+  if (/\bcallManualRestContract\b/u.test(apiSource)) {
+    return;
+  }
+  if (!LEGACY_MANUAL_REST_API_SOURCE_PATTERN.test(apiSource)) {
+    throw new Error(
+      `Manual REST resource source "${restResource.slug}" must export callManualRestContract from ${restResource.apiFile}. Restore the generated manual REST api.ts or update it before scaffolding a settings admin view.`,
+    );
+  }
+
+  await fsp.writeFile(
+    apiPath,
+    buildManualRestContractApiSource({
+      bodyTypeName: restResource.bodyTypeName,
+      queryTypeName: restResource.queryTypeName,
+      restResourceSlug: restResource.slug,
+    }),
+    'utf8',
+  );
 }
 
 async function ensureAdminViewPackageDependencies(
@@ -374,6 +405,9 @@ export async function scaffoldAdminViewWorkspace(options: {
   );
   const manualSettingsRestResource =
     isAdminViewManualSettingsRestResource(restResource) ? restResource : undefined;
+  const manualSettingsRestApiPath = manualSettingsRestResource
+    ? path.join(workspace.projectDir, manualSettingsRestResource.apiFile)
+    : undefined;
   const adminViewPhpPath = path.join(
     workspace.projectDir,
     'inc',
@@ -388,6 +422,7 @@ export async function scaffoldAdminViewWorkspace(options: {
       buildScriptPath,
       packageJsonPath,
       webpackConfigPath,
+      ...(manualSettingsRestApiPath ? [manualSettingsRestApiPath] : []),
     ],
     targetPaths: [adminViewDir, adminViewPhpPath],
     run: async () => {
@@ -397,6 +432,12 @@ export async function scaffoldAdminViewWorkspace(options: {
       await ensureAdminViewBootstrapAnchors(workspace);
       await ensureAdminViewBuildScriptAnchors(workspace);
       await ensureAdminViewWebpackAnchors(workspace);
+      if (manualSettingsRestResource) {
+        await ensureManualSettingsRestApiShim(
+          workspace,
+          manualSettingsRestResource,
+        );
+      }
       await fsp.writeFile(
         path.join(adminViewDir, 'types.ts'),
         manualSettingsRestResource
