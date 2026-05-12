@@ -11,6 +11,7 @@ import {
 	isGeneratedRestResourceRoutePatternCompatible,
 	resolveEditorPluginSlotAlias,
 } from "./cli-add-shared.js";
+import { isAdminViewManualSettingsRestResource } from "./cli-add-workspace-admin-view-types.js";
 import {
 	checkExistingFiles,
 	createDoctorCheck,
@@ -661,12 +662,8 @@ function checkWorkspaceAdminViewConfig(
 		? inventory.restResources.find((entry) => entry.slug === restResourceSlug)
 		: undefined;
 	const isListCapableRestResource = Boolean(restResource?.methods.includes("list"));
-	const isManualSettingsRestResource = Boolean(
-		restResource?.mode === "manual" &&
-			typeof restResource.bodyTypeName === "string" &&
-			typeof restResource.queryTypeName === "string" &&
-			typeof restResource.responseTypeName === "string",
-	);
+	const isManualSettingsRestResource =
+		isAdminViewManualSettingsRestResource(restResource);
 	const isValid =
 		isListCapableRestResource ||
 		isManualSettingsRestResource ||
@@ -677,7 +674,11 @@ function checkWorkspaceAdminViewConfig(
 		isValid ? "pass" : "fail",
 		isValid
 			? `Admin view source ${source} is ${
-					isManualSettingsRestResource ? "settings-form capable" : "list-capable"
+					isManualSettingsRestResource
+						? "settings-form capable"
+						: coreDataSourceMatch
+							? "core-data capable"
+							: "list-capable"
 				}`
 			: "Admin view source must use rest-resource:<slug> with a list-capable REST resource, a manual settings contract with a body type, or core-data:<postType|taxonomy>/<name>",
 	);

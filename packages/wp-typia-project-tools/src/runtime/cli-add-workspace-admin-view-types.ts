@@ -38,6 +38,11 @@ export type AdminViewSource =
 
 export type AdminViewRestResource = WorkspaceRestResourceInventoryEntry;
 
+/**
+ * Manual REST resource metadata required to scaffold a typed admin settings
+ * screen. The type narrows a workspace REST inventory entry to manual
+ * contracts that expose request body, query, and response type names.
+ */
 export type AdminViewManualSettingsRestResource = AdminViewRestResource & {
   bodyTypeName: string;
   mode: 'manual';
@@ -57,14 +62,21 @@ export function isAdminViewRestResourceSource(
   return source?.kind === ADMIN_VIEW_REST_SOURCE_KIND;
 }
 
+/**
+ * Return whether a REST inventory entry has the manual contract shape required
+ * by generated settings screens.
+ */
 export function isAdminViewManualSettingsRestResource(
   restResource: AdminViewRestResource | undefined,
 ): restResource is AdminViewManualSettingsRestResource {
   return (
     restResource?.mode === 'manual' &&
     typeof restResource.bodyTypeName === 'string' &&
+    restResource.bodyTypeName.trim().length > 0 &&
     typeof restResource.queryTypeName === 'string' &&
-    typeof restResource.responseTypeName === 'string'
+    restResource.queryTypeName.trim().length > 0 &&
+    typeof restResource.responseTypeName === 'string' &&
+    restResource.responseTypeName.trim().length > 0
   );
 }
 

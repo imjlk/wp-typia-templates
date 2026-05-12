@@ -591,8 +591,15 @@ export function buildRestSettingsAdminViewDataSource(
   const initialFields = [
     '\tpayload: \'\',',
     '\tcomment: \'\',',
-    ...(restResource.secretFieldName ? [`\t${restResource.secretFieldName}: '',`] : []),
   ].join('\n');
+  const requestBodySource = restResource.secretFieldName
+    ? `\tconst requestBody = { ...form } as Record<string, unknown>;
+\tif (requestBody[${quoteTsString(restResource.secretFieldName)}] === '') {
+\t\tdelete requestBody[${quoteTsString(restResource.secretFieldName)}];
+\t}
+`
+    : `\tconst requestBody = form as Record<string, unknown>;
+`;
 
   return `import { callManualRestContract } from ${quoteTsString(restApiModule)};
 import type {
@@ -628,8 +635,9 @@ export async function ${saveName}(
 \tform: ${formStateTypeName},
 \tquery: Partial<${pascalName}SettingsQuery> = {},
 ): Promise<${pascalName}SettingsResponse> {
+${requestBodySource}
 \tconst result = await callManualRestContract({
-\t\tbody: form as ${pascalName}SettingsRequest,
+\t\tbody: requestBody as unknown as ${pascalName}SettingsRequest,
 \t\tquery: query as ${pascalName}SettingsQuery,
 \t});
 \tif (!result.isValid || !result.data) {

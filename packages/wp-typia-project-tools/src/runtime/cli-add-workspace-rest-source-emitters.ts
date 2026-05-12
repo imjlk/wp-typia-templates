@@ -338,14 +338,18 @@ ${requestTypeSource}function resolveRestNonce(fallback?: string): string | undef
 function resolveEndpointRouteOptions(request: ${requestTypeName}) {
 \tconst requestOptions = ${operationId}Endpoint.buildRequestOptions?.(request) ?? {};
 \tconst nonce = resolveRestNonce();
+\tconst requestHeaders = (
+\t\trequestOptions as { headers?: Record<string, string> }
+\t).headers;
 
 \treturn {
 \t\t...requestOptions,
 \t\theaders: nonce
 \t\t\t? {
+\t\t\t\t\t...(requestHeaders ?? {}),
 \t\t\t\t\t'X-WP-Nonce': nonce,
 \t\t\t\t}
-\t\t\t: undefined,
+\t\t\t: requestHeaders,
 \t\tpath: undefined,
 \t\turl:
 \t\t\trequestOptions.url ??
