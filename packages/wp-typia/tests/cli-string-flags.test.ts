@@ -3,6 +3,7 @@ import { expect, test } from 'bun:test';
 import { CLI_DIAGNOSTIC_CODES } from '@wp-typia/project-tools/cli-diagnostics';
 
 import {
+  readOptionalDashedOrCamelStringFlag,
   readOptionalLooseStringFlag,
   readOptionalPairedStrictStringFlags,
   readOptionalStrictStringFlag,
@@ -31,6 +32,39 @@ test('loose optional string flags trim values and collapse empty strings to unde
   );
   expect(readOptionalLooseStringFlag({ namespace: '   ' }, 'namespace')).toBeUndefined();
   expect(readOptionalLooseStringFlag({}, 'namespace')).toBeUndefined();
+});
+
+test('dashed-or-camel string flags preserve rest-resource alias behavior', () => {
+  expect(
+    readOptionalDashedOrCamelStringFlag(
+      { 'route-pattern': '/books/(?P<id>[\\d]+)', routePattern: '/ignored' },
+      'route-pattern',
+      'routePattern',
+    ),
+  ).toBe('/books/(?P<id>[\\d]+)');
+  expect(
+    readOptionalDashedOrCamelStringFlag(
+      { routePattern: '/books/(?P<id>[\\d]+)' },
+      'route-pattern',
+      'routePattern',
+    ),
+  ).toBe('/books/(?P<id>[\\d]+)');
+
+  try {
+    readOptionalDashedOrCamelStringFlag(
+      { routePattern: '   ' },
+      'route-pattern',
+      'routePattern',
+    );
+    throw new Error('Expected dashed-or-camel flag reader to throw.');
+  } catch (error) {
+    expect((error as { code?: string }).code).toBe(
+      CLI_DIAGNOSTIC_CODES.MISSING_ARGUMENT,
+    );
+    expect((error as Error).message).toContain(
+      '`--routePattern` requires a value.',
+    );
+  }
 });
 
 test('paired and required strict string flags keep current missing-argument diagnostics', () => {
