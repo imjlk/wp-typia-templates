@@ -34,7 +34,10 @@ function cleanupTrackedTempRootsSync(): void {
 		trackedTempRoots.delete(tempRoot);
 		try {
 			fs.rmSync(tempRoot, { force: true, recursive: true });
-		} catch {}
+		} catch {
+			// Process-exit cleanup is best-effort: shutdown-time rm failures
+			// such as EPERM are intentionally ignored rather than made fatal.
+		}
 	}
 }
 

@@ -65,4 +65,14 @@ describe("@wp-typia/project-tools temp root management", () => {
 		expect(fs.existsSync(freshRoot)).toBe(true);
 		expect(fs.existsSync(unrelatedRoot)).toBe(true);
 	});
+
+	test("documents why process-exit cleanup ignores rm failures", async () => {
+		const source = await fs.promises.readFile(
+			new URL("../src/runtime/temp-roots.ts", import.meta.url),
+			"utf8",
+		);
+
+		expect(source).toContain("Process-exit cleanup is best-effort");
+		expect(source).toContain("such as EPERM are intentionally ignored");
+	});
 });
