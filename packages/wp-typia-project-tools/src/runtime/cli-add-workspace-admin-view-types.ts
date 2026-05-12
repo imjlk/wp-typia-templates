@@ -18,7 +18,7 @@ export const ADMIN_VIEWS_STYLE = 'build/admin-views/style-index.css';
 export const ADMIN_VIEWS_STYLE_RTL = 'build/admin-views/style-index-rtl.css';
 export const ADMIN_VIEWS_PHP_GLOB = '/inc/admin-views/*.php';
 const ADMIN_VIEW_MANUAL_REST_ROUTE_PARAMETER_PATTERN =
-  /\(\?P<[A-Za-z_][A-Za-z0-9_]*>/u;
+  /(?:^|[^\\])\(/u;
 
 export interface AdminViewRestResourceSource {
   kind: typeof ADMIN_VIEW_REST_SOURCE_KIND;
@@ -83,8 +83,8 @@ export function isAdminViewManualSettingsRestResource(
 }
 
 /**
- * Return whether a REST inventory entry uses named route parameters that a
- * generated singleton settings screen cannot supply.
+ * Return whether a REST inventory entry uses route regex groups that a
+ * generated singleton settings screen cannot satisfy with path input.
  */
 export function hasAdminViewManualSettingsRouteParameters(
   restResource: AdminViewRestResource | undefined,

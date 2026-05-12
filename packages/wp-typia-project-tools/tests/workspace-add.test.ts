@@ -3947,7 +3947,7 @@ test("admin settings screens reject manual REST contracts with route parameters"
       "--method",
       "POST",
       "--path",
-      "/settings/(?P<id>[\\d]+)",
+      "/settings/([\\d]+)",
     ],
     { cwd: targetDir }
   );
@@ -3968,7 +3968,7 @@ test("admin settings screens reject manual REST contracts with route parameters"
       )
     )
   ).toContain(
-    'REST resource source "integration-settings" uses route parameters and cannot scaffold a singleton admin settings form'
+    'REST resource source "integration-settings" uses route parameters or regex groups and cannot scaffold a singleton admin settings form'
   );
   expect(
     fs.existsSync(
@@ -4011,7 +4011,7 @@ test("admin settings screens reject manual REST contracts with route parameters"
   );
   expect(configCheck?.status).toBe("fail");
   expect(configCheck?.detail).toContain(
-    "uses route parameters and cannot scaffold a singleton settings form"
+    "uses route parameters or regex groups and cannot scaffold a singleton settings form"
   );
 }, 30_000);
 

@@ -152,7 +152,7 @@ export function resolveRestResourceSource(
   if (isAdminViewManualSettingsRestResource(restResource)) {
     if (hasAdminViewManualSettingsRouteParameters(restResource)) {
       throw new Error(
-        `REST resource source "${source.slug}" uses route parameters and cannot scaffold a singleton admin settings form. Use a manual REST contract without path parameters or build a custom admin UI.`,
+        `REST resource source "${source.slug}" uses route parameters or regex groups and cannot scaffold a singleton admin settings form. Use a manual REST contract without path parameters or build a custom admin UI.`,
       );
     }
 

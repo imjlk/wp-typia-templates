@@ -286,9 +286,9 @@ collection screen when that REST resource has a list method. A manual REST
 settings contract with a request body, such as `rest-resource:integration-settings`,
 generates a typed React form instead and reuses the generated API/client helper
 for load/save state. That settings form is intentionally singleton-shaped, so
-manual contracts with path parameters such as `/(?P<id>...)` should use custom
-UI instead. Published npm installs can scaffold `admin-view` now that
-`@wp-typia/dataviews` is available on npm.
+manual contracts with path parameters or regex groups such as `/(?P<id>...)`
+should use custom UI instead. Published npm installs can scaffold `admin-view`
+now that `@wp-typia/dataviews` is available on npm.
 The first core-data wave also accepts `core-data:postType/<post-type>` and
 `core-data:taxonomy/<taxonomy>` for WordPress-owned entity collections. That
 path adds direct `@wordpress/core-data` and `@wordpress/data` dependencies only

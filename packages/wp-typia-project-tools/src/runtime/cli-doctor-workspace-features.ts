@@ -675,7 +675,7 @@ function checkWorkspaceAdminViewConfig(
 		(isManualSettingsRestResource && !hasManualSettingsRouteParameters) ||
 		Boolean(coreDataSourceMatch);
 	const failDetail = hasManualSettingsRouteParameters
-		? `Admin view source ${source} uses route parameters and cannot scaffold a singleton settings form`
+		? `Admin view source ${source} uses route parameters or regex groups and cannot scaffold a singleton settings form`
 		: "Admin view source must use rest-resource:<slug> with a list-capable REST resource, a manual settings contract with a body type, or core-data:<postType|taxonomy>/<name>";
 
 	return createDoctorCheck(
