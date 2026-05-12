@@ -180,6 +180,28 @@ test('treats missing add kinds as an error while still printing help text', () =
   );
 });
 
+test('node fallback rest-resource missing-name output keeps usage split by mode', () => {
+  const result = runCapturedCommand(
+    process.execPath,
+    [entryPath, 'add', 'rest-resource'],
+    {
+      env: withoutLocalBunEnv(),
+    },
+  );
+
+  expect(result.status).toBe(1);
+  expect(result.stderr).toContain(
+    '`wp-typia add rest-resource` requires <name>. Usage:',
+  );
+  expect(result.stderr).toContain(
+    'Generated: wp-typia add rest-resource <name> [--namespace <vendor/v1>] [--methods <list,read,create,update,delete>]',
+  );
+  expect(result.stderr).toContain(
+    'Manual: wp-typia add rest-resource <name> --manual [--method <GET|POST|PUT|PATCH|DELETE>]',
+  );
+  expect(result.stderr).not.toContain(' or wp-typia add rest-resource ');
+});
+
 test('node fallback source entry treats missing add kinds as an error while printing add help', async () => {
   const originalLog = console.log;
   const capturedStdout: string[] = [];

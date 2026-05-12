@@ -599,6 +599,36 @@ describe('wp-typia add command bridge', () => {
     }
   }, 15_000);
 
+  test('rest-resource missing-name guidance separates generated and manual modes', async () => {
+    let error: unknown;
+
+    try {
+      await executeAddCommand({
+        cwd: tempRoot,
+        emitOutput: false,
+        flags: {},
+        interactive: false,
+        kind: 'rest-resource',
+      });
+    } catch (caughtError) {
+      error = caughtError;
+    }
+
+    expect(error).toBeInstanceOf(Error);
+    expect((error as { code?: string }).code).toBe(
+      CLI_DIAGNOSTIC_CODES.MISSING_ARGUMENT,
+    );
+    expect((error as Error).message).toContain(
+      '`wp-typia add rest-resource` requires <name>. Usage:',
+    );
+    expect((error as Error).message).toContain(
+      'Generated: wp-typia add rest-resource <name> [--namespace <vendor/v1>] [--methods <list,read,create,update,delete>] [--route-pattern <route-pattern>]',
+    );
+    expect((error as Error).message).toContain(
+      'Manual: wp-typia add rest-resource <name> --manual [--method <GET|POST|PUT|PATCH|DELETE>] [--auth <public|authenticated|public-write-protected>] [--path <route-pattern>]',
+    );
+  });
+
   test('every registered add kind currently advertises dry-run support', () => {
     expect(ADD_KIND_IDS.every((kind) => supportsAddKindDryRun(kind))).toBe(
       true,
