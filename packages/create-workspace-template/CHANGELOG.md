@@ -1,5 +1,18 @@
 # @wp-typia/create-workspace-template
 
+## 0.17.0 — 2026-05-12
+
+### Minor changes
+
+- [efdc8784](https://github.com/imjlk/wp-typia/commit/efdc878408cca0fe0494a619da9faba7f7600252) Add typed admin settings screen scaffolds for manual REST contracts, including generated React form state, API/client integration, secret-field metadata propagation, and docs that distinguish generated settings screens from DataViews and custom admin UI. — Thanks @imjlk!
+- [bcfdba8b](https://github.com/imjlk/wp-typia/commit/bcfdba8b9ce1c0bac6bbeba1a8e122bdf94f71a2) Added `wp-typia add contract <name> [--type <ExportedTypeName>]` for standalone TypeScript wire contracts, including JSON Schema artifact generation, workspace inventory registration, and `sync-rest` / `sync --check` drift checks without generating PHP route glue. — Thanks @imjlk!
+- [10a835ad](https://github.com/imjlk/wp-typia/commit/10a835add0580c3f3964386c84f652500b2f0cfe) Add generated REST resource escape hatches for custom item route patterns, permission callbacks, and controller class wrappers while keeping generated schemas, OpenAPI, clients, and workspace inventory aligned. — Thanks @imjlk!
+- [81c2f5c3](https://github.com/imjlk/wp-typia/commit/81c2f5c3e1ee76575c09fa82eaa93b524bb73675) Add `wp-typia add post-meta` for typed WordPress post meta contracts, including TypeScript shape scaffolding, generated schema sync, `register_post_meta()` PHP glue, workspace inventory, doctor coverage, and CLI/TUI/docs wiring. — Thanks @imjlk!
+
+### Patch changes
+
+- [3cebc2c8](https://github.com/imjlk/wp-typia/commit/3cebc2c889371245c413d20b13435c93b8f9443a) Added an opt-in `wp-typia add integration-env <name>` workspace workflow that can generate local smoke-test starters, `.env.example`, optional `@wordpress/env` setup, and an optional docker-compose service scaffold. — Thanks @imjlk!
+
 ## 0.16.0 — 2026-04-29
 
 ### Minor changes

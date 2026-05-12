@@ -1,5 +1,26 @@
 # wp-typia
 
+## 0.23.0 — 2026-05-12
+
+### Minor changes
+
+- [efdc8784](https://github.com/imjlk/wp-typia/commit/efdc878408cca0fe0494a619da9faba7f7600252) Add typed admin settings screen scaffolds for manual REST contracts, including generated React form state, API/client integration, secret-field metadata propagation, and docs that distinguish generated settings screens from DataViews and custom admin UI. — Thanks @imjlk!
+- [bcfdba8b](https://github.com/imjlk/wp-typia/commit/bcfdba8b9ce1c0bac6bbeba1a8e122bdf94f71a2) Added `wp-typia add contract <name> [--type <ExportedTypeName>]` for standalone TypeScript wire contracts, including JSON Schema artifact generation, workspace inventory registration, and `sync-rest` / `sync --check` drift checks without generating PHP route glue. — Thanks @imjlk!
+- [3cebc2c8](https://github.com/imjlk/wp-typia/commit/3cebc2c889371245c413d20b13435c93b8f9443a) Added an opt-in `wp-typia add integration-env <name>` workspace workflow that can generate local smoke-test starters, `.env.example`, optional `@wordpress/env` setup, and an optional docker-compose service scaffold. — Thanks @imjlk!
+- [10a835ad](https://github.com/imjlk/wp-typia/commit/10a835add0580c3f3964386c84f652500b2f0cfe) Add generated REST resource escape hatches for custom item route patterns, permission callbacks, and controller class wrappers while keeping generated schemas, OpenAPI, clients, and workspace inventory aligned. — Thanks @imjlk!
+- [82450468](https://github.com/imjlk/wp-typia/commit/82450468cdd72f8d4a287821021b8c0f92173c80) Add first-class secret/write-only field metadata for settings-style REST contracts, including Typia tags, OpenAPI schema extensions, manual REST scaffold flags, and tests that keep raw secrets out of response contracts. — Thanks @imjlk!
+- [81c2f5c3](https://github.com/imjlk/wp-typia/commit/81c2f5c3e1ee76575c09fa82eaa93b524bb73675) Add `wp-typia add post-meta` for typed WordPress post meta contracts, including TypeScript shape scaffolding, generated schema sync, `register_post_meta()` PHP glue, workspace inventory, doctor coverage, and CLI/TUI/docs wiring. — Thanks @imjlk!
+- [bb7aa2e9](https://github.com/imjlk/wp-typia/commit/bb7aa2e9b100b431d208095dec697e980127ed73) Add manual REST contract scaffolding through `wp-typia add rest-resource --manual` so projects can track external WordPress REST routes with generated TypeScript contracts, validators, schemas, OpenAPI, clients, and drift checks without generating PHP route files. — Thanks @imjlk!
+
+### Patch changes
+
+- [57ea28e4](https://github.com/imjlk/wp-typia/commit/57ea28e4ead58bcc1842d2c266ae3981899c0591) Share the CLI regular expression escaping helper across runtime output and marker formatting. — Thanks @imjlk!
+- [80f41876](https://github.com/imjlk/wp-typia/commit/80f418763379ef6e5ffd6e2b1ff2cab55358d5fc) Route add-kind warning output through the explicit warning printer for every shared execution plan. — Thanks @imjlk!
+- [c26a0ae0](https://github.com/imjlk/wp-typia/commit/c26a0ae0b14ac00d1fab4286a6f208be02f13968) Route migrate command human output through injected line printers instead of bridge-level console output. — Thanks @imjlk!
+- [83cd24e8](https://github.com/imjlk/wp-typia/commit/83cd24e8c9ede0b536ac14e67a320311dcf449f0) Route Node fallback no-command failures through the shared CLI diagnostic flow while preserving human-readable help output. — Thanks @imjlk!
+- [a555728d](https://github.com/imjlk/wp-typia/commit/a555728d3b6dcf7099dc78f7f2836fe2598d8d5d) Pass explicit output adapters from Bunli command handlers into supported runtime bridges. — Thanks @imjlk!
+- Updated dependencies: project-tools (npm)@0.23.0
+
 ## 0.22.10 — 2026-05-10
 
 ### Patch changes

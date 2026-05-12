@@ -1,5 +1,12 @@
 # @wp-typia/block-runtime
 
+## 0.6.0 — 2026-05-12
+
+### Minor changes
+
+- [0c29c393](https://github.com/imjlk/wp-typia/commit/0c29c3931828cb547e47f35c717df39bf10025e7) Added `@wp-typia/block-runtime/schema-test` helpers for validating smoke and integration response payloads against generated JSON Schema contract artifacts with field-level failure paths. — Thanks @imjlk!
+- [82450468](https://github.com/imjlk/wp-typia/commit/82450468cdd72f8d4a287821021b8c0f92173c80) Add first-class secret/write-only field metadata for settings-style REST contracts, including Typia tags, OpenAPI schema extensions, manual REST scaffold flags, and tests that keep raw secrets out of response contracts. — Thanks @imjlk!
+
 ## 0.5.1 — 2026-05-10
 
 ### Patch changes

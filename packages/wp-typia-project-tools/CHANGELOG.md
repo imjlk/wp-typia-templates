@@ -1,5 +1,27 @@
 # @wp-typia/project-tools
 
+## 0.23.0 — 2026-05-12
+
+### Minor changes
+
+- [efdc8784](https://github.com/imjlk/wp-typia/commit/efdc878408cca0fe0494a619da9faba7f7600252) Add typed admin settings screen scaffolds for manual REST contracts, including generated React form state, API/client integration, secret-field metadata propagation, and docs that distinguish generated settings screens from DataViews and custom admin UI. — Thanks @imjlk!
+- [bcfdba8b](https://github.com/imjlk/wp-typia/commit/bcfdba8b9ce1c0bac6bbeba1a8e122bdf94f71a2) Added `wp-typia add contract <name> [--type <ExportedTypeName>]` for standalone TypeScript wire contracts, including JSON Schema artifact generation, workspace inventory registration, and `sync-rest` / `sync --check` drift checks without generating PHP route glue. — Thanks @imjlk!
+- [3cebc2c8](https://github.com/imjlk/wp-typia/commit/3cebc2c889371245c413d20b13435c93b8f9443a) Added an opt-in `wp-typia add integration-env <name>` workspace workflow that can generate local smoke-test starters, `.env.example`, optional `@wordpress/env` setup, and an optional docker-compose service scaffold. — Thanks @imjlk!
+- [10a835ad](https://github.com/imjlk/wp-typia/commit/10a835add0580c3f3964386c84f652500b2f0cfe) Add generated REST resource escape hatches for custom item route patterns, permission callbacks, and controller class wrappers while keeping generated schemas, OpenAPI, clients, and workspace inventory aligned. — Thanks @imjlk!
+- [82450468](https://github.com/imjlk/wp-typia/commit/82450468cdd72f8d4a287821021b8c0f92173c80) Add first-class secret/write-only field metadata for settings-style REST contracts, including Typia tags, OpenAPI schema extensions, manual REST scaffold flags, and tests that keep raw secrets out of response contracts. — Thanks @imjlk!
+- [81c2f5c3](https://github.com/imjlk/wp-typia/commit/81c2f5c3e1ee76575c09fa82eaa93b524bb73675) Add `wp-typia add post-meta` for typed WordPress post meta contracts, including TypeScript shape scaffolding, generated schema sync, `register_post_meta()` PHP glue, workspace inventory, doctor coverage, and CLI/TUI/docs wiring. — Thanks @imjlk!
+- [bb7aa2e9](https://github.com/imjlk/wp-typia/commit/bb7aa2e9b100b431d208095dec697e980127ed73) Add manual REST contract scaffolding through `wp-typia add rest-resource --manual` so projects can track external WordPress REST routes with generated TypeScript contracts, validators, schemas, OpenAPI, clients, and drift checks without generating PHP route files. — Thanks @imjlk!
+
+### Patch changes
+
+- [7bc6301e](https://github.com/imjlk/wp-typia/commit/7bc6301e304f4510ff81411bf16d8221866eb476) Rename the template renderer's synchronous path existence helper to `pathExistsSync` to avoid confusion with the canonical async helper. — Thanks @imjlk!
+- [683a1317](https://github.com/imjlk/wp-typia/commit/683a131786bc9105081b9bc89e2365afec0efd8c) Route the generated init sync helper through a shared file-not-found error helper instead of an inline ENOENT code check. — Thanks @imjlk!
+- [39e95cf0](https://github.com/imjlk/wp-typia/commit/39e95cf0d7a21f705b8fafb02c3686e9decac56c) Route environment doctor checks through the shared doctor check helper to keep diagnostic row metadata consistent. — Thanks @imjlk!
+- [9ad7db20](https://github.com/imjlk/wp-typia/commit/9ad7db20521d3e9de0c9272d66be8f16a4548be5) Document async replacements and no-removal-scheduled guidance for deprecated synchronous inventory and template-source helpers. — Thanks @imjlk!
+- [c8c93068](https://github.com/imjlk/wp-typia/commit/c8c93068cbf17f19cc0a33563d3595c4f59fc00a) Split external template cache marker parsing and serialization into a focused runtime helper module. — Thanks @imjlk!
+- [3d1a3b63](https://github.com/imjlk/wp-typia/commit/3d1a3b6336e31d2412d2ec69eb3f9e937fc949fe) Move package-level workspace doctor filesystem probes behind an async snapshot while documenting the remaining synchronous doctor categories. — Thanks @imjlk!
+- Updated dependencies: block-runtime (npm)@0.6.0
+
 ## 0.22.10 — 2026-05-10
 
 ### Patch changes
