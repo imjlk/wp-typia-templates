@@ -8,6 +8,9 @@ import {
   buildAdminViewConfigSource,
   buildAdminViewTypesSource,
 } from '../src/runtime/cli-add-workspace-admin-view-templates.js';
+import { buildCoreDataAdminViewConfigSource } from '../src/runtime/cli-add-workspace-admin-view-templates-core-data.js';
+import { buildDefaultAdminViewConfigSource } from '../src/runtime/cli-add-workspace-admin-view-templates-default.js';
+import { buildRestAdminViewTypesSource } from '../src/runtime/cli-add-workspace-admin-view-templates-rest.js';
 import {
   type AdminViewCoreDataSource,
   type AdminViewRestResource,
@@ -83,4 +86,57 @@ test('admin-view template builders emit rest-resource imports and taxonomy-speci
   expect(taxonomyConfigSource).toContain(
     'label: __( \'Count\', "demo-space" )',
   );
+});
+
+test('admin-view template barrel delegates to focused variant emitters', () => {
+  const restResource: AdminViewRestResource = {
+    apiFile: 'src/rest/orders/api.ts',
+    clientFile: 'src/rest/orders/client.ts',
+    dataFile: 'src/rest/orders/data.ts',
+    methods: ['list', 'read'],
+    namespace: 'demo/v1',
+    openApiFile: 'src/rest/orders/openapi.json',
+    phpFile: 'inc/rest/orders.php',
+    slug: 'orders',
+    typesFile: 'src/rest/orders/types.ts',
+    validatorsFile: 'src/rest/orders/validators.ts',
+  };
+  const taxonomySource: AdminViewCoreDataSource = {
+    entityKind: 'taxonomy',
+    entityName: 'category',
+    kind: 'core-data',
+  };
+
+  expect(buildAdminViewTypesSource('snapshots', restResource, undefined)).toBe(
+    buildRestAdminViewTypesSource('snapshots', restResource),
+  );
+  expect(
+    buildAdminViewConfigSource('starter', 'demo-space', undefined, undefined),
+  ).toBe(buildDefaultAdminViewConfigSource('starter', 'demo-space'));
+  expect(
+    buildAdminViewConfigSource(
+      'categories',
+      'demo-space',
+      taxonomySource,
+      undefined,
+    ),
+  ).toBe(
+    buildCoreDataAdminViewConfigSource(
+      'categories',
+      'demo-space',
+      taxonomySource,
+    ),
+  );
+});
+
+test('core-data admin-view config labels post title fields as title', () => {
+  const postTypeSource: AdminViewCoreDataSource = {
+    entityKind: 'postType',
+    entityName: 'post',
+    kind: 'core-data',
+  };
+
+  expect(
+    buildCoreDataAdminViewConfigSource('posts', 'demo-space', postTypeSource),
+  ).toContain('label: __( \'Title\', "demo-space" )');
 });
