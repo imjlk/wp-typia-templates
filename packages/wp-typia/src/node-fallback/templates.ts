@@ -64,7 +64,7 @@ export async function dispatchNodeFallbackTemplates({
     typeof mergedFlags.id === 'string'
       ? mergedFlags.id
       : (positionals[2] as string | undefined);
-  const resolvedSubcommand = templateId ? 'inspect' : (subcommand ?? 'list');
+  const resolvedSubcommand = subcommand ?? (templateId ? 'inspect' : 'list');
   if (resolvedSubcommand !== 'list' && resolvedSubcommand !== 'inspect') {
     throw createCliCommandError({
       code: CLI_DIAGNOSTIC_CODES.INVALID_COMMAND,

@@ -1064,6 +1064,12 @@ process.exit(0);
       code: 'invalid-command',
       command: 'templates',
     });
+    await expect(
+      runNodeCli(['templates', 'unknown', 'basic', '--format', 'json']),
+    ).rejects.toMatchObject({
+      code: 'invalid-command',
+      command: 'templates',
+    });
   });
 
   test('formats migrate failures with a shared non-interactive diagnostic block', () => {
