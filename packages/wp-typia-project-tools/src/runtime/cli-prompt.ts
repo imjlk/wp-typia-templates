@@ -2,7 +2,7 @@ import readline from "node:readline";
 
 type ValidateInput = (value: string) => boolean | string;
 type PromptQuestion = (query: string) => Promise<string>;
-type PromptLinePrinter = (line: string) => void;
+export type PromptLinePrinter = (line: string) => void;
 
 interface PromptOption<T extends string> {
 	hint?: string;
