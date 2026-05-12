@@ -326,9 +326,14 @@ export function createCliDiagnosticCodeError<TCode extends CliDiagnosticCode>(
 
 /**
  * Compatibility-only fallback for legacy or third-party errors that have not
- * yet been tagged by their throw site. New user-facing failures should pass an
- * explicit code through `createCliDiagnosticCodeError()` or
- * `createCliCommandError({ code })` instead of relying on message matching.
+ * yet been tagged by their throw site.
+ *
+ * The regexes below intentionally couple this classifier to existing
+ * project-tools runtime validation messages. Treat them as compatibility shims:
+ * changing a validation message can silently change, downgrade, or remove the
+ * inferred diagnostic code. New user-facing runtime validation failures should
+ * pass an explicit code through `createCliDiagnosticCodeError()` or
+ * `createCliCommandError({ code })` instead of adding new message patterns.
  */
 function inferCliDiagnosticCode(options: {
 	command: string;

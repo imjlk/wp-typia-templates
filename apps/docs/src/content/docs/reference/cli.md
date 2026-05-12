@@ -92,8 +92,13 @@ improves.
 }
 ```
 
-Known throw sites attach an explicit diagnostic code. Message-based inference is
-kept only as a compatibility fallback for legacy or untyped errors.
+Known throw sites attach an explicit diagnostic code. Message-based inference in
+`inferCliDiagnosticCode()` is kept only as a compatibility fallback for legacy or
+untyped errors, and its regexes are coupled to the exact runtime validation
+messages they match. Rewording one of those messages can silently change,
+downgrade, or remove the diagnostic code returned to JSON consumers, so new
+user-facing runtime validation failures should use a diagnostic-coded error at
+the throw site instead of extending the fallback classifier.
 
 | Code                         | Typical cause                                            | Recovery                                                                |
 | ---------------------------- | -------------------------------------------------------- | ----------------------------------------------------------------------- |
