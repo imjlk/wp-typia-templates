@@ -1977,6 +1977,10 @@ test("official workspace template scaffolds through the local npm template resol
     path.join(targetDir, "scripts", "block-config.ts"),
     "utf8"
   );
+  const restSchemaHelperSource = fs.readFileSync(
+    path.join(targetDir, "inc", "rest-schema.php"),
+    "utf8"
+  );
 
   expect(result.templateId).toBe(workspaceTemplatePackageManifest.name);
   expect(packageJson.wpTypia).toEqual({
@@ -2026,6 +2030,7 @@ test("official workspace template scaffolds through the local npm template resol
   expect(readmeSource).toContain("npm run wp-typia:doctor");
   expect(readmeSource).toContain("npm run wp-typia:sync -- --check");
   expect(readmeSource).toContain("npm run sync-rest:package:check");
+  expect(readmeSource).toContain("demo_space_get_wordpress_rest_schema");
   expect(readmeSource).toContain(
     "npm run wp-typia:add -- block counter-card --template basic"
   );
@@ -2036,9 +2041,22 @@ test("official workspace template scaffolds through the local npm template resol
     "wp_register_block_types_from_metadata_collection"
   );
   expect(bootstrapSource).toContain("src/bindings/*/server.php");
+  expect(bootstrapSource).toContain("function demo_space_load_rest_schema_helpers()");
+  expect(bootstrapSource).toContain("inc/rest-schema.php");
   expect(bootstrapSource).toContain("enqueue_block_editor_assets");
   expect(bootstrapSource).toContain("register_block_pattern_category");
   expect(bootstrapSource).toContain("/src/patterns/*.php");
+  expect(restSchemaHelperSource).toContain("function demo_space_load_rest_schema");
+  expect(restSchemaHelperSource).toContain(
+    "function demo_space_prepare_rest_schema_for_wordpress"
+  );
+  expect(restSchemaHelperSource).toContain(
+    "function demo_space_get_wordpress_rest_schema"
+  );
+  expect(restSchemaHelperSource).toContain(
+    "function demo_space_validate_and_sanitize_rest_payload"
+  );
+  expect(restSchemaHelperSource).toContain("malformed_rest_schema");
   expect(
     fs.existsSync(path.join(targetDir, "src", "blocks", ".gitkeep"))
   ).toBe(true);

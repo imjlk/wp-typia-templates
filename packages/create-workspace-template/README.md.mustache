@@ -53,6 +53,13 @@ Run `sync-rest:package` before building release zips when REST resources are
 registered. It copies generated runtime schemas into `inc/rest-schemas` and
 `sync-rest:package:check` fails CI if packaged schemas are missing or stale.
 
+The generated `inc/rest-schema.php` helper centralizes schema loading and
+WordPress REST sanitization. Generated REST resources use it automatically, and
+custom PHP resources can call
+`{{phpPrefix}}_get_wordpress_rest_schema( 'settings-response', array( 'resource' => 'settings' ) )`
+or `{{phpPrefix}}_validate_and_sanitize_rest_payload(...)` to reuse the same
+packaged/source lookup and `WP_Error` handling.
+
 ## Development
 
 ```bash
