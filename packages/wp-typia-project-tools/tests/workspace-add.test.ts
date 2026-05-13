@@ -3630,6 +3630,10 @@ test("canonical CLI can add a type-only manual REST contract to an official work
       "ExternalRecordResponse",
       "--secret-field",
       "apiKey",
+      "--secret-has-value-field",
+      "hasApiKey",
+      "--secret-preserve-on-empty",
+      "true",
     ],
     {
       cwd: targetDir,
@@ -3697,6 +3701,7 @@ test("canonical CLI can add a type-only manual REST contract to an official work
   expect(blockConfigSource).toContain('queryTypeName: "ExternalRecordQuery"');
   expect(blockConfigSource).toContain('bodyTypeName: "ExternalRecordRequest"');
   expect(blockConfigSource).toContain('responseTypeName: "ExternalRecordResponse"');
+  expect(blockConfigSource).toContain("secretPreserveOnEmpty: true");
   expect(blockConfigSource).toContain("\tdataFile?: string;");
   expect(blockConfigSource).toContain("\tphpFile?: string;");
   expect(blockConfigSource).not.toContain("inc/rest/external-record.php");
@@ -3709,6 +3714,7 @@ test("canonical CLI can add a type-only manual REST contract to an official work
   expect(typesSource).toContain("export interface ExternalRecordRequest");
   expect(typesSource).toContain("apiKey?: string");
   expect(typesSource).toContain('tags.Secret< "hasApiKey" >');
+  expect(typesSource).toContain("tags.PreserveOnEmpty< true >");
   expect(typesSource).toContain("export interface ExternalRecordResponse");
   expect(typesSource).toContain("hasApiKey: boolean");
   expect(typesSource).not.toContain("apiKey: boolean");
@@ -3733,6 +3739,7 @@ test("canonical CLI can add a type-only manual REST contract to an official work
   );
   expect(openApiSource).toContain('"x-typia-authIntent": "authenticated"');
   expect(openApiSource).toContain('"writeOnly": true');
+  expect(openApiSource).toContain('"x-wp-typia-preserveOnEmpty": true');
   expect(openApiSource).toContain('"x-wp-typia-secret": true');
   expect(openApiSource).toContain('"x-wp-typia-secretStateField": "hasApiKey"');
   expect(fs.existsSync(responseSchemaPath)).toBe(true);
@@ -3745,6 +3752,7 @@ test("canonical CLI can add a type-only manual REST contract to an official work
   ) as { properties: Record<string, unknown> };
   expect(requestSchema.properties.apiKey).toMatchObject({
     writeOnly: true,
+    "x-wp-typia-preserveOnEmpty": true,
     "x-wp-typia-secret": true,
     "x-wp-typia-secretStateField": "hasApiKey",
   });
@@ -3882,6 +3890,7 @@ test("canonical CLI can add a typed admin settings screen from a manual REST con
   expect(packageJson.devDependencies?.["@wp-typia/dataviews"]).toBeUndefined();
   expect(blockConfigSource).toContain('source: "rest-resource:integration-settings"');
   expect(blockConfigSource).toContain('secretFieldName: "apiKey"');
+  expect(blockConfigSource).toContain("secretPreserveOnEmpty: true");
   expect(blockConfigSource).toContain('secretStateFieldName: "hasApiKey"');
   expect(apiSource).toContain("manualRestContractEndpoint");
   expect(apiSource).toContain("callManualRestContract");
@@ -3889,6 +3898,8 @@ test("canonical CLI can add a typed admin settings screen from a manual REST con
   expect(entrySource).not.toContain("@wordpress/dataviews/build-style/style.css");
   expect(configSource).toContain("integrationSettingsSettingsConfig");
   expect(configSource).toContain('secretFieldName: "apiKey"');
+  expect(configSource).toContain("secretPreserveOnEmpty: true");
+  expect(configSource).toContain("preserveOnEmpty: true");
   expect(configSource).toContain('secretStateFieldName: "hasApiKey"');
   expect(dataSource).toContain("callManualRestContract");
   expect(dataSource).toContain("saveIntegrationSettingsSettings");

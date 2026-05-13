@@ -313,6 +313,7 @@ export function updateWorkspaceInventorySource(
 		["responseTypeName", "\tresponseTypeName?: string;"],
 		["routePattern", "\troutePattern?: string;"],
 		["secretFieldName", "\tsecretFieldName?: string;"],
+		["secretPreserveOnEmpty", "\tsecretPreserveOnEmpty?: boolean;"],
 		["secretStateFieldName", "\tsecretStateFieldName?: string;"],
 	] as const) {
 		nextSource = upsertInterfaceField(

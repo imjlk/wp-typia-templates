@@ -127,6 +127,7 @@ describe("metadata-parser", () => {
 
 			const excerpt = parserDemo.properties?.excerpt;
 			expect(excerpt?.wp).toEqual({
+				preserveOnEmpty: false,
 				selector: ".demo__excerpt",
 				secret: false,
 				secretStateField: null,
@@ -134,6 +135,7 @@ describe("metadata-parser", () => {
 				writeOnly: false,
 			});
 			expect(parserDemo.properties?.secret.wp).toEqual({
+				preserveOnEmpty: false,
 				selector: null,
 				secret: true,
 				secretStateField: "hasSecret",

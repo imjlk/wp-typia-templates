@@ -276,6 +276,12 @@ export interface RunAddPostMetaCommandOptions {
  * Generated mode defaults to `/<name>/item`; manual mode defaults to `/<name>`.
  * @property secretFieldName Optional write-only secret field name for manual
  * settings contracts. Requires a request body.
+ * @property secretHasValueFieldName Optional alias for `secretStateFieldName`
+ * when the response field is a safe presence indicator.
+ * @property secretMaskedResponseFieldName Optional alias for
+ * `secretStateFieldName` when the response field represents masked state.
+ * @property secretPreserveOnEmpty Whether blank secret submissions should
+ * preserve the existing value. Defaults to true when `secretFieldName` is set.
  * @property secretStateFieldName Optional masked response boolean field for
  * `secretFieldName`. Defaults to `has<PascalSecretField>`.
  */
@@ -296,6 +302,9 @@ export interface RunAddRestResourceCommandOptions {
 	responseTypeName?: string;
 	routePattern?: string;
 	secretFieldName?: string;
+	secretHasValueFieldName?: string;
+	secretMaskedResponseFieldName?: string;
+	secretPreserveOnEmpty?: boolean | string;
 	secretStateFieldName?: string;
 }
 

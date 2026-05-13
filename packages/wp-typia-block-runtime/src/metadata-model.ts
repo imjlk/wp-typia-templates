@@ -80,6 +80,7 @@ export interface AttributeNode {
 	required: boolean;
 	union?: AttributeUnion | null;
 	wp: {
+		preserveOnEmpty: boolean;
 		selector: string | null;
 		secret: boolean;
 		secretStateField: string | null;
@@ -133,6 +134,7 @@ export interface ManifestAttribute {
 		defaultValue: JsonValue | null;
 		enum: Array<string | number | boolean> | null;
 		hasDefault: boolean;
+		preserveOnEmpty?: boolean;
 		selector?: string | null;
 		secret?: boolean;
 		secretStateField?: string | null;
@@ -214,6 +216,7 @@ export function baseNode(kind: AttributeKind, pathLabel: string): AttributeNode 
 		required: true,
 		union: null,
 		wp: {
+			preserveOnEmpty: false,
 			selector: null,
 			secret: false,
 			secretStateField: null,

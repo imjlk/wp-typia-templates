@@ -58,12 +58,18 @@ export function buildRestSettingsAdminViewConfigSource(
   const title = toTitleCase(adminViewSlug);
   const configName = `${camelName}SettingsConfig`;
   const formStateTypeName = `${pascalName}SettingsFormState`;
+  const secretPreserveOnEmpty = restResource.secretPreserveOnEmpty !== false;
   const secretFieldSource =
     restResource.secretFieldName && restResource.secretStateFieldName
       ? `\t{
-\t\tdescription: __( 'Write-only secret value. Leave blank to keep the existing secret unless your route treats blank values as removal.', ${quoteTsString(textDomain)} ),
+\t\tdescription: __( ${quoteTsString(
+        secretPreserveOnEmpty
+          ? 'Write-only secret value. Leave blank to keep the existing secret.'
+          : 'Write-only secret value. Blank submissions are sent to the REST route.',
+      )}, ${quoteTsString(textDomain)} ),
 \t\tid: ${quoteTsString(restResource.secretFieldName)},
 \t\tlabel: __( ${quoteTsString(toTitleCase(restResource.secretFieldName))}, ${quoteTsString(textDomain)} ),
+\t\tpreserveOnEmpty: ${secretPreserveOnEmpty},
 \t\tsecretStateField: ${quoteTsString(restResource.secretStateFieldName)},
 \t\ttype: 'secret',
 \t},`
@@ -79,6 +85,7 @@ export interface ${pascalName}SettingsField {
 \tdescription?: string;
 \tid: Extract<keyof ${formStateTypeName}, string> | string;
 \tlabel: string;
+\tpreserveOnEmpty?: boolean;
 \tsecretStateField?: string;
 \ttype: ${pascalName}SettingsFieldType;
 }
@@ -101,6 +108,7 @@ export const ${configName} = {
 ${secretFieldSource}
 \t] satisfies ${pascalName}SettingsField[],
 \tsecretFieldName: ${restResource.secretFieldName ? quoteTsString(restResource.secretFieldName) : 'undefined'},
+\tsecretPreserveOnEmpty: ${restResource.secretFieldName ? secretPreserveOnEmpty : 'undefined'},
 \tsecretStateFieldName: ${restResource.secretStateFieldName ? quoteTsString(restResource.secretStateFieldName) : 'undefined'},
 \ttitle: __( ${quoteTsString(title)}, ${quoteTsString(textDomain)} ),
 };
@@ -127,11 +135,12 @@ export function buildRestSettingsAdminViewDataSource(
   const loadResultTypeName = `${pascalName}SettingsLoadResult`;
   const loadName = `load${pascalName}Settings`;
   const saveName = `save${pascalName}Settings`;
+  const secretPreserveOnEmpty = restResource.secretPreserveOnEmpty !== false;
   const initialFields = [
     '\tpayload: \'\',',
     '\tcomment: \'\',',
   ].join('\n');
-  const requestBodySource = restResource.secretFieldName
+  const requestBodySource = restResource.secretFieldName && secretPreserveOnEmpty
     ? `\tconst requestBody = { ...form } as Record<string, unknown>;
 \tif (requestBody[${quoteTsString(restResource.secretFieldName)}] === '') {
 \t\tdelete requestBody[${quoteTsString(restResource.secretFieldName)}];

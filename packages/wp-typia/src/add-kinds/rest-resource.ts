@@ -13,7 +13,7 @@ import {
 const REST_RESOURCE_GENERATED_USAGE =
   'Generated: wp-typia add rest-resource <name> [--namespace <vendor/v1>] [--methods <list,read,create,update,delete>] [--route-pattern <route-pattern>] [--permission-callback <callback>] [--controller-class <ClassName>] [--controller-extends <BaseClass>] [--dry-run]';
 const REST_RESOURCE_MANUAL_USAGE =
-  'Manual: wp-typia add rest-resource <name> --manual [--namespace <vendor/v1>] [--method <GET|POST|PUT|PATCH|DELETE>] [--auth <public|authenticated|public-write-protected>] [--path <route-pattern>|--route-pattern <route-pattern>] [--permission-callback <callback>] [--controller-class <ClassName>] [--controller-extends <BaseClass>] [--query-type <Type>] [--body-type <Type>] [--response-type <Type>] [--secret-field <field>] [--secret-state-field <field>] [--dry-run]';
+  'Manual: wp-typia add rest-resource <name> --manual [--namespace <vendor/v1>] [--method <GET|POST|PUT|PATCH|DELETE>] [--auth <public|authenticated|public-write-protected>] [--path <route-pattern>|--route-pattern <route-pattern>] [--permission-callback <callback>] [--controller-class <ClassName>] [--controller-extends <BaseClass>] [--query-type <Type>] [--body-type <Type>] [--response-type <Type>] [--secret-field <field>] [--secret-state-field|--secret-has-value-field <field>] [--secret-preserve-on-empty <true|false>] [--dry-run]';
 const REST_RESOURCE_USAGE = `${REST_RESOURCE_GENERATED_USAGE}\n${REST_RESOURCE_MANUAL_USAGE}`;
 const REST_RESOURCE_MISSING_NAME_MESSAGE = [
   '`wp-typia add rest-resource` requires <name>. Usage:',
@@ -45,6 +45,7 @@ export const restResourceAddKindEntry =
               ...(values.secretFieldName
                 ? [
                     `Secret field: ${values.secretFieldName} -> ${values.secretStateFieldName}`,
+                    `Secret preserve on empty: ${values.secretPreserveOnEmpty}`,
                   ]
                 : []),
               ...(values.permissionCallback
@@ -87,6 +88,9 @@ export const restResourceAddKindEntry =
       'response-type',
       'route-pattern',
       'secret-field',
+      'secret-has-value-field',
+      'secret-masked-response-field',
+      'secret-preserve-on-empty',
       'secret-state-field',
     ],
     nameLabel: 'REST resource name',
@@ -138,6 +142,21 @@ export const restResourceAddKindEntry =
         'secret-field',
         'secretField',
       );
+      const secretHasValueFieldName = readOptionalDashedOrCamelStringFlag(
+        context.flags,
+        'secret-has-value-field',
+        'secretHasValueField',
+      );
+      const secretMaskedResponseFieldName = readOptionalDashedOrCamelStringFlag(
+        context.flags,
+        'secret-masked-response-field',
+        'secretMaskedResponseField',
+      );
+      const secretPreserveOnEmpty = readOptionalDashedOrCamelStringFlag(
+        context.flags,
+        'secret-preserve-on-empty',
+        'secretPreserveOnEmpty',
+      );
       const secretStateFieldName = readOptionalDashedOrCamelStringFlag(
         context.flags,
         'secret-state-field',
@@ -163,6 +182,9 @@ export const restResourceAddKindEntry =
             responseTypeName,
             routePattern,
             secretFieldName,
+            secretHasValueFieldName,
+            secretMaskedResponseFieldName,
+            secretPreserveOnEmpty,
             secretStateFieldName,
           }),
         getValues: (result) => ({
@@ -178,6 +200,10 @@ export const restResourceAddKindEntry =
           restResourceSlug: result.restResourceSlug,
           routePattern: result.routePattern ?? '',
           secretFieldName: result.secretFieldName ?? '',
+          secretPreserveOnEmpty:
+            result.secretPreserveOnEmpty === undefined
+              ? ''
+              : String(result.secretPreserveOnEmpty),
           secretStateFieldName: result.secretStateFieldName ?? '',
         }),
         missingNameMessage: REST_RESOURCE_MISSING_NAME_MESSAGE,

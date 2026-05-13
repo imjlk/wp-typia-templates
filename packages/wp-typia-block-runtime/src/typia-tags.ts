@@ -53,6 +53,10 @@ export namespace tags {
     readonly __wpTypiaSecret?: MaskedStateField;
   };
 
+  export type PreserveOnEmpty<Value extends boolean> = {
+    readonly __wpTypiaPreserveOnEmpty?: Value;
+  };
+
   export type Source<Value extends 'html' | 'text' | 'rich-text'> = {
     readonly __wpTypiaSource?: Value;
   };
@@ -70,6 +74,10 @@ declare module 'typia' {
   export namespace tags {
     export type Secret<MaskedStateField extends string> = {
       readonly __wpTypiaSecret?: MaskedStateField;
+    };
+
+    export type PreserveOnEmpty<Value extends boolean> = {
+      readonly __wpTypiaPreserveOnEmpty?: Value;
     };
 
     export type Source<Value extends 'html' | 'text' | 'rich-text'> = {

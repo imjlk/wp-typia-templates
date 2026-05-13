@@ -37,6 +37,49 @@ const MANUAL_REST_RESPONSE_FIELD_NAMES = new Set([
 	"updatedAt",
 ]);
 
+function resolveManualRestSecretPreserveOnEmpty(
+	value: boolean | string | undefined,
+): boolean {
+	if (value === undefined) {
+		return true;
+	}
+	if (typeof value === "boolean") {
+		return value;
+	}
+
+	const normalized = value.trim().toLowerCase();
+	if (["1", "true", "yes"].includes(normalized)) {
+		return true;
+	}
+	if (["0", "false", "no"].includes(normalized)) {
+		return false;
+	}
+
+	throw new Error(
+		"Manual REST contract --secret-preserve-on-empty must be true or false.",
+	);
+}
+
+function resolveManualRestSecretStateFieldCandidate(options: {
+	secretHasValueFieldName: string | undefined;
+	secretMaskedResponseFieldName: string | undefined;
+	secretStateFieldName: string | undefined;
+}): string | undefined {
+	const candidates = [
+		options.secretStateFieldName,
+		options.secretHasValueFieldName,
+		options.secretMaskedResponseFieldName,
+	].filter((value): value is string => typeof value === "string");
+	const distinct = Array.from(new Set(candidates));
+	if (distinct.length > 1) {
+		throw new Error(
+			"Manual REST contract secret state, has-value, and masked response field flags must match when combined.",
+		);
+	}
+
+	return distinct[0];
+}
+
 function resolveManualRestRoutePathPattern(options: {
 	pathPattern: string | undefined;
 	restResourceSlug: string;
@@ -87,6 +130,9 @@ export async function scaffoldManualRestContract({
 	restResourceSlug,
 	routePattern,
 	secretFieldName,
+	secretHasValueFieldName,
+	secretMaskedResponseFieldName,
+	secretPreserveOnEmpty,
 	secretStateFieldName,
 	workspace,
 }: ManualRestContractScaffoldOptions): Promise<RunAddRestResourceCommandResult> {
@@ -148,9 +194,19 @@ export async function scaffoldManualRestContract({
 			"Manual REST contract GET routes cannot define a body type. Remove --body-type or use POST, PUT, or PATCH.",
 		);
 	}
-	if (secretStateFieldName && !secretFieldName) {
+	const secretStateFieldCandidate = resolveManualRestSecretStateFieldCandidate({
+		secretHasValueFieldName,
+		secretMaskedResponseFieldName,
+		secretStateFieldName,
+	});
+	if (secretPreserveOnEmpty !== undefined && !secretFieldName) {
 		throw new Error(
-			"Manual REST contract --secret-state-field requires --secret-field.",
+			"Manual REST contract --secret-preserve-on-empty requires --secret-field.",
+		);
+	}
+	if (secretStateFieldCandidate && !secretFieldName) {
+		throw new Error(
+			"Manual REST contract secret state, has-value, and masked response field flags require --secret-field.",
 		);
 	}
 	if (secretFieldName && !resolvedBodyTypeName) {
@@ -165,10 +221,14 @@ export async function scaffoldManualRestContract({
 				"wp-typia add rest-resource <name> --manual --method POST --secret-field <field>",
 			)
 		: undefined;
+	const resolvedSecretPreserveOnEmpty = resolvedSecretFieldName
+		? resolveManualRestSecretPreserveOnEmpty(secretPreserveOnEmpty)
+		: undefined;
 	const resolvedSecretStateFieldName = resolvedSecretFieldName
 		? assertValidTypeScriptIdentifier(
 				"Manual REST contract secret state field",
-				secretStateFieldName ?? `has${toPascalCase(resolvedSecretFieldName)}`,
+				secretStateFieldCandidate ??
+					`has${toPascalCase(resolvedSecretFieldName)}`,
 				"wp-typia add rest-resource <name> --manual --method POST --secret-state-field <field>",
 			)
 		: undefined;
@@ -240,6 +300,9 @@ export async function scaffoldManualRestContract({
 				restResourceSlug,
 				...(resolvedSecretFieldName
 					? { secretFieldName: resolvedSecretFieldName }
+					: {}),
+				...(resolvedSecretPreserveOnEmpty !== undefined
+					? { secretPreserveOnEmpty: resolvedSecretPreserveOnEmpty }
 					: {}),
 				...(resolvedSecretStateFieldName
 					? { secretStateFieldName: resolvedSecretStateFieldName }
@@ -315,6 +378,9 @@ export async function scaffoldManualRestContract({
 					...(resolvedSecretFieldName
 						? { secretFieldName: resolvedSecretFieldName }
 						: {}),
+					...(resolvedSecretPreserveOnEmpty !== undefined
+						? { secretPreserveOnEmpty: resolvedSecretPreserveOnEmpty }
+						: {}),
 					...(resolvedSecretStateFieldName
 						? { secretStateFieldName: resolvedSecretStateFieldName }
 						: {}),
@@ -348,6 +414,9 @@ export async function scaffoldManualRestContract({
 			responseTypeName: resolvedResponseTypeName,
 			...(resolvedSecretFieldName
 				? { secretFieldName: resolvedSecretFieldName }
+				: {}),
+			...(resolvedSecretPreserveOnEmpty !== undefined
+				? { secretPreserveOnEmpty: resolvedSecretPreserveOnEmpty }
 				: {}),
 			...(resolvedSecretStateFieldName
 				? { secretStateFieldName: resolvedSecretStateFieldName }

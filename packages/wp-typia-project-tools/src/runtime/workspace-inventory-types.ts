@@ -80,6 +80,7 @@ export interface WorkspaceRestResourceInventoryEntry {
 	responseTypeName?: string;
 	routePattern?: string;
 	secretFieldName?: string;
+	secretPreserveOnEmpty?: boolean;
 	secretStateFieldName?: string;
 	slug: string;
 	typesFile: string;

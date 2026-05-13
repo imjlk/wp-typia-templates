@@ -28,7 +28,7 @@ export function formatHelpText(): string {
   wp-typia add pattern <name>
   wp-typia add binding-source <name> [--block <block-slug|namespace/block-slug> --attribute <attribute>]
   wp-typia add rest-resource <name> [--namespace <vendor/v1>] [--methods <method[,method...]>]
-  wp-typia add rest-resource <name> --manual [--namespace <vendor/v1>] [--method <GET|POST|PUT|PATCH|DELETE>] [--auth <public|authenticated|public-write-protected>] [--path <route-pattern>|--route-pattern <route-pattern>] [--permission-callback <callback>] [--controller-class <ClassName>] [--controller-extends <BaseClass>] [--query-type <Type>] [--body-type <Type>] [--response-type <Type>]
+  wp-typia add rest-resource <name> --manual [--namespace <vendor/v1>] [--method <GET|POST|PUT|PATCH|DELETE>] [--auth <public|authenticated|public-write-protected>] [--path <route-pattern>|--route-pattern <route-pattern>] [--permission-callback <callback>] [--controller-class <ClassName>] [--controller-extends <BaseClass>] [--query-type <Type>] [--body-type <Type>] [--response-type <Type>] [--secret-field <field>] [--secret-state-field|--secret-has-value-field <field>] [--secret-preserve-on-empty <true|false>]
   wp-typia add post-meta <name> --post-type <post-type> [--type <ExportedTypeName>] [--meta-key <meta-key>] [--hide-from-rest]
   wp-typia add ability <name>
   wp-typia add ai-feature <name> [--namespace <vendor/v1>]
@@ -66,7 +66,7 @@ Notes:
   \`add pattern\` scaffolds a namespaced PHP pattern shell under \`src/patterns/\`.
   \`add binding-source\` scaffolds shared PHP and editor registration under \`src/bindings/\`; pass \`--block\` and \`--attribute\` together to declare a bindable generated-block attribute.
   \`add rest-resource\` scaffolds plugin-level TypeScript REST contracts under \`src/rest/\` and PHP route glue under \`inc/rest/\`.
-  \`add rest-resource --manual\` tracks an external/provider REST route with typed schemas, OpenAPI, clients, and drift checks without generating PHP route/controller files while still allowing route-owner metadata such as permission callbacks and controller classes.
+  \`add rest-resource --manual\` tracks an external/provider REST route with typed schemas, OpenAPI, clients, and drift checks without generating PHP route/controller files while still allowing route-owner metadata such as permission callbacks and controller classes. Settings contracts can add \`--secret-field\` plus \`--secret-preserve-on-empty\` to model write-only credentials and preserve blank submissions.
   \`add post-meta\` scaffolds typed post meta contracts under \`src/post-meta/\`, emits schema artifacts, and wires generated \`register_post_meta()\` helpers under \`inc/post-meta/\`.
   \`add ability\` scaffolds typed workflow abilities under \`src/abilities/\` and server registration under \`inc/abilities/\`.
   \`add ai-feature\` scaffolds server-owned AI feature endpoints under \`src/ai-features/\` and PHP route glue under \`inc/ai-features/\`.

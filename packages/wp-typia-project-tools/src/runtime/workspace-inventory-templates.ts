@@ -144,6 +144,7 @@ export interface WorkspaceRestResourceBaseConfig {
 \t\ttypeof import( '@wp-typia/block-runtime/metadata-core' ).defineEndpointManifest
 \t>;
 \tsecretFieldName?: string;
+\tsecretPreserveOnEmpty?: boolean;
 \tsecretStateFieldName?: string;
 \tslug: string;
 \ttypesFile: string;

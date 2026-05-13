@@ -30,6 +30,7 @@ import type {
 const WP_TYPIA_OPENAPI_EXTENSION_KEYS = {
 	AUTH_INTENT: "x-typia-authIntent",
 	AUTH_POLICY: "x-wp-typia-authPolicy",
+	PRESERVE_ON_EMPTY: "x-wp-typia-preserveOnEmpty",
 	PUBLIC_TOKEN_FIELD: "x-wp-typia-publicTokenField",
 	SECRET: "x-wp-typia-secret",
 	SECRET_STATE_FIELD: "x-wp-typia-secretStateField",
@@ -96,6 +97,9 @@ function applyWordPressFieldMetadata(
 ): void {
 	if (attribute.wp.writeOnly) {
 		schema.writeOnly = true;
+	}
+	if (attribute.wp.preserveOnEmpty) {
+		schema[WP_TYPIA_OPENAPI_EXTENSION_KEYS.PRESERVE_ON_EMPTY] = true;
 	}
 	if (attribute.wp.secret) {
 		schema[WP_TYPIA_OPENAPI_EXTENSION_KEYS.SECRET] = true;

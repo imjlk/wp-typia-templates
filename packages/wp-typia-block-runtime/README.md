@@ -34,6 +34,10 @@ import type { tags } from '@wp-typia/block-runtime/typia-tags';
 
 `wp-typia` remains the CLI package.
 
+Import `tags` from `@wp-typia/block-runtime/typia-tags` when REST settings
+contracts need wp-typia-only metadata such as `tags.Secret<"hasApiKey">` and
+`tags.PreserveOnEmpty<true>` for write-only credentials.
+
 `@wp-typia/project-tools` is the canonical programmatic project orchestration
 package, while newly generated projects should prefer `@wp-typia/block-runtime/*`
 and `@wp-typia/block-runtime/metadata-core`.
