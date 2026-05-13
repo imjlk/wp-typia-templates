@@ -41,6 +41,11 @@ export interface ManifestWpMetadata {
 	defaultValue?: JsonValue | null;
 	enum?: JsonValue[] | null;
 	hasDefault?: boolean;
+	/**
+	 * Indicates blank or empty secret submissions should preserve any stored
+	 * value instead of clearing it.
+	 */
+	preserveOnEmpty?: boolean;
 	selector?: string | null;
 	/**
 	 * Marks a field as containing sensitive data such as an API key or token.

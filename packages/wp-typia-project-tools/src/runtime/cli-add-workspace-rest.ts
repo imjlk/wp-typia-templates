@@ -35,6 +35,9 @@ export async function runAddRestResourceCommand({
 	responseTypeName,
 	routePattern,
 	secretFieldName,
+	secretHasValueFieldName,
+	secretMaskedResponseFieldName,
+	secretPreserveOnEmpty,
 	secretStateFieldName,
 }: RunAddRestResourceCommandOptions): Promise<RunAddRestResourceCommandResult> {
 	const workspace = resolveWorkspaceProject(cwd);
@@ -66,6 +69,9 @@ export async function runAddRestResourceCommand({
 			restResourceSlug,
 			routePattern,
 			secretFieldName,
+			secretHasValueFieldName,
+			secretMaskedResponseFieldName,
+			secretPreserveOnEmpty,
 			secretStateFieldName,
 			workspace,
 		});

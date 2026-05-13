@@ -3630,6 +3630,10 @@ test("canonical CLI can add a type-only manual REST contract to an official work
       "ExternalRecordResponse",
       "--secret-field",
       "apiKey",
+      "--secret-has-value-field",
+      "hasApiKey",
+      "--secret-preserve-on-empty",
+      "true",
     ],
     {
       cwd: targetDir,
@@ -3697,6 +3701,7 @@ test("canonical CLI can add a type-only manual REST contract to an official work
   expect(blockConfigSource).toContain('queryTypeName: "ExternalRecordQuery"');
   expect(blockConfigSource).toContain('bodyTypeName: "ExternalRecordRequest"');
   expect(blockConfigSource).toContain('responseTypeName: "ExternalRecordResponse"');
+  expect(blockConfigSource).toContain("secretPreserveOnEmpty: true");
   expect(blockConfigSource).toContain("\tdataFile?: string;");
   expect(blockConfigSource).toContain("\tphpFile?: string;");
   expect(blockConfigSource).not.toContain("inc/rest/external-record.php");
@@ -3709,6 +3714,7 @@ test("canonical CLI can add a type-only manual REST contract to an official work
   expect(typesSource).toContain("export interface ExternalRecordRequest");
   expect(typesSource).toContain("apiKey?: string");
   expect(typesSource).toContain('tags.Secret< "hasApiKey" >');
+  expect(typesSource).toContain("tags.PreserveOnEmpty< true >");
   expect(typesSource).toContain("export interface ExternalRecordResponse");
   expect(typesSource).toContain("hasApiKey: boolean");
   expect(typesSource).not.toContain("apiKey: boolean");
@@ -3732,7 +3738,85 @@ test("canonical CLI can add a type-only manual REST contract to an official work
     "/legacy/v1/records/(?P<post_id>[\\\\d]+(?:-[\\\\d]+)*)"
   );
   expect(openApiSource).toContain('"x-typia-authIntent": "authenticated"');
+
+  runCli(
+    "node",
+    [
+      entryPath,
+      "add",
+      "rest-resource",
+      "external-token",
+      "--manual",
+      "--namespace",
+      "legacy/v1",
+      "--method",
+      "POST",
+      "--auth",
+      "Authenticated",
+      "--body-type",
+      "ExternalTokenRequest",
+      "--response-type",
+      "ExternalTokenResponse",
+      "--secret-field",
+      "apiToken",
+      "--secret-state-field",
+      "hasApiToken",
+      "--secret-preserve-on-empty",
+      "false",
+    ],
+    {
+      cwd: targetDir,
+    }
+  );
+
+  const updatedBlockConfigSource = fs.readFileSync(
+    blockConfigPath,
+    "utf8"
+  );
+  const nonPreservedTypesSource = fs.readFileSync(
+    path.join(targetDir, "src", "rest", "external-token", "api-types.ts"),
+    "utf8"
+  );
+  const nonPreservedOpenApiSource = fs.readFileSync(
+    path.join(targetDir, "src", "rest", "external-token", "api.openapi.json"),
+    "utf8"
+  );
+  const nonPreservedRequestSchema = JSON.parse(
+    fs.readFileSync(
+      path.join(
+        targetDir,
+        "src",
+        "rest",
+        "external-token",
+        "api-schemas",
+        "request.schema.json"
+      ),
+      "utf8"
+    )
+  ) as { properties: Record<string, Record<string, unknown>> };
+
+  expect(updatedBlockConfigSource).toContain("secretPreserveOnEmpty: false");
+  expect(nonPreservedTypesSource).toContain(
+    'apiToken?: string & tags.MaxLength< 4096 > & tags.Secret< "hasApiToken" >;'
+  );
+  expect(nonPreservedTypesSource).not.toContain(
+    "apiToken?: string & tags.MinLength< 1 >"
+  );
+  expect(nonPreservedTypesSource).not.toContain("tags.PreserveOnEmpty< true >");
+  expect(nonPreservedOpenApiSource).toContain('"writeOnly": true');
+  expect(nonPreservedOpenApiSource).not.toContain(
+    '"x-wp-typia-preserveOnEmpty": true'
+  );
+  expect(nonPreservedRequestSchema.properties.apiToken).toMatchObject({
+    writeOnly: true,
+    "x-wp-typia-secret": true,
+    "x-wp-typia-secretStateField": "hasApiToken",
+  });
+  expect(
+    nonPreservedRequestSchema.properties.apiToken?.["x-wp-typia-preserveOnEmpty"]
+  ).not.toBe(true);
   expect(openApiSource).toContain('"writeOnly": true');
+  expect(openApiSource).toContain('"x-wp-typia-preserveOnEmpty": true');
   expect(openApiSource).toContain('"x-wp-typia-secret": true');
   expect(openApiSource).toContain('"x-wp-typia-secretStateField": "hasApiKey"');
   expect(fs.existsSync(responseSchemaPath)).toBe(true);
@@ -3745,6 +3829,7 @@ test("canonical CLI can add a type-only manual REST contract to an official work
   ) as { properties: Record<string, unknown> };
   expect(requestSchema.properties.apiKey).toMatchObject({
     writeOnly: true,
+    "x-wp-typia-preserveOnEmpty": true,
     "x-wp-typia-secret": true,
     "x-wp-typia-secretStateField": "hasApiKey",
   });
@@ -3882,6 +3967,7 @@ test("canonical CLI can add a typed admin settings screen from a manual REST con
   expect(packageJson.devDependencies?.["@wp-typia/dataviews"]).toBeUndefined();
   expect(blockConfigSource).toContain('source: "rest-resource:integration-settings"');
   expect(blockConfigSource).toContain('secretFieldName: "apiKey"');
+  expect(blockConfigSource).toContain("secretPreserveOnEmpty: true");
   expect(blockConfigSource).toContain('secretStateFieldName: "hasApiKey"');
   expect(apiSource).toContain("manualRestContractEndpoint");
   expect(apiSource).toContain("callManualRestContract");
@@ -3889,6 +3975,8 @@ test("canonical CLI can add a typed admin settings screen from a manual REST con
   expect(entrySource).not.toContain("@wordpress/dataviews/build-style/style.css");
   expect(configSource).toContain("integrationSettingsSettingsConfig");
   expect(configSource).toContain('secretFieldName: "apiKey"');
+  expect(configSource).toContain("secretPreserveOnEmpty: true");
+  expect(configSource).toContain("preserveOnEmpty: true");
   expect(configSource).toContain('secretStateFieldName: "hasApiKey"');
   expect(dataSource).toContain("callManualRestContract");
   expect(dataSource).toContain("saveIntegrationSettingsSettings");
@@ -3904,6 +3992,63 @@ test("canonical CLI can add a typed admin settings screen from a manual REST con
   expect(screenSource).toContain("TextareaControl");
   expect(screenSource).toContain("Save settings");
   expect(screenSource).toContain("A secret is currently configured");
+
+  runCli(
+    "node",
+    [
+      entryPath,
+      "add",
+      "rest-resource",
+      "credential-reset",
+      "--manual",
+      "--namespace",
+      "demo-space/v1",
+      "--method",
+      "POST",
+      "--path",
+      "/credential-reset",
+      "--secret-field",
+      "apiToken",
+      "--secret-preserve-on-empty",
+      "false",
+    ],
+    { cwd: targetDir }
+  );
+  fs.writeFileSync(
+    path.join(targetDir, "src", "rest", "credential-reset", "api.ts"),
+    "export * from './api-client';\n",
+    "utf8"
+  );
+  runCli(
+    "node",
+    [
+      entryPath,
+      "add",
+      "admin-view",
+      "credential-reset",
+      "--source",
+      "rest-resource:credential-reset",
+    ],
+    { cwd: targetDir }
+  );
+
+  const nonPreservedSettingsConfigSource = fs.readFileSync(
+    path.join(targetDir, "src", "admin-views", "credential-reset", "config.ts"),
+    "utf8"
+  );
+  const nonPreservedSettingsDataSource = fs.readFileSync(
+    path.join(targetDir, "src", "admin-views", "credential-reset", "data.ts"),
+    "utf8"
+  );
+
+  expect(nonPreservedSettingsConfigSource).toContain(
+    "secretPreserveOnEmpty: false"
+  );
+  expect(nonPreservedSettingsConfigSource).toContain("preserveOnEmpty: false");
+  expect(nonPreservedSettingsDataSource).toContain('"apiToken": \'\',');
+  expect(nonPreservedSettingsDataSource).not.toContain(
+    "delete requestBody[\"apiToken\"]"
+  );
 
   const doctorOutput = runCli("node", [entryPath, "doctor", "--format", "json"], {
     cwd: targetDir,

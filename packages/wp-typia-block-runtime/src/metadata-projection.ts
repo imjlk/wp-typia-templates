@@ -52,6 +52,7 @@ export function createBlockJsonAttribute(
 	if (node.constraints.multipleOf !== null) reasons.push("multipleOf");
 	if (node.constraints.pattern !== null) reasons.push("pattern");
 	if (node.constraints.typeTag !== null) reasons.push("typeTag");
+	if (node.wp.preserveOnEmpty) reasons.push("preserveOnEmpty");
 	if (node.wp.secret) reasons.push("secret");
 	if (node.wp.writeOnly) reasons.push("writeOnly");
 	if (node.kind === "array" && node.items !== undefined) reasons.push("items");
@@ -110,6 +111,7 @@ export function createManifestAttribute(node: AttributeNode): ManifestAttribute 
 				node.defaultValue === undefined ? null : cloneJsonValue(node.defaultValue),
 			enum: node.enumValues ? [...node.enumValues] : null,
 			hasDefault: node.defaultValue !== undefined,
+			...(node.wp.preserveOnEmpty ? { preserveOnEmpty: true } : {}),
 			...(node.wp.selector !== null ? { selector: node.wp.selector } : {}),
 			...(node.wp.secret ? { secret: true } : {}),
 			...(node.wp.secretStateField !== null

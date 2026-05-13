@@ -69,6 +69,12 @@ and route-owner metadata such as `--permission-callback`,
 `--controller-class`, and `--controller-extends` while still generating typed
 schemas, OpenAPI, clients, and drift checks.
 
+Manual settings contracts can model write-only credentials with
+`--secret-field <field>`. The generated request type marks the field as
+`tags.Secret<"has<Field>">` plus `tags.PreserveOnEmpty<true>`, response types
+expose only the safe has-value field, and generated admin settings screens omit
+blank secrets so existing stored values are preserved by default.
+
 | Package manager | Doctor                     | Sync check                         | Add a block                                               |
 | --------------- | -------------------------- | ---------------------------------- | --------------------------------------------------------- |
 | npm             | `npm run wp-typia:doctor`  | `npm run wp-typia:sync -- --check` | `npm run wp-typia:add -- block my-block --template basic` |

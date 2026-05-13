@@ -204,6 +204,7 @@ function parseInterfaceDeclaration(
 		required,
 		union: null,
 		wp: {
+			preserveOnEmpty: false,
 			selector: null,
 			secret: false,
 			secretStateField: null,
@@ -255,6 +256,7 @@ export function parseTypeNode(
 			required: true,
 			union: null,
 			wp: {
+				preserveOnEmpty: false,
 				selector: null,
 				secret: false,
 				secretStateField: null,
@@ -383,6 +385,7 @@ function parseUnionType(
 			required: true,
 			union: null,
 			wp: {
+				preserveOnEmpty: false,
 				selector: null,
 				secret: false,
 				secretStateField: null,
@@ -462,6 +465,7 @@ function parseDiscriminatedUnion(
 			discriminator,
 		},
 		wp: {
+			preserveOnEmpty: false,
 			selector: null,
 			secret: false,
 			secretStateField: null,
@@ -539,6 +543,7 @@ function parseTypeLiteral(
 		required: true,
 		union: null,
 		wp: {
+			preserveOnEmpty: false,
 			selector: null,
 			secret: false,
 			secretStateField: null,
@@ -567,6 +572,7 @@ function parseLiteralType(
 		required: true,
 		union: null,
 		wp: {
+			preserveOnEmpty: false,
 			selector: null,
 			secret: false,
 			secretStateField: null,
@@ -599,6 +605,7 @@ function parseTypeReference(
 			required: true,
 			union: null,
 			wp: {
+				preserveOnEmpty: false,
 				selector: null,
 				secret: false,
 				secretStateField: null,

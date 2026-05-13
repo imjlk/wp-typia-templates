@@ -385,7 +385,7 @@ describe("@wp-typia/block-runtime", () => {
 					"import type { tags } from '@wp-typia/block-runtime/typia-tags';",
 					"",
 					"export interface SettingsUpdateRequest {",
-					"\tapiKey?: string & tags.MinLength< 1 > & tags.Secret< 'hasApiKey' >;",
+					"\tapiKey?: string & tags.MinLength< 1 > & tags.Secret< 'hasApiKey' > & tags.PreserveOnEmpty< true >;",
 					"\twebhookSecret?: string & tags.WriteOnly< true >;",
 					"}",
 					"",
@@ -463,6 +463,7 @@ describe("@wp-typia/block-runtime", () => {
 				"description":
 					"Write-only secret value. Responses should expose only masked state.",
 				writeOnly: true,
+				"x-wp-typia-preserveOnEmpty": true,
 				"x-wp-typia-secret": true,
 				"x-wp-typia-secretStateField": "hasApiKey",
 			});
@@ -475,6 +476,7 @@ describe("@wp-typia/block-runtime", () => {
 				openApi.components.schemas.SettingsUpdateRequest.properties.apiKey,
 			).toMatchObject({
 				writeOnly: true,
+				"x-wp-typia-preserveOnEmpty": true,
 				"x-wp-typia-secret": true,
 				"x-wp-typia-secretStateField": "hasApiKey",
 			});

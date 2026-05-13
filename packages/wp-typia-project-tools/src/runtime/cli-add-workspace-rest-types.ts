@@ -19,6 +19,8 @@ import type { WorkspaceProject } from "./workspace-project.js";
  * @property namespace REST namespace in `vendor/v1` format.
  * @property projectDir Absolute workspace project directory.
  * @property restResourceSlug Normalized kebab-case REST resource slug.
+ * @property secretPreserveOnEmpty Whether blank settings secret submissions
+ * should preserve the stored value when `secretFieldName` is set.
  */
 export interface RunAddRestResourceCommandResult {
 	auth?: ManualRestContractAuthId;
@@ -37,6 +39,9 @@ export interface RunAddRestResourceCommandResult {
 	responseTypeName?: string;
 	routePattern?: string;
 	secretFieldName?: string;
+	secretHasValueFieldName?: string;
+	secretMaskedResponseFieldName?: string;
+	secretPreserveOnEmpty?: boolean;
 	secretStateFieldName?: string;
 }
 
@@ -55,7 +60,12 @@ export interface RunAddRestResourceCommandResult {
  * metadata.
  * @property restResourceSlug Normalized kebab-case REST resource slug.
  * @property routePattern Optional manual route path alias for `pathPattern`.
+ * @property secretHasValueFieldName Optional alias for `secretStateFieldName`.
+ * @property secretMaskedResponseFieldName Optional alias for
+ * `secretStateFieldName`.
  * @property secretFieldName Optional write-only request secret field.
+ * @property secretPreserveOnEmpty Optional true/false string or boolean for
+ * blank-secret preservation. Defaults to true when `secretFieldName` is set.
  * @property workspace Resolved official workspace project.
  */
 export interface ManualRestContractScaffoldOptions {
@@ -72,6 +82,9 @@ export interface ManualRestContractScaffoldOptions {
 	restResourceSlug: string;
 	routePattern: string | undefined;
 	secretFieldName: string | undefined;
+	secretHasValueFieldName: string | undefined;
+	secretMaskedResponseFieldName: string | undefined;
+	secretPreserveOnEmpty: boolean | string | undefined;
 	secretStateFieldName: string | undefined;
 	workspace: WorkspaceProject;
 }

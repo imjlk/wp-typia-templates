@@ -108,6 +108,7 @@ export function buildManualRestContractConfigEntry(options: {
 	responseTypeName: string;
 	restResourceSlug: string;
 	secretFieldName?: string;
+	secretPreserveOnEmpty?: boolean;
 	secretStateFieldName?: string;
 }): string {
 	const pascalCase = toPascalCase(options.restResourceSlug);
@@ -156,6 +157,9 @@ export function buildManualRestContractConfigEntry(options: {
 		...(options.secretFieldName
 			? [`\t\tsecretFieldName: ${quoteTsString(options.secretFieldName)},`]
 			: []),
+		...(options.secretPreserveOnEmpty !== undefined
+			? [`\t\tsecretPreserveOnEmpty: ${options.secretPreserveOnEmpty},`]
+			: []),
 		...(options.secretStateFieldName
 			? [`\t\tsecretStateFieldName: ${quoteTsString(options.secretStateFieldName)},`]
 			: []),
@@ -187,6 +191,7 @@ export function buildManualRestContractTypesSource(options: {
 	responseTypeName: string;
 	restResourceSlug: string;
 	secretFieldName?: string;
+	secretPreserveOnEmpty?: boolean;
 	secretStateFieldName?: string;
 }): string {
 	const title = toTitleCase(options.restResourceSlug);
@@ -208,11 +213,14 @@ export function buildManualRestContractTypesSource(options: {
 	];
 
 	if (options.bodyTypeName) {
+		const secretPreserveOnEmpty = options.secretPreserveOnEmpty ?? true;
 		const secretLines =
 			options.secretFieldName && options.secretStateFieldName
 				? [
-						`\t${options.secretFieldName}?: string & tags.MinLength< 1 > & tags.MaxLength< 4096 > & tags.Secret< ${quoteTsString(options.secretStateFieldName)} >;`,
-						`\t// ${options.secretFieldName} is write-only: persist it server-side and expose ${options.secretStateFieldName} in responses instead of returning the raw value.`,
+						`\t${options.secretFieldName}?: string${secretPreserveOnEmpty ? " & tags.MinLength< 1 >" : ""} & tags.MaxLength< 4096 > & tags.Secret< ${quoteTsString(options.secretStateFieldName)} >${secretPreserveOnEmpty ? " & tags.PreserveOnEmpty< true >" : ""};`,
+						secretPreserveOnEmpty
+							? `\t// ${options.secretFieldName} is write-only: omit or submit an empty value to preserve the stored secret, and expose ${options.secretStateFieldName} in responses instead of returning the raw value.`
+							: `\t// ${options.secretFieldName} is write-only: persist it server-side and expose ${options.secretStateFieldName} in responses instead of returning the raw value.`,
 					]
 				: [];
 		lines.push(

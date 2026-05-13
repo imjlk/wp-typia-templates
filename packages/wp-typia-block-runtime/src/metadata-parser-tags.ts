@@ -22,6 +22,7 @@ const SUPPORTED_TAGS = new Set([
 	"Minimum",
 	"MultipleOf",
 	"Pattern",
+	"PreserveOnEmpty",
 	"Selector",
 	"Secret",
 	"Source",
@@ -277,6 +278,9 @@ export function applyTag(
 				tagName,
 				pathLabel,
 			);
+			return;
+		case "PreserveOnEmpty":
+			node.wp.preserveOnEmpty = parseBooleanArgument(arg, tagName, pathLabel);
 			return;
 		case "Selector":
 			node.wp.selector = parseStringLikeArgument(arg, tagName, pathLabel);

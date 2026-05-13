@@ -63,6 +63,7 @@ export interface WorkspaceRestResourceBaseConfig {
 		typeof import( '@wp-typia/block-runtime/metadata-core' ).defineEndpointManifest
 	>;
 	secretFieldName?: string;
+	secretPreserveOnEmpty?: boolean;
 	secretStateFieldName?: string;
 	slug: string;
 	typesFile: string;
