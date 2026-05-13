@@ -14,6 +14,13 @@ import type { WorkspaceProject } from "./workspace-project.js";
 const REST_RESOURCE_SERVER_GLOB = "/inc/rest/*.php";
 const REST_SCHEMA_HELPER_PATH = "/inc/rest-schema.php";
 
+/**
+ * Ensure the workspace bootstrap loads the shared REST schema helper file.
+ *
+ * @param workspace Resolved workspace project metadata and PHP prefix.
+ * @returns A promise that resolves after the bootstrap is patched.
+ * @throws When an existing loader does not reference `inc/rest-schema.php`.
+ */
 export async function ensureRestSchemaHelperBootstrapAnchors(
 	workspace: WorkspaceProject,
 ): Promise<void> {
