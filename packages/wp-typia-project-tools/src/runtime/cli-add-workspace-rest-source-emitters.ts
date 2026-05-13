@@ -217,7 +217,7 @@ export function buildManualRestContractTypesSource(options: {
 		const secretLines =
 			options.secretFieldName && options.secretStateFieldName
 				? [
-						`\t${options.secretFieldName}?: string & tags.MinLength< 1 > & tags.MaxLength< 4096 > & tags.Secret< ${quoteTsString(options.secretStateFieldName)} >${secretPreserveOnEmpty ? " & tags.PreserveOnEmpty< true >" : ""};`,
+						`\t${options.secretFieldName}?: string${secretPreserveOnEmpty ? " & tags.MinLength< 1 >" : ""} & tags.MaxLength< 4096 > & tags.Secret< ${quoteTsString(options.secretStateFieldName)} >${secretPreserveOnEmpty ? " & tags.PreserveOnEmpty< true >" : ""};`,
 						secretPreserveOnEmpty
 							? `\t// ${options.secretFieldName} is write-only: omit or submit an empty value to preserve the stored secret, and expose ${options.secretStateFieldName} in responses instead of returning the raw value.`
 							: `\t// ${options.secretFieldName} is write-only: persist it server-side and expose ${options.secretStateFieldName} in responses instead of returning the raw value.`,

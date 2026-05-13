@@ -3738,6 +3738,54 @@ test("canonical CLI can add a type-only manual REST contract to an official work
     "/legacy/v1/records/(?P<post_id>[\\\\d]+(?:-[\\\\d]+)*)"
   );
   expect(openApiSource).toContain('"x-typia-authIntent": "authenticated"');
+
+  runCli(
+    "node",
+    [
+      entryPath,
+      "add",
+      "rest-resource",
+      "external-token",
+      "--manual",
+      "--namespace",
+      "legacy/v1",
+      "--method",
+      "POST",
+      "--auth",
+      "Authenticated",
+      "--body-type",
+      "ExternalTokenRequest",
+      "--response-type",
+      "ExternalTokenResponse",
+      "--secret-field",
+      "apiToken",
+      "--secret-state-field",
+      "hasApiToken",
+      "--secret-preserve-on-empty",
+      "false",
+    ],
+    {
+      cwd: targetDir,
+    }
+  );
+
+  const updatedBlockConfigSource = fs.readFileSync(
+    blockConfigPath,
+    "utf8"
+  );
+  const nonPreservedTypesSource = fs.readFileSync(
+    path.join(targetDir, "src", "rest", "external-token", "api-types.ts"),
+    "utf8"
+  );
+
+  expect(updatedBlockConfigSource).toContain("secretPreserveOnEmpty: false");
+  expect(nonPreservedTypesSource).toContain(
+    'apiToken?: string & tags.MaxLength< 4096 > & tags.Secret< "hasApiToken" >;'
+  );
+  expect(nonPreservedTypesSource).not.toContain(
+    "apiToken?: string & tags.MinLength< 1 >"
+  );
+  expect(nonPreservedTypesSource).not.toContain("tags.PreserveOnEmpty< true >");
   expect(openApiSource).toContain('"writeOnly": true');
   expect(openApiSource).toContain('"x-wp-typia-preserveOnEmpty": true');
   expect(openApiSource).toContain('"x-wp-typia-secret": true');

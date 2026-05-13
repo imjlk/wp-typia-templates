@@ -204,7 +204,7 @@ export async function scaffoldManualRestContract({
 			"Manual REST contract --secret-preserve-on-empty requires --secret-field.",
 		);
 	}
-	if (secretStateFieldCandidate && !secretFieldName) {
+	if (secretStateFieldCandidate !== undefined && !secretFieldName) {
 		throw new Error(
 			"Manual REST contract secret state, has-value, and masked response field flags require --secret-field.",
 		);
