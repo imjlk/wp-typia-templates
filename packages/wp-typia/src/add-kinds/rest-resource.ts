@@ -13,7 +13,7 @@ import {
 const REST_RESOURCE_GENERATED_USAGE =
   'Generated: wp-typia add rest-resource <name> [--namespace <vendor/v1>] [--methods <list,read,create,update,delete>] [--route-pattern <route-pattern>] [--permission-callback <callback>] [--controller-class <ClassName>] [--controller-extends <BaseClass>] [--dry-run]';
 const REST_RESOURCE_MANUAL_USAGE =
-  'Manual: wp-typia add rest-resource <name> --manual [--method <GET|POST|PUT|PATCH|DELETE>] [--auth <public|authenticated|public-write-protected>] [--path <route-pattern>] [--query-type <Type>] [--body-type <Type>] [--response-type <Type>] [--secret-field <field>] [--secret-state-field <field>] [--dry-run]';
+  'Manual: wp-typia add rest-resource <name> --manual [--namespace <vendor/v1>] [--method <GET|POST|PUT|PATCH|DELETE>] [--auth <public|authenticated|public-write-protected>] [--path <route-pattern>|--route-pattern <route-pattern>] [--permission-callback <callback>] [--controller-class <ClassName>] [--controller-extends <BaseClass>] [--query-type <Type>] [--body-type <Type>] [--response-type <Type>] [--secret-field <field>] [--secret-state-field <field>] [--dry-run]';
 const REST_RESOURCE_USAGE = `${REST_RESOURCE_GENERATED_USAGE}\n${REST_RESOURCE_MANUAL_USAGE}`;
 const REST_RESOURCE_MISSING_NAME_MESSAGE = [
   '`wp-typia add rest-resource` requires <name>. Usage:',
@@ -46,6 +46,15 @@ export const restResourceAddKindEntry =
                 ? [
                     `Secret field: ${values.secretFieldName} -> ${values.secretStateFieldName}`,
                   ]
+                : []),
+              ...(values.permissionCallback
+                ? [`Declared permission callback: ${values.permissionCallback}`]
+                : []),
+              ...(values.controllerClass
+                ? [`Declared controller class: ${values.controllerClass}`]
+                : []),
+              ...(values.controllerExtends
+                ? [`Declared controller base: ${values.controllerExtends}`]
                 : []),
             ]
           : [
@@ -159,6 +168,7 @@ export const restResourceAddKindEntry =
         getValues: (result) => ({
           auth: result.auth ?? '',
           controllerClass: result.controllerClass ?? '',
+          controllerExtends: result.controllerExtends ?? '',
           method: result.method ?? '',
           methods: result.methods.join(', '),
           mode: result.mode,

@@ -3614,8 +3614,14 @@ test("canonical CLI can add a type-only manual REST contract to an official work
       "POST",
       "--auth",
       "Authenticated",
-      "--path",
-      "/records/(?P<id>[\\d]+(?:-[\\d]+)*)",
+      "--route-pattern",
+      "/records/(?P<post_id>[\\d]+(?:-[\\d]+)*)",
+      "--permission-callback",
+      "legacy_can_read_external_record",
+      "--controller-class",
+      "Legacy\\Records\\Controller",
+      "--controller-extends",
+      "Legacy\\Records\\BaseController",
       "--query-type",
       "ExternalRecordQuery",
       "--body-type",
@@ -3677,7 +3683,16 @@ test("canonical CLI can add a type-only manual REST contract to an official work
   expect(blockConfigSource).toContain('namespace: "legacy/v1"');
   expect(blockConfigSource).toContain('method: "POST"');
   expect(blockConfigSource).toContain(
-    'pathPattern: "/records/(?P<id>[\\\\d]+(?:-[\\\\d]+)*)"'
+    'pathPattern: "/records/(?P<post_id>[\\\\d]+(?:-[\\\\d]+)*)"'
+  );
+  expect(blockConfigSource).toContain(
+    'permissionCallback: "legacy_can_read_external_record"'
+  );
+  expect(blockConfigSource).toContain(
+    'controllerClass: "Legacy\\\\Records\\\\Controller"'
+  );
+  expect(blockConfigSource).toContain(
+    'controllerExtends: "Legacy\\\\Records\\\\BaseController"'
   );
   expect(blockConfigSource).toContain('queryTypeName: "ExternalRecordQuery"');
   expect(blockConfigSource).toContain('bodyTypeName: "ExternalRecordRequest"');
@@ -3690,6 +3705,7 @@ test("canonical CLI can add a type-only manual REST contract to an official work
   );
   expect(syncRestSource).toContain("REST_RESOURCES.filter( isWorkspaceRestResource )");
   expect(typesSource).toContain("export interface ExternalRecordQuery");
+  expect(typesSource).toContain("post_id: string & tags.MinLength< 1 >;");
   expect(typesSource).toContain("export interface ExternalRecordRequest");
   expect(typesSource).toContain("apiKey?: string");
   expect(typesSource).toContain('tags.Secret< "hasApiKey" >');
@@ -3707,12 +3723,13 @@ test("canonical CLI can add a type-only manual REST contract to an official work
   expect(clientSource).toContain(
     "const pathParams = rawPathParams && typeof rawPathParams === 'object'"
   );
+  expect(clientSource).toContain("const pathParam0 = pathParams['post_id'];");
   expect(clientSource).toContain(
     "path: `/legacy/v1/records/${encodeURIComponent( String( pathParam0 ) )}`"
   );
   expect(clientSource).toContain("requestLocation: 'query-and-body'");
   expect(openApiSource).toContain(
-    "/legacy/v1/records/(?P<id>[\\\\d]+(?:-[\\\\d]+)*)"
+    "/legacy/v1/records/(?P<post_id>[\\\\d]+(?:-[\\\\d]+)*)"
   );
   expect(openApiSource).toContain('"x-typia-authIntent": "authenticated"');
   expect(openApiSource).toContain('"writeOnly": true');

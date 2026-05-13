@@ -465,6 +465,25 @@ export function isGeneratedRestResourceRoutePatternCompatible(
 	);
 }
 
+/**
+ * Collect unique WordPress named capture parameters from a REST route pattern.
+ *
+ * @param routePattern Route pattern relative to the namespace.
+ * @returns Capture names in first-seen order.
+ */
+export function collectRestRouteNamedCaptureNames(
+	routePattern: string,
+): string[] {
+	return Array.from(
+		new Set(
+			Array.from(
+				routePattern.matchAll(REST_ROUTE_NAMED_CAPTURE_PATTERN),
+				(match) => match[1],
+			),
+		),
+	);
+}
+
 export function resolveManualRestContractPathPattern(
 	slug: string,
 	pathPattern?: string,

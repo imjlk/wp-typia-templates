@@ -98,9 +98,12 @@ export function buildRestResourceConfigEntry(
 export function buildManualRestContractConfigEntry(options: {
 	auth: ManualRestContractAuthId;
 	bodyTypeName?: string;
+	controllerClass?: string;
+	controllerExtends?: string;
 	method: ManualRestContractHttpMethodId;
 	namespace: string;
 	pathPattern: string;
+	permissionCallback?: string;
 	queryTypeName: string;
 	responseTypeName: string;
 	restResourceSlug: string;
@@ -130,12 +133,21 @@ export function buildManualRestContractConfigEntry(options: {
 			? [`\t\tbodyTypeName: ${quoteTsString(options.bodyTypeName)},`]
 			: []),
 		`\t\tclientFile: ${quoteTsString(`src/rest/${options.restResourceSlug}/api-client.ts`)},`,
+		...(options.controllerClass
+			? [`\t\tcontrollerClass: ${quoteTsString(options.controllerClass)},`]
+			: []),
+		...(options.controllerExtends
+			? [`\t\tcontrollerExtends: ${quoteTsString(options.controllerExtends)},`]
+			: []),
 		`\t\tmethod: ${quoteTsString(options.method)},`,
 		"\t\tmethods: [],",
 		"\t\tmode: 'manual',",
 		`\t\tnamespace: ${quoteTsString(options.namespace)},`,
 		`\t\topenApiFile: ${quoteTsString(`src/rest/${options.restResourceSlug}/api.openapi.json`)},`,
 		`\t\tpathPattern: ${quoteTsString(options.pathPattern)},`,
+		...(options.permissionCallback
+			? [`\t\tpermissionCallback: ${quoteTsString(options.permissionCallback)},`]
+			: []),
 		`\t\tqueryTypeName: ${quoteTsString(options.queryTypeName)},`,
 		"\t\trestManifest: defineEndpointManifest(",
 		indentMultiline(JSON.stringify(manifest, null, "\t"), "\t\t\t"),
@@ -159,6 +171,8 @@ export function buildManualRestContractConfigEntry(options: {
  *
  * @param options Manual contract type naming metadata.
  * @param options.bodyTypeName Optional exported body type name.
+ * @param options.pathParameterNames Route named captures that should be present
+ * in the starter query type so generated clients can fill provider paths.
  * @param options.queryTypeName Exported query type name.
  * @param options.responseTypeName Exported response type name.
  * @param options.restResourceSlug Normalized workspace REST contract slug.
@@ -168,6 +182,7 @@ export function buildManualRestContractConfigEntry(options: {
  */
 export function buildManualRestContractTypesSource(options: {
 	bodyTypeName?: string;
+	pathParameterNames?: string[];
 	queryTypeName: string;
 	responseTypeName: string;
 	restResourceSlug: string;
@@ -175,12 +190,20 @@ export function buildManualRestContractTypesSource(options: {
 	secretStateFieldName?: string;
 }): string {
 	const title = toTitleCase(options.restResourceSlug);
+	const pathParameterNames = Array.from(new Set(options.pathParameterNames ?? []));
+	const queryFields =
+		pathParameterNames.length > 0
+			? pathParameterNames.map(
+					(parameterName) =>
+						`\t${parameterName}: string & tags.MinLength< 1 >;`,
+				)
+			: ["\tid?: string & tags.MinLength< 1 >;"];
 	const lines = [
 		"import type { tags } from '@wp-typia/block-runtime/typia-tags';",
 		"",
 		`export interface ${options.queryTypeName} {`,
-		"\tid?: string & tags.MinLength< 1 >;",
-		"\tpreview?: boolean;",
+		...queryFields,
+		...(pathParameterNames.includes("preview") ? [] : ["\tpreview?: boolean;"]),
 		"}",
 	];
 

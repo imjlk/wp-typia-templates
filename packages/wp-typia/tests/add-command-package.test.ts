@@ -197,7 +197,7 @@ test('node fallback rest-resource missing-name output keeps usage split by mode'
     'Generated: wp-typia add rest-resource <name> [--namespace <vendor/v1>] [--methods <list,read,create,update,delete>]',
   );
   expect(result.stderr).toContain(
-    'Manual: wp-typia add rest-resource <name> --manual [--method <GET|POST|PUT|PATCH|DELETE>]',
+    'Manual: wp-typia add rest-resource <name> --manual [--namespace <vendor/v1>] [--method <GET|POST|PUT|PATCH|DELETE>]',
   );
   expect(result.stderr).not.toContain(' or wp-typia add rest-resource ');
 });

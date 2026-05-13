@@ -29,6 +29,7 @@ bun run wp-typia:add style callout-emphasis --block counter-card
 bun run wp-typia:add transform quote-to-counter --from core/quote --to counter-card
 bun run wp-typia:add pattern hero-layout
 bun run wp-typia:add rest-resource snapshots --namespace {{namespace}}/v1 --methods list,read,create
+bun run wp-typia:add rest-resource external-record --manual --namespace legacy/v1 --route-pattern '/records/(?P<post_id>[\d]+)' --permission-callback legacy_can_read_records --controller-class Legacy\\Records\\Controller
 bun run wp-typia:add post-meta integration-state --post-type post
 ```
 
@@ -59,6 +60,14 @@ custom PHP resources can call
 `{{phpPrefix}}_get_wordpress_rest_schema( 'settings-response', array( 'resource' => 'settings' ) )`
 or `{{phpPrefix}}_validate_and_sanitize_rest_payload(...)` to reuse the same
 packaged/source lookup and `WP_Error` handling.
+
+Use generated REST resources when the workspace should own the PHP route glue.
+Use `wp-typia add rest-resource <name> --manual` for provider routes owned by
+another plugin, editor contract, or legacy controller. Manual routes can declare
+custom namespaces, `--path` or `--route-pattern` patterns with named captures,
+and route-owner metadata such as `--permission-callback`,
+`--controller-class`, and `--controller-extends` while still generating typed
+schemas, OpenAPI, clients, and drift checks.
 
 ## Development
 

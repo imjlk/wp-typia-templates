@@ -10,7 +10,8 @@ import type { WorkspaceProject } from "./workspace-project.js";
  *
  * @property auth Manual-mode authentication policy when `mode` is `"manual"`.
  * @property bodyTypeName Optional manual-mode request body type export.
- * @property controllerClass Optional generated-mode PHP controller class reference.
+ * @property controllerClass Optional PHP controller class reference. Generated
+ * mode uses it for callbacks; manual mode records it as route-owner metadata.
  * @property methods Generated-mode REST operation ids, or an empty array for
  * manual contracts.
  * @property mode Whether the scaffold wrote generated REST glue or a type-only
@@ -50,7 +51,10 @@ export interface RunAddRestResourceCommandResult {
  * @property namespace Resolved REST namespace in `vendor/v1` format.
  * @property pathPattern Optional manual route path pattern relative to the
  * namespace.
+ * @property permissionCallback Optional manual route-owner permission callback
+ * metadata.
  * @property restResourceSlug Normalized kebab-case REST resource slug.
+ * @property routePattern Optional manual route path alias for `pathPattern`.
  * @property secretFieldName Optional write-only request secret field.
  * @property workspace Resolved official workspace project.
  */
