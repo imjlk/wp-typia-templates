@@ -153,33 +153,61 @@ function getSyncRestPatchErrorMessage(
 	].join(" ");
 }
 
-function replaceBlockConfigImportForContracts(
-	nextSource: string,
-	syncRestScriptPath: string,
-): string {
-	const importPatterns = [
-		/^import\s*\{\n(?:\t[^\n]*\n)+\} from ["']\.\/block-config["'];?$/mu,
-		/^import\s*\{[^\n]*\}\s*from\s*["']\.\/block-config["'];?$/mu,
-	];
+const BLOCK_CONFIG_IMPORT_PATTERNS = [
+	/^import\s*\{\n(?:\t[^\n]*\n)+\} from ["']\.\/block-config["'];?$/mu,
+	/^import\s*\{[^\n]*\}\s*from\s*["']\.\/block-config["'];?$/mu,
+] as const;
+
+const BLOCK_CONFIG_VALUE_IMPORT_ORDER = [
+	"AI_FEATURES",
+	"BLOCKS",
+	"CONTRACTS",
+	"POST_META",
+	"REST_RESOURCES",
+] as const;
+
+const BLOCK_CONFIG_TYPE_IMPORT_ORDER = [
+	"WorkspaceAiFeatureConfig",
+	"WorkspaceBlockConfig",
+	"WorkspaceContractConfig",
+	"WorkspacePostMetaConfig",
+	"WorkspaceRestResourceConfig",
+] as const;
+
+function replaceBlockConfigImport({
+	functionName,
+	nextSource,
+	subject,
+	syncRestScriptPath,
+}: {
+	functionName: string;
+	nextSource: string;
+	subject: {
+		configTypeName: string;
+		constName: string;
+	};
+	syncRestScriptPath: string;
+}): string {
 	const importMatch =
-		importPatterns.map((pattern) => pattern.exec(nextSource)).find(Boolean) ??
-		null;
+		BLOCK_CONFIG_IMPORT_PATTERNS.map((pattern) => pattern.exec(nextSource)).find(
+			Boolean,
+		) ?? null;
 
 	if (!importMatch) {
 		throw new Error(
 			getSyncRestPatchErrorMessage(
-				"ensureContractSyncScriptAnchors",
+				functionName,
 				syncRestScriptPath,
 				"block-config import",
-				"CONTRACTS",
+				subject.constName,
 			),
 		);
 	}
 
 	const importSource = importMatch[0];
 	if (
-		importSource.includes("CONTRACTS") &&
-		importSource.includes("WorkspaceContractConfig")
+		importSource.includes(subject.constName) &&
+		importSource.includes(subject.configTypeName)
 	) {
 		return nextSource;
 	}
@@ -189,100 +217,27 @@ function replaceBlockConfigImportForContracts(
 	) {
 		throw new Error(
 			getSyncRestPatchErrorMessage(
-				"ensureContractSyncScriptAnchors",
+				functionName,
 				syncRestScriptPath,
 				"BLOCKS import",
-				"CONTRACTS",
+				subject.constName,
 			),
 		);
 	}
 
-	const hasAiFeatures = importSource.includes("AI_FEATURES");
-	const hasAiFeatureConfig = importSource.includes("WorkspaceAiFeatureConfig");
-	const hasRestResources = importSource.includes("REST_RESOURCES");
-	const hasRestResourceConfig = importSource.includes("WorkspaceRestResourceConfig");
-	const hasPostMeta = importSource.includes("POST_META");
-	const hasPostMetaConfig = importSource.includes("WorkspacePostMetaConfig");
 	const replacement = [
 		"import {",
-		...(hasAiFeatures ? ["\tAI_FEATURES,"] : []),
-		"\tBLOCKS,",
-		"\tCONTRACTS,",
-		...(hasPostMeta ? ["\tPOST_META,"] : []),
-		...(hasRestResources ? ["\tREST_RESOURCES,"] : []),
-		...(hasAiFeatureConfig ? ["\ttype WorkspaceAiFeatureConfig,"] : []),
-		"\ttype WorkspaceBlockConfig,",
-		"\ttype WorkspaceContractConfig,",
-		...(hasPostMetaConfig ? ["\ttype WorkspacePostMetaConfig,"] : []),
-		...(hasRestResourceConfig ? ["\ttype WorkspaceRestResourceConfig,"] : []),
-		"} from './block-config';",
-	].join("\n");
-
-	return nextSource.replace(importSource, replacement);
-}
-
-function replaceBlockConfigImportForRestResources(
-	nextSource: string,
-	syncRestScriptPath: string,
-): string {
-	const importPatterns = [
-		/^import\s*\{\n(?:\t[^\n]*\n)+\} from ["']\.\/block-config["'];?$/mu,
-		/^import\s*\{[^\n]*\}\s*from\s*["']\.\/block-config["'];?$/mu,
-	];
-	const importMatch =
-		importPatterns.map((pattern) => pattern.exec(nextSource)).find(Boolean) ??
-		null;
-
-	if (!importMatch) {
-		throw new Error(
-			getSyncRestPatchErrorMessage(
-				"ensureRestResourceSyncScriptAnchors",
-				syncRestScriptPath,
-				"block-config import",
-				"REST_RESOURCES",
-			),
-		);
-	}
-
-	const importSource = importMatch[0];
-	if (
-		importSource.includes("REST_RESOURCES") &&
-		importSource.includes("WorkspaceRestResourceConfig")
-	) {
-		return nextSource;
-	}
-	if (
-		!importSource.includes("BLOCKS") ||
-		!importSource.includes("WorkspaceBlockConfig")
-	) {
-		throw new Error(
-			getSyncRestPatchErrorMessage(
-				"ensureRestResourceSyncScriptAnchors",
-				syncRestScriptPath,
-				"BLOCKS import",
-				"REST_RESOURCES",
-			),
-		);
-	}
-
-	const hasAiFeatures = importSource.includes("AI_FEATURES");
-	const hasAiFeatureConfig = importSource.includes("WorkspaceAiFeatureConfig");
-	const hasContracts = importSource.includes("CONTRACTS");
-	const hasContractConfig = importSource.includes("WorkspaceContractConfig");
-	const hasPostMeta = importSource.includes("POST_META");
-	const hasPostMetaConfig = importSource.includes("WorkspacePostMetaConfig");
-	const replacement = [
-		"import {",
-		...(hasAiFeatures ? ["\tAI_FEATURES,"] : []),
-		"\tBLOCKS,",
-		...(hasContracts ? ["\tCONTRACTS,"] : []),
-		...(hasPostMeta ? ["\tPOST_META,"] : []),
-		"\tREST_RESOURCES,",
-		...(hasAiFeatureConfig ? ["\ttype WorkspaceAiFeatureConfig,"] : []),
-		"\ttype WorkspaceBlockConfig,",
-		...(hasContractConfig ? ["\ttype WorkspaceContractConfig,"] : []),
-		...(hasPostMetaConfig ? ["\ttype WorkspacePostMetaConfig,"] : []),
-		"\ttype WorkspaceRestResourceConfig,",
+		...BLOCK_CONFIG_VALUE_IMPORT_ORDER.flatMap((constName) =>
+			constName === subject.constName || importSource.includes(constName)
+				? [`\t${constName},`]
+				: [],
+		),
+		...BLOCK_CONFIG_TYPE_IMPORT_ORDER.flatMap((configTypeName) =>
+			configTypeName === subject.configTypeName ||
+			importSource.includes(configTypeName)
+				? [`\ttype ${configTypeName},`]
+				: [],
+		),
 		"} from './block-config';",
 	].join("\n");
 
@@ -326,35 +281,22 @@ function formatNoResourcesSubject(subjects: readonly string[]): string {
 	return `${subjects.slice(0, -1).join(", ")}, or ${lastSubject}`;
 }
 
-function buildContractNoResourcesGuard({
-	hasAiFeatures,
-	hasPostMeta,
-	hasRestResources,
+function buildNoResourcesGuard({
+	subjects,
 }: {
-	hasAiFeatures: boolean;
-	hasPostMeta: boolean;
-	hasRestResources: boolean;
+	subjects: readonly {
+		condition: string;
+		include: boolean;
+		subject: string;
+	}[];
 }): string {
-	const condition = ["restBlocks.length === 0 &&", "standaloneContracts.length === 0"];
-	if (hasPostMeta) {
-		condition[condition.length - 1] = `${condition[condition.length - 1]} &&`;
-		condition.push("postMetaContracts.length === 0");
-	}
-	if (hasRestResources) {
-		condition[condition.length - 1] = `${condition[condition.length - 1]} &&`;
-		condition.push("restResources.length === 0");
-	}
-	if (hasAiFeatures) {
-		condition[condition.length - 1] = `${condition[condition.length - 1]} &&`;
-		condition.push("aiFeatures.length === 0");
-	}
-	const noResourcesSubject = formatNoResourcesSubject([
-		"REST-enabled workspace blocks",
-		"standalone contracts",
-		...(hasPostMeta ? ["post meta contracts"] : []),
-		...(hasRestResources ? ["plugin-level REST resources"] : []),
-		...(hasAiFeatures ? ["AI features"] : []),
-	]);
+	const includedSubjects = subjects.filter((subject) => subject.include);
+	const condition = includedSubjects.map(({ condition }, index) =>
+		index === includedSubjects.length - 1 ? condition : `${condition} &&`,
+	);
+	const noResourcesSubject = formatNoResourcesSubject(
+		includedSubjects.map(({ subject }) => subject),
+	);
 
 	return [
 		"if (",
@@ -441,61 +383,39 @@ function insertStandaloneContractNoResourcesGuard(
 
 	return replaceNoResourcesGuard(
 		nextSource,
-		buildContractNoResourcesGuard({
-			hasAiFeatures,
-			hasPostMeta,
-			hasRestResources,
+		buildNoResourcesGuard({
+			subjects: [
+				{
+					condition: "restBlocks.length === 0",
+					include: true,
+					subject: "REST-enabled workspace blocks",
+				},
+				{
+					condition: "standaloneContracts.length === 0",
+					include: true,
+					subject: "standalone contracts",
+				},
+				{
+					condition: "postMetaContracts.length === 0",
+					include: hasPostMeta,
+					subject: "post meta contracts",
+				},
+				{
+					condition: "restResources.length === 0",
+					include: hasRestResources,
+					subject: "plugin-level REST resources",
+				},
+				{
+					condition: "aiFeatures.length === 0",
+					include: hasAiFeatures,
+					subject: "AI features",
+				},
+			],
 		}),
 		"ensureContractSyncScriptAnchors",
 		syncRestScriptPath,
 		"CONTRACTS",
 	);
-}
-
-function buildRestResourceNoResourcesGuard({
-	hasAiFeatures,
-	hasPostMeta,
-	hasStandaloneContracts,
-}: {
-	hasAiFeatures: boolean;
-	hasPostMeta: boolean;
-	hasStandaloneContracts: boolean;
-}): string {
-	const condition = ["restBlocks.length === 0"];
-	if (hasStandaloneContracts) {
-		condition[condition.length - 1] = `${condition[condition.length - 1]} &&`;
-		condition.push("standaloneContracts.length === 0");
-	}
-	if (hasPostMeta) {
-		condition[condition.length - 1] = `${condition[condition.length - 1]} &&`;
-		condition.push("postMetaContracts.length === 0");
-	}
-	condition[condition.length - 1] = `${condition[condition.length - 1]} &&`;
-	condition.push("restResources.length === 0");
-	if (hasAiFeatures) {
-		condition[condition.length - 1] = `${condition[condition.length - 1]} &&`;
-		condition.push("aiFeatures.length === 0");
-	}
-	const noResourcesSubject = formatNoResourcesSubject([
-		"REST-enabled workspace blocks",
-		...(hasStandaloneContracts ? ["standalone contracts"] : []),
-		...(hasPostMeta ? ["post meta contracts"] : []),
-		"plugin-level REST resources",
-		...(hasAiFeatures ? ["AI features"] : []),
-	]);
-
-	return [
-		"if (",
-		...condition.map((line) => `\t\t${line}`),
-		"\t) {",
-		"\t\tconsole.log(",
-		"\t\t\toptions.check",
-		`\t\t\t\t? 'ℹ️ No ${noResourcesSubject} are registered yet. \`sync-rest --check\` is already clean.'`,
-		`\t\t\t\t: 'ℹ️ No ${noResourcesSubject} are registered yet.'`,
-		"\t\t);",
-		"\t\treturn;",
-		"\t}",
-	].join("\n");
 }
 
 function insertRestResourceNoResourcesGuard(
@@ -514,10 +434,34 @@ function insertRestResourceNoResourcesGuard(
 
 	return replaceNoResourcesGuard(
 		nextSource,
-		buildRestResourceNoResourcesGuard({
-			hasAiFeatures,
-			hasPostMeta,
-			hasStandaloneContracts,
+		buildNoResourcesGuard({
+			subjects: [
+				{
+					condition: "restBlocks.length === 0",
+					include: true,
+					subject: "REST-enabled workspace blocks",
+				},
+				{
+					condition: "standaloneContracts.length === 0",
+					include: hasStandaloneContracts,
+					subject: "standalone contracts",
+				},
+				{
+					condition: "postMetaContracts.length === 0",
+					include: hasPostMeta,
+					subject: "post meta contracts",
+				},
+				{
+					condition: "restResources.length === 0",
+					include: true,
+					subject: "plugin-level REST resources",
+				},
+				{
+					condition: "aiFeatures.length === 0",
+					include: hasAiFeatures,
+					subject: "AI features",
+				},
+			],
 		}),
 		"ensureRestResourceSyncScriptAnchors",
 		syncRestScriptPath,
@@ -578,10 +522,15 @@ export async function ensureContractSyncScriptAnchors(
 	const syncRestScriptPath = path.join(workspace.projectDir, "scripts", "sync-rest-contracts.ts");
 
 	await patchFile(syncRestScriptPath, (source) => {
-		let nextSource = replaceBlockConfigImportForContracts(
-			source,
+		let nextSource = replaceBlockConfigImport({
+			functionName: "ensureContractSyncScriptAnchors",
+			nextSource: source,
+			subject: {
+				configTypeName: "WorkspaceContractConfig",
+				constName: "CONTRACTS",
+			},
 			syncRestScriptPath,
-		);
+		});
 		const helperInsertionAnchor = "async function assertTypeArtifactsCurrent";
 
 		nextSource = replaceRequiredContractSyncRestSource(
@@ -641,10 +590,15 @@ export async function ensureRestResourceSyncScriptAnchors(
 	const syncRestScriptPath = path.join(workspace.projectDir, "scripts", "sync-rest-contracts.ts");
 
 	await patchFile(syncRestScriptPath, (source) => {
-		let nextSource = replaceBlockConfigImportForRestResources(
-			source,
+		let nextSource = replaceBlockConfigImport({
+			functionName: "ensureRestResourceSyncScriptAnchors",
+			nextSource: source,
+			subject: {
+				configTypeName: "WorkspaceRestResourceConfig",
+				constName: "REST_RESOURCES",
+			},
 			syncRestScriptPath,
-		);
+		});
 		const helperInsertionAnchor = "async function assertTypeArtifactsCurrent";
 		const restBlocksAnchor = "const restBlocks = BLOCKS.filter( isRestEnabledBlock );";
 		const consoleLogPattern = /\n\tconsole\.log\(\n\t\toptions\.check/u;
