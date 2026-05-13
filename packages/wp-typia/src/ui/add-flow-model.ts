@@ -49,6 +49,7 @@ export const addFlowSchema = z.object({
   'post-type': z.string().optional(),
   position: z.string().optional(),
   'query-type': z.string().optional(),
+  'release-zip': z.boolean().optional(),
   'response-type': z.string().optional(),
   'route-pattern': z.string().optional(),
   'secret-field': z.string().optional(),
@@ -61,6 +62,7 @@ export const addFlowSchema = z.object({
   template: z.string().optional(),
   type: z.string().optional(),
   to: z.string().optional(),
+  'wp-env': z.boolean().optional(),
 });
 
 export type AddFlowValues = z.infer<typeof addFlowSchema>;

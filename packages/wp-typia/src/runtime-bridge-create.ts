@@ -133,6 +133,7 @@ export async function executeCreateCommand({
         'persistence-policy',
       ),
       phpPrefix: readOptionalLooseStringFlag(flags, 'php-prefix'),
+      profile: readOptionalLooseStringFlag(flags, 'profile'),
       projectInput: projectDir,
       onProgress: async (progress) => {
         const payload = {

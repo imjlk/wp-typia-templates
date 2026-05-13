@@ -142,6 +142,7 @@ npx wp-typia create my-block --template compound --package-manager bun --yes --n
 npx wp-typia create my-block --template compound --persistence-policy public --package-manager npm --yes --no-install
 npx wp-typia create my-books --template query-loop --query-post-type book --package-manager npm --yes --no-install
 npx wp-typia create my-block --template basic --with-migration-ui --package-manager bun --yes --no-install
+npx wp-typia create my-plugin --template workspace --profile plugin-qa --package-manager bun --yes --no-install
 ```
 
 Empty workspace flow:
@@ -152,7 +153,7 @@ cd my-plugin
 bun install
 bun run wp-typia:add block counter-card --template basic
 bun run wp-typia:add block faq-stack --template compound --persistence-policy public --data-storage custom-table
-bun run wp-typia:add integration-env local-smoke --wp-env --service docker-compose
+bun run wp-typia:add integration-env local-smoke --wp-env --release-zip --service docker-compose
 bun run wp-typia:add style callout-emphasis --block counter-card
 bun run wp-typia:add transform quote-to-counter --from core/quote --to counter-card
 bun run wp-typia:add binding-source hero-data
@@ -206,7 +207,8 @@ missing or malformed schema files.
 - Need a parent/child block system? Start with `compound`.
 - Need a branded Query Loop inserter variation? Start with `query-loop`.
 - Need an empty workspace that will grow through `wp-typia add ...` workflows? Start with `--template workspace`.
-- Need a local WordPress smoke starter later? Use `wp-typia add integration-env <name> --wp-env` from a workspace.
+- Need plugin QA from day one? Use `--template workspace --profile plugin-qa` for `.wp-env.json`, `.env.example`, a smoke starter, and release zip scripts; omit the profile for the minimal workspace shell.
+- Need a local WordPress smoke starter later? Use `wp-typia add integration-env <name> --wp-env --release-zip` from a workspace.
 - Need to describe a REST route owned by another plugin or legacy controller?
   Use `wp-typia add rest-resource <name> --manual` to generate TypeScript
   contracts, schemas, OpenAPI, and clients without PHP route glue. Use `--path`

@@ -6,6 +6,7 @@ import {
 	DATA_STORAGE_MODES,
 	PERSISTENCE_POLICIES,
 	isDataStorageMode,
+	resolveCreateProfileId,
 	isPersistencePolicy,
 	resolvePackageManagerId,
 	resolveTemplateId,
@@ -91,6 +92,7 @@ interface RunScaffoldFlowOptions {
 	onProgress?: ((event: ScaffoldProgressEvent) => void | Promise<void>) | undefined;
 	packageManager?: string;
 	phpPrefix?: string;
+	profile?: string;
 	projectInput: string;
 	promptText?: Parameters<typeof collectScaffoldAnswers>[0]["promptText"];
 	queryPostType?: string;
@@ -166,6 +168,7 @@ async function buildScaffoldDryRunPlan({
 	onProgress,
 	packageManager,
 	persistencePolicy,
+	profile,
 	projectDir,
 	templateId,
 	variant,
@@ -186,6 +189,7 @@ async function buildScaffoldDryRunPlan({
 	onProgress?: RunScaffoldFlowOptions["onProgress"];
 	packageManager: PackageManagerId;
 	persistencePolicy?: Parameters<typeof scaffoldProject>[0]["persistencePolicy"];
+	profile?: Parameters<typeof scaffoldProject>[0]["profile"];
 	projectDir: string;
 	templateId: string;
 	variant?: string;
@@ -217,6 +221,7 @@ async function buildScaffoldDryRunPlan({
 			onProgress,
 			packageManager,
 			persistencePolicy,
+			profile,
 			projectDir: previewProjectDir,
 			templateId,
 			variant,
@@ -599,6 +604,7 @@ export async function runScaffoldFlow({
 	persistencePolicy,
 	packageManager,
 	namespace,
+	profile,
 	textDomain,
 	phpPrefix,
 	queryPostType,
@@ -638,6 +644,7 @@ export async function runScaffoldFlow({
 		isInteractive,
 		selectTemplate,
 	});
+	const resolvedProfile = resolveCreateProfileId(profile);
 	validateCreateFlagContract({
 		alternateRenderTargets,
 		dataStorageMode,
@@ -693,12 +700,15 @@ export async function runScaffoldFlow({
 			isInteractive,
 			selectPackageManager,
 		});
-		const resolvedWithWpEnv = await resolveOptionalBooleanFlag({
-			explicitValue: withWpEnv,
-			isInteractive,
-			select: selectWithWpEnv,
-			yes,
-		});
+		const resolvedWithWpEnv =
+			resolvedProfile === "plugin-qa"
+				? true
+				: await resolveOptionalBooleanFlag({
+						explicitValue: withWpEnv,
+						isInteractive,
+						select: selectWithWpEnv,
+						yes,
+					});
 		const resolvedWithTestPreset = await resolveOptionalBooleanFlag({
 			explicitValue: withTestPreset,
 			isInteractive,
@@ -748,6 +758,7 @@ export async function runScaffoldFlow({
 					onProgress,
 					packageManager: resolvedPackageManager,
 					persistencePolicy: resolvedPersistencePolicy,
+					profile: resolvedProfile,
 					projectDir,
 					templateId: resolvedTemplateId,
 					variant,
@@ -772,6 +783,7 @@ export async function runScaffoldFlow({
 						onProgress,
 						packageManager: resolvedPackageManager,
 						persistencePolicy: resolvedPersistencePolicy,
+						profile: resolvedProfile,
 						projectDir,
 						templateId: resolvedTemplateId,
 						variant,

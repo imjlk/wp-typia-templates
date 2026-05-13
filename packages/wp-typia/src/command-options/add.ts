@@ -131,6 +131,12 @@ export const ADD_OPTION_METADATA = {
       'Exported TypeScript response type for manual REST contract workflows.',
     type: 'string',
   },
+  'release-zip': {
+    argumentKind: 'flag',
+    description:
+      'Add release zip packaging scripts for integration-env plugin QA workflows.',
+    type: 'boolean',
+  },
   'route-pattern': {
     description:
       'REST route pattern relative to the namespace; generated resources use it for item routes and manual/provider contracts may use it as an alias for --path.',

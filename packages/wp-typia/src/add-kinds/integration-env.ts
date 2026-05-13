@@ -7,7 +7,7 @@ import {
 } from '../add-kind-registry-shared';
 
 const INTEGRATION_ENV_MISSING_NAME_MESSAGE =
-  '`wp-typia add integration-env` requires <name>. Usage: wp-typia add integration-env <name> [--wp-env] [--service <none|docker-compose>].';
+  '`wp-typia add integration-env` requires <name>. Usage: wp-typia add integration-env <name> [--wp-env] [--release-zip] [--service <none|docker-compose>].';
 
 export const integrationEnvAddKindEntry =
   defineAddKindRegistryEntry<AddIntegrationEnvResult>({
@@ -18,10 +18,14 @@ export const integrationEnvAddKindEntry =
         ...(values.withWpEnv === 'true'
           ? ['Run `npm run wp-env:start` before the smoke check when using the generated wp-env preset.']
           : []),
+        ...(values.withReleaseZip === 'true'
+          ? ['Run `npm run release:zip` after smoke checks pass to build a distributable plugin zip.']
+          : []),
       ],
       summaryLines: (values, projectDir) => [
         `Integration env: ${values.integrationEnvSlug}`,
         `wp-env preset: ${values.withWpEnv}`,
+        `Release zip scripts: ${values.withReleaseZip}`,
         `Service starter: ${values.service}`,
         `Project directory: ${projectDir}`,
       ],
@@ -32,6 +36,7 @@ export const integrationEnvAddKindEntry =
     nameLabel: 'Integration env name',
     async prepareExecution(context) {
       const service = readOptionalStrictStringFlag(context.flags, 'service');
+      const withReleaseZip = Boolean(context.flags['release-zip']);
       const withWpEnv = Boolean(context.flags['wp-env']);
 
       return createNamedExecutionPlan(context, {
@@ -40,11 +45,13 @@ export const integrationEnvAddKindEntry =
             cwd,
             integrationEnvName: name,
             service,
+            withReleaseZip,
             withWpEnv,
           }),
         getValues: (result) => ({
           integrationEnvSlug: result.integrationEnvSlug,
           service: result.service,
+          withReleaseZip: String(result.withReleaseZip),
           withWpEnv: String(result.withWpEnv),
         }),
         getWarnings: (result) => result.warnings,
@@ -55,6 +62,7 @@ export const integrationEnvAddKindEntry =
     sortOrder: 25,
     supportsDryRun: true,
     usage:
-      'wp-typia add integration-env <name> [--wp-env] [--service <none|docker-compose>] [--dry-run]',
+      'wp-typia add integration-env <name> [--wp-env] [--release-zip] [--service <none|docker-compose>] [--dry-run]',
     visibleFieldNames: () => NAME_ONLY_VISIBLE_FIELDS,
+    hiddenBooleanSubmitFields: ['wp-env', 'release-zip'],
   });

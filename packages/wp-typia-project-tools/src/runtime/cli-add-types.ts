@@ -390,12 +390,14 @@ export interface RunAddEditorPluginCommandOptions {
  * @property integrationEnvName Human-entered environment name that will be
  * normalized into script and documentation paths.
  * @property service Optional local service starter. Defaults to `none`.
+ * @property withReleaseZip Whether to add release zip packaging scripts.
  * @property withWpEnv Whether to add a local `@wordpress/env` preset and scripts.
  */
 export interface RunAddIntegrationEnvCommandOptions {
 	cwd?: string;
 	integrationEnvName: string;
 	service?: string;
+	withReleaseZip?: boolean;
 	withWpEnv?: boolean;
 }
 

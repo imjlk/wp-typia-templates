@@ -174,6 +174,40 @@ describe('command option metadata helpers', () => {
     expect(parsed.positionals).toEqual(['binding-source', 'hero-data']);
   });
 
+  test('parses plugin QA profile flags from shared create and add metadata', () => {
+    const createParsed = parseCommandArgvWithMetadata(
+      ['--template', 'workspace', '--profile', 'plugin-qa', 'demo-plugin'],
+      {
+        extraBooleanOptionNames: ['help', 'version'],
+        parser: buildCommandOptionParser(
+          GLOBAL_OPTION_METADATA,
+          CREATE_OPTION_METADATA,
+        ),
+      },
+    );
+    const addParsed = parseCommandArgvWithMetadata(
+      ['integration-env', 'local-smoke', '--wp-env', '--release-zip'],
+      {
+        extraBooleanOptionNames: ['help', 'version'],
+        parser: buildCommandOptionParser(
+          GLOBAL_OPTION_METADATA,
+          ADD_OPTION_METADATA,
+        ),
+      },
+    );
+
+    expect(createParsed.flags).toEqual({
+      profile: 'plugin-qa',
+      template: 'workspace',
+    });
+    expect(createParsed.positionals).toEqual(['demo-plugin']);
+    expect(addParsed.flags).toEqual({
+      'release-zip': true,
+      'wp-env': true,
+    });
+    expect(addParsed.positionals).toEqual(['integration-env', 'local-smoke']);
+  });
+
   test('parses transform source and target flags from shared add metadata', () => {
     const parsed = parseCommandArgvWithMetadata(
       [
@@ -345,6 +379,7 @@ describe('command option metadata helpers', () => {
     );
     expect(COMMAND_ROUTING_METADATA.longValueOptions).toContain('--config');
     expect(COMMAND_ROUTING_METADATA.longValueOptions).toContain('--output-dir');
+    expect(COMMAND_ROUTING_METADATA.longValueOptions).toContain('--profile');
     expect(COMMAND_ROUTING_METADATA.shortValueOptions).toContain('-c');
   });
 

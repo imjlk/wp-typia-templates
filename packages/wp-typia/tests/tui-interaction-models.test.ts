@@ -148,6 +148,20 @@ describe("first-party TUI interaction models", () => {
 
 		expect(
 			sanitizeAddSubmitValues({
+				kind: "integration-env",
+				name: "local-smoke",
+				"release-zip": true,
+				"wp-env": true,
+			}),
+		).toEqual({
+			kind: "integration-env",
+			name: "local-smoke",
+			"release-zip": true,
+			"wp-env": true,
+		});
+
+		expect(
+			sanitizeAddSubmitValues({
 				anchor: "",
 				attribute: " headline ",
 				block: "counter-card",

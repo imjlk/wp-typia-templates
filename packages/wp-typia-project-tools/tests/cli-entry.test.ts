@@ -864,6 +864,68 @@ test("runScaffoldFlow dry-run previews scaffold output without writing the targe
   expect(fs.existsSync(targetDir)).toBe(false);
 });
 
+test("runScaffoldFlow applies the plugin-qa profile to the official workspace template", async () => {
+  const projectInput = "demo-plugin-qa-profile";
+  const flow = await runScaffoldFlow({
+    cwd: tempRoot,
+    noInstall: true,
+    packageManager: "npm",
+    profile: "plugin-qa",
+    projectInput,
+    templateId: "workspace",
+    yes: true,
+  });
+
+  const packageJson = JSON.parse(
+    fs.readFileSync(path.join(flow.projectDir, "package.json"), "utf8")
+  ) as {
+    devDependencies: Record<string, string>;
+    scripts: Record<string, string>;
+  };
+
+  expect(flow.result.templateId).toBe("@wp-typia/create-workspace-template");
+  expect(fs.existsSync(path.join(flow.projectDir, ".wp-env.json"))).toBe(true);
+  expect(fs.existsSync(path.join(flow.projectDir, ".env.example"))).toBe(true);
+  expect(
+    fs.existsSync(
+      path.join(
+        flow.projectDir,
+        "scripts",
+        "integration-smoke",
+        "local-smoke.mjs"
+      )
+    )
+  ).toBe(true);
+  expect(packageJson.devDependencies["@wordpress/env"]).toBe("^11.2.0");
+  expect(packageJson.scripts["wp-env:start"]).toBe("wp-env start");
+  expect(packageJson.scripts["smoke:local-smoke"]).toBe(
+    "node scripts/integration-smoke/local-smoke.mjs"
+  );
+  expect(packageJson.scripts["release:zip"]).toBe(
+    "npm run sync-rest:package && npm run build && wp-scripts plugin-zip"
+  );
+  expect(packageJson.scripts["release:zip:check"]).toBe(
+    "npm run sync-rest:package:check && npm run build"
+  );
+  expect(packageJson.scripts["qa:check"]).toBe(
+    "npm run wp-typia:doctor:workspace && npm run release:zip:check"
+  );
+});
+
+test("runScaffoldFlow rejects plugin-qa profile outside the official workspace template", async () => {
+  await expect(
+    runScaffoldFlow({
+      cwd: tempRoot,
+      noInstall: true,
+      packageManager: "npm",
+      profile: "plugin-qa",
+      projectInput: "demo-plugin-qa-basic",
+      templateId: "basic",
+      yes: true,
+    })
+  ).rejects.toThrow("supports only the official workspace template");
+});
+
 test("runScaffoldFlow rejects removed built-in template ids", async () => {
   await expect(
     runScaffoldFlow({
@@ -1008,6 +1070,7 @@ test("formatHelpText keeps migration UI flags out of external template usage", (
   expect(helpText).toContain("--alternate-render-targets");
   expect(helpText).toContain("--inner-blocks-preset");
   expect(helpText).toContain("--template workspace");
+  expect(helpText).toContain("--profile <plugin-qa>");
   expect(helpText).toContain("--external-layer-source");
   expect(helpText).toContain("--external-layer-id");
   expect(helpText).toContain("@wp-typia/create-workspace-template");
@@ -1020,6 +1083,7 @@ test("formatHelpText keeps migration UI flags out of external template usage", (
   expect(helpText).toContain("opt-in dependencies");
   expect(helpText).toContain("wp-typia add integration-env <name>");
   expect(helpText).toContain("scripts/integration-smoke/");
+  expect(helpText).toContain("release:zip");
   expect(helpText).not.toContain("Public installs currently gate");
   expect(helpText).toContain("wp-typia add ai-feature <name>");
   expect(helpText).toContain(

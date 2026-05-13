@@ -14,6 +14,7 @@ import {
 	applyGeneratedProjectDxPackageJson,
 	applyLocalDevPresetFiles,
 } from "./local-dev-presets.js";
+import { runAddIntegrationEnvCommand } from "./cli-add-workspace-integration-env.js";
 import { applyMigrationUiCapability } from "./migration-ui-capability.js";
 import {
 	applyWorkspaceMigrationCapability,
@@ -30,6 +31,7 @@ import {
 } from "./scaffold-package-manager-files.js";
 import { copyInterpolatedDirectory } from "./template-render.js";
 import {
+	OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE,
 	isBuiltInTemplateId,
 	normalizeTemplateLookupId,
 } from "./template-registry.js";
@@ -75,6 +77,10 @@ export const DATA_STORAGE_MODES = ["post-meta", "custom-table"] as const;
 export type DataStorageMode = (typeof DATA_STORAGE_MODES)[number];
 export const PERSISTENCE_POLICIES = ["authenticated", "public"] as const;
 export type PersistencePolicy = (typeof PERSISTENCE_POLICIES)[number];
+/** Supported create profile ids for opt-in workspace scaffold presets. */
+export const CREATE_PROFILE_IDS = ["plugin-qa"] as const;
+/** Union of supported `wp-typia create --profile` id strings. */
+export type CreateProfileId = (typeof CREATE_PROFILE_IDS)[number];
 
 /**
  * Normalized template variables shared by built-in and remote scaffold flows.
@@ -230,6 +236,7 @@ interface ScaffoldProjectOptions {
 	onProgress?: ((event: ScaffoldProgressEvent) => void | Promise<void>) | undefined;
 	packageManager: PackageManagerId;
 	persistencePolicy?: PersistencePolicy;
+	profile?: CreateProfileId;
 	projectDir: string;
 	repositoryReference?: string;
 	templateId: string;
@@ -277,8 +284,76 @@ export function isPersistencePolicy(value: string): value is PersistencePolicy {
 	return (PERSISTENCE_POLICIES as readonly string[]).includes(value);
 }
 
+/**
+ * Return whether a raw string is a supported create profile id.
+ */
+export function isCreateProfileId(value: string): value is CreateProfileId {
+	return (CREATE_PROFILE_IDS as readonly string[]).includes(value);
+}
+
+/**
+ * Resolve an optional create profile flag into a validated profile id.
+ *
+ * Empty input disables profile application; unknown ids throw with the allowed
+ * profile list for CLI diagnostics.
+ */
+export function resolveCreateProfileId(
+	profile?: string,
+): CreateProfileId | undefined {
+	if (profile === undefined || profile.trim().length === 0) {
+		return undefined;
+	}
+
+	const normalizedProfile = profile.trim();
+	if (isCreateProfileId(normalizedProfile)) {
+		return normalizedProfile;
+	}
+
+	throw new Error(
+		`Unknown create profile "${profile}". Expected one of: ${CREATE_PROFILE_IDS.join(", ")}.`,
+	);
+}
+
 function normalizeTemplateSelection(templateId: string): string {
 	return normalizeTemplateLookupId(templateId);
+}
+
+function assertCreateProfileTemplateCompatibility({
+	profile,
+	templateId,
+}: {
+	profile?: CreateProfileId;
+	templateId: string;
+}) {
+	if (!profile) {
+		return;
+	}
+
+	if (profile === "plugin-qa" && templateId !== OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE) {
+		throw new Error(
+			"`--profile plugin-qa` currently supports only the official workspace template. Use `--template workspace` or add QA files later with `wp-typia add integration-env <name> --wp-env --release-zip`.",
+		);
+	}
+}
+
+async function applyCreateProfile({
+	profile,
+	projectDir,
+}: {
+	profile?: CreateProfileId;
+	projectDir: string;
+}) {
+	if (profile !== "plugin-qa") {
+		return;
+	}
+
+	await runAddIntegrationEnvCommand({
+		cwd: projectDir,
+		integrationEnvName: "local-smoke",
+		service: "none",
+		withReleaseZip: true,
+		withWpEnv: true,
+	});
 }
 
 async function reportScaffoldProgress(
@@ -299,6 +374,7 @@ export async function scaffoldProject({
 	externalLayerId,
 	externalLayerSource,
 	externalLayerSourceLabel,
+	profile,
 	repositoryReference,
 	cwd = process.cwd(),
 	allowExistingDir = false,
@@ -314,6 +390,10 @@ export async function scaffoldProject({
 	const resolvedPackageManager = getPackageManager(packageManager).id;
 	const isBuiltInTemplate = isBuiltInTemplateId(resolvedTemplateId);
 
+	assertCreateProfileTemplateCompatibility({
+		profile,
+		templateId: resolvedTemplateId,
+	});
 	assertExternalLayerCompositionOptions({
 		externalLayerId,
 		externalLayerSource,
@@ -478,6 +558,10 @@ export async function scaffoldProject({
 			withWpEnv,
 		});
 	}
+	await applyCreateProfile({
+		profile,
+		projectDir,
+	});
 	await normalizePackageManagerFiles(projectDir, resolvedPackageManager);
 	await removeUnexpectedLockfiles(projectDir, resolvedPackageManager);
 	await replaceTextRecursively(projectDir, resolvedPackageManager, {

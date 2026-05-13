@@ -6,13 +6,14 @@ Use it through the canonical CLI:
 
 ```bash
 npx wp-typia create my-plugin --template @wp-typia/create-workspace-template
+npx wp-typia create my-plugin --template workspace --profile plugin-qa
 ```
 
 The generated project starts with an empty `src/blocks/*` workspace shell and is designed to grow through:
 
 ```bash
 npm run wp-typia:add -- block my-block --template basic
-npm run wp-typia:add -- integration-env local-smoke --wp-env --service docker-compose
+npm run wp-typia:add -- integration-env local-smoke --wp-env --release-zip --service docker-compose
 npm run wp-typia:add -- style callout-emphasis --block my-block
 npm run wp-typia:add -- transform quote-to-block --from core/quote --to my-block
 npm run wp-typia:add -- binding-source hero-data
@@ -44,6 +45,19 @@ expose package scripts for the common CLI entrypoints:
     "wp-typia": "<version>"
   }
 }
+```
+
+## Minimal Workspace vs Plugin QA Profile
+
+Use the default workspace template when you want the smallest editable shell and
+plan to add QA infrastructure later. Use `--profile plugin-qa` when the plugin
+should start with local WordPress smoke checks, `.wp-env.json`, `.env.example`,
+`scripts/integration-smoke/local-smoke.mjs`, and release zip scripts.
+
+Existing minimal workspaces can adopt the same QA surface later:
+
+```bash
+npm run wp-typia:add -- integration-env local-smoke --wp-env --release-zip
 ```
 
 Use the script form from generated workspaces so the executable CLI package is

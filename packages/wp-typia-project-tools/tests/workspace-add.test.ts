@@ -1255,6 +1255,7 @@ test("canonical CLI can add an integration environment starter to an official wo
       "integration-env",
       "local-smoke",
       "--wp-env",
+      "--release-zip",
       "--service",
       "docker-compose",
     ],
@@ -1263,6 +1264,7 @@ test("canonical CLI can add an integration environment starter to an official wo
 
   expect(output).toContain("Added integration environment starter");
   expect(output).toContain("Integration env: local-smoke");
+  expect(output).toContain("Release zip scripts: true");
 
   const packageJson = JSON.parse(
     fs.readFileSync(path.join(targetDir, "package.json"), "utf8")
@@ -1280,6 +1282,15 @@ test("canonical CLI can add an integration environment starter to an official wo
   );
   expect(packageJson.scripts["smoke:integration"]).toBe(
     "npm run smoke:local-smoke"
+  );
+  expect(packageJson.scripts["release:zip"]).toBe(
+    "npm run sync-rest:package && npm run build && wp-scripts plugin-zip"
+  );
+  expect(packageJson.scripts["release:zip:check"]).toBe(
+    "npm run sync-rest:package:check && npm run build"
+  );
+  expect(packageJson.scripts["qa:check"]).toBe(
+    "npm run wp-typia:doctor:workspace && npm run release:zip:check"
   );
 
   const envExampleSource = fs.readFileSync(
@@ -1313,6 +1324,7 @@ test("canonical CLI can add an integration environment starter to an official wo
   );
   const smokeScriptSource = fs.readFileSync(smokeScriptPath, "utf8");
   expect(smokeScriptSource).toContain("WordPress REST index");
+  expect(smokeScriptSource).toContain("generated REST clients or schema");
   expect(smokeScriptSource).toContain("local-smoke");
   expect(smokeScriptSource).toContain("function resolveEndpointUrl");
   expect(smokeScriptSource).toContain(
@@ -1328,6 +1340,12 @@ test("canonical CLI can add an integration environment starter to an official wo
       "utf8"
     )
   ).toContain("Adapting the Starter");
+  expect(
+    fs.readFileSync(
+      path.join(targetDir, "docs", "integration-env", "local-smoke.md"),
+      "utf8"
+    )
+  ).toContain("release:zip");
 });
 
 test("canonical CLI preserves an existing wp-env dependency when adding an integration environment", async () => {
