@@ -6,30 +6,35 @@ import { executeDoctorCommand } from '../runtime-bridge';
 import type { PrintLine } from '../print-line';
 import type { NodeFallbackDispatchContext } from './types';
 
+type DoctorExitPolicy = 'strict' | 'workspace-only';
+
 async function renderNodeFallbackDoctorJson(
   cwd: string,
+  exitPolicy: DoctorExitPolicy,
   printLine: PrintLine,
 ): Promise<void> {
-  const [{ getDoctorChecks }, { getDoctorFailureDetailLines }] =
-    await Promise.all([
-      import('@wp-typia/project-tools/cli-doctor'),
-      import('@wp-typia/project-tools/cli-diagnostics'),
-    ]);
+  const {
+    createDoctorRunSummary,
+    getDoctorChecks,
+    getDoctorExitFailureDetailLines,
+  } = await import('@wp-typia/project-tools/cli-doctor');
   const checks = await getDoctorChecks(cwd);
+  const summary = createDoctorRunSummary(checks, { exitPolicy });
   printLine(
     JSON.stringify(
       {
         checks,
+        summary,
       },
       null,
       2,
     ),
   );
-  if (checks.some((check) => check.status === 'fail')) {
+  if (summary.exitCode === 1) {
     throw createCliCommandError({
       code: CLI_DIAGNOSTIC_CODES.DOCTOR_CHECK_FAILED,
       command: 'doctor',
-      detailLines: getDoctorFailureDetailLines(checks),
+      detailLines: getDoctorExitFailureDetailLines(checks, { exitPolicy }),
       summary: 'One or more doctor checks failed.',
     });
   }
@@ -40,9 +45,10 @@ export async function dispatchNodeFallbackDoctor({
   mergedFlags,
   printLine,
 }: NodeFallbackDispatchContext): Promise<void> {
+  const exitPolicy = mergedFlags['workspace-only'] ? 'workspace-only' : 'strict';
   if (mergedFlags.format === 'json') {
-    await renderNodeFallbackDoctorJson(cwd, printLine);
+    await renderNodeFallbackDoctorJson(cwd, exitPolicy, printLine);
     return;
   }
-  await executeDoctorCommand(cwd);
+  await executeDoctorCommand(cwd, { exitPolicy });
 }

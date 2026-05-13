@@ -283,7 +283,7 @@ describe('command option metadata helpers', () => {
 
   test('parses doctor structured output flags from shared metadata', () => {
     const parsed = parseCommandArgvWithMetadata(
-      ['doctor', '--format', 'json'],
+      ['doctor', '--format', 'json', '--workspace-only'],
       {
         extraBooleanOptionNames: ['help', 'version'],
         parser: buildCommandOptionParser(
@@ -295,6 +295,7 @@ describe('command option metadata helpers', () => {
 
     expect(parsed.flags).toEqual({
       format: 'json',
+      'workspace-only': true,
     });
     expect(parsed.positionals).toEqual(['doctor']);
   });

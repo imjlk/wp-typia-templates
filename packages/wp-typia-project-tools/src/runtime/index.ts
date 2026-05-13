@@ -174,6 +174,7 @@ export {
 } from "./temp-roots.js";
 export {
 	createReadlinePrompt,
+	createDoctorRunSummary,
 	createCliCommandError,
 	createCliDiagnosticCodeError,
 	CliDiagnosticError,
@@ -187,6 +188,8 @@ export {
 	formatTemplateFeatures,
 	formatTemplateSummary,
 	getDoctorChecks,
+	getDoctorExitFailureChecks,
+	getDoctorExitFailureDetailLines,
 	getDoctorFailureDetailLines,
 	getFailingDoctorChecks,
 	getNextSteps,
@@ -216,6 +219,10 @@ export type {
 	CliDiagnosticCodeError,
 	CliDiagnosticMessage,
 	DoctorCheck,
+	DoctorCheckScope,
+	DoctorExitPolicy,
+	DoctorFailureSummary,
+	DoctorRunSummary,
 	EditorPluginSlotId,
 	HookedBlockPositionId,
 	ReadlinePrompt,

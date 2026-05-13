@@ -30,7 +30,18 @@
  * `getTemplateSelectOptions`, `listTemplates`, and `isBuiltInTemplateId` for
  * template inspection flows.
  */
-export { getDoctorChecks, runDoctor, type DoctorCheck } from "./cli-doctor.js";
+export {
+	createDoctorRunSummary,
+	getDoctorChecks,
+	getDoctorExitFailureChecks,
+	getDoctorExitFailureDetailLines,
+	runDoctor,
+	type DoctorCheck,
+	type DoctorCheckScope,
+	type DoctorExitPolicy,
+	type DoctorFailureSummary,
+	type DoctorRunSummary,
+} from "./cli-doctor.js";
 export {
 	createCliCommandError,
 	createCliDiagnosticCodeError,

@@ -3,7 +3,11 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import { cleanupScaffoldTempRoot, createScaffoldTempRoot, entryPath, getCommandErrorMessage, linkWorkspaceNodeModules, parseJsonObjectFromOutput, runCli, scaffoldOfficialWorkspace, stripPhpFunction, workspaceTemplatePackageManifest } from "./helpers/scaffold-test-harness.js";
 import { scaffoldProject } from "../src/runtime/index.js";
-import { getDoctorChecks } from "../src/runtime/cli-core.js";
+import {
+  createDoctorRunSummary,
+  getDoctorChecks,
+  getDoctorExitFailureDetailLines,
+} from "../src/runtime/cli-core.js";
 import {
   getWorkspaceBlockSelectOptions,
   getWorkspaceBlockSelectOptionsAsync,
@@ -47,6 +51,50 @@ test("doctor reports environment-only scope outside official workspace roots", a
   expect(
     checks.some((check) => check.label === "Workspace package metadata")
   ).toBe(false);
+});
+
+test("doctor workspace-only policy treats environment failures as advisory", () => {
+  const checks = [
+    {
+      detail: "Not available",
+      label: "Bun",
+      scope: "environment" as const,
+      status: "fail" as const,
+    },
+    {
+      detail: "Workspace metadata is current",
+      label: "Workspace package metadata",
+      scope: "workspace" as const,
+      status: "pass" as const,
+    },
+  ];
+
+  const strictSummary = createDoctorRunSummary(checks);
+  expect(strictSummary.exitPolicy).toBe("strict");
+  expect(strictSummary.exitCode).toBe(1);
+  expect(strictSummary.exitFailureCount).toBe(1);
+  expect(strictSummary.advisoryFailureCount).toBe(0);
+  expect(getDoctorExitFailureDetailLines(checks)).toEqual([
+    "Bun: Not available",
+  ]);
+
+  const workspaceOnlySummary = createDoctorRunSummary(checks, {
+    exitPolicy: "workspace-only",
+  });
+  expect(workspaceOnlySummary.exitPolicy).toBe("workspace-only");
+  expect(workspaceOnlySummary.exitCode).toBe(0);
+  expect(workspaceOnlySummary.exitFailureCount).toBe(0);
+  expect(workspaceOnlySummary.advisoryFailureCount).toBe(1);
+  expect(workspaceOnlySummary.advisoryFailures).toEqual([
+    {
+      label: "Bun",
+      scope: "environment",
+      severity: "advisory",
+    },
+  ]);
+  expect(
+    getDoctorExitFailureDetailLines(checks, { exitPolicy: "workspace-only" })
+  ).toEqual([]);
 });
 
 test("doctor reports invalid nearby workspace metadata before workspace checks", async () => {

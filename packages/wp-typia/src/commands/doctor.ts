@@ -15,28 +15,35 @@ export const doctorCommand = defineCommand({
 	description: "Run repository and project diagnostics.",
 	handler: async (args) => {
 		const prefersStructuredOutput = prefersStructuredCliOutput(args);
+		const doctorArgs = args as typeof args & { "workspace-only"?: boolean };
+		const doctorExitPolicy = doctorArgs["workspace-only"] ? "workspace-only" : "strict";
 		if (prefersStructuredOutput) {
-			const [{ getDoctorChecks }, { getDoctorFailureDetailLines }] =
-				await Promise.all([
-					import("@wp-typia/project-tools/cli-doctor"),
-					import("@wp-typia/project-tools/cli-diagnostics"),
-				]);
+			const {
+				createDoctorRunSummary,
+				getDoctorChecks,
+				getDoctorExitFailureDetailLines,
+			} = await import("@wp-typia/project-tools/cli-doctor");
 			const checks = await getDoctorChecks(args.cwd);
-			if (checks.some((check) => check.status === "fail")) {
+			const summary = createDoctorRunSummary(checks, {
+				exitPolicy: doctorExitPolicy,
+			});
+			if (summary.exitCode === 1) {
 				emitCliDiagnosticFailure(args, {
 					code: CLI_DIAGNOSTIC_CODES.DOCTOR_CHECK_FAILED,
 					command: "doctor",
-					detailLines: getDoctorFailureDetailLines(checks),
-					extraOutput: { checks },
+					detailLines: getDoctorExitFailureDetailLines(checks, {
+						exitPolicy: doctorExitPolicy,
+					}),
+					extraOutput: { checks, summary },
 					summary: "One or more doctor checks failed.",
 				});
 				return;
 			}
-			args.output({ checks });
+			args.output({ checks, summary });
 			return;
 		}
 		try {
-			await executeDoctorCommand(args.cwd);
+			await executeDoctorCommand(args.cwd, { exitPolicy: doctorExitPolicy });
 		} catch (error) {
 			emitCliDiagnosticFailure(args, {
 				command: "doctor",
