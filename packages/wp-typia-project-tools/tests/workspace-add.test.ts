@@ -4310,6 +4310,10 @@ test("canonical CLI can add a plugin-level REST resource to an official workspac
     path.join(targetDir, "demo-workspace-add-rest-resource.php"),
     "utf8"
   );
+  const restSchemaHelperSource = fs.readFileSync(
+    path.join(targetDir, "inc", "rest-schema.php"),
+    "utf8"
+  );
   const typesSource = fs.readFileSync(
     path.join(targetDir, "src", "rest", "snapshots", "api-types.ts"),
     "utf8"
@@ -4344,6 +4348,19 @@ test("canonical CLI can add a plugin-level REST resource to an official workspac
   expect(blockConfigSource).toContain("defineEndpointManifest");
   expect(bootstrapSource).toContain("function demo_space_register_rest_resources()");
   expect(bootstrapSource).toContain("inc/rest/*.php");
+  expect(bootstrapSource).toContain("function demo_space_load_rest_schema_helpers()");
+  expect(bootstrapSource).toContain("inc/rest-schema.php");
+  expect(restSchemaHelperSource).toContain("function demo_space_load_rest_schema");
+  expect(restSchemaHelperSource).toContain(
+    "function demo_space_prepare_rest_schema_for_wordpress"
+  );
+  expect(restSchemaHelperSource).toContain(
+    "function demo_space_get_wordpress_rest_schema"
+  );
+  expect(restSchemaHelperSource).toContain(
+    "function demo_space_validate_and_sanitize_rest_payload"
+  );
+  expect(restSchemaHelperSource).toContain("malformed_rest_schema");
   expect(typesSource).toContain("export interface SnapshotsListQuery");
   expect(typesSource).toContain("export interface SnapshotsDeleteResponse");
   expect(validatorsSource).toContain("apiValidators");
@@ -4358,8 +4375,10 @@ test("canonical CLI can add a plugin-level REST resource to an official workspac
   expect(phpSource).toContain("register_rest_route");
   expect(phpSource).toContain("'demo-space/v1'");
   expect(phpSource).toContain("current_user_can( 'edit_posts' )");
-  expect(phpSource).toContain("inc/rest-schemas/rest/snapshots");
-  expect(phpSource).toContain("$schema_json = file_get_contents( $schema_path );");
+  expect(phpSource).toContain("demo_space_validate_and_sanitize_rest_payload");
+  expect(phpSource).toContain("array( 'resource' => 'snapshots' )");
+  expect(phpSource).not.toContain("demo_space_snapshots_load_rest_resource_schema");
+  expect(phpSource).not.toContain("$schema_json = file_get_contents( $schema_path );");
   expect(
     fs.existsSync(path.join(targetDir, "src", "rest", "snapshots", "api-client.ts"))
   ).toBe(true);
@@ -5304,6 +5323,11 @@ test("rest resource workflow repairs legacy sync-rest scripts before writing wor
 
   linkWorkspaceNodeModules(targetDir);
 
+  const bootstrapPath = path.join(
+    targetDir,
+    "demo-workspace-rest-resource-legacy-sync-rest.php"
+  );
+  const restSchemaHelperPath = path.join(targetDir, "inc", "rest-schema.php");
   const syncRestScriptPath = path.join(
     targetDir,
     "scripts",
@@ -5313,12 +5337,32 @@ test("rest resource workflow repairs legacy sync-rest scripts before writing wor
     fs.readFileSync(syncRestScriptPath, "utf8")
   );
   fs.writeFileSync(syncRestScriptPath, legacySyncRestSource, "utf8");
+  fs.rmSync(restSchemaHelperPath, { force: true });
+  fs.writeFileSync(
+    bootstrapPath,
+    fs
+      .readFileSync(bootstrapPath, "utf8")
+      .replace(
+        /\nfunction demo_space_load_rest_schema_helpers\(\) \{[\s\S]*?\n\}\n\ndemo_space_load_rest_schema_helpers\(\);\n/u,
+        "\n"
+      ),
+    "utf8"
+  );
 
   runCli("node", [entryPath, "add", "rest-resource", "snapshots"], {
     cwd: targetDir,
   });
 
+  const repairedBootstrapSource = fs.readFileSync(bootstrapPath, "utf8");
   const repairedSyncRestSource = fs.readFileSync(syncRestScriptPath, "utf8");
+  const repairedRestSchemaHelperSource = fs.readFileSync(
+    restSchemaHelperPath,
+    "utf8"
+  );
+  expect(repairedBootstrapSource).toContain("inc/rest-schema.php");
+  expect(repairedRestSchemaHelperSource).toContain(
+    "function demo_space_validate_and_sanitize_rest_payload"
+  );
   expect(repairedSyncRestSource).toContain("REST_RESOURCES");
   expect(repairedSyncRestSource).toContain("function isWorkspaceRestResource(");
   expect(repairedSyncRestSource).toContain(

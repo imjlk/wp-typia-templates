@@ -14,9 +14,13 @@ import {
 } from "./cli-add-shared.js";
 import {
 	ensureRestResourceBootstrapAnchors,
+	ensureRestSchemaHelperBootstrapAnchors,
 	ensureRestResourceSyncScriptAnchors,
 } from "./cli-add-workspace-rest-anchors.js";
-import { buildRestResourcePhpSource } from "./cli-add-workspace-rest-php-templates.js";
+import {
+	buildRestResourcePhpSource,
+	buildWorkspaceRestSchemaHelperPhpSource,
+} from "./cli-add-workspace-rest-php-templates.js";
 import {
 	buildRestResourceApiSource,
 	buildRestResourceConfigEntry,
@@ -28,9 +32,52 @@ import {
 	type GeneratedRestResourceScaffoldOptions,
 	type RunAddRestResourceCommandResult,
 } from "./cli-add-workspace-rest-types.js";
+import { hasPhpFunctionDefinition } from "./php-utils.js";
 import { syncRestResourceArtifacts } from "./rest-resource-artifacts.js";
 import { toPascalCase, toTitleCase } from "./string-case.js";
 import { appendWorkspaceInventoryEntries } from "./workspace-inventory.js";
+
+async function ensureWorkspaceRestSchemaHelperFile(
+	helperFilePath: string,
+	phpPrefix: string,
+): Promise<void> {
+	let currentSource: string | null = null;
+	try {
+		currentSource = await fsp.readFile(helperFilePath, "utf8");
+	} catch (error) {
+		if ((error as NodeJS.ErrnoException).code !== "ENOENT") {
+			throw error;
+		}
+	}
+
+	if (currentSource === null) {
+		await fsp.mkdir(path.dirname(helperFilePath), { recursive: true });
+		await fsp.writeFile(
+			helperFilePath,
+			buildWorkspaceRestSchemaHelperPhpSource(phpPrefix),
+			"utf8",
+		);
+		return;
+	}
+
+	const requiredFunctions = [
+		`${phpPrefix}_load_rest_schema`,
+		`${phpPrefix}_prepare_rest_schema_for_wordpress`,
+		`${phpPrefix}_get_wordpress_rest_schema`,
+		`${phpPrefix}_validate_and_sanitize_rest_payload`,
+	];
+	const missingFunctions = requiredFunctions.filter(
+		(functionName) => !hasPhpFunctionDefinition(currentSource, functionName),
+	);
+	if (missingFunctions.length > 0) {
+		throw new Error(
+			[
+				`Existing ${path.relative(process.cwd(), helperFilePath)} is missing generated REST schema helper functions: ${missingFunctions.join(", ")}.`,
+				"Restore the generated inc/rest-schema.php helper or add these functions manually before retrying.",
+			].join(" "),
+		);
+	}
+}
 
 /**
  * Scaffold generated TypeScript, PHP, schema, and inventory files for a
@@ -81,20 +128,27 @@ export async function scaffoldGeneratedRestResource({
 	}
 	const bootstrapPath = getWorkspaceBootstrapPath(workspace);
 	const dataFilePath = path.join(restResourceDir, "data.ts");
+	const restSchemaHelperPath = path.join(workspace.projectDir, "inc", "rest-schema.php");
 	const phpFilePath = path.join(workspace.projectDir, "inc", "rest", `${restResourceSlug}.php`);
 	const mutationSnapshot: WorkspaceMutationSnapshot = {
 		fileSources: await snapshotWorkspaceFiles([
 			blockConfigPath,
 			bootstrapPath,
+			restSchemaHelperPath,
 			syncRestScriptPath,
 		]),
 		snapshotDirs: [],
-		targetPaths: [restResourceDir, phpFilePath],
+		targetPaths: [restResourceDir, restSchemaHelperPath, phpFilePath],
 	};
 
 	try {
 		await fsp.mkdir(restResourceDir, { recursive: true });
 		await fsp.mkdir(path.dirname(phpFilePath), { recursive: true });
+		await ensureWorkspaceRestSchemaHelperFile(
+			restSchemaHelperPath,
+			workspace.workspace.phpPrefix,
+		);
+		await ensureRestSchemaHelperBootstrapAnchors(workspace);
 		await ensureRestResourceBootstrapAnchors(workspace);
 		await ensureRestResourceSyncScriptAnchors(workspace);
 		await fsp.writeFile(

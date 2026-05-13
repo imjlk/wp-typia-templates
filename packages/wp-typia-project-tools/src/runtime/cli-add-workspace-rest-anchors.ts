@@ -12,6 +12,46 @@ import { hasPhpFunctionDefinition } from "./php-utils.js";
 import type { WorkspaceProject } from "./workspace-project.js";
 
 const REST_RESOURCE_SERVER_GLOB = "/inc/rest/*.php";
+const REST_SCHEMA_HELPER_PATH = "/inc/rest-schema.php";
+
+export async function ensureRestSchemaHelperBootstrapAnchors(
+	workspace: WorkspaceProject,
+): Promise<void> {
+	const bootstrapPath = getWorkspaceBootstrapPath(workspace);
+
+	await patchFile(bootstrapPath, (source) => {
+		let nextSource = source;
+		const loadFunctionName = `${workspace.workspace.phpPrefix}_load_rest_schema_helpers`;
+		const loadCall = `${loadFunctionName}();`;
+		const helperFunction = `
+
+function ${loadFunctionName}() {
+\t$helper_path = __DIR__ . '${REST_SCHEMA_HELPER_PATH}';
+\tif ( is_readable( $helper_path ) ) {
+\t\trequire_once $helper_path;
+\t}
+}
+
+${loadCall}
+`;
+
+		if (!hasPhpFunctionDefinition(nextSource, loadFunctionName)) {
+			nextSource = insertPhpSnippetBeforeWorkspaceAnchors(nextSource, helperFunction);
+		} else if (!nextSource.includes(REST_SCHEMA_HELPER_PATH)) {
+			throw new Error(
+				[
+					`Unable to patch ${path.basename(bootstrapPath)} in ensureRestSchemaHelperBootstrapAnchors.`,
+					`The existing ${loadFunctionName}() definition does not include ${REST_SCHEMA_HELPER_PATH}.`,
+					"Restore the generated bootstrap shape or load inc/rest-schema.php manually before retrying.",
+				].join(" "),
+			);
+		} else if (!nextSource.includes(loadCall)) {
+			nextSource = appendPhpSnippetBeforeClosingTag(nextSource, loadCall);
+		}
+
+		return nextSource;
+	});
+}
 
 export async function ensureRestResourceBootstrapAnchors(
 	workspace: WorkspaceProject,

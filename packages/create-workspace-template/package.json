@@ -8,6 +8,7 @@
     "package.json.mustache",
     "tsconfig.json.mustache",
     "webpack.config.js.mustache",
+    "inc/",
     "scripts/",
     "src/",
     "languages/",

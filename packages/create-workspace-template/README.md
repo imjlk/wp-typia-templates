@@ -53,6 +53,13 @@ builds to copy generated runtime schemas into `inc/rest-schemas`. Add
 `sync-rest:package:check` to release CI so stale or missing packaged schemas are
 caught before a zip is built without TypeScript source files.
 
+The generated `inc/rest-schema.php` helper centralizes schema loading and
+WordPress REST sanitization. Generated REST resources use it automatically, and
+custom PHP resources can call
+`<phpPrefix>_get_wordpress_rest_schema( 'settings-response', array( 'resource' => 'settings' ) )`
+or `<phpPrefix>_validate_and_sanitize_rest_payload(...)` to reuse the same
+packaged/source lookup and `WP_Error` handling.
+
 | Package manager | Doctor                     | Sync check                         | Add a block                                               |
 | --------------- | -------------------------- | ---------------------------------- | --------------------------------------------------------- |
 | npm             | `npm run wp-typia:doctor`  | `npm run wp-typia:sync -- --check` | `npm run wp-typia:add -- block my-block --template basic` |

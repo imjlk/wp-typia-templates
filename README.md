@@ -190,6 +190,14 @@ building a zip and `sync-rest:package:check` in release CI. Those scripts copy
 generated REST schemas into `inc/rest-schemas`, so runtime validation does not
 depend on shipping TypeScript source directories.
 
+Generated workspaces include `inc/rest-schema.php`, which exposes
+plugin-prefixed helpers such as
+`<phpPrefix>_get_wordpress_rest_schema( 'settings-response', array( 'resource' => 'settings' ) )`
+and `<phpPrefix>_validate_and_sanitize_rest_payload(...)`. Custom PHP REST
+resources can call those helpers to load packaged or source schemas, strip
+fields WordPress REST does not need, and receive `WP_Error` responses for
+missing or malformed schema files.
+
 ## Start here
 
 - Want the smallest possible starting point? Start with `basic`.

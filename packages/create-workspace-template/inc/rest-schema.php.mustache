@@ -1,0 +1,184 @@
+<?php
+if ( ! defined( 'ABSPATH' ) ) {
+	return;
+}
+
+if ( ! function_exists( '{{phpPrefix}}_is_valid_rest_schema_key' ) ) {
+	function {{phpPrefix}}_is_valid_rest_schema_key( $value ) {
+		return is_string( $value ) && 1 === preg_match( '/\A[A-Za-z0-9_-]+\z/', $value );
+	}
+}
+
+if ( ! function_exists( '{{phpPrefix}}_is_valid_rest_resource_slug' ) ) {
+	function {{phpPrefix}}_is_valid_rest_resource_slug( $value ) {
+		return is_string( $value ) && 1 === preg_match( '/\A[a-z0-9]+(?:-[a-z0-9]+)*\z/', $value );
+	}
+}
+
+if ( ! function_exists( '{{phpPrefix}}_resolve_rest_schema_paths' ) ) {
+	function {{phpPrefix}}_resolve_rest_schema_paths( $schema_name, $options = array() ) {
+		if ( ! {{phpPrefix}}_is_valid_rest_schema_key( $schema_name ) ) {
+			return new WP_Error(
+				'invalid_rest_schema_name',
+				'Invalid REST schema name.',
+				array( 'status' => 500 )
+			);
+		}
+
+		$options      = is_array( $options ) ? $options : array();
+		$project_root = dirname( __DIR__ );
+		$paths        = array();
+
+		if ( isset( $options['resource'] ) && '' !== $options['resource'] ) {
+			if ( ! {{phpPrefix}}_is_valid_rest_resource_slug( $options['resource'] ) ) {
+				return new WP_Error(
+					'invalid_rest_schema_resource',
+					'Invalid REST schema resource slug.',
+					array( 'status' => 500 )
+				);
+			}
+
+			$resource_slug = $options['resource'];
+			$paths[]       = __DIR__ . '/rest-schemas/rest/' . $resource_slug . '/' . $schema_name . '.schema.json';
+			$paths[]       = $project_root . '/src/rest/' . $resource_slug . '/api-schemas/' . $schema_name . '.schema.json';
+		}
+
+		if ( isset( $options['paths'] ) && is_array( $options['paths'] ) ) {
+			foreach ( $options['paths'] as $schema_path ) {
+				if ( is_string( $schema_path ) && '' !== $schema_path && ! in_array( $schema_path, $paths, true ) ) {
+					$paths[] = $schema_path;
+				}
+			}
+		}
+
+		return $paths;
+	}
+}
+
+if ( ! function_exists( '{{phpPrefix}}_load_rest_schema' ) ) {
+	function {{phpPrefix}}_load_rest_schema( $schema_name, $options = array() ) {
+		$schema_paths = {{phpPrefix}}_resolve_rest_schema_paths( $schema_name, $options );
+		if ( is_wp_error( $schema_paths ) ) {
+			return $schema_paths;
+		}
+
+		foreach ( $schema_paths as $schema_path ) {
+			if ( ! is_file( $schema_path ) ) {
+				continue;
+			}
+
+			if ( ! is_readable( $schema_path ) ) {
+				return new WP_Error(
+					'unreadable_rest_schema',
+					'Generated REST schema is not readable.',
+					array(
+						'path'   => $schema_path,
+						'status' => 500,
+					)
+				);
+			}
+
+			$schema_json = file_get_contents( $schema_path );
+			if ( false === $schema_json ) {
+				return new WP_Error(
+					'rest_schema_read_failed',
+					'Generated REST schema could not be read.',
+					array(
+						'path'   => $schema_path,
+						'status' => 500,
+					)
+				);
+			}
+
+			$decoded = json_decode( $schema_json, true );
+			if ( ! is_array( $decoded ) ) {
+				return new WP_Error(
+					'malformed_rest_schema',
+					'Generated REST schema contains malformed JSON.',
+					array(
+						'json_error' => json_last_error_msg(),
+						'path'       => $schema_path,
+						'status'     => 500,
+					)
+				);
+			}
+
+			return $decoded;
+		}
+
+		return new WP_Error(
+			'missing_rest_schema',
+			'Generated REST schema could not be found.',
+			array(
+				'paths'  => $schema_paths,
+				'schema' => $schema_name,
+				'status' => 500,
+			)
+		);
+	}
+}
+
+if ( ! function_exists( '{{phpPrefix}}_prepare_rest_schema_for_wordpress' ) ) {
+	function {{phpPrefix}}_prepare_rest_schema_for_wordpress( $schema ) {
+		if ( ! is_array( $schema ) ) {
+			return $schema;
+		}
+
+		unset( $schema['$schema'], $schema['title'] );
+
+		foreach ( array( 'properties', 'patternProperties', 'definitions', '$defs' ) as $schema_map_key ) {
+			if ( ! isset( $schema[ $schema_map_key ] ) || ! is_array( $schema[ $schema_map_key ] ) ) {
+				continue;
+			}
+
+			foreach ( $schema[ $schema_map_key ] as $key => $property_schema ) {
+				$schema[ $schema_map_key ][ $key ] = {{phpPrefix}}_prepare_rest_schema_for_wordpress( $property_schema );
+			}
+		}
+
+		foreach ( array( 'items', 'additionalProperties', 'contains', 'propertyNames', 'not', 'if', 'then', 'else' ) as $nested_schema_key ) {
+			if ( isset( $schema[ $nested_schema_key ] ) && is_array( $schema[ $nested_schema_key ] ) ) {
+				$schema[ $nested_schema_key ] = {{phpPrefix}}_prepare_rest_schema_for_wordpress( $schema[ $nested_schema_key ] );
+			}
+		}
+
+		foreach ( array( 'allOf', 'anyOf', 'oneOf' ) as $schema_list_key ) {
+			if ( ! isset( $schema[ $schema_list_key ] ) || ! is_array( $schema[ $schema_list_key ] ) ) {
+				continue;
+			}
+
+			foreach ( $schema[ $schema_list_key ] as $index => $variant_schema ) {
+				$schema[ $schema_list_key ][ $index ] = {{phpPrefix}}_prepare_rest_schema_for_wordpress( $variant_schema );
+			}
+		}
+
+		return $schema;
+	}
+}
+
+if ( ! function_exists( '{{phpPrefix}}_get_wordpress_rest_schema' ) ) {
+	function {{phpPrefix}}_get_wordpress_rest_schema( $schema_name, $options = array() ) {
+		$schema = {{phpPrefix}}_load_rest_schema( $schema_name, $options );
+		if ( is_wp_error( $schema ) ) {
+			return $schema;
+		}
+
+		return {{phpPrefix}}_prepare_rest_schema_for_wordpress( $schema );
+	}
+}
+
+if ( ! function_exists( '{{phpPrefix}}_validate_and_sanitize_rest_payload' ) ) {
+	function {{phpPrefix}}_validate_and_sanitize_rest_payload( $value, $schema_name, $param_name, $options = array() ) {
+		$rest_schema = {{phpPrefix}}_get_wordpress_rest_schema( $schema_name, $options );
+		if ( is_wp_error( $rest_schema ) ) {
+			return $rest_schema;
+		}
+
+		$validation = rest_validate_value_from_schema( $value, $rest_schema, $param_name );
+		if ( is_wp_error( $validation ) ) {
+			return $validation;
+		}
+
+		return rest_sanitize_value_from_schema( $value, $rest_schema, $param_name );
+	}
+}

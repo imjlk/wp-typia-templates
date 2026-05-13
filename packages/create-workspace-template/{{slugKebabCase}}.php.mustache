@@ -17,6 +17,15 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+function {{phpPrefix}}_load_rest_schema_helpers() {
+	$helper_path = __DIR__ . '/inc/rest-schema.php';
+	if ( is_readable( $helper_path ) ) {
+		require_once $helper_path;
+	}
+}
+
+{{phpPrefix}}_load_rest_schema_helpers();
+
 foreach ( glob( __DIR__ . '/src/blocks/*/server.php' ) ?: array() as $server_module ) {
 	require_once $server_module;
 }
