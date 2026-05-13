@@ -36,6 +36,7 @@ const createConfigSchema = z
 		"package-manager": z.string().optional(),
 		"persistence-policy": z.string().optional(),
 		"php-prefix": z.string().optional(),
+		profile: z.string().optional(),
 		"query-post-type": z.string().optional(),
 		template: z.string().optional(),
 		"text-domain": z.string().optional(),

@@ -8,12 +8,13 @@ Use this package for new projects:
 - `bunx wp-typia create my-block`
 - `curl -fsSL https://github.com/imjlk/wp-typia/releases/latest/download/install-wp-typia.sh | sh`
 - `npx wp-typia create my-plugin --template workspace`
+- `npx wp-typia create my-plugin --template workspace --profile plugin-qa`
 - `npx wp-typia create my-books --template query-loop --query-post-type book`
 
 Extend an existing workspace with:
 
 - `wp-typia add block counter-card --template basic`
-- `wp-typia add integration-env local-smoke --wp-env --service docker-compose`
+- `wp-typia add integration-env local-smoke --wp-env --release-zip --service docker-compose`
 - `wp-typia add style callout-emphasis --block counter-card`
 - `wp-typia add transform quote-to-counter --from core/quote --to counter-card`
 - `wp-typia add binding-source hero-data`

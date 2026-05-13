@@ -45,6 +45,7 @@ export const longValueOptions = Object.freeze([
   '--php-prefix',
   '--position',
   '--post-type',
+  '--profile',
   '--query-post-type',
   '--query-type',
   '--response-type',

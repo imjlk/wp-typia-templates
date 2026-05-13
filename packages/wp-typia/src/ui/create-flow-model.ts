@@ -21,6 +21,7 @@ export const createFlowSchema = z.object({
   'package-manager': z.string().optional(),
   'persistence-policy': z.string().optional(),
   'php-prefix': z.string().optional(),
+  profile: z.string().optional(),
   'project-dir': z.string().min(1),
   'query-post-type': z.string().optional(),
   template: z.string().optional(),
@@ -38,6 +39,7 @@ export type CreateFieldName =
   | 'project-dir'
   | 'template'
   | 'package-manager'
+  | 'profile'
   | 'namespace'
   | 'text-domain'
   | 'php-prefix'
@@ -65,6 +67,7 @@ export const CREATE_CHECKBOX_FIELD_NAMES = [
 export const CREATE_FIELD_ORDER = [
   'project-dir',
   'template',
+  'profile',
   'package-manager',
   'namespace',
   'text-domain',
@@ -85,6 +88,7 @@ const CREATE_FIELD_HEIGHTS: Record<CreateFieldName, number> = {
   'package-manager': FIRST_PARTY_SELECT_FIELD_BODY_HEIGHT,
   'persistence-policy': FIRST_PARTY_SELECT_FIELD_BODY_HEIGHT,
   'php-prefix': FIRST_PARTY_TEXT_FIELD_BODY_HEIGHT,
+  profile: FIRST_PARTY_TEXT_FIELD_BODY_HEIGHT,
   'project-dir': FIRST_PARTY_TEXT_FIELD_BODY_HEIGHT,
   'query-post-type': FIRST_PARTY_TEXT_FIELD_BODY_HEIGHT,
   'alternate-render-targets': FIRST_PARTY_TEXT_FIELD_BODY_HEIGHT,
@@ -161,6 +165,7 @@ export function sanitizeCreateSubmitValues(
 ): CreateFlowValues {
   const normalizedValues: CreateFlowValues = {
     ...values,
+    profile: normalizeOptionalSubmitString(values.profile),
     'external-layer-id': supportsCreateExternalLayers(values.template)
       ? normalizeOptionalSubmitString(values['external-layer-id'])
       : undefined,

@@ -133,6 +133,12 @@ function CreateFlowFields({
 				name: "template" satisfies CreateSelectFieldName,
 				options: templateOptions,
 			}),
+			createElement(FirstPartyTextField, {
+				...getWrappedFieldNeighbors(visibleFields, "profile"),
+				key: "profile",
+				label: "Profile",
+				name: "profile",
+			}),
 			createElement(FirstPartySelectField, {
 				...getWrappedFieldNeighbors(visibleFields, "package-manager"),
 				key: "package-manager",

@@ -58,6 +58,11 @@ export const CREATE_OPTION_METADATA = {
     description: 'Custom PHP symbol prefix.',
     type: 'string',
   },
+  profile: {
+    description:
+      'Opt-in scaffold profile; use plugin-qa with --template workspace for wp-env, smoke, and release zip starters.',
+    type: 'string',
+  },
   'query-post-type': {
     description: 'Default post type assigned to Query Loop variation scaffolds.',
     type: 'string',

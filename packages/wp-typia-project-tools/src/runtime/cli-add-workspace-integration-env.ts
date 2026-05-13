@@ -32,6 +32,7 @@ interface IntegrationEnvPackageJson {
  * @property service Canonical local service starter id selected for the scaffold.
  * @property warnings Optional non-fatal preservation notices for existing files
  * or scripts.
+ * @property withReleaseZip Whether release zip packaging scripts were added.
  * @property withWpEnv Whether the generated scaffold included the wp-env preset.
  */
 export interface RunAddIntegrationEnvCommandResult {
@@ -39,6 +40,7 @@ export interface RunAddIntegrationEnvCommandResult {
 	projectDir: string;
 	service: IntegrationEnvServiceId;
 	warnings?: string[];
+	withReleaseZip: boolean;
 	withWpEnv: boolean;
 }
 
@@ -181,6 +183,11 @@ const baseUrl = new URL(
 );
 const serviceUrl = getEnv("WP_TYPIA_SERVICE_URL", "").trim();
 
+// Extend this starter with project-specific generated REST clients or schema
+// checks as the workspace grows. For example, read JSON schemas under
+// src/rest/<resource>/api-schemas or import TS clients through a tsx-powered
+// smoke runner when you need authenticated route coverage.
+
 await assertJsonEndpoint(
 	"WordPress REST index",
 	resolveEndpointUrl(baseUrl, "wp-json/"),
@@ -221,10 +228,12 @@ function buildEnvExampleSource(service: IntegrationEnvServiceId): string {
 function buildIntegrationEnvReadmeSource({
 	integrationEnvSlug,
 	service,
+	withReleaseZip,
 	withWpEnv,
 }: {
 	integrationEnvSlug: string;
 	service: IntegrationEnvServiceId;
+	withReleaseZip: boolean;
 	withWpEnv: boolean;
 }): string {
 	const title = toTitleCase(integrationEnvSlug);
@@ -245,6 +254,11 @@ function buildIntegrationEnvReadmeSource({
 					"Set `WP_TYPIA_SERVICE_URL` only when your integration smoke needs a local service dependency.",
 			  ]),
 		`Run \`npm run smoke:${integrationEnvSlug}\` to execute the starter smoke check.`,
+		...(withReleaseZip
+			? [
+					"Run `npm run release:zip` after smoke checks pass to build a distributable plugin zip.",
+			  ]
+			: []),
 	];
 
 	return `# ${title} Integration Environment
@@ -267,6 +281,7 @@ ${setupSteps.map((step, index) => `${index + 1}. ${step}`).join("\n")}
   emulator containers.
 - Keep the smoke script focused on high-signal integration checks so CI and
   local debugging stay fast.
+${withReleaseZip ? "- Treat `release:zip:check` as a CI guard before packaging release artifacts.\n" : ""}
 `;
 }
 
@@ -365,6 +380,7 @@ function addIntegrationEnvPackageJsonEntries({
 	integrationEnvSlug,
 	packageManager,
 	packageJson,
+	withReleaseZip,
 	service,
 	warnings,
 	withWpEnv,
@@ -373,6 +389,7 @@ function addIntegrationEnvPackageJsonEntries({
 	packageManager: PackageManagerId;
 	packageJson: IntegrationEnvPackageJson;
 	service: IntegrationEnvServiceId;
+	withReleaseZip: boolean;
 	warnings: string[];
 	withWpEnv: boolean;
 }) {
@@ -421,6 +438,27 @@ function addIntegrationEnvPackageJsonEntries({
 		});
 	}
 
+	if (withReleaseZip) {
+		addScriptIfMissing({
+			scriptName: "release:zip",
+			scriptValue: `${formatRunScript(packageManager, "sync-rest:package")} && ${formatRunScript(packageManager, "build")} && wp-scripts plugin-zip`,
+			scripts,
+			warnings,
+		});
+		addScriptIfMissing({
+			scriptName: "release:zip:check",
+			scriptValue: `${formatRunScript(packageManager, "sync-rest:package:check")} && ${formatRunScript(packageManager, "build")}`,
+			scripts,
+			warnings,
+		});
+		addScriptIfMissing({
+			scriptName: "qa:check",
+			scriptValue: `${formatRunScript(packageManager, "wp-typia:doctor:workspace")} && ${formatRunScript(packageManager, "release:zip:check")}`,
+			scripts,
+			warnings,
+		});
+	}
+
 	if (service === "docker-compose") {
 		addScriptIfMissing({
 			scriptName: "service:start",
@@ -447,13 +485,14 @@ export async function runAddIntegrationEnvCommand({
 	cwd = process.cwd(),
 	integrationEnvName,
 	service,
+	withReleaseZip = false,
 	withWpEnv = false,
 }: RunAddIntegrationEnvCommandOptions): Promise<RunAddIntegrationEnvCommandResult> {
 	const workspace = resolveWorkspaceProject(cwd);
 	const integrationEnvSlug = assertValidGeneratedSlug(
 		"Integration environment name",
 		normalizeBlockSlug(integrationEnvName),
-		"wp-typia add integration-env <name> [--wp-env]",
+		"wp-typia add integration-env <name> [--wp-env] [--release-zip]",
 	);
 	const serviceId = assertValidIntegrationEnvService(service);
 	const warnings: string[] = [];
@@ -501,6 +540,7 @@ export async function runAddIntegrationEnvCommand({
 				buildIntegrationEnvReadmeSource({
 					integrationEnvSlug,
 					service: serviceId,
+					withReleaseZip,
 					withWpEnv,
 				}),
 			);
@@ -530,6 +570,7 @@ export async function runAddIntegrationEnvCommand({
 					packageManager: workspace.packageManager,
 					packageJson,
 					service: serviceId,
+					withReleaseZip,
 					warnings,
 					withWpEnv,
 				}),
@@ -542,6 +583,7 @@ export async function runAddIntegrationEnvCommand({
 		projectDir: workspace.projectDir,
 		service: serviceId,
 		warnings: warnings.length > 0 ? warnings : undefined,
+		withReleaseZip,
 		withWpEnv,
 	};
 }

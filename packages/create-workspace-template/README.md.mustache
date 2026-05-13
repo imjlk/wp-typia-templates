@@ -7,6 +7,16 @@
 This scaffold is the official empty `wp-typia` workspace shell. It starts with
 an empty `src/blocks/*` inventory and grows through `wp-typia add`.
 
+Use the minimal workspace when you want the smallest editable shell and plan to
+add QA infrastructure later. Scaffold with `--profile plugin-qa` when the plugin
+should start with local WordPress smoke checks, `.wp-env.json`, `.env.example`,
+`scripts/integration-smoke/local-smoke.mjs`, and release zip scripts. Existing
+minimal workspaces can adopt the same surface later:
+
+```bash
+bun run wp-typia:add integration-env local-smoke --wp-env --release-zip
+```
+
 ## First Block
 
 ```bash

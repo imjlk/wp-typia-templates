@@ -53,6 +53,7 @@ describe("create flow layout model", () => {
 		expect(persistenceFields).toEqual([
 			"project-dir",
 			"template",
+			"profile",
 			"package-manager",
 			"namespace",
 			"text-domain",
@@ -117,6 +118,7 @@ describe("create flow layout model", () => {
 				"package-manager": "npm",
 				"persistence-policy": "authenticated",
 				"php-prefix": "DEMO",
+				profile: " plugin-qa ",
 				"project-dir": "demo-project",
 				"query-post-type": " book ",
 				template: "basic",
@@ -133,6 +135,7 @@ describe("create flow layout model", () => {
 			"external-layer-id": "acme/demo",
 			"external-layer-source": "./layers/demo",
 			"persistence-policy": undefined,
+			profile: "plugin-qa",
 			"query-post-type": undefined,
 			template: "basic",
 			"with-wp-env": true,
