@@ -177,12 +177,19 @@ export function createDoctorRunSummary(
 }
 
 /**
- * Run doctor checks, render each line, and fail when any check does not pass.
+ * Run doctor checks, render each line, and fail when one or more failed checks
+ * contribute to the exit code under the active exit policy.
+ *
+ * The default `strict` policy treats every failed row as exit-contributing.
+ * The `workspace-only` policy only fails on workspace-scoped rows so
+ * environment/runtime failures remain advisory for CI gates that only care
+ * about generated workspace artifacts.
  *
  * @param cwd Working directory to validate.
- * @param options Optional renderer override for each emitted check row.
+ * @param options Optional renderer overrides and exit-policy selection.
+ * @param options.exitPolicy Policy deciding which failed checks contribute to the process exit code.
  * @returns The completed list of doctor checks.
- * @throws {Error} When one or more checks fail.
+ * @throws {Error} When one or more failed checks contribute to the exit code under the active policy.
  */
 export async function runDoctor(
 	cwd: string,

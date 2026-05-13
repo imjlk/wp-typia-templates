@@ -1,5 +1,6 @@
 import { defineCommand } from "@bunli/core";
 import { CLI_DIAGNOSTIC_CODES } from "@wp-typia/project-tools/cli-diagnostics";
+import type { DoctorExitPolicy } from "@wp-typia/project-tools/cli-doctor";
 import {
 	emitCliDiagnosticFailure,
 	prefersStructuredCliOutput,
@@ -15,8 +16,9 @@ export const doctorCommand = defineCommand({
 	description: "Run repository and project diagnostics.",
 	handler: async (args) => {
 		const prefersStructuredOutput = prefersStructuredCliOutput(args);
-		const doctorArgs = args as typeof args & { "workspace-only"?: boolean };
-		const doctorExitPolicy = doctorArgs["workspace-only"] ? "workspace-only" : "strict";
+		const doctorExitPolicy: DoctorExitPolicy = args.flags["workspace-only"]
+			? "workspace-only"
+			: "strict";
 		if (prefersStructuredOutput) {
 			const {
 				createDoctorRunSummary,

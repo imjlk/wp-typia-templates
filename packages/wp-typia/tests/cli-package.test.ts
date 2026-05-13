@@ -867,6 +867,7 @@ process.exit(0);
     expect(doctorCommandSource).toContain(
       'buildCommandOptions(DOCTOR_OPTION_METADATA)',
     );
+    expect(doctorCommandSource).toContain('args.flags["workspace-only"]');
     expect(migrateCommandSource).toContain(
       'buildCommandOptions(MIGRATE_OPTION_METADATA)',
     );

@@ -2,11 +2,10 @@ import {
   CLI_DIAGNOSTIC_CODES,
   createCliCommandError,
 } from '@wp-typia/project-tools/cli-diagnostics';
+import type { DoctorExitPolicy } from '@wp-typia/project-tools/cli-doctor';
 import { executeDoctorCommand } from '../runtime-bridge';
 import type { PrintLine } from '../print-line';
 import type { NodeFallbackDispatchContext } from './types';
-
-type DoctorExitPolicy = 'strict' | 'workspace-only';
 
 async function renderNodeFallbackDoctorJson(
   cwd: string,

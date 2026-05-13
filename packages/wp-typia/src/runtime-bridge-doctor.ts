@@ -1,9 +1,10 @@
+import type { DoctorExitPolicy } from '@wp-typia/project-tools/cli-doctor';
 import { wrapCliCommandError } from './runtime-bridge-shared';
 
 const loadCliDoctorRuntime = () => import('@wp-typia/project-tools/cli-doctor');
 
 type ExecuteDoctorCommandOptions = {
-  exitPolicy?: 'strict' | 'workspace-only';
+  exitPolicy?: DoctorExitPolicy;
 };
 
 export async function executeDoctorCommand(
