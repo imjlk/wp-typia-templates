@@ -77,7 +77,9 @@ export const DATA_STORAGE_MODES = ["post-meta", "custom-table"] as const;
 export type DataStorageMode = (typeof DATA_STORAGE_MODES)[number];
 export const PERSISTENCE_POLICIES = ["authenticated", "public"] as const;
 export type PersistencePolicy = (typeof PERSISTENCE_POLICIES)[number];
+/** Supported create profile ids for opt-in workspace scaffold presets. */
 export const CREATE_PROFILE_IDS = ["plugin-qa"] as const;
+/** Union of supported `wp-typia create --profile` id strings. */
 export type CreateProfileId = (typeof CREATE_PROFILE_IDS)[number];
 
 /**
@@ -282,10 +284,19 @@ export function isPersistencePolicy(value: string): value is PersistencePolicy {
 	return (PERSISTENCE_POLICIES as readonly string[]).includes(value);
 }
 
+/**
+ * Return whether a raw string is a supported create profile id.
+ */
 export function isCreateProfileId(value: string): value is CreateProfileId {
 	return (CREATE_PROFILE_IDS as readonly string[]).includes(value);
 }
 
+/**
+ * Resolve an optional create profile flag into a validated profile id.
+ *
+ * Empty input disables profile application; unknown ids throw with the allowed
+ * profile list for CLI diagnostics.
+ */
 export function resolveCreateProfileId(
 	profile?: string,
 ): CreateProfileId | undefined {
