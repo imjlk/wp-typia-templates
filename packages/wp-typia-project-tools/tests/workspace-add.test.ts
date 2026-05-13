@@ -3777,6 +3777,23 @@ test("canonical CLI can add a type-only manual REST contract to an official work
     path.join(targetDir, "src", "rest", "external-token", "api-types.ts"),
     "utf8"
   );
+  const nonPreservedOpenApiSource = fs.readFileSync(
+    path.join(targetDir, "src", "rest", "external-token", "api.openapi.json"),
+    "utf8"
+  );
+  const nonPreservedRequestSchema = JSON.parse(
+    fs.readFileSync(
+      path.join(
+        targetDir,
+        "src",
+        "rest",
+        "external-token",
+        "api-schemas",
+        "request.schema.json"
+      ),
+      "utf8"
+    )
+  ) as { properties: Record<string, Record<string, unknown>> };
 
   expect(updatedBlockConfigSource).toContain("secretPreserveOnEmpty: false");
   expect(nonPreservedTypesSource).toContain(
@@ -3786,6 +3803,18 @@ test("canonical CLI can add a type-only manual REST contract to an official work
     "apiToken?: string & tags.MinLength< 1 >"
   );
   expect(nonPreservedTypesSource).not.toContain("tags.PreserveOnEmpty< true >");
+  expect(nonPreservedOpenApiSource).toContain('"writeOnly": true');
+  expect(nonPreservedOpenApiSource).not.toContain(
+    '"x-wp-typia-preserveOnEmpty": true'
+  );
+  expect(nonPreservedRequestSchema.properties.apiToken).toMatchObject({
+    writeOnly: true,
+    "x-wp-typia-secret": true,
+    "x-wp-typia-secretStateField": "hasApiToken",
+  });
+  expect(
+    nonPreservedRequestSchema.properties.apiToken?.["x-wp-typia-preserveOnEmpty"]
+  ).not.toBe(true);
   expect(openApiSource).toContain('"writeOnly": true');
   expect(openApiSource).toContain('"x-wp-typia-preserveOnEmpty": true');
   expect(openApiSource).toContain('"x-wp-typia-secret": true');
@@ -3963,6 +3992,63 @@ test("canonical CLI can add a typed admin settings screen from a manual REST con
   expect(screenSource).toContain("TextareaControl");
   expect(screenSource).toContain("Save settings");
   expect(screenSource).toContain("A secret is currently configured");
+
+  runCli(
+    "node",
+    [
+      entryPath,
+      "add",
+      "rest-resource",
+      "credential-reset",
+      "--manual",
+      "--namespace",
+      "demo-space/v1",
+      "--method",
+      "POST",
+      "--path",
+      "/credential-reset",
+      "--secret-field",
+      "apiToken",
+      "--secret-preserve-on-empty",
+      "false",
+    ],
+    { cwd: targetDir }
+  );
+  fs.writeFileSync(
+    path.join(targetDir, "src", "rest", "credential-reset", "api.ts"),
+    "export * from './api-client';\n",
+    "utf8"
+  );
+  runCli(
+    "node",
+    [
+      entryPath,
+      "add",
+      "admin-view",
+      "credential-reset",
+      "--source",
+      "rest-resource:credential-reset",
+    ],
+    { cwd: targetDir }
+  );
+
+  const nonPreservedSettingsConfigSource = fs.readFileSync(
+    path.join(targetDir, "src", "admin-views", "credential-reset", "config.ts"),
+    "utf8"
+  );
+  const nonPreservedSettingsDataSource = fs.readFileSync(
+    path.join(targetDir, "src", "admin-views", "credential-reset", "data.ts"),
+    "utf8"
+  );
+
+  expect(nonPreservedSettingsConfigSource).toContain(
+    "secretPreserveOnEmpty: false"
+  );
+  expect(nonPreservedSettingsConfigSource).toContain("preserveOnEmpty: false");
+  expect(nonPreservedSettingsDataSource).toContain('"apiToken": \'\',');
+  expect(nonPreservedSettingsDataSource).not.toContain(
+    "delete requestBody[\"apiToken\"]"
+  );
 
   const doctorOutput = runCli("node", [entryPath, "doctor", "--format", "json"], {
     cwd: targetDir,

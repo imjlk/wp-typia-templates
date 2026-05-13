@@ -136,10 +136,14 @@ export function buildRestSettingsAdminViewDataSource(
   const loadName = `load${pascalName}Settings`;
   const saveName = `save${pascalName}Settings`;
   const secretPreserveOnEmpty = restResource.secretPreserveOnEmpty !== false;
-  const initialFields = [
+  const initialFieldLines = [
     '\tpayload: \'\',',
     '\tcomment: \'\',',
-  ].join('\n');
+    ...(restResource.secretFieldName && !secretPreserveOnEmpty
+      ? [`\t${quoteTsString(restResource.secretFieldName)}: '',`]
+      : []),
+  ];
+  const initialFields = initialFieldLines.join('\n');
   const requestBodySource = restResource.secretFieldName && secretPreserveOnEmpty
     ? `\tconst requestBody = { ...form } as Record<string, unknown>;
 \tif (requestBody[${quoteTsString(restResource.secretFieldName)}] === '') {
