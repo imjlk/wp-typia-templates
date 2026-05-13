@@ -20,12 +20,48 @@ test("cli-doctor keeps environment and workspace checks in dedicated modules", (
 		resolve(sourceRoot, "cli-doctor-workspace-blocks.ts"),
 		"utf8",
 	);
+	const workspaceBlockAddonsSource = readFileSync(
+		resolve(sourceRoot, "cli-doctor-workspace-block-addons.ts"),
+		"utf8",
+	);
+	const workspaceBlockIframeSource = readFileSync(
+		resolve(sourceRoot, "cli-doctor-workspace-block-iframe.ts"),
+		"utf8",
+	);
+	const workspaceBlockMetadataSource = readFileSync(
+		resolve(sourceRoot, "cli-doctor-workspace-block-metadata.ts"),
+		"utf8",
+	);
 	const workspaceBindingsSource = readFileSync(
 		resolve(sourceRoot, "cli-doctor-workspace-bindings.ts"),
 		"utf8",
 	);
 	const workspaceFeaturesSource = readFileSync(
 		resolve(sourceRoot, "cli-doctor-workspace-features.ts"),
+		"utf8",
+	);
+	const workspaceFeatureAbilitiesSource = readFileSync(
+		resolve(sourceRoot, "cli-doctor-workspace-features-abilities.ts"),
+		"utf8",
+	);
+	const workspaceFeatureAdminViewsSource = readFileSync(
+		resolve(sourceRoot, "cli-doctor-workspace-features-admin-views.ts"),
+		"utf8",
+	);
+	const workspaceFeatureAiSource = readFileSync(
+		resolve(sourceRoot, "cli-doctor-workspace-features-ai.ts"),
+		"utf8",
+	);
+	const workspaceFeatureEditorPluginsSource = readFileSync(
+		resolve(sourceRoot, "cli-doctor-workspace-features-editor-plugins.ts"),
+		"utf8",
+	);
+	const workspaceFeaturePostMetaSource = readFileSync(
+		resolve(sourceRoot, "cli-doctor-workspace-features-post-meta.ts"),
+		"utf8",
+	);
+	const workspaceFeatureRestSource = readFileSync(
+		resolve(sourceRoot, "cli-doctor-workspace-features-rest.ts"),
 		"utf8",
 	);
 	const workspacePackageSource = readFileSync(
@@ -71,8 +107,50 @@ test("cli-doctor keeps environment and workspace checks in dedicated modules", (
 		"getWorkspaceFeatureDoctorChecks(workspace, inventory)",
 	);
 	expect(workspaceBlocksSource).toContain("export function getWorkspaceBlockDoctorChecks(");
+	expect(workspaceBlocksSource).toContain("getWorkspaceBlockCoreDoctorChecks(");
+	expect(workspaceBlocksSource).toContain("getWorkspaceBlockIframeCompatibilityChecks(");
+	expect(workspaceBlocksSource).toContain("getWorkspaceBlockAddonDoctorChecks(");
+	expect(workspaceBlocksSource).not.toContain("function checkWorkspaceBlockMetadata(");
+	expect(workspaceBlocksSource).not.toContain("function checkWorkspaceBlockIframeCompatibility(");
+	expect(workspaceBlocksSource).not.toContain("function checkVariationEntrypoint(");
+	expect(workspaceBlockMetadataSource).toContain(
+		"export function getWorkspaceBlockCoreDoctorChecks(",
+	);
+	expect(workspaceBlockIframeSource).toContain(
+		"export function getWorkspaceBlockIframeCompatibilityChecks(",
+	);
+	expect(workspaceBlockAddonsSource).toContain(
+		"export function getWorkspaceBlockAddonDoctorChecks(",
+	);
 	expect(workspaceBindingsSource).toContain("export function getWorkspaceBindingDoctorChecks(");
 	expect(workspaceFeaturesSource).toContain("export function getWorkspaceFeatureDoctorChecks(");
+	expect(workspaceFeaturesSource).toContain("getWorkspaceRestResourceDoctorChecks(");
+	expect(workspaceFeaturesSource).toContain("getWorkspacePostMetaDoctorChecks(");
+	expect(workspaceFeaturesSource).toContain("getWorkspaceAbilityDoctorChecks(");
+	expect(workspaceFeaturesSource).toContain("getWorkspaceAiFeatureDoctorChecks(");
+	expect(workspaceFeaturesSource).toContain("getWorkspaceEditorPluginDoctorChecks(");
+	expect(workspaceFeaturesSource).toContain("getWorkspaceAdminViewDoctorChecks(");
+	expect(workspaceFeaturesSource).not.toContain("function checkWorkspaceRestResourceConfig(");
+	expect(workspaceFeaturesSource).not.toContain("function checkWorkspaceAbilityBootstrap(");
+	expect(workspaceFeaturesSource).not.toContain("function checkWorkspaceAdminViewConfig(");
+	expect(workspaceFeatureRestSource).toContain(
+		"export function getWorkspaceRestResourceDoctorChecks(",
+	);
+	expect(workspaceFeaturePostMetaSource).toContain(
+		"export function getWorkspacePostMetaDoctorChecks(",
+	);
+	expect(workspaceFeatureAbilitiesSource).toContain(
+		"export function getWorkspaceAbilityDoctorChecks(",
+	);
+	expect(workspaceFeatureAiSource).toContain(
+		"export function getWorkspaceAiFeatureDoctorChecks(",
+	);
+	expect(workspaceFeatureEditorPluginsSource).toContain(
+		"export function getWorkspaceEditorPluginDoctorChecks(",
+	);
+	expect(workspaceFeatureAdminViewsSource).toContain(
+		"export function getWorkspaceAdminViewDoctorChecks(",
+	);
 	expect(workspacePackageSource).toContain(
 		"export async function prepareWorkspacePackageDoctorSnapshot(",
 	);
