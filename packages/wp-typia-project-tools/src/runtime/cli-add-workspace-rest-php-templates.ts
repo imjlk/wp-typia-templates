@@ -309,13 +309,23 @@ if ( ! function_exists( '${saveItemsFunctionName}' ) ) {
 if ( ! function_exists( '${loadSchemaFunctionName}' ) ) {
 \tfunction ${loadSchemaFunctionName}( $schema_name ) {
 \t\t$project_root = dirname( __DIR__, 2 );
-\t\t$schema_path  = $project_root . '/src/rest/${restResourceSlug}/api-schemas/' . $schema_name . '.schema.json';
-\t\tif ( ! file_exists( $schema_path ) ) {
-\t\t\treturn null;
+\t\t$schema_paths = array(
+\t\t\t$project_root . '/inc/rest-schemas/rest/${restResourceSlug}/' . $schema_name . '.schema.json',
+\t\t\t$project_root . '/src/rest/${restResourceSlug}/api-schemas/' . $schema_name . '.schema.json',
+\t\t);
+
+\t\tforeach ( $schema_paths as $schema_path ) {
+\t\t\tif ( ! file_exists( $schema_path ) ) {
+\t\t\t\tcontinue;
+\t\t\t}
+
+\t\t\t$decoded = json_decode( file_get_contents( $schema_path ), true );
+\t\t\tif ( is_array( $decoded ) ) {
+\t\t\t\treturn $decoded;
+\t\t\t}
 \t\t}
 
-\t\t$decoded = json_decode( file_get_contents( $schema_path ), true );
-\t\treturn is_array( $decoded ) ? $decoded : null;
+\t\treturn null;
 \t}
 }
 

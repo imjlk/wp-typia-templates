@@ -4358,6 +4358,7 @@ test("canonical CLI can add a plugin-level REST resource to an official workspac
   expect(phpSource).toContain("register_rest_route");
   expect(phpSource).toContain("'demo-space/v1'");
   expect(phpSource).toContain("current_user_can( 'edit_posts' )");
+  expect(phpSource).toContain("inc/rest-schemas/rest/snapshots");
   expect(
     fs.existsSync(path.join(targetDir, "src", "rest", "snapshots", "api-client.ts"))
   ).toBe(true);
@@ -4376,6 +4377,54 @@ test("canonical CLI can add a plugin-level REST resource to an official workspac
       )
     )
   ).toBe(true);
+
+  runCli("npm", ["run", "sync-rest:package"], { cwd: targetDir });
+
+  const packagedListQuerySchemaPath = path.join(
+    targetDir,
+    "inc",
+    "rest-schemas",
+    "rest",
+    "snapshots",
+    "list-query.schema.json"
+  );
+  const packageManifestPath = path.join(
+    targetDir,
+    "inc",
+    "rest-schemas",
+    "manifest.json"
+  );
+  expect(fs.existsSync(packagedListQuerySchemaPath)).toBe(true);
+  expect(fs.existsSync(packageManifestPath)).toBe(true);
+
+  const packageManifest = JSON.parse(
+    fs.readFileSync(packageManifestPath, "utf8")
+  ) as {
+    outputDir: string;
+    schemas: Array<{ id: string; path: string; source: string }>;
+  };
+  expect(packageManifest.outputDir).toBe("inc/rest-schemas");
+  expect(packageManifest.schemas).toContainEqual(
+    expect.objectContaining({
+      id: "rest:snapshots:list-query",
+      path: "inc/rest-schemas/rest/snapshots/list-query.schema.json",
+      source: "src/rest/snapshots/api-schemas/list-query.schema.json",
+    })
+  );
+
+  runCli("npm", ["run", "sync-rest:package:check"], { cwd: targetDir });
+  fs.writeFileSync(packagedListQuerySchemaPath, "{}\n", "utf8");
+  const stalePackageError = getCommandErrorMessage(() =>
+    runCli("npm", ["run", "sync-rest:package:check"], { cwd: targetDir })
+  );
+  expect(stalePackageError).toContain(
+    "Runtime REST schema package is missing or stale"
+  );
+  expect(stalePackageError).toContain(
+    "inc/rest-schemas/rest/snapshots/list-query.schema.json (stale)"
+  );
+  runCli("npm", ["run", "sync-rest:package"], { cwd: targetDir });
+  runCli("npm", ["run", "sync-rest:package:check"], { cwd: targetDir });
 
   const doctorOutput = runCli("node", [entryPath, "doctor", "--format", "json"], {
     cwd: targetDir,

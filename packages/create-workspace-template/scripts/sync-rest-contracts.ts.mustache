@@ -1,4 +1,5 @@
 /* eslint-disable no-console */
+import { promises as fsp } from 'node:fs';
 import path from 'node:path';
 
 import {
@@ -8,6 +9,7 @@ import {
 	syncTypeSchemas,
 } from '@wp-typia/block-runtime/metadata-core';
 
+import * as workspaceConfig from './block-config';
 import {
 	BLOCKS,
 	CONTRACTS,
@@ -19,9 +21,25 @@ import {
 	type WorkspaceRestResourceConfig,
 } from './block-config';
 
+type WorkspaceRestSchemaPackageConfig = {
+	manifestFile?: string;
+	outputDir: string;
+};
+
+const DEFAULT_REST_SCHEMA_PACKAGE: WorkspaceRestSchemaPackageConfig = {
+	manifestFile: 'inc/rest-schemas/manifest.json',
+	outputDir: 'inc/rest-schemas',
+};
+const workspaceConfigWithPackage = workspaceConfig as {
+	REST_SCHEMA_PACKAGE?: WorkspaceRestSchemaPackageConfig;
+};
+const REST_SCHEMA_PACKAGE =
+	workspaceConfigWithPackage.REST_SCHEMA_PACKAGE ?? DEFAULT_REST_SCHEMA_PACKAGE;
+
 function parseCliOptions( argv: string[] ) {
 	const options = {
 		check: false,
+		packageSchemas: false,
 	};
 
 	for ( const argument of argv ) {
@@ -30,10 +48,79 @@ function parseCliOptions( argv: string[] ) {
 			continue;
 		}
 
+		if ( argument === '--package' ) {
+			options.packageSchemas = true;
+			continue;
+		}
+
 		throw new Error( `Unknown sync-rest flag: ${ argument }` );
 	}
 
 	return options;
+}
+
+type RuntimeRestSchemaPackageEntry = {
+	id: string;
+	kind: 'block' | 'rest-resource';
+	owner: string;
+	path: string;
+	schema: string;
+	source: string;
+};
+
+type RuntimeRestSchemaPackageManifest = {
+	generatedBy: 'wp-typia sync-rest --package';
+	outputDir: string;
+	schemaVersion: 1;
+	schemas: RuntimeRestSchemaPackageEntry[];
+};
+
+function getNodeErrorCode( error: unknown ) {
+	return typeof error === 'object' &&
+		error !== null &&
+		'code' in error &&
+		typeof ( error as { code?: unknown } ).code === 'string'
+		? ( error as { code: string } ).code
+		: undefined;
+}
+
+function normalizeProjectPath( filePath: string, label: string ) {
+	if ( path.isAbsolute( filePath ) ) {
+		throw new Error( `${ label } must be project-relative: ${ filePath }` );
+	}
+
+	const normalized = path.normalize( filePath );
+	if ( normalized === '..' || normalized.startsWith( `..${ path.sep }` ) ) {
+		throw new Error( `${ label } cannot point outside the project: ${ filePath }` );
+	}
+
+	return normalized.split( path.sep ).join( '/' );
+}
+
+function resolveRestSchemaPackageConfig() {
+	const outputDir = normalizeProjectPath(
+		REST_SCHEMA_PACKAGE.outputDir,
+		'REST_SCHEMA_PACKAGE.outputDir'
+	);
+	const manifestFile = normalizeProjectPath(
+		REST_SCHEMA_PACKAGE.manifestFile ?? path.join( outputDir, 'manifest.json' ),
+		'REST_SCHEMA_PACKAGE.manifestFile'
+	);
+
+	if (
+		outputDir !== '.' &&
+		manifestFile !== outputDir &&
+		! manifestFile.startsWith( `${ outputDir }/` )
+	) {
+		throw new Error(
+			`REST_SCHEMA_PACKAGE.manifestFile must stay inside REST_SCHEMA_PACKAGE.outputDir (${ outputDir }): ${ manifestFile }`
+		);
+	}
+
+	return {
+		manifestFile,
+		outputDir,
+	};
 }
 
 function isRestEnabledBlock(
@@ -96,6 +183,299 @@ function isWorkspacePostMetaContract(
 		typeof postMeta.sourceTypeName === 'string' &&
 		typeof postMeta.typesFile === 'string'
 	);
+}
+
+function getBlockRestSchemaEntries(
+	block: WorkspaceBlockConfig & {
+		restManifest: NonNullable< WorkspaceBlockConfig[ 'restManifest' ] >;
+	},
+	outputDir: string
+): RuntimeRestSchemaPackageEntry[] {
+	return Object.keys( block.restManifest.contracts ).map( ( baseName ) => ( {
+		id: `block:${ block.slug }:${ baseName }`,
+		kind: 'block',
+		owner: block.slug,
+		path: normalizeProjectPath(
+			path.join(
+				outputDir,
+				'blocks',
+				block.slug,
+				`${ baseName }.schema.json`
+			),
+			'REST schema package path'
+		),
+		schema: baseName,
+		source: normalizeProjectPath(
+			path.join(
+				'src',
+				'blocks',
+				block.slug,
+				'api-schemas',
+				`${ baseName }.schema.json`
+			),
+			'REST schema source path'
+		),
+	} ) );
+}
+
+function getRestResourceSchemaEntries(
+	resource: WorkspaceRestResourceConfig & {
+		restManifest: NonNullable< WorkspaceRestResourceConfig[ 'restManifest' ] >;
+		typesFile: string;
+	},
+	outputDir: string
+): RuntimeRestSchemaPackageEntry[] {
+	return Object.keys( resource.restManifest.contracts ).map( ( baseName ) => ( {
+		id: `rest:${ resource.slug }:${ baseName }`,
+		kind: 'rest-resource',
+		owner: resource.slug,
+		path: normalizeProjectPath(
+			path.join(
+				outputDir,
+				'rest',
+				resource.slug,
+				`${ baseName }.schema.json`
+			),
+			'REST schema package path'
+		),
+		schema: baseName,
+		source: normalizeProjectPath(
+			path.join(
+				path.dirname( resource.typesFile ),
+				'api-schemas',
+				`${ baseName }.schema.json`
+			),
+			'REST schema source path'
+		),
+	} ) );
+}
+
+function buildRuntimeRestSchemaPackageManifest(
+	restBlocks: Array<
+		WorkspaceBlockConfig & {
+			restManifest: NonNullable< WorkspaceBlockConfig[ 'restManifest' ] >;
+		}
+	>,
+	restResources: Array<
+		WorkspaceRestResourceConfig & {
+			restManifest: NonNullable< WorkspaceRestResourceConfig[ 'restManifest' ] >;
+			typesFile: string;
+		}
+	>
+): RuntimeRestSchemaPackageManifest {
+	const { outputDir } = resolveRestSchemaPackageConfig();
+	const schemas = [
+		...restBlocks.flatMap( ( block ) =>
+			getBlockRestSchemaEntries( block, outputDir )
+		),
+		...restResources.flatMap( ( resource ) =>
+			getRestResourceSchemaEntries( resource, outputDir )
+		),
+	].sort(
+		( left, right ) =>
+			left.path.localeCompare( right.path ) || left.id.localeCompare( right.id )
+	);
+	const seenPaths = new Set< string >();
+	const seenIds = new Set< string >();
+
+	for ( const schema of schemas ) {
+		if ( seenIds.has( schema.id ) ) {
+			throw new Error( `Duplicate runtime REST schema package id: ${ schema.id }` );
+		}
+
+		if ( seenPaths.has( schema.path ) ) {
+			throw new Error(
+				`Duplicate runtime REST schema package path: ${ schema.path }`
+			);
+		}
+
+		seenIds.add( schema.id );
+		seenPaths.add( schema.path );
+	}
+
+	return {
+		generatedBy: 'wp-typia sync-rest --package',
+		outputDir,
+		schemaVersion: 1,
+		schemas,
+	};
+}
+
+async function readUtf8IfExists( filePath: string ) {
+	try {
+		return await fsp.readFile( filePath, 'utf8' );
+	} catch ( error ) {
+		if ( getNodeErrorCode( error ) === 'ENOENT' ) {
+			return undefined;
+		}
+
+		throw error;
+	}
+}
+
+async function writeUtf8IfChanged( filePath: string, content: string ) {
+	const existing = await readUtf8IfExists( filePath );
+	if ( existing === content ) {
+		return;
+	}
+
+	await fsp.mkdir( path.dirname( filePath ), { recursive: true } );
+	await fsp.writeFile( filePath, content, 'utf8' );
+}
+
+async function unlinkIfExists( filePath: string ) {
+	try {
+		await fsp.unlink( filePath );
+	} catch ( error ) {
+		if ( getNodeErrorCode( error ) === 'ENOENT' ) {
+			return;
+		}
+
+		throw error;
+	}
+}
+
+async function collectPackagedSchemaFiles( outputDir: string ) {
+	const schemaFiles: string[] = [];
+
+	async function walk( relativeDir: string ) {
+		const currentDir =
+			relativeDir.length > 0 ? path.join( outputDir, relativeDir ) : outputDir;
+		let directoryEntries: import( 'node:fs' ).Dirent[];
+
+		try {
+			directoryEntries = await fsp.readdir( currentDir, {
+				withFileTypes: true,
+			} );
+		} catch ( error ) {
+			if ( getNodeErrorCode( error ) === 'ENOENT' ) {
+				return;
+			}
+
+			throw error;
+		}
+
+		for ( const directoryEntry of directoryEntries ) {
+			const relativePath = path.join( relativeDir, directoryEntry.name );
+
+			if ( directoryEntry.isDirectory() ) {
+				await walk( relativePath );
+				continue;
+			}
+
+			if (
+				directoryEntry.isFile() &&
+				directoryEntry.name.endsWith( '.schema.json' )
+			) {
+				schemaFiles.push(
+					normalizeProjectPath(
+						path.join( outputDir, relativePath ),
+						'REST schema package file'
+					)
+				);
+			}
+		}
+	}
+
+	await walk( '' );
+	return schemaFiles.sort();
+}
+
+async function syncRuntimeRestSchemaPackage(
+	restBlocks: Array<
+		WorkspaceBlockConfig & {
+			restManifest: NonNullable< WorkspaceBlockConfig[ 'restManifest' ] >;
+		}
+	>,
+	restResources: Array<
+		WorkspaceRestResourceConfig & {
+			restManifest: NonNullable< WorkspaceRestResourceConfig[ 'restManifest' ] >;
+			typesFile: string;
+		}
+	>,
+	options: { check: boolean }
+) {
+	const { manifestFile, outputDir } = resolveRestSchemaPackageConfig();
+	const manifest = buildRuntimeRestSchemaPackageManifest(
+		restBlocks,
+		restResources
+	);
+	const manifestContent = `${ JSON.stringify( manifest, null, 2 ) }\n`;
+	const expectedPackagePaths = new Set(
+		manifest.schemas.map( ( schema ) => schema.path )
+	);
+	const packageFailures: string[] = [];
+
+	for ( const schema of manifest.schemas ) {
+		const sourceContent = await readUtf8IfExists( schema.source );
+
+		if ( sourceContent === undefined ) {
+			if ( ! options.check ) {
+				throw new Error(
+					`Runtime REST schema source is missing: ${ schema.source }\nRun \`sync-rest\` before \`sync-rest --package\` to generate source schemas.`
+				);
+			}
+
+			packageFailures.push( `${ schema.source } (source missing)` );
+			continue;
+		}
+
+		if ( options.check ) {
+			const packagedContent = await readUtf8IfExists( schema.path );
+
+			if ( packagedContent === undefined ) {
+				packageFailures.push( `${ schema.path } (missing)` );
+				continue;
+			}
+
+			if ( packagedContent !== sourceContent ) {
+				packageFailures.push( `${ schema.path } (stale)` );
+			}
+
+			continue;
+		}
+
+		await writeUtf8IfChanged( schema.path, sourceContent );
+	}
+
+	const existingPackagedSchemas = await collectPackagedSchemaFiles( outputDir );
+	for ( const schemaPath of existingPackagedSchemas ) {
+		if ( expectedPackagePaths.has( schemaPath ) ) {
+			continue;
+		}
+
+		if ( options.check ) {
+			packageFailures.push( `${ schemaPath } (unexpected)` );
+			continue;
+		}
+
+		await unlinkIfExists( schemaPath );
+	}
+
+	if ( options.check ) {
+		const existingManifestContent = await readUtf8IfExists( manifestFile );
+
+		if ( existingManifestContent === undefined ) {
+			packageFailures.push( `${ manifestFile } (missing)` );
+		} else if ( existingManifestContent !== manifestContent ) {
+			packageFailures.push( `${ manifestFile } (stale)` );
+		}
+
+		if ( packageFailures.length > 0 ) {
+			throw new Error(
+				`Runtime REST schema package is missing or stale:\n${ packageFailures
+					.map( ( failure ) => `- ${ failure }` )
+					.join(
+						'\n'
+					) }\nRun \`sync-rest --package\` to refresh packaged REST schemas before building a release zip.`
+			);
+		}
+
+		return manifest.schemas.length;
+	}
+
+	await writeUtf8IfChanged( manifestFile, manifestContent );
+	return manifest.schemas.length;
 }
 
 async function assertTypeArtifactsCurrent( block: WorkspaceBlockConfig ) {
@@ -278,6 +658,22 @@ async function main() {
 			{
 				check: options.check,
 			}
+		);
+	}
+
+	if ( options.packageSchemas ) {
+		const packagedSchemaCount = await syncRuntimeRestSchemaPackage(
+			restBlocks,
+			restResources,
+			{
+				check: options.check,
+			}
+		);
+
+		console.log(
+			options.check
+				? `✅ Runtime REST schema package is already up to date (${ packagedSchemaCount } schemas).`
+				: `✅ Runtime REST schema package generated (${ packagedSchemaCount } schemas).`
 		);
 	}
 

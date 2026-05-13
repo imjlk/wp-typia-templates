@@ -114,6 +114,11 @@ export interface WorkspaceAdminViewConfig {
 	source?: string;
 }
 
+export interface WorkspaceRestSchemaPackageConfig {
+	manifestFile?: string;
+	outputDir: string;
+}
+
 export const BLOCKS: WorkspaceBlockConfig[] = [
 	// wp-typia add block entries
 ];
@@ -157,3 +162,8 @@ export const EDITOR_PLUGINS: WorkspaceEditorPluginConfig[] = [
 export const ADMIN_VIEWS: WorkspaceAdminViewConfig[] = [
 	// wp-typia add admin-view entries
 ];
+
+export const REST_SCHEMA_PACKAGE: WorkspaceRestSchemaPackageConfig = {
+	manifestFile: 'inc/rest-schemas/manifest.json',
+	outputDir: 'inc/rest-schemas',
+};
