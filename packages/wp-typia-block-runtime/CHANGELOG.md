@@ -1,5 +1,13 @@
 # @wp-typia/block-runtime
 
+## 0.6.1 — 2026-05-13
+
+### Patch changes
+
+- [6d0ec1e1](https://github.com/imjlk/wp-typia/commit/6d0ec1e19f85b8629540341325391ef12e5ff9f9) Add first-class preserve-on-empty metadata for manual settings secrets, including
+  Typia tags, OpenAPI schema extensions, CLI aliases, generated admin settings
+  form behavior, and documentation. — Thanks @imjlk!
+
 ## 0.6.0 — 2026-05-12
 
 ### Minor changes

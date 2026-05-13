@@ -1,5 +1,30 @@
 # @wp-typia/project-tools
 
+## 0.23.1 — 2026-05-13
+
+### Patch changes
+
+- [57306069](https://github.com/imjlk/wp-typia/commit/5730606918c4f79483e2cad5034d7077a75464da) Route interactive prompt rendering and validation feedback through injectable line printers so tests and callers can capture output without monkeypatching global console methods. — Thanks @imjlk!
+- [2767962d](https://github.com/imjlk/wp-typia/commit/2767962d2831f3d124a71b0d65fb994d15cfca05) Split workspace block and feature doctor checks into focused category modules while preserving doctor output order. — Thanks @imjlk!
+- [8374ec1a](https://github.com/imjlk/wp-typia/commit/8374ec1adc458943c5433ec79de4d24147234cfa) Split workspace inventory parser descriptors, entry parsing, and validation helpers into focused runtime modules. — Thanks @imjlk!
+- [e0d8082f](https://github.com/imjlk/wp-typia/commit/e0d8082f86566b1a8e2c25a145ec666e1a44862e) Add path-aware safe JSON parse/read helpers for project-tools runtime JSON file readers. — Thanks @imjlk!
+- [c12a3597](https://github.com/imjlk/wp-typia/commit/c12a3597f6458f6545a180fde49aac28e5e3e559) Add shared workspace PHP helpers for loading, WordPress-sanitizing, and validating generated REST schemas from packaged or source schema files. — Thanks @imjlk!
+- [171982fa](https://github.com/imjlk/wp-typia/commit/171982fa5828e07d830917e7f5388a6ed8cd23e6) Add local `wp-typia` CLI scripts to official workspace scaffolds and document package-manager-specific `doctor`, `sync`, and `add` commands for generated and existing workspaces. — Thanks @imjlk!
+- [fa781368](https://github.com/imjlk/wp-typia/commit/fa78136887cebe293e1ef6c2e33f313856794ef4) Add `wp-typia doctor --workspace-only` with JSON exit-policy summaries so CI can treat environment/runtime failures as advisory while preserving strict doctor behavior by default. — Thanks @imjlk!
+- [9883a187](https://github.com/imjlk/wp-typia/commit/9883a187c19f2b7b5cca7101dcf0e2c996e4e3ce) Support provider-style manual REST route contracts with route-pattern aliases,
+  declared controller/permission owner metadata, and path parameter starter query
+  types. — Thanks @imjlk!
+- [7addacae](https://github.com/imjlk/wp-typia/commit/7addacae6f2789caaa2f1ecb164ff96cb8291fe2) Document why process-exit temp-root cleanup intentionally ignores removal failures. — Thanks @imjlk!
+- [8937cfd4](https://github.com/imjlk/wp-typia/commit/8937cfd489f5f904c0271d484e45d4351ef1f59a) Split workspace REST resource scaffolding into focused generated-mode, manual-mode, PHP template, and shared type modules while preserving existing add rest-resource behavior. — Thanks @imjlk!
+- [c8734da3](https://github.com/imjlk/wp-typia/commit/c8734da33cfd6b2694c7d80d1892681cca38736a) Package generated REST JSON schemas into `inc/rest-schemas` for workspace release zips and add release-check scripts that fail when packaged runtime schemas are missing or stale. — Thanks @imjlk!
+- [f54b7db5](https://github.com/imjlk/wp-typia/commit/f54b7db54560ff6f4eba1b1ad9235efa1c178dcb) Document the diagnostic fallback classifier as a compatibility shim for message-based runtime validation errors. — Thanks @imjlk!
+- [6d0ec1e1](https://github.com/imjlk/wp-typia/commit/6d0ec1e19f85b8629540341325391ef12e5ff9f9) Add first-class preserve-on-empty metadata for manual settings secrets, including
+  Typia tags, OpenAPI schema extensions, CLI aliases, generated admin settings
+  form behavior, and documentation. — Thanks @imjlk!
+- [621a0257](https://github.com/imjlk/wp-typia/commit/621a0257801085f7d93e57bd46bba14ac44694e0) Split admin-view template emitters into focused default, REST, core-data, settings, and shared modules while keeping the existing public template import path compatible. — Thanks @imjlk!
+- [e946efaf](https://github.com/imjlk/wp-typia/commit/e946efaff8af434a18b7663d51c6b8ccc00db1da) Add a `plugin-qa` workspace create profile plus `add integration-env --release-zip` scripts for wp-env smoke checks and plugin zip packaging. — Thanks @imjlk!
+- Updated dependencies: block-runtime (npm)@0.6.1
+
 ## 0.23.0 — 2026-05-12
 
 ### Minor changes

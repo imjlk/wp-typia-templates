@@ -1,5 +1,28 @@
 # wp-typia
 
+## 0.23.1 — 2026-05-13
+
+### Patch changes
+
+- [57306069](https://github.com/imjlk/wp-typia/commit/5730606918c4f79483e2cad5034d7077a75464da) Route interactive prompt rendering and validation feedback through injectable line printers so tests and callers can capture output without monkeypatching global console methods. — Thanks @imjlk!
+- [0f94f80e](https://github.com/imjlk/wp-typia/commit/0f94f80eee74ec0ae20c70827fabdfe0a2caf9ac) Use the shared dashed-or-camel string flag reader for rest-resource add-kind options. — Thanks @imjlk!
+- [22a4f4dd](https://github.com/imjlk/wp-typia/commit/22a4f4dd0ad45da0b978d430f7299dc97b96868d) Clarify manual REST secret-field prerequisites in add help and CLI reference docs. — Thanks @imjlk!
+- [e0d8082f](https://github.com/imjlk/wp-typia/commit/e0d8082f86566b1a8e2c25a145ec666e1a44862e) Add path-aware safe JSON parse/read helpers for project-tools runtime JSON file readers. — Thanks @imjlk!
+- [fa781368](https://github.com/imjlk/wp-typia/commit/fa78136887cebe293e1ef6c2e33f313856794ef4) Add `wp-typia doctor --workspace-only` with JSON exit-policy summaries so CI can treat environment/runtime failures as advisory while preserving strict doctor behavior by default. — Thanks @imjlk!
+- [56de24a6](https://github.com/imjlk/wp-typia/commit/56de24a68cb2f9d7006b092af69a227b9a84b082) Split rest-resource usage guidance into generated and manual mode lines for add-kind help and missing-name diagnostics. — Thanks @imjlk!
+- [9883a187](https://github.com/imjlk/wp-typia/commit/9883a187c19f2b7b5cca7101dcf0e2c996e4e3ce) Support provider-style manual REST route contracts with route-pattern aliases,
+  declared controller/permission owner metadata, and path parameter starter query
+  types. — Thanks @imjlk!
+- [8937cfd4](https://github.com/imjlk/wp-typia/commit/8937cfd489f5f904c0271d484e45d4351ef1f59a) Split workspace REST resource scaffolding into focused generated-mode, manual-mode, PHP template, and shared type modules while preserving existing add rest-resource behavior. — Thanks @imjlk!
+- [f54b7db5](https://github.com/imjlk/wp-typia/commit/f54b7db54560ff6f4eba1b1ad9235efa1c178dcb) Document the diagnostic fallback classifier as a compatibility shim for message-based runtime validation errors. — Thanks @imjlk!
+- [6d0ec1e1](https://github.com/imjlk/wp-typia/commit/6d0ec1e19f85b8629540341325391ef12e5ff9f9) Add first-class preserve-on-empty metadata for manual settings secrets, including
+  Typia tags, OpenAPI schema extensions, CLI aliases, generated admin settings
+  form behavior, and documentation. — Thanks @imjlk!
+- [16882dab](https://github.com/imjlk/wp-typia/commit/16882dabd032ba40cd9a9e81690f86fbe1beed8f) Split Node fallback version, templates, doctor, and entrypoint error handling into focused modules. — Thanks @imjlk!
+- [621a0257](https://github.com/imjlk/wp-typia/commit/621a0257801085f7d93e57bd46bba14ac44694e0) Split admin-view template emitters into focused default, REST, core-data, settings, and shared modules while keeping the existing public template import path compatible. — Thanks @imjlk!
+- [e946efaf](https://github.com/imjlk/wp-typia/commit/e946efaff8af434a18b7663d51c6b8ccc00db1da) Add a `plugin-qa` workspace create profile plus `add integration-env --release-zip` scripts for wp-env smoke checks and plugin zip packaging. — Thanks @imjlk!
+- Updated dependencies: project-tools (npm)@0.23.1
+
 ## 0.23.0 — 2026-05-12
 
 ### Minor changes

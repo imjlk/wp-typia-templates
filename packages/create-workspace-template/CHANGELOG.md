@@ -1,5 +1,17 @@
 # @wp-typia/create-workspace-template
 
+## 0.17.1 — 2026-05-13
+
+### Patch changes
+
+- [c12a3597](https://github.com/imjlk/wp-typia/commit/c12a3597f6458f6545a180fde49aac28e5e3e559) Add shared workspace PHP helpers for loading, WordPress-sanitizing, and validating generated REST schemas from packaged or source schema files. — Thanks @imjlk!
+- [171982fa](https://github.com/imjlk/wp-typia/commit/171982fa5828e07d830917e7f5388a6ed8cd23e6) Add local `wp-typia` CLI scripts to official workspace scaffolds and document package-manager-specific `doctor`, `sync`, and `add` commands for generated and existing workspaces. — Thanks @imjlk!
+- [c8734da3](https://github.com/imjlk/wp-typia/commit/c8734da33cfd6b2694c7d80d1892681cca38736a) Package generated REST JSON schemas into `inc/rest-schemas` for workspace release zips and add release-check scripts that fail when packaged runtime schemas are missing or stale. — Thanks @imjlk!
+- [6d0ec1e1](https://github.com/imjlk/wp-typia/commit/6d0ec1e19f85b8629540341325391ef12e5ff9f9) Add first-class preserve-on-empty metadata for manual settings secrets, including
+  Typia tags, OpenAPI schema extensions, CLI aliases, generated admin settings
+  form behavior, and documentation. — Thanks @imjlk!
+- [e946efaf](https://github.com/imjlk/wp-typia/commit/e946efaff8af434a18b7663d51c6b8ccc00db1da) Add a `plugin-qa` workspace create profile plus `add integration-env --release-zip` scripts for wp-env smoke checks and plugin zip packaging. — Thanks @imjlk!
+
 ## 0.17.0 — 2026-05-12
 
 ### Minor changes
