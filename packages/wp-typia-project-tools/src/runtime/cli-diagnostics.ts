@@ -519,15 +519,25 @@ export function getFailingDoctorChecks<TCheck extends DoctorCheckLike>(
 /**
  * Format the final doctor summary row.
  */
-export function formatDoctorSummaryLine(checks: readonly DoctorCheckLike[]): string {
+export function formatDoctorSummaryLine(
+	checks: readonly DoctorCheckLike[],
+	options: { exitFailureChecks?: readonly DoctorCheckLike[] } = {},
+): string {
 	const failedChecks = getFailingDoctorChecks(checks);
+	const exitFailureChecks = options.exitFailureChecks ?? failedChecks;
+	const advisoryFailureCount = failedChecks.length - exitFailureChecks.length;
 	const warningCount = checks.filter((check) => check.status === "warn").length;
 	const summaryStatus =
-		failedChecks.length > 0 ? "FAIL" : warningCount > 0 ? "WARN" : "PASS";
+		exitFailureChecks.length > 0
+			? "FAIL"
+			: advisoryFailureCount > 0 || warningCount > 0
+				? "WARN"
+				: "PASS";
 	return formatWrappedPrefixedLine(
 		`${summaryStatus} wp-typia doctor summary: `,
 		[
 			`${checks.length - failedChecks.length - warningCount}/${checks.length} checks passed`,
+			advisoryFailureCount > 0 ? `${advisoryFailureCount} advisory failure(s)` : null,
 			warningCount > 0 ? `${warningCount} warning(s)` : null,
 		]
 			.filter((detail): detail is string => detail !== null)

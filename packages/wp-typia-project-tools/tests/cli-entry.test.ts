@@ -1245,12 +1245,15 @@ test("node entry exposes fallback help and rejects the removed migrations alias"
   expect(helpOutput).toContain(
     "Inspect or sync schema-driven MCP metadata."
   );
-  expect(doctorHelpOutput).toContain("Usage: wp-typia doctor [--format json]");
+  expect(doctorHelpOutput).toContain(
+    "Usage: wp-typia doctor [--format json] [--workspace-only]"
+  );
   expect(doctorHelpOutput).toContain("Supported flags:");
   expect(doctorHelpOutput).toContain("--format");
+  expect(doctorHelpOutput).toContain("--workspace-only");
   expect(doctorHelpOutput).toContain("machine-readable doctor check output");
   expect(doctorHelpAliasOutput).toContain(
-    "Usage: wp-typia doctor [--format json]"
+    "Usage: wp-typia doctor [--format json] [--workspace-only]"
   );
   expect(errorMessage).toContain(
     "`wp-typia migrations` was removed in favor of `wp-typia migrate`."
@@ -1286,9 +1289,12 @@ test("bun entry exposes fallback help and rejects the removed migrations alias",
   expect(helpOutput).toContain(
     "Inspect or sync schema-driven MCP metadata."
   );
-  expect(doctorHelpOutput).toContain("Usage: wp-typia doctor [--format json]");
+  expect(doctorHelpOutput).toContain(
+    "Usage: wp-typia doctor [--format json] [--workspace-only]"
+  );
   expect(doctorHelpOutput).toContain("Supported flags:");
   expect(doctorHelpOutput).toContain("--format");
+  expect(doctorHelpOutput).toContain("--workspace-only");
   expect(doctorHelpOutput).toContain("machine-readable doctor check output");
   expect(errorMessage).toContain(
     "`wp-typia migrations` was removed in favor of `wp-typia migrate`."

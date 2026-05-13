@@ -867,6 +867,7 @@ process.exit(0);
     expect(doctorCommandSource).toContain(
       'buildCommandOptions(DOCTOR_OPTION_METADATA)',
     );
+    expect(doctorCommandSource).toContain('args.flags["workspace-only"]');
     expect(migrateCommandSource).toContain(
       'buildCommandOptions(MIGRATE_OPTION_METADATA)',
     );
@@ -1125,6 +1126,68 @@ process.exit(0);
       );
       expect(result.stderr).toContain('- Doctor scope:');
       expect(result.stderr).toContain('- Workspace package metadata:');
+    } finally {
+      fs.rmSync(fixtureRoot, { force: true, recursive: true });
+    }
+  });
+
+  test('keeps strict doctor JSON failures while offering workspace-only advisory exits', () => {
+    const fixtureRoot = fs.mkdtempSync(
+      path.join(os.tmpdir(), 'wp-typia-doctor-workspace-only-'),
+    );
+
+    type DoctorPayload = {
+      checks: Array<{
+        label: string;
+        scope?: 'environment' | 'workspace';
+        status: 'fail' | 'pass' | 'warn';
+      }>;
+      summary: {
+        advisoryFailureCount: number;
+        exitCode: 0 | 1;
+        exitFailureCount: number;
+        exitPolicy: 'strict' | 'workspace-only';
+      };
+    };
+
+    try {
+      const strictResult = runCapturedCommand(
+        process.execPath,
+        [entryPath, 'doctor', '--format', 'json'],
+        {
+          cwd: fixtureRoot,
+          env: withoutLocalBunEnv(),
+        },
+      );
+      const strictPayload = parseJsonObjectFromOutput<DoctorPayload>(
+        strictResult.stdout,
+      );
+
+      expect(strictResult.status).toBe(1);
+      expect(strictPayload.summary.exitPolicy).toBe('strict');
+      expect(strictPayload.summary.exitCode).toBe(1);
+      expect(strictPayload.summary.exitFailureCount).toBeGreaterThan(0);
+      expect(
+        strictPayload.checks.find((check) => check.label === 'Bun')?.scope,
+      ).toBe('environment');
+
+      const workspaceOnlyResult = runCapturedCommand(
+        process.execPath,
+        [entryPath, 'doctor', '--format', 'json', '--workspace-only'],
+        {
+          cwd: fixtureRoot,
+          env: withoutLocalBunEnv(),
+        },
+      );
+      const workspaceOnlyPayload = parseJsonObjectFromOutput<DoctorPayload>(
+        workspaceOnlyResult.stdout,
+      );
+
+      expect(workspaceOnlyResult.status).toBe(0);
+      expect(workspaceOnlyPayload.summary.exitPolicy).toBe('workspace-only');
+      expect(workspaceOnlyPayload.summary.exitCode).toBe(0);
+      expect(workspaceOnlyPayload.summary.exitFailureCount).toBe(0);
+      expect(workspaceOnlyPayload.summary.advisoryFailureCount).toBeGreaterThan(0);
     } finally {
       fs.rmSync(fixtureRoot, { force: true, recursive: true });
     }

@@ -93,9 +93,9 @@ const NODE_FALLBACK_COMMAND_HELP_CONFIG = {
   },
   doctor: {
     bodyLines: [
-      'Runs read-only environment readiness checks. Official wp-typia workspace roots also get inventory, source-tree drift, iframe/API v3 compatibility, and shared convention checks.',
+      'Runs read-only environment readiness checks. Official wp-typia workspace roots also get inventory, source-tree drift, iframe/API v3 compatibility, and shared convention checks. Use --workspace-only for CI gates that should fail only on workspace-scoped checks while keeping environment failures advisory.',
     ],
-    heading: 'Usage: wp-typia doctor [--format json]',
+    heading: 'Usage: wp-typia doctor [--format json] [--workspace-only]',
     optionMetadata: DOCTOR_OPTION_METADATA,
   },
   init: {
