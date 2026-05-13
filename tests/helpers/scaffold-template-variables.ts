@@ -42,6 +42,7 @@ export function createTestScaffoldTemplateVariables(
 		hasAlternatePlainTextRenderTarget: "false",
 		hasAlternateRenderTargets: "false",
 		projectToolsPackageVersion: "^0.8.0",
+		wpTypiaPackageVersion: "^0.8.0",
 		cssClassName: "wp-block-demo-demo-block",
 		dashCase: "demo-block",
 		dataStorageMode: "custom-table",

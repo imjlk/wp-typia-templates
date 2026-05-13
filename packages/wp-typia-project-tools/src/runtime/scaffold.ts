@@ -107,6 +107,7 @@ export interface FlatScaffoldTemplateVariables extends Record<string, string> {
 	hasAlternatePlainTextRenderTarget: "false" | "true";
 	hasAlternateRenderTargets: "false" | "true";
 	projectToolsPackageVersion: string;
+	wpTypiaPackageVersion: string;
 	requiresAtLeast: string;
 	requiresPhp: string;
 	cssClassName: string;
