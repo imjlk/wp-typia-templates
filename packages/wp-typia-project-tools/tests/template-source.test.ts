@@ -3,7 +3,7 @@ import { execFileSync } from "node:child_process";
 import * as fs from "node:fs";
 import * as http from "node:http";
 import * as path from "node:path";
-import { blockTypesPackageVersion, cleanupScaffoldTempRoot, createBlockExternalFixturePath, createBlockSubsetFixturePath, createScaffoldTempRoot, normalizedBlockRuntimePackageVersion, packageRoot, templateLayerFixturePath, workspaceTemplatePackageManifest } from "./helpers/scaffold-test-harness.js";
+import { blockTypesPackageVersion, cleanupScaffoldTempRoot, createBlockExternalFixturePath, createBlockSubsetFixturePath, createScaffoldTempRoot, normalizedBlockRuntimePackageVersion, packageRoot, templateLayerFixturePath, workspaceTemplatePackageManifest, wpTypiaPackageManifest } from "./helpers/scaffold-test-harness.js";
 import { getTemplateVariables, scaffoldProject } from "../src/runtime/index.js";
 import { resolveTemplateId } from "../src/runtime/scaffold.js";
 import {
@@ -1969,6 +1969,10 @@ test("official workspace template scaffolds through the local npm template resol
     path.join(targetDir, "scripts", "build-workspace.mjs"),
     "utf8"
   );
+  const readmeSource = fs.readFileSync(
+    path.join(targetDir, "README.md"),
+    "utf8"
+  );
   const blockConfigSource = fs.readFileSync(
     path.join(targetDir, "scripts", "block-config.ts"),
     "utf8"
@@ -1991,6 +1995,12 @@ test("official workspace template scaffolds through the local npm template resol
   expect(blockConfigSource).toContain("// wp-typia add contract entries");
   expect(blockConfigSource).toContain("// wp-typia add post-meta entries");
   expect(packageJson.scripts.sync).toBe("tsx scripts/sync-project.ts");
+  expect(packageJson.scripts["wp-typia:sync"]).toBe("wp-typia sync");
+  expect(packageJson.scripts["wp-typia:doctor"]).toBe("wp-typia doctor");
+  expect(packageJson.scripts["wp-typia:doctor:workspace"]).toBe(
+    "wp-typia doctor --workspace-only"
+  );
+  expect(packageJson.scripts["wp-typia:add"]).toBe("wp-typia add");
   expect(packageJson.scripts.build).toBe(
     "npm run sync -- --check && node scripts/build-workspace.mjs build"
   );
@@ -2001,6 +2011,14 @@ test("official workspace template scaffolds through the local npm template resol
   expect(packageJson.packageManager).toBeUndefined();
   expect(packageJson.scripts.typecheck).toBe(
     "npm run sync -- --check && tsc --noEmit"
+  );
+  expect(packageJson.devDependencies["wp-typia"]).toBe(
+    `^${wpTypiaPackageManifest.version}`
+  );
+  expect(readmeSource).toContain("npm run wp-typia:doctor");
+  expect(readmeSource).toContain("npm run wp-typia:sync -- --check");
+  expect(readmeSource).toContain(
+    "npm run wp-typia:add -- block counter-card --template basic"
   );
   expect(buildWorkspaceSource).toContain("--blocks-manifest");
   expect(buildWorkspaceSource).toContain("if ( blockSlugs.length === 0 )");

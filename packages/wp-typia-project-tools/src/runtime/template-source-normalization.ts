@@ -30,6 +30,7 @@ export function getTemplateVariableContext(variables: {
     blockTypesPackageVersion,
     projectToolsPackageVersion,
     restPackageVersion,
+    wpTypiaPackageVersion,
   } = getPackageVersions()
   return {
     ...variables,
@@ -41,6 +42,8 @@ export function getTemplateVariableContext(variables: {
       variables.blockTypesPackageVersion ?? blockTypesPackageVersion,
     projectToolsPackageVersion:
       variables.projectToolsPackageVersion ?? projectToolsPackageVersion,
+    wpTypiaPackageVersion:
+      variables.wpTypiaPackageVersion ?? wpTypiaPackageVersion,
     description: variables.description,
     keyword: variables.keyword,
     namespace: variables.namespace,

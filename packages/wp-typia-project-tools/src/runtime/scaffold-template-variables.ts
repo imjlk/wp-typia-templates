@@ -61,6 +61,7 @@ export function getTemplateVariables(
     blockTypesPackageVersion,
     projectToolsPackageVersion,
     restPackageVersion,
+    wpTypiaPackageVersion,
   } = getPackageVersions();
   const template = isBuiltInTemplateId(templateId) ? getTemplateById(templateId) : null;
   const metadataDefaults = isBuiltInTemplateId(templateId)
@@ -142,6 +143,7 @@ export function getTemplateVariables(
     hasAlternatePlainTextRenderTarget: 'false',
     hasAlternateRenderTargets: 'false',
     projectToolsPackageVersion,
+    wpTypiaPackageVersion,
     requiresAtLeast: compatibility.pluginHeader.requiresAtLeast,
     requiresPhp: compatibility.pluginHeader.requiresPhp,
     cssClassName,

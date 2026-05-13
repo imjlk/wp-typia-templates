@@ -150,24 +150,40 @@ Empty workspace flow:
 npx wp-typia create my-plugin --template workspace --package-manager bun --yes --no-install
 cd my-plugin
 bun install
-wp-typia add block counter-card --template basic
-wp-typia add block faq-stack --template compound --persistence-policy public --data-storage custom-table
-wp-typia add integration-env local-smoke --wp-env --service docker-compose
-wp-typia add style callout-emphasis --block counter-card
-wp-typia add transform quote-to-counter --from core/quote --to counter-card
-wp-typia add binding-source hero-data
-wp-typia add binding-source hero-data --block counter-card --attribute headline
-wp-typia add contract external-retrieve-response --type ExternalRetrieveResponse
-wp-typia add rest-resource snapshots --namespace my-plugin/v1 --methods list,read,create
-wp-typia add rest-resource snapshots --namespace my-plugin/v1 --methods read,update --route-pattern '/snapshots/(?P<id>[\d]+)' --permission-callback my_plugin_can_manage_snapshots
-wp-typia add rest-resource external-record --manual --namespace legacy/v1 --method GET --auth authenticated --path '/records/(?P<id>[\d]+)'
-wp-typia add rest-resource integration-settings --manual --namespace my-plugin/v1 --method POST --secret-field apiKey
-wp-typia add admin-view integration-settings --source rest-resource:integration-settings
-wp-typia add post-meta integration-state --post-type post --type IntegrationStateMeta
-wp-typia add editor-plugin review-workflow --slot sidebar
-wp-typia add editor-plugin seo-notes --slot document-setting-panel
-wp-typia add hooked-block counter-card --anchor core/post-content --position after
+bun run wp-typia:add block counter-card --template basic
+bun run wp-typia:add block faq-stack --template compound --persistence-policy public --data-storage custom-table
+bun run wp-typia:add integration-env local-smoke --wp-env --service docker-compose
+bun run wp-typia:add style callout-emphasis --block counter-card
+bun run wp-typia:add transform quote-to-counter --from core/quote --to counter-card
+bun run wp-typia:add binding-source hero-data
+bun run wp-typia:add binding-source hero-data --block counter-card --attribute headline
+bun run wp-typia:add contract external-retrieve-response --type ExternalRetrieveResponse
+bun run wp-typia:add rest-resource snapshots --namespace my-plugin/v1 --methods list,read,create
+bun run wp-typia:add rest-resource snapshots --namespace my-plugin/v1 --methods read,update --route-pattern '/snapshots/(?P<id>[\d]+)' --permission-callback my_plugin_can_manage_snapshots
+bun run wp-typia:add rest-resource external-record --manual --namespace legacy/v1 --method GET --auth authenticated --path '/records/(?P<id>[\d]+)'
+bun run wp-typia:add rest-resource integration-settings --manual --namespace my-plugin/v1 --method POST --secret-field apiKey
+bun run wp-typia:add admin-view integration-settings --source rest-resource:integration-settings
+bun run wp-typia:add post-meta integration-state --post-type post --type IntegrationStateMeta
+bun run wp-typia:add editor-plugin review-workflow --slot sidebar
+bun run wp-typia:add editor-plugin seo-notes --slot document-setting-panel
+bun run wp-typia:add hooked-block counter-card --anchor core/post-content --position after
 ```
+
+Official workspace templates install `wp-typia` as the local executable CLI and
+generate stable package scripts so support packages are not mistaken for the
+binary package:
+
+| Package manager | Doctor                     | Sync check                         | Add a block                                                   |
+| --------------- | -------------------------- | ---------------------------------- | ------------------------------------------------------------- |
+| npm             | `npm run wp-typia:doctor`  | `npm run wp-typia:sync -- --check` | `npm run wp-typia:add -- block counter-card --template basic` |
+| pnpm            | `pnpm run wp-typia:doctor` | `pnpm run wp-typia:sync --check`   | `pnpm run wp-typia:add block counter-card --template basic`   |
+| bun             | `bun run wp-typia:doctor`  | `bun run wp-typia:sync --check`    | `bun run wp-typia:add block counter-card --template basic`    |
+| yarn            | `yarn run wp-typia:doctor` | `yarn run wp-typia:sync --check`   | `yarn run wp-typia:add block counter-card --template basic`   |
+
+Existing workspaces can adopt the same policy without regenerating: add a
+`wp-typia` devDependency pinned to the CLI version you want CI to execute, then
+add `wp-typia:sync`, `wp-typia:doctor`, `wp-typia:doctor:workspace`, and
+`wp-typia:add` scripts to `package.json`.
 
 ## Start here
 

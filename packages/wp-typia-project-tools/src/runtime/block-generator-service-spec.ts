@@ -283,6 +283,7 @@ export function buildTemplateVariablesFromBlockSpec(spec: BlockSpec): ScaffoldTe
 		blockTypesPackageVersion,
 		projectToolsPackageVersion,
 		restPackageVersion,
+		wpTypiaPackageVersion,
 	} = getPackageVersions();
 	const slug = spec.block.slug;
 	const slugSnakeCase = toSnakeCase(slug);
@@ -364,6 +365,7 @@ export function buildTemplateVariablesFromBlockSpec(spec: BlockSpec): ScaffoldTe
 		requiresPhp: compatibility.pluginHeader.requiresPhp,
 		testedUpTo: compatibility.pluginHeader.testedUpTo,
 		projectToolsPackageVersion,
+		wpTypiaPackageVersion,
 		cssClassName,
 		dashCase: slug,
 		dataStorageMode,
