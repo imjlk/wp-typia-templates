@@ -4632,10 +4632,13 @@ test("canonical CLI can add a DataViews admin screen with a REST resource source
     path.join(targetDir, "src", "admin-views", "snapshots", "config.ts"),
     "utf8"
   );
-  const phpSource = fs.readFileSync(
-    path.join(targetDir, "inc", "admin-views", "snapshots.php"),
-    "utf8"
+  const adminViewPhpPath = path.join(
+    targetDir,
+    "inc",
+    "admin-views",
+    "snapshots.php"
   );
+  const phpSource = fs.readFileSync(adminViewPhpPath, "utf8");
 
   expect(packageJson.devDependencies?.["@wp-typia/dataviews"]).toBeTruthy();
   expect(packageJson.dependencies?.["@wordpress/dataviews"]).toBeTruthy();
@@ -4704,6 +4707,26 @@ test("canonical CLI can add a DataViews admin screen with a REST resource source
   expect(
     doctorChecks.checks.find((check) => check.label === "Admin view PHP snapshots")
       ?.status
+  ).toBe("pass");
+
+  fs.writeFileSync(
+    adminViewPhpPath,
+    phpSource.replace("'wp-components'", '"wp-components"')
+  );
+  const doubleQuotedDoctorOutput = runCli(
+    "node",
+    [entryPath, "doctor", "--format", "json"],
+    {
+      cwd: targetDir,
+    }
+  );
+  const doubleQuotedDoctorChecks = parseJsonObjectFromOutput<{
+    checks: Array<{ detail: string; label: string; status: string }>;
+  }>(doubleQuotedDoctorOutput);
+  expect(
+    doubleQuotedDoctorChecks.checks.find(
+      (check) => check.label === "Admin view PHP snapshots"
+    )?.status
   ).toBe("pass");
 
   linkWorkspaceNodeModules(targetDir);
