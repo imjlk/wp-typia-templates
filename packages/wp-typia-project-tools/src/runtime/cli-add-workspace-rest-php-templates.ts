@@ -315,11 +315,16 @@ if ( ! function_exists( '${loadSchemaFunctionName}' ) ) {
 \t\t);
 
 \t\tforeach ( $schema_paths as $schema_path ) {
-\t\t\tif ( ! file_exists( $schema_path ) ) {
+\t\t\tif ( ! is_file( $schema_path ) || ! is_readable( $schema_path ) ) {
 \t\t\t\tcontinue;
 \t\t\t}
 
-\t\t\t$decoded = json_decode( file_get_contents( $schema_path ), true );
+\t\t\t$schema_json = file_get_contents( $schema_path );
+\t\t\tif ( false === $schema_json ) {
+\t\t\t\tcontinue;
+\t\t\t}
+
+\t\t\t$decoded = json_decode( $schema_json, true );
 \t\t\tif ( is_array( $decoded ) ) {
 \t\t\t\treturn $decoded;
 \t\t\t}

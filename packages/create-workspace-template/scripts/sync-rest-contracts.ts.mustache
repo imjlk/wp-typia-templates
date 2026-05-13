@@ -107,11 +107,13 @@ function resolveRestSchemaPackageConfig() {
 		'REST_SCHEMA_PACKAGE.manifestFile'
 	);
 
-	if (
-		outputDir !== '.' &&
-		manifestFile !== outputDir &&
-		! manifestFile.startsWith( `${ outputDir }/` )
-	) {
+	if ( outputDir === '.' ) {
+		throw new Error(
+			'REST_SCHEMA_PACKAGE.outputDir must not be the project root; use a dedicated subdirectory such as "inc/rest-schemas".'
+		);
+	}
+
+	if ( manifestFile === outputDir || ! manifestFile.startsWith( `${ outputDir }/` ) ) {
 		throw new Error(
 			`REST_SCHEMA_PACKAGE.manifestFile must stay inside REST_SCHEMA_PACKAGE.outputDir (${ outputDir }): ${ manifestFile }`
 		);
@@ -121,6 +123,33 @@ function resolveRestSchemaPackageConfig() {
 		manifestFile,
 		outputDir,
 	};
+}
+
+function assertSafeSchemaBaseName( baseName: string, owner: string ) {
+	if (
+		! /^[A-Za-z0-9][A-Za-z0-9._-]*$/u.test( baseName ) ||
+		baseName === '.' ||
+		baseName === '..'
+	) {
+		throw new Error(
+			`${ owner }: REST schema contract key must be a file basename containing only letters, numbers, dots, underscores, or hyphens: ${ baseName }`
+		);
+	}
+}
+
+function getPackagePath( outputDir: string, owner: string, ...segments: string[] ) {
+	const packagePath = normalizeProjectPath(
+		path.join( outputDir, ...segments ),
+		'REST schema package path'
+	);
+
+	if ( ! packagePath.startsWith( `${ outputDir }/` ) ) {
+		throw new Error(
+			`${ owner }: REST schema package path must stay inside ${ outputDir }: ${ packagePath }`
+		);
+	}
+
+	return packagePath;
 }
 
 function isRestEnabledBlock(
@@ -191,31 +220,34 @@ function getBlockRestSchemaEntries(
 	},
 	outputDir: string
 ): RuntimeRestSchemaPackageEntry[] {
-	return Object.keys( block.restManifest.contracts ).map( ( baseName ) => ( {
-		id: `block:${ block.slug }:${ baseName }`,
-		kind: 'block',
-		owner: block.slug,
-		path: normalizeProjectPath(
-			path.join(
+	return Object.keys( block.restManifest.contracts ).map( ( baseName ) => {
+		const owner = `Block ${ block.slug }`;
+		assertSafeSchemaBaseName( baseName, owner );
+
+		return {
+			id: `block:${ block.slug }:${ baseName }`,
+			kind: 'block',
+			owner: block.slug,
+			path: getPackagePath(
 				outputDir,
+				owner,
 				'blocks',
 				block.slug,
 				`${ baseName }.schema.json`
 			),
-			'REST schema package path'
-		),
-		schema: baseName,
-		source: normalizeProjectPath(
-			path.join(
-				'src',
-				'blocks',
-				block.slug,
-				'api-schemas',
-				`${ baseName }.schema.json`
+			schema: baseName,
+			source: normalizeProjectPath(
+				path.join(
+					'src',
+					'blocks',
+					block.slug,
+					'api-schemas',
+					`${ baseName }.schema.json`
+				),
+				'REST schema source path'
 			),
-			'REST schema source path'
-		),
-	} ) );
+		};
+	} );
 }
 
 function getRestResourceSchemaEntries(
@@ -225,29 +257,32 @@ function getRestResourceSchemaEntries(
 	},
 	outputDir: string
 ): RuntimeRestSchemaPackageEntry[] {
-	return Object.keys( resource.restManifest.contracts ).map( ( baseName ) => ( {
-		id: `rest:${ resource.slug }:${ baseName }`,
-		kind: 'rest-resource',
-		owner: resource.slug,
-		path: normalizeProjectPath(
-			path.join(
+	return Object.keys( resource.restManifest.contracts ).map( ( baseName ) => {
+		const owner = `REST resource ${ resource.slug }`;
+		assertSafeSchemaBaseName( baseName, owner );
+
+		return {
+			id: `rest:${ resource.slug }:${ baseName }`,
+			kind: 'rest-resource',
+			owner: resource.slug,
+			path: getPackagePath(
 				outputDir,
+				owner,
 				'rest',
 				resource.slug,
 				`${ baseName }.schema.json`
 			),
-			'REST schema package path'
-		),
-		schema: baseName,
-		source: normalizeProjectPath(
-			path.join(
-				path.dirname( resource.typesFile ),
-				'api-schemas',
-				`${ baseName }.schema.json`
+			schema: baseName,
+			source: normalizeProjectPath(
+				path.join(
+					path.dirname( resource.typesFile ),
+					'api-schemas',
+					`${ baseName }.schema.json`
+				),
+				'REST schema source path'
 			),
-			'REST schema source path'
-		),
-	} ) );
+		};
+	} );
 }
 
 function buildRuntimeRestSchemaPackageManifest(
@@ -456,7 +491,9 @@ async function syncRuntimeRestSchemaPackage(
 		const existingManifestContent = await readUtf8IfExists( manifestFile );
 
 		if ( existingManifestContent === undefined ) {
-			packageFailures.push( `${ manifestFile } (missing)` );
+			if ( manifest.schemas.length > 0 ) {
+				packageFailures.push( `${ manifestFile } (missing)` );
+			}
 		} else if ( existingManifestContent !== manifestContent ) {
 			packageFailures.push( `${ manifestFile } (stale)` );
 		}
@@ -519,6 +556,22 @@ async function main() {
 		postMetaContracts.length === 0 &&
 		restResources.length === 0
 	) {
+		if ( options.packageSchemas ) {
+			const packagedSchemaCount = await syncRuntimeRestSchemaPackage(
+				restBlocks,
+				restResources,
+				{
+					check: options.check,
+				}
+			);
+
+			console.log(
+				options.check
+					? `✅ Runtime REST schema package is already up to date (${ packagedSchemaCount } schemas).`
+					: `✅ Runtime REST schema package generated (${ packagedSchemaCount } schemas).`
+			);
+		}
+
 		console.log(
 			options.check
 				? 'ℹ️ No REST-enabled workspace blocks, standalone contracts, post meta contracts, or plugin-level REST resources are registered yet. `sync-rest --check` is already clean.'

@@ -4359,6 +4359,7 @@ test("canonical CLI can add a plugin-level REST resource to an official workspac
   expect(phpSource).toContain("'demo-space/v1'");
   expect(phpSource).toContain("current_user_can( 'edit_posts' )");
   expect(phpSource).toContain("inc/rest-schemas/rest/snapshots");
+  expect(phpSource).toContain("$schema_json = file_get_contents( $schema_path );");
   expect(
     fs.existsSync(path.join(targetDir, "src", "rest", "snapshots", "api-client.ts"))
   ).toBe(true);
@@ -4449,6 +4450,55 @@ test("canonical CLI can add a plugin-level REST resource to an official workspac
 
   runCli("npm", ["run", "sync-rest", "--", "--check"], { cwd: targetDir });
   typecheckGeneratedProject(targetDir);
+}, 30_000);
+
+test("sync-rest package check flags stale packaged schemas after REST resources are removed", async () => {
+  const targetDir = path.join(tempRoot, "demo-workspace-empty-rest-schema-package");
+
+  await scaffoldProject({
+    projectDir: targetDir,
+    templateId: workspaceTemplatePackageManifest.name,
+    packageManager: "npm",
+    noInstall: true,
+    answers: {
+      author: "Test Runner",
+      description: "Demo workspace empty rest schema package",
+      namespace: "demo-space",
+      phpPrefix: "demo_space",
+      slug: "demo-workspace-empty-rest-schema-package",
+      textDomain: "demo-space",
+      title: "Demo Workspace Empty Rest Schema Package",
+    },
+  });
+
+  linkWorkspaceNodeModules(targetDir);
+
+  runCli("npm", ["run", "sync-rest:package:check"], { cwd: targetDir });
+
+  const staleSchemaPath = path.join(
+    targetDir,
+    "inc",
+    "rest-schemas",
+    "rest",
+    "snapshots",
+    "old.schema.json"
+  );
+  fs.mkdirSync(path.dirname(staleSchemaPath), { recursive: true });
+  fs.writeFileSync(staleSchemaPath, "{}\n", "utf8");
+
+  const stalePackageError = getCommandErrorMessage(() =>
+    runCli("npm", ["run", "sync-rest:package:check"], { cwd: targetDir })
+  );
+  expect(stalePackageError).toContain(
+    "Runtime REST schema package is missing or stale"
+  );
+  expect(stalePackageError).toContain(
+    "inc/rest-schemas/rest/snapshots/old.schema.json (unexpected)"
+  );
+
+  runCli("npm", ["run", "sync-rest:package"], { cwd: targetDir });
+  expect(fs.existsSync(staleSchemaPath)).toBe(false);
+  runCli("npm", ["run", "sync-rest:package:check"], { cwd: targetDir });
 }, 30_000);
 
 test("canonical CLI can add a generated REST resource with custom route and controller hooks", async () => {
