@@ -1994,7 +1994,15 @@ test("official workspace template scaffolds through the local npm template resol
   );
   expect(blockConfigSource).toContain("// wp-typia add contract entries");
   expect(blockConfigSource).toContain("// wp-typia add post-meta entries");
+  expect(blockConfigSource).toContain("REST_SCHEMA_PACKAGE");
+  expect(blockConfigSource).toContain("outputDir: 'inc/rest-schemas'");
   expect(packageJson.scripts.sync).toBe("tsx scripts/sync-project.ts");
+  expect(packageJson.scripts["sync-rest:package"]).toBe(
+    "tsx scripts/sync-rest-contracts.ts --package"
+  );
+  expect(packageJson.scripts["sync-rest:package:check"]).toBe(
+    "tsx scripts/sync-rest-contracts.ts --package --check"
+  );
   expect(packageJson.scripts["wp-typia:sync"]).toBe("wp-typia sync");
   expect(packageJson.scripts["wp-typia:doctor"]).toBe("wp-typia doctor");
   expect(packageJson.scripts["wp-typia:doctor:workspace"]).toBe(
@@ -2017,6 +2025,7 @@ test("official workspace template scaffolds through the local npm template resol
   );
   expect(readmeSource).toContain("npm run wp-typia:doctor");
   expect(readmeSource).toContain("npm run wp-typia:sync -- --check");
+  expect(readmeSource).toContain("npm run sync-rest:package:check");
   expect(readmeSource).toContain(
     "npm run wp-typia:add -- block counter-card --template basic"
   );

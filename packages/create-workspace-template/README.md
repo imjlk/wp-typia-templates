@@ -32,6 +32,8 @@ expose package scripts for the common CLI entrypoints:
 ```json
 {
   "scripts": {
+    "sync-rest:package": "tsx scripts/sync-rest-contracts.ts --package",
+    "sync-rest:package:check": "tsx scripts/sync-rest-contracts.ts --package --check",
     "wp-typia:sync": "wp-typia sync",
     "wp-typia:doctor": "wp-typia doctor",
     "wp-typia:doctor:workspace": "wp-typia doctor --workspace-only",
@@ -45,6 +47,11 @@ expose package scripts for the common CLI entrypoints:
 
 Use the script form from generated workspaces so the executable CLI package is
 clearly separated from support packages such as `@wp-typia/project-tools`.
+
+Workspaces that ship REST resources can run `sync-rest:package` before release
+builds to copy generated runtime schemas into `inc/rest-schemas`. Add
+`sync-rest:package:check` to release CI so stale or missing packaged schemas are
+caught before a zip is built without TypeScript source files.
 
 | Package manager | Doctor                     | Sync check                         | Add a block                                               |
 | --------------- | -------------------------- | ---------------------------------- | --------------------------------------------------------- |

@@ -42,11 +42,16 @@ binary package:
 bun run wp-typia:doctor
 bun run wp-typia:doctor:workspace
 bun run wp-typia:sync --check
+bun run sync-rest:package:check
 bun run wp-typia:add block counter-card --template basic
 ```
 
 Use `wp-typia:doctor:workspace` in CI when optional local runtimes are advisory
 but workspace checks must still fail the job.
+
+Run `sync-rest:package` before building release zips when REST resources are
+registered. It copies generated runtime schemas into `inc/rest-schemas` and
+`sync-rest:package:check` fails CI if packaged schemas are missing or stale.
 
 ## Development
 

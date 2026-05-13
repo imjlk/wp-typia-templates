@@ -185,6 +185,11 @@ Existing workspaces can adopt the same policy without regenerating: add a
 add `wp-typia:sync`, `wp-typia:doctor`, `wp-typia:doctor:workspace`, and
 `wp-typia:add` scripts to `package.json`.
 
+REST-heavy workspace releases should also run `sync-rest:package` before
+building a zip and `sync-rest:package:check` in release CI. Those scripts copy
+generated REST schemas into `inc/rest-schemas`, so runtime validation does not
+depend on shipping TypeScript source directories.
+
 ## Start here
 
 - Want the smallest possible starting point? Start with `basic`.
