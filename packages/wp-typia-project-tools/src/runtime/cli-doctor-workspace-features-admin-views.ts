@@ -173,7 +173,7 @@ function checkWorkspaceAdminViewPhp(
 	const hasScript = source.includes(WORKSPACE_ADMIN_VIEW_SCRIPT);
 	const hasAsset = source.includes(WORKSPACE_ADMIN_VIEW_ASSET);
 	const hasStyle = source.includes(WORKSPACE_ADMIN_VIEW_STYLE);
-	const hasComponentsStyleDependency = source.includes("'wp-components'");
+	const hasComponentsStyleDependency = /['"]wp-components['"]/u.test(source);
 
 	return createDoctorCheck(
 		`Admin view PHP ${adminView.slug}`,
