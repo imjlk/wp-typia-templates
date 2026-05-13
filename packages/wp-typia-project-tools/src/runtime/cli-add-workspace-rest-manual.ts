@@ -6,6 +6,9 @@ import {
 	assertValidManualRestContractAuth,
 	assertValidManualRestContractHttpMethod,
 	assertValidTypeScriptIdentifier,
+	collectRestRouteNamedCaptureNames,
+	resolveOptionalPhpCallbackReference,
+	resolveOptionalPhpClassReference,
 	resolveManualRestContractPathPattern,
 	rollbackWorkspaceMutation,
 	type WorkspaceMutationSnapshot,
@@ -34,6 +37,36 @@ const MANUAL_REST_RESPONSE_FIELD_NAMES = new Set([
 	"updatedAt",
 ]);
 
+function resolveManualRestRoutePathPattern(options: {
+	pathPattern: string | undefined;
+	restResourceSlug: string;
+	routePattern: string | undefined;
+}): string {
+	const trimmedPathPattern =
+		typeof options.pathPattern === "string"
+			? options.pathPattern.trim()
+			: undefined;
+	const trimmedRoutePattern =
+		typeof options.routePattern === "string"
+			? options.routePattern.trim()
+			: undefined;
+
+	if (
+		trimmedPathPattern &&
+		trimmedRoutePattern &&
+		trimmedPathPattern !== trimmedRoutePattern
+	) {
+		throw new Error(
+			"Manual REST contract --path and --route-pattern must match when both are provided. Use one route pattern flag for provider routes.",
+		);
+	}
+
+	return resolveManualRestContractPathPattern(
+		options.restResourceSlug,
+		options.pathPattern ?? options.routePattern,
+	);
+}
+
 /**
  * Scaffold a type-only external REST contract for workspace consumers.
  *
@@ -57,12 +90,6 @@ export async function scaffoldManualRestContract({
 	secretStateFieldName,
 	workspace,
 }: ManualRestContractScaffoldOptions): Promise<RunAddRestResourceCommandResult> {
-	if (controllerClass || controllerExtends || permissionCallback || routePattern) {
-		throw new Error(
-			"Manual REST contracts do not generate PHP route glue. Use generated rest-resource mode for --route-pattern, --permission-callback, --controller-class, or --controller-extends.",
-		);
-	}
-
 	const blockConfigPath = path.join(workspace.projectDir, "scripts", "block-config.ts");
 	const syncRestScriptPath = path.join(workspace.projectDir, "scripts", "sync-rest-contracts.ts");
 	const restResourceDir = path.join(workspace.projectDir, "src", "rest", restResourceSlug);
@@ -72,10 +99,30 @@ export async function scaffoldManualRestContract({
 	const pascalCase = toPascalCase(restResourceSlug);
 	const resolvedAuth = assertValidManualRestContractAuth(auth);
 	const resolvedMethod = assertValidManualRestContractHttpMethod(method);
-	const resolvedPathPattern = resolveManualRestContractPathPattern(
-		restResourceSlug,
+	const resolvedPathPattern = resolveManualRestRoutePathPattern({
 		pathPattern,
+		restResourceSlug,
+		routePattern,
+	});
+	const pathParameterNames =
+		collectRestRouteNamedCaptureNames(resolvedPathPattern);
+	const resolvedPermissionCallback = resolveOptionalPhpCallbackReference(
+		"Manual REST contract permission callback",
+		permissionCallback,
 	);
+	const resolvedControllerClass = resolveOptionalPhpClassReference(
+		"Manual REST contract controller class",
+		controllerClass,
+	);
+	const resolvedControllerExtends = resolveOptionalPhpClassReference(
+		"Manual REST contract controller base class",
+		controllerExtends,
+	);
+	if (resolvedControllerExtends && !resolvedControllerClass) {
+		throw new Error(
+			"Manual REST contract controller base class requires --controller-class.",
+		);
+	}
 	const resolvedQueryTypeName = assertValidTypeScriptIdentifier(
 		"Manual REST contract query type",
 		queryTypeName ?? `${pascalCase}Query`,
@@ -187,6 +234,7 @@ export async function scaffoldManualRestContract({
 				...(resolvedBodyTypeName
 					? { bodyTypeName: resolvedBodyTypeName }
 					: {}),
+				pathParameterNames,
 				queryTypeName: resolvedQueryTypeName,
 				responseTypeName: resolvedResponseTypeName,
 				restResourceSlug,
@@ -249,9 +297,18 @@ export async function scaffoldManualRestContract({
 					...(resolvedBodyTypeName
 						? { bodyTypeName: resolvedBodyTypeName }
 						: {}),
+					...(resolvedControllerClass
+						? { controllerClass: resolvedControllerClass }
+						: {}),
+					...(resolvedControllerExtends
+						? { controllerExtends: resolvedControllerExtends }
+						: {}),
 					method: resolvedMethod,
 					namespace,
 					pathPattern: resolvedPathPattern,
+					...(resolvedPermissionCallback
+						? { permissionCallback: resolvedPermissionCallback }
+						: {}),
 					queryTypeName: resolvedQueryTypeName,
 					responseTypeName: resolvedResponseTypeName,
 					restResourceSlug,
@@ -271,11 +328,20 @@ export async function scaffoldManualRestContract({
 			...(resolvedBodyTypeName
 				? { bodyTypeName: resolvedBodyTypeName }
 				: {}),
+			...(resolvedControllerClass
+				? { controllerClass: resolvedControllerClass }
+				: {}),
+			...(resolvedControllerExtends
+				? { controllerExtends: resolvedControllerExtends }
+				: {}),
 			method: resolvedMethod,
 			methods: [],
 			mode: "manual",
 			namespace,
 			pathPattern: resolvedPathPattern,
+			...(resolvedPermissionCallback
+				? { permissionCallback: resolvedPermissionCallback }
+				: {}),
 			projectDir: workspace.projectDir,
 			queryTypeName: resolvedQueryTypeName,
 			restResourceSlug,

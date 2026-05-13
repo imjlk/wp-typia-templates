@@ -30,12 +30,12 @@ export const ADD_OPTION_METADATA = {
   },
   'controller-class': {
     description:
-      'Generated REST resource controller class used for route callbacks.',
+      'REST resource controller class used for generated route callbacks or declared manual/provider route ownership.',
     type: 'string',
   },
   'controller-extends': {
     description:
-      'Optional base class for generated REST resource controller wrappers.',
+      'Optional base class for generated REST resource controller wrappers or declared manual/provider controller ownership.',
     type: 'string',
   },
   'data-storage': {
@@ -101,7 +101,7 @@ export const ADD_OPTION_METADATA = {
   },
   'permission-callback': {
     description:
-      'PHP permission callback for generated REST resource route registrations.',
+      'PHP permission callback for generated route registrations or declared manual/provider route ownership.',
     type: 'string',
   },
   'post-type': {
@@ -133,7 +133,7 @@ export const ADD_OPTION_METADATA = {
   },
   'route-pattern': {
     description:
-      'Generated REST resource item route pattern relative to the REST namespace.',
+      'REST route pattern relative to the namespace; generated resources use it for item routes and manual/provider contracts may use it as an alias for --path.',
     type: 'string',
   },
   'secret-field': {
