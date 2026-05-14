@@ -13,6 +13,18 @@ test('cli-add-workspace delegates asset, rest-resource, post-meta, ai-feature, a
     path.join(runtimeRoot, 'cli-add-workspace-assets.ts'),
     'utf8',
   );
+  const patternSource = fs.readFileSync(
+    path.join(runtimeRoot, 'cli-add-workspace-pattern.ts'),
+    'utf8',
+  );
+  const bindingSource = fs.readFileSync(
+    path.join(runtimeRoot, 'cli-add-workspace-binding-source.ts'),
+    'utf8',
+  );
+  const editorPluginSource = fs.readFileSync(
+    path.join(runtimeRoot, 'cli-add-workspace-editor-plugin.ts'),
+    'utf8',
+  );
 	const restSource = fs.readFileSync(
 		path.join(runtimeRoot, 'cli-add-workspace-rest.ts'),
 		'utf8',
@@ -183,15 +195,40 @@ test('cli-add-workspace delegates asset, rest-resource, post-meta, ai-feature, a
   expect(addWorkspaceSource).not.toContain(
     'export async function runAddPostMetaCommand(',
   );
-  expect(assetsSource).toContain('function buildPatternSource(');
-  expect(assetsSource).toContain('function buildBindingSourceServerSource(');
-  expect(assetsSource).toContain('function buildEditorPluginEntrySource(');
-  expect(assetsSource).toContain('export async function runAddPatternCommand(');
   expect(assetsSource).toContain(
-    'export async function runAddBindingSourceCommand(',
+    'from "./cli-add-workspace-binding-source.js"',
   );
   expect(assetsSource).toContain(
+    'from "./cli-add-workspace-editor-plugin.js"',
+  );
+  expect(assetsSource).toContain('from "./cli-add-workspace-pattern.js"');
+  expect(assetsSource).not.toContain('function buildPatternSource(');
+  expect(assetsSource).not.toContain('function buildBindingSourceServerSource(');
+  expect(assetsSource).not.toContain('function buildEditorPluginEntrySource(');
+  expect(patternSource).toContain('function buildPatternSource(');
+  expect(patternSource).toContain('async function ensurePatternBootstrapAnchors(');
+  expect(patternSource).toContain('export async function runAddPatternCommand(');
+  expect(patternSource).not.toContain('function buildBindingSourceServerSource(');
+  expect(patternSource).not.toContain('function buildEditorPluginEntrySource(');
+  expect(bindingSource).toContain('function buildBindingSourceServerSource(');
+  expect(bindingSource).toContain(
+    'async function ensureBindingSourceBootstrapAnchors(',
+  );
+  expect(bindingSource).toContain(
+    'export async function runAddBindingSourceCommand(',
+  );
+  expect(bindingSource).not.toContain('function buildPatternSource(');
+  expect(bindingSource).not.toContain('function buildEditorPluginEntrySource(');
+  expect(editorPluginSource).toContain('function buildEditorPluginEntrySource(');
+  expect(editorPluginSource).toContain(
+    'async function ensureEditorPluginBootstrapAnchors(',
+  );
+  expect(editorPluginSource).toContain(
     'export async function runAddEditorPluginCommand(',
+  );
+  expect(editorPluginSource).not.toContain('function buildPatternSource(');
+  expect(editorPluginSource).not.toContain(
+    'function buildBindingSourceServerSource(',
   );
 	expect(restSource).toContain(
 		'from "./cli-add-workspace-rest-generated.js"',
@@ -356,9 +393,10 @@ test('cli-add-workspace delegates asset, rest-resource, post-meta, ai-feature, a
   expect(mutationSource).toContain('appendPhpSnippetBeforeClosingTag');
   for (const bootstrapAnchorSource of [
     aiAnchorsSource,
+    bindingSource,
+    editorPluginSource,
     postMetaAnchorsSource,
     restAnchorsSource,
-    assetsSource,
   ]) {
     expect(bootstrapAnchorSource).toContain(
       'insertPhpSnippetBeforeWorkspaceAnchors',
