@@ -26,6 +26,12 @@ import {
   type SyncRestOpenApiManifestOptions,
   type SyncRestOpenApiOptions,
 } from "../../packages/wp-typia-block-runtime/src/metadata-core";
+import {
+  NESTED_BLOCK_FAMILY_BLOCK_NAMES,
+  NESTED_BLOCK_FAMILY_NESTING,
+  NESTED_BLOCK_FAMILY_PATTERN_CONTENT,
+  NESTED_BLOCK_FAMILY_TEMPLATES,
+} from "../fixtures/nested-block-family";
 
 const manifest = defineEndpointManifest({
   contracts: {
@@ -421,6 +427,36 @@ describe("metadata-core endpoint manifests", () => {
     expect(formattedWarnings).toContain(
       'Serialized closing block "demo/container" appeared before all nested blocks were closed.'
     );
+  });
+
+  test("nested block family fixture documents reusable contract, template, and pattern validation", () => {
+    expect(() =>
+      validateBlockNestingContract(NESTED_BLOCK_FAMILY_NESTING, {
+        knownBlockNames: NESTED_BLOCK_FAMILY_BLOCK_NAMES,
+      })
+    ).not.toThrow();
+    expect(() =>
+      validateInnerBlocksTemplates(NESTED_BLOCK_FAMILY_TEMPLATES, {
+        knownBlockNames: NESTED_BLOCK_FAMILY_BLOCK_NAMES,
+        nesting: NESTED_BLOCK_FAMILY_NESTING,
+      })
+    ).not.toThrow();
+
+    const patternValidation = validateBlockPatternContentNesting(
+      NESTED_BLOCK_FAMILY_PATTERN_CONTENT,
+      {
+        knownBlockNames: NESTED_BLOCK_FAMILY_BLOCK_NAMES,
+        nesting: NESTED_BLOCK_FAMILY_NESTING,
+        patternFile: "src/patterns/nested-family.php",
+      }
+    );
+
+    expect(patternValidation.errors).toEqual([]);
+    expect(patternValidation.warnings).toEqual([]);
+    expect(patternValidation.blocks[0]?.blockName).toBe("example/container");
+    expect(
+      renderInnerBlocksTemplateModule(NESTED_BLOCK_FAMILY_TEMPLATES)
+    ).toContain('"example/container"');
   });
 
   test("block nesting contracts can carry generated InnerBlocks templates", () => {

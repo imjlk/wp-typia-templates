@@ -144,6 +144,9 @@ fail with the pattern file and serialized block path, while unknown or
 unparseable block comments are reported as warnings instead of being rewritten.
 The first validator intentionally reads serialized `<!-- wp:* -->` block
 comment boundaries conservatively and does not execute dynamic PHP content.
+For an end-to-end generic `example/container` → `example/section` → leaf block
+family, see the Nesting Contracts Guide in `apps/docs/src/content/docs/guides`
+and the checked fixture in `tests/fixtures/nested-block-family.ts`.
 
 ### 5. Query Loop variations get a first-class scaffold
 
