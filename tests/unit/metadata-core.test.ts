@@ -276,6 +276,13 @@ describe("metadata-core endpoint manifests", () => {
     expect(getInnerBlocksTemplatesFromNesting(nesting)).toEqual({
       "demo/container": [["demo/section", { role: "intro" }]],
     });
+    expect(
+      getInnerBlocksTemplatesFromNesting({
+        "demo/empty": {
+          template: undefined,
+        },
+      } as unknown as Parameters<typeof getInnerBlocksTemplatesFromNesting>[0])
+    ).toEqual({});
     expect(() =>
       validateBlockNestingContract(nesting, {
         knownBlockNames: ["demo/container", "demo/section"],
@@ -315,6 +322,11 @@ describe("metadata-core endpoint manifests", () => {
       expect(output).toContain('"demo/container"');
       expect(output).toContain('"demo/section"');
       expect(renderInnerBlocksTemplateModule(templates)).toBe(output);
+      expect(() =>
+        renderInnerBlocksTemplateModule(templates, {
+          exportName: "INNER_BLOCKS_TEMPLATES; console.log('nope')",
+        })
+      ).toThrow("is not a valid TypeScript identifier");
 
       fs.writeFileSync(result.outputPath, output.replace("hero", "stale"), "utf8");
       await expect(
@@ -329,6 +341,25 @@ describe("metadata-core endpoint manifests", () => {
           { check: true }
         )
       ).rejects.toThrow(path.join(root, "src", "inner-blocks-templates.ts"));
+
+      await expect(
+        syncInnerBlocksTemplateModule({
+          knownBlockNames: ["demo/container", "demo/section"],
+          nesting: {
+            "demo/container": {
+              allowedBlocks: ["demo/section"],
+            },
+            "demo/section": {
+              parent: ["demo/other-container"],
+            },
+          },
+          outputFile: "src/inner-blocks-templates.ts",
+          projectRoot: root,
+          templates,
+        })
+      ).rejects.toThrow(
+        'demo/section.parent references unknown block "demo/other-container"'
+      );
     } finally {
       fs.rmSync(root, { force: true, recursive: true });
     }

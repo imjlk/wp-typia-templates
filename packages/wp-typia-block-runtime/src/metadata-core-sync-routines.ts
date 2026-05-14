@@ -244,6 +244,10 @@ export async function syncInnerBlocksTemplateModuleArtifacts(
 ): Promise<SyncInnerBlocksTemplateModuleResult> {
 	const projectRoot = path.resolve(options.projectRoot ?? process.cwd());
 	const outputPath = path.resolve(projectRoot, options.outputFile);
+	validateBlockNestingContract(options.nesting, {
+		allowExternalBlockNames: options.allowExternalBlockNames,
+		knownBlockNames: options.knownBlockNames,
+	});
 	const templates =
 		options.templates ?? getInnerBlocksTemplatesFromNesting(options.nesting);
 

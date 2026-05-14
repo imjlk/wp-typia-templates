@@ -364,6 +364,15 @@ export async function syncBlockMetadata(
   return syncBlockMetadataArtifacts(options, executionOptions);
 }
 
+/**
+ * Generate and write a typed `InnerBlocks` template module from a nesting
+ * contract or explicit template contract.
+ *
+ * @param options Nesting metadata, optional explicit templates, output path,
+ * and known-block validation settings.
+ * @param executionOptions Optional check-mode behavior for drift detection.
+ * @returns The resolved output path and sorted generated template names.
+ */
 export async function syncInnerBlocksTemplateModule(
   options: SyncInnerBlocksTemplateModuleOptions,
   executionOptions: ArtifactSyncExecutionOptions = {},

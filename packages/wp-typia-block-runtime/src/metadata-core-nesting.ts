@@ -63,6 +63,8 @@ export interface RenderInnerBlocksTemplateModuleOptions {
   exportName?: string;
 }
 
+const TYPESCRIPT_IDENTIFIER_PATTERN = /^[A-Za-z_$][A-Za-z0-9_$]*$/u;
+
 function hasOwn(object: object, key: string): boolean {
   return Object.prototype.hasOwnProperty.call(object, key);
 }
@@ -394,7 +396,7 @@ export function getInnerBlocksTemplatesFromNesting(
 
   const templates: Record<string, BlockInnerBlocksTemplate> = {};
   for (const [blockName, rule] of Object.entries(nesting)) {
-    if (isRecord(rule) && hasOwn(rule, 'template')) {
+    if (isRecord(rule) && hasOwn(rule, 'template') && rule.template !== undefined) {
       assertBlockName(blockName, `Block nesting contract key "${blockName}"`);
       templates[blockName] = rule.template as BlockInnerBlocksTemplate;
     }
@@ -556,6 +558,11 @@ export function renderInnerBlocksTemplateModule(
   validateInnerBlocksTemplates(templates);
 
   const exportName = options.exportName ?? 'INNER_BLOCKS_TEMPLATES';
+  if (!TYPESCRIPT_IDENTIFIER_PATTERN.test(exportName)) {
+    throw new Error(
+      `renderInnerBlocksTemplateModule: exportName "${exportName}" is not a valid TypeScript identifier.`,
+    );
+  }
   const serializedTemplates = JSON.stringify(templates, null, '\t');
 
   return [
