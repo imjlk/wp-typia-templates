@@ -1,10 +1,15 @@
 import {
 	defineBlockNesting,
 	defineEndpointManifest,
+	defineInnerBlocksTemplates,
 } from '@wp-typia/block-runtime/metadata-core';
 
 export const BLOCK_NESTING = defineBlockNesting( {
 	// Add parent, ancestor, and allowedBlocks relationships here.
+} );
+
+export const BLOCK_TEMPLATES = defineInnerBlocksTemplates( {
+	// Add default InnerBlocks templates here.
 } );
 
 export const BLOCKS = [

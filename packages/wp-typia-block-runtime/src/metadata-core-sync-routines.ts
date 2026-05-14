@@ -5,6 +5,8 @@ import type {
 	ArtifactSyncExecutionOptions,
 	SyncBlockMetadataOptions,
 	SyncBlockMetadataResult,
+	SyncInnerBlocksTemplateModuleOptions,
+	SyncInnerBlocksTemplateModuleResult,
 	SyncRestOpenApiOptions,
 	SyncRestOpenApiResult,
 	SyncTypeSchemaOptions,
@@ -21,6 +23,9 @@ import {
 import { normalizeSyncRestOpenApiOptions } from './metadata-core-endpoint-client.js';
 import {
 	applyBlockNestingMetadata,
+	getInnerBlocksTemplatesFromNesting,
+	renderInnerBlocksTemplateModule,
+	validateInnerBlocksTemplates,
 	validateBlockNestingContract,
 } from './metadata-core-nesting.js';
 import { renderPhpValidator } from './metadata-php-render.js';
@@ -230,6 +235,43 @@ export async function syncTypeSchemaArtifacts(
 		jsonSchemaPath,
 		openApiPath,
 		sourceTypeName: options.sourceTypeName,
+	};
+}
+
+export async function syncInnerBlocksTemplateModuleArtifacts(
+	options: SyncInnerBlocksTemplateModuleOptions,
+	executionOptions: ArtifactSyncExecutionOptions = {},
+): Promise<SyncInnerBlocksTemplateModuleResult> {
+	const projectRoot = path.resolve(options.projectRoot ?? process.cwd());
+	const outputPath = path.resolve(projectRoot, options.outputFile);
+	validateBlockNestingContract(options.nesting, {
+		allowExternalBlockNames: options.allowExternalBlockNames,
+		knownBlockNames: options.knownBlockNames,
+	});
+	const templates =
+		options.templates ?? getInnerBlocksTemplatesFromNesting(options.nesting);
+
+	validateInnerBlocksTemplates(templates, {
+		allowExternalBlockNames: options.allowExternalBlockNames,
+		knownBlockNames: options.knownBlockNames,
+		nesting: options.nesting,
+	});
+
+	reconcileGeneratedArtifacts(
+		[
+			{
+				content: renderInnerBlocksTemplateModule(templates, {
+					exportName: options.exportName,
+				}),
+				path: outputPath,
+			},
+		],
+		executionOptions,
+	);
+
+	return {
+		outputPath,
+		templateNames: Object.keys(templates).sort(),
 	};
 }
 

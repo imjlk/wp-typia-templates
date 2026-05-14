@@ -134,6 +134,10 @@ Edit `BLOCK_NESTING` in `scripts/block-config.ts`, then run
 Unknown workspace-local block references fail with actionable diagnostics before
 artifacts are rewritten, while external WordPress or plugin blocks like
 `core/group` remain valid relationship targets.
+Default editor templates can live beside those rules in `BLOCK_TEMPLATES` or in
+the optional `template` field on a nesting rule. `wp-typia sync` generates
+`src/inner-blocks-templates.ts`, and `--check` verifies that nested template
+tuples still obey the declared `allowedBlocks`, `parent`, and `ancestor` rules.
 
 ### 5. Query Loop variations get a first-class scaffold
 

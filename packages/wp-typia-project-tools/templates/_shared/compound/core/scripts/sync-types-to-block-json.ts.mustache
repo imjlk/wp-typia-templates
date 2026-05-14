@@ -3,11 +3,13 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 import {
+	syncInnerBlocksTemplateModule,
 	syncBlockMetadata,
 	validateBlockNestingContract,
+	validateInnerBlocksTemplates,
 } from '@wp-typia/block-runtime/metadata-core';
 
-import { BLOCK_NESTING, BLOCKS } from './block-config';
+import { BLOCK_NESTING, BLOCK_TEMPLATES, BLOCKS } from './block-config';
 
 function parseCliOptions( argv: string[] ) {
 	const options = {
@@ -54,6 +56,23 @@ async function main() {
 		allowExternalBlockNames: true,
 		knownBlockNames,
 	} );
+	validateInnerBlocksTemplates( BLOCK_TEMPLATES, {
+		allowExternalBlockNames: true,
+		knownBlockNames,
+		nesting: BLOCK_NESTING,
+	} );
+	await syncInnerBlocksTemplateModule(
+		{
+			allowExternalBlockNames: true,
+			knownBlockNames,
+			nesting: BLOCK_NESTING,
+			outputFile: path.join( 'src', 'inner-blocks-templates.ts' ),
+			templates: BLOCK_TEMPLATES,
+		},
+		{
+			check: options.check,
+		}
+	);
 
 	for ( const block of BLOCKS ) {
 		const baseDir = path.join( 'src', 'blocks', block.slug );
