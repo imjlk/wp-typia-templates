@@ -14,12 +14,15 @@ import type { SpacingAxis, SpacingDimension } from "../block-editor/spacing.js";
 export type BlockSupportFeature =
   | 'align'
   | 'alignWide'
+  | 'allowedBlocks'
   | 'anchor'
   | 'ariaLabel'
+  | 'autoRegister'
   | 'background'
   | 'border'
   | 'className'
   | 'color'
+  | 'contentRole'
   | 'customClassName'
   | 'dimensions'
   | 'filter'
@@ -29,6 +32,7 @@ export type BlockSupportFeature =
   | 'js'
   | 'layout'
   | 'lightbox'
+  | 'listView'
   | 'lock'
   | 'locking'
   | 'multiple'
@@ -37,17 +41,22 @@ export type BlockSupportFeature =
   | 'reusable'
   | 'shadow'
   | 'spacing'
+  | 'splitting'
+  | 'visibility'
   | 'typography';
 
 export const BLOCK_SUPPORT_FEATURES = [
   'align',
   'alignWide',
+  'allowedBlocks',
   'anchor',
   'ariaLabel',
+  'autoRegister',
   'background',
   'border',
   'className',
   'color',
+  'contentRole',
   'customClassName',
   'dimensions',
   'filter',
@@ -57,6 +66,7 @@ export const BLOCK_SUPPORT_FEATURES = [
   'js',
   'layout',
   'lightbox',
+  'listView',
   'lock',
   'locking',
   'multiple',
@@ -65,7 +75,9 @@ export const BLOCK_SUPPORT_FEATURES = [
   'reusable',
   'shadow',
   'spacing',
+  'splitting',
   'typography',
+  'visibility',
 ] as const satisfies readonly BlockSupportFeature[];
 
 export type TypographySupportKey =
@@ -267,12 +279,15 @@ export interface BlockTypographySupport {
 export interface BlockSupports {
   readonly align?: boolean | readonly BlockAlignment[];
   readonly alignWide?: boolean;
+  readonly allowedBlocks?: boolean;
   readonly anchor?: boolean;
   readonly ariaLabel?: boolean;
+  readonly autoRegister?: boolean;
   readonly background?: boolean | BlockBackgroundSupport;
   readonly border?: boolean | BlockBorderSupport;
   readonly className?: boolean;
   readonly color?: boolean | BlockColorSupport;
+  readonly contentRole?: boolean;
   readonly customClassName?: boolean;
   readonly dimensions?: boolean | BlockDimensionsSupport;
   readonly filter?: boolean | BlockFilterSupport;
@@ -282,6 +297,7 @@ export interface BlockSupports {
   readonly js?: boolean;
   readonly layout?: boolean | BlockLayoutSupport;
   readonly lightbox?: boolean | BlockLightboxSupport;
+  readonly listView?: boolean;
   readonly lock?: boolean;
   readonly locking?: boolean;
   readonly multiple?: boolean;
@@ -290,5 +306,7 @@ export interface BlockSupports {
   readonly reusable?: boolean;
   readonly shadow?: boolean | BlockShadowSupport;
   readonly spacing?: boolean | BlockSpacingSupport;
+  readonly splitting?: boolean;
   readonly typography?: boolean | BlockTypographySupport;
+  readonly visibility?: boolean;
 }

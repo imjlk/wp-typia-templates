@@ -91,6 +91,11 @@ describe("@wp-typia/block-types export contracts", () => {
 			import: "./dist/blocks/index.js",
 			types: "./dist/blocks/index.d.ts",
 		});
+		expect(packageJson.exports?.["./blocks/compatibility"]).toEqual({
+			default: "./dist/blocks/compatibility.js",
+			import: "./dist/blocks/compatibility.js",
+			types: "./dist/blocks/compatibility.d.ts",
+		});
 		expect(packageJson.exports?.["./blocks/registration"]).toEqual({
 			default: "./dist/blocks/registration.js",
 			import: "./dist/blocks/registration.js",
@@ -124,6 +129,7 @@ describe("@wp-typia/block-types export contracts", () => {
 							"const styleAttributes = await import('@wp-typia/block-types/block-editor/style-attributes');",
 							"const typography = await import('@wp-typia/block-types/block-editor/typography');",
 							"const blocks = await import('@wp-typia/block-types/blocks');",
+							"const compatibility = await import('@wp-typia/block-types/blocks/compatibility');",
 							"const registration = await import('@wp-typia/block-types/blocks/registration');",
 							"const supports = await import('@wp-typia/block-types/blocks/supports');",
 							"const registered = registration.registerScaffoldBlockType('wp-typia/demo', { title: 'Demo' });",
@@ -135,6 +141,7 @@ describe("@wp-typia/block-types export contracts", () => {
 							"  namedColors: color.CSS_NAMED_COLORS,",
 							"  aspectRatios: dimensions.ASPECT_RATIOS,",
 							"  layoutTypes: layout.LAYOUT_TYPES,",
+							"  manifestStatus: compatibility.createWordPressBlockApiCompatibilityManifest([{ area: 'blockSupports', feature: 'visibility' }], { minVersion: '6.8' }).unsupported[0]?.status ?? null,",
 							"  spacingDimensions: spacing.SPACING_DIMENSIONS,",
 							"  textDecorations: typography.TEXT_DECORATIONS,",
 							"  supportsFeatures: supports.BLOCK_SUPPORT_FEATURES,",
@@ -160,6 +167,7 @@ describe("@wp-typia/block-types export contracts", () => {
 				registeredTitle: string | null;
 				rootHasRegister: boolean;
 				rootHasSupports: boolean;
+				manifestStatus: string | null;
 				spacingDimensions: string[];
 				styleAttributeKeys: string[];
 				supportsFeatures: string[];
@@ -181,6 +189,7 @@ describe("@wp-typia/block-types export contracts", () => {
 		]);
 		expect(summary.aspectRatios).toContain("16/9");
 		expect(summary.layoutTypes).toEqual(["flow", "constrained", "flex", "grid"]);
+		expect(summary.manifestStatus).toBe("unsupported");
 		expect(summary.spacingDimensions).toEqual([
 			"top",
 			"right",
@@ -217,5 +226,6 @@ describe("@wp-typia/block-types export contracts", () => {
 		expect(builtBlockEditorIndexJs).toContain('export * from "./style-attributes.js";');
 		expect(builtBlocksIndexJs).toContain('export * from "./registration.js";');
 		expect(builtBlocksIndexJs).toContain('export * from "./supports.js";');
+		expect(builtBlocksIndexJs).toContain('export * from "./compatibility.js";');
 	});
 });

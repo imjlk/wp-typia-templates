@@ -18,6 +18,7 @@ Shared WordPress block semantic types derived from Gutenberg source and unoffici
 - `@wp-typia/block-types/block-editor/style-attributes`
 - `@wp-typia/block-types/block-editor/typography`
 - `@wp-typia/block-types/blocks`
+- `@wp-typia/block-types/blocks/compatibility`
 - `@wp-typia/block-types/blocks/registration`
 - `@wp-typia/block-types/blocks/supports`
 
@@ -43,6 +44,8 @@ Shared WordPress block semantic types derived from Gutenberg source and unoffici
   migration-facing `BlockInstance`
 - additive stable Core coverage for drop caps, spacing sizes, layout gaps,
   duotone, per-side border widths, and `js` / `locking`
+- a WordPress block API compatibility matrix for Supports, Variations, and
+  Bindings features that codegen and diagnostics can share
 
 ## Registration facade
 
@@ -70,6 +73,34 @@ TypeScript installs surface the requirement explicitly.
 
 Compatibility should track that floor unless the generated project dependency
 matrix changes in the same release.
+
+## WordPress block API compatibility
+
+`@wp-typia/block-types/blocks/compatibility` exposes the shared compatibility
+foundation used by future block Supports, Variations, and Bindings helpers.
+The matrix records documented WordPress version floors, runtime surfaces, derived
+attributes, fallback hints, and source URLs for feature checks.
+
+```ts
+import { createWordPressBlockApiCompatibilityManifest } from '@wp-typia/block-types/blocks/compatibility';
+
+const manifest = createWordPressBlockApiCompatibilityManifest(
+  [
+    { area: 'blockSupports', feature: 'allowedBlocks' },
+    { area: 'blockBindings', feature: 'editorRegistration' },
+  ],
+  {
+    minVersion: '6.7',
+    strict: true,
+    allowUnknownFutureKeys: false,
+  },
+);
+```
+
+Strict mode marks known unsupported features as errors and recommends skipping
+generation. Non-strict mode downgrades them to warnings and recommends guarded
+generation. Unknown future keys are guarded by default, or passed through only
+when `allowUnknownFutureKeys` is enabled.
 
 ## Validation coverage
 

@@ -40,6 +40,7 @@ Configuration files:
 - `--config <path>` is an explicit override loaded after the default sources, relative to the current working directory unless absolute
 - config files use a strict schema: unknown keys are errors rather than warnings or stripped values, so typos fail near the source config file
 - object values are deep-merged, while arrays such as `mcp.schemaSources` replace earlier arrays instead of concatenating
+- projects can declare block API compatibility intent with `wordpress.minVersion`, `wordpress.testedVersions`, `compatibility.strict`, and `compatibility.allowUnknownFutureKeys`; future Supports, Variations, and Bindings helpers use those values for version-aware diagnostics
 
 Compatibility notes:
 

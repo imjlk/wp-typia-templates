@@ -16,10 +16,31 @@ export const WP_TYPIA_CONFIG_SOURCES = [
 ] as const;
 type JsonRecord = Record<string, unknown>;
 
+const wordpressVersionSchema = z
+	.string()
+	.regex(
+		/^\d+\.\d+(?:\.\d+)?$/u,
+		'expected dotted numeric WordPress version such as "6.7" or "6.7.1"',
+	);
+
 const wpTypiaSchemaSourceSchema = z
 	.object({
 		namespace: z.string(),
 		path: z.string(),
+	})
+	.strict();
+
+const wordpressCompatibilityConfigSchema = z
+	.object({
+		minVersion: wordpressVersionSchema.optional(),
+		testedVersions: z.array(wordpressVersionSchema).optional(),
+	})
+	.strict();
+
+const blockApiCompatibilityConfigSchema = z
+	.object({
+		allowUnknownFutureKeys: z.boolean().optional(),
+		strict: z.boolean().optional(),
 	})
 	.strict();
 
@@ -75,13 +96,21 @@ const mcpConfigSchema = z
 export const wpTypiaUserConfigSchema = z
 	.object({
 		add: addConfigSchema.optional(),
+		compatibility: blockApiCompatibilityConfigSchema.optional(),
 		create: createConfigSchema.optional(),
 		mcp: mcpConfigSchema.optional(),
+		wordpress: wordpressCompatibilityConfigSchema.optional(),
 	})
 	.strict();
 
 export type WpTypiaSchemaSource = z.infer<typeof wpTypiaSchemaSourceSchema>;
 export type WpTypiaUserConfig = z.infer<typeof wpTypiaUserConfigSchema>;
+export interface WpTypiaWordPressCompatibilitySettings {
+	allowUnknownFutureKeys?: boolean | undefined;
+	minVersion?: string | undefined;
+	strict?: boolean | undefined;
+	testedVersions?: string[] | undefined;
+}
 
 function formatIssuePath(issuePath: ZodIssue["path"]): string {
 	if (issuePath.length === 0) {
@@ -233,4 +262,15 @@ export function getAddBlockDefaults(
 
 export function getMcpSchemaSources(config: WpTypiaUserConfig): WpTypiaSchemaSource[] {
 	return config.mcp?.schemaSources ?? [];
+}
+
+export function getWordPressCompatibilitySettings(
+	config: WpTypiaUserConfig,
+): WpTypiaWordPressCompatibilitySettings {
+	return {
+		allowUnknownFutureKeys: config.compatibility?.allowUnknownFutureKeys,
+		minVersion: config.wordpress?.minVersion,
+		strict: config.compatibility?.strict,
+		testedVersions: config.wordpress?.testedVersions,
+	};
 }
