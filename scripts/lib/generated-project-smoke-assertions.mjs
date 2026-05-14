@@ -221,9 +221,18 @@ function isLocalProjectToolsRewrite(value) {
 	);
 }
 
+function isOfficialWorkspaceTemplatePackage(packageJson) {
+	return (
+		packageJson.wpTypia?.projectType === "workspace" &&
+		packageJson.wpTypia?.templatePackage === "@wp-typia/create-workspace-template"
+	);
+}
+
 export function assertGeneratedPackageBoundary(projectDir) {
 	const packageJsonPath = path.join(projectDir, "package.json");
 	const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf8"));
+	const allowWorkspaceCliHelperScripts =
+		isOfficialWorkspaceTemplatePackage(packageJson);
 
 	if (
 		packageJson.dependencies?.["@wp-typia/project-tools"] &&
@@ -254,6 +263,12 @@ export function assertGeneratedPackageBoundary(projectDir) {
 					`Expected generated migration script "${scriptName}" to pin wp-typia`,
 				);
 			}
+			continue;
+		}
+		if (
+			allowWorkspaceCliHelperScripts &&
+			scriptName.startsWith("wp-typia:")
+		) {
 			continue;
 		}
 		if (scriptValue.includes("wp-typia")) {
