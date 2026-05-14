@@ -15,6 +15,7 @@ export interface BlockNestingRule {
 export type BlockNestingContract = Readonly<Record<string, BlockNestingRule>>;
 
 export interface ValidateBlockNestingContractOptions {
+  allowExternalBlockNames?: boolean;
   knownBlockNames?: readonly string[];
 }
 
@@ -24,12 +25,22 @@ interface NormalizedBlockNestingRule {
   parent?: string[];
 }
 
+interface KnownBlockNameValidationContext {
+  allowExternalBlockNames: boolean;
+  knownBlockNames: ReadonlySet<string>;
+  knownBlockNamespaces: ReadonlySet<string>;
+}
+
 function hasOwn(object: object, key: string): boolean {
   return Object.prototype.hasOwnProperty.call(object, key);
 }
 
 function formatKnownBlockNames(knownBlockNames: ReadonlySet<string>): string {
   return [...knownBlockNames].sort().join(', ');
+}
+
+function getBlockNamespace(blockName: string): string {
+  return blockName.slice(0, blockName.indexOf('/'));
 }
 
 function assertBlockName(name: string, context: string): void {
@@ -83,19 +94,53 @@ function normalizeBlockNestingRule(
   return normalized;
 }
 
+function createKnownBlockNameValidationContext(
+  options: ValidateBlockNestingContractOptions,
+): KnownBlockNameValidationContext | null {
+  if (!options.knownBlockNames) {
+    return null;
+  }
+
+  const knownBlockNames = new Set(options.knownBlockNames);
+  return {
+    allowExternalBlockNames: options.allowExternalBlockNames === true,
+    knownBlockNames,
+    knownBlockNamespaces: new Set(
+      [...knownBlockNames].map((blockName) => getBlockNamespace(blockName)),
+    ),
+  };
+}
+
 function validateKnownBlockName(
   issues: string[],
-  knownBlockNames: ReadonlySet<string> | null,
+  knownBlockNameContext: KnownBlockNameValidationContext | null,
   blockName: string,
   context: string,
+  options: {
+    allowExternalBlockName?: boolean;
+  } = {},
 ): void {
-  if (knownBlockNames && !knownBlockNames.has(blockName)) {
-    issues.push(
-      `${context} references unknown block "${blockName}". Expected one of: ${formatKnownBlockNames(
-        knownBlockNames,
-      )}.`,
-    );
+  if (
+    !knownBlockNameContext ||
+    knownBlockNameContext.knownBlockNames.has(blockName)
+  ) {
+    return;
   }
+
+  const isExternalBlockName =
+    options.allowExternalBlockName === true &&
+    knownBlockNameContext.allowExternalBlockNames &&
+    !knownBlockNameContext.knownBlockNamespaces.has(getBlockNamespace(blockName));
+
+  if (isExternalBlockName) {
+    return;
+  }
+
+  issues.push(
+    `${context} references unknown block "${blockName}". Expected one of: ${formatKnownBlockNames(
+      knownBlockNameContext.knownBlockNames,
+    )}.`,
+  );
 }
 
 function normalizeBlockNestingContract(
@@ -125,13 +170,12 @@ export function validateBlockNestingContract(
   options: ValidateBlockNestingContractOptions = {},
 ): void {
   const normalized = normalizeBlockNestingContract(contract);
-  const knownBlockNames = options.knownBlockNames
-    ? new Set(options.knownBlockNames)
-    : null;
+  const knownBlockNameContext =
+    createKnownBlockNameValidationContext(options);
   const issues: string[] = [];
 
   for (const [blockName, rule] of Object.entries(normalized)) {
-    validateKnownBlockName(issues, knownBlockNames, blockName, 'Contract key');
+    validateKnownBlockName(issues, knownBlockNameContext, blockName, 'Contract key');
 
     for (const key of BLOCK_NESTING_RELATION_KEYS) {
       const relatedBlockNames = rule[key];
@@ -142,9 +186,10 @@ export function validateBlockNestingContract(
       for (const relatedBlockName of relatedBlockNames) {
         validateKnownBlockName(
           issues,
-          knownBlockNames,
+          knownBlockNameContext,
           relatedBlockName,
           `${blockName}.${key}`,
+          { allowExternalBlockName: true },
         );
         if (
           relatedBlockName === blockName &&
@@ -152,6 +197,21 @@ export function validateBlockNestingContract(
         ) {
           issues.push(`${blockName}.${key} must not reference itself.`);
         }
+      }
+    }
+  }
+
+  for (const [childBlockName, rule] of Object.entries(normalized)) {
+    for (const parentBlockName of rule.parent ?? []) {
+      const parentRule = normalized[parentBlockName];
+      if (
+        parentRule?.allowedBlocks &&
+        parentRule.allowedBlocks.length > 0 &&
+        !parentRule.allowedBlocks.includes(childBlockName)
+      ) {
+        issues.push(
+          `${childBlockName}.parent includes "${parentBlockName}", but ${parentBlockName}.allowedBlocks does not include "${childBlockName}".`,
+        );
       }
     }
   }
@@ -188,6 +248,8 @@ export function applyBlockNestingMetadata({
   if (!nesting || !hasOwn(nesting, blockName)) {
     return [];
   }
+
+  validateBlockNestingContract(nesting);
 
   const rule = normalizeBlockNestingRule(blockName, nesting[blockName]);
   const appliedKeys: BlockNestingRelationKey[] = [];

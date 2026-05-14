@@ -131,8 +131,9 @@ Workspace projects can also keep static nesting metadata in one typed contract.
 Edit `BLOCK_NESTING` in `scripts/block-config.ts`, then run
 `wp-typia sync --check` to verify generated `block.json` `parent`,
 `ancestor`, and `allowedBlocks` fields still match the declared relationships.
-Unknown block references fail with actionable diagnostics before artifacts are
-rewritten.
+Unknown workspace-local block references fail with actionable diagnostics before
+artifacts are rewritten, while external WordPress or plugin blocks like
+`core/group` remain valid relationship targets.
 
 ### 5. Query Loop variations get a first-class scaffold
 

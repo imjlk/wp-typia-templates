@@ -28,6 +28,7 @@ export type {
 import type { BlockNestingContract } from './metadata-core-nesting.js';
 
 export interface SyncBlockMetadataOptions {
+  allowExternalBlockNames?: boolean;
   blockJsonFile: string;
   jsonSchemaFile?: string;
   knownBlockNames?: readonly string[];

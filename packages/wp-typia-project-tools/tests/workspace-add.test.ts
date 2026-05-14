@@ -243,6 +243,7 @@ test("canonical CLI can add a basic block to an official workspace template", as
   expect(blockConfigSource).toContain("export const BLOCK_NESTING");
   expect(blockConfigSource).toContain('slug: "counter-card"');
   expect(syncTypesSource).toContain("validateBlockNestingContract");
+  expect(syncTypesSource).toContain("allowExternalBlockNames: true");
   expect(syncTypesSource).toContain("nesting: BLOCK_NESTING");
   expect(indexSource).toContain("import '../../collection';");
   expect(blockJson.name).toBe("demo-space/counter-card");
@@ -256,7 +257,7 @@ test("canonical CLI can add a basic block to an official workspace template", as
     blockConfigPath,
     blockConfigSource.replace(
       "\t// Add parent, ancestor, and allowedBlocks relationships here.",
-      '\t"demo-space/counter-card": {\n\t\tallowedBlocks: [],\n\t},'
+      '\t"demo-space/counter-card": {\n\t\tallowedBlocks: [ "core/group" ],\n\t},'
     ),
     "utf8"
   );
@@ -267,7 +268,7 @@ test("canonical CLI can add a basic block to an official workspace template", as
       "utf8"
     )
   );
-  expect(blockJsonWithNesting.allowedBlocks).toEqual([]);
+  expect(blockJsonWithNesting.allowedBlocks).toEqual(["core/group"]);
   runGeneratedScript(targetDir, "scripts/sync-types-to-block-json.ts", [
     "--check",
   ]);
@@ -277,7 +278,7 @@ test("canonical CLI can add a basic block to an official workspace template", as
     fs
       .readFileSync(blockConfigPath, "utf8")
       .replace(
-        "\t\tallowedBlocks: [],",
+        '\t\tallowedBlocks: [ "core/group" ],',
         '\t\tallowedBlocks: [ "demo-space/missing-child" ],'
       ),
     "utf8"

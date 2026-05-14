@@ -152,6 +152,50 @@ describe("metadata-core endpoint manifests", () => {
     ).not.toThrow();
   });
 
+  test("validateBlockNestingContract can allow external relationship names", () => {
+    expect(() =>
+      validateBlockNestingContract(
+        defineBlockNesting({
+          "demo/section": {
+            parent: ["core/group"],
+          },
+        }),
+        {
+          allowExternalBlockNames: true,
+          knownBlockNames: ["demo/section"],
+        }
+      )
+    ).not.toThrow();
+
+    expect(() =>
+      validateBlockNestingContract(
+        defineBlockNesting({
+          "demo/section": {
+            parent: ["demo/missing-parent"],
+          },
+        }),
+        {
+          allowExternalBlockNames: true,
+          knownBlockNames: ["demo/section"],
+        }
+      )
+    ).toThrow('parent references unknown block "demo/missing-parent"');
+
+    expect(() =>
+      validateBlockNestingContract(
+        defineBlockNesting({
+          "core/group": {
+            allowedBlocks: ["demo/section"],
+          },
+        }),
+        {
+          allowExternalBlockNames: true,
+          knownBlockNames: ["demo/section"],
+        }
+      )
+    ).toThrow('Contract key references unknown block "core/group"');
+  });
+
   test("syncBlockMetadata applies typed nesting relationships to block metadata", async () => {
     const root = fs.mkdtempSync(
       path.join(os.tmpdir(), "wp-typia-nesting-sync-")
@@ -198,12 +242,13 @@ describe("metadata-core endpoint manifests", () => {
 
     try {
       await syncBlockMetadata({
+        allowExternalBlockNames: true,
         blockJsonFile: "block.json",
         knownBlockNames: ["demo/container", "demo/section"],
         manifestFile: "typia.manifest.json",
         nesting: defineBlockNesting({
           "demo/container": {
-            allowedBlocks: ["demo/section"],
+            allowedBlocks: ["demo/section", "core/paragraph"],
           },
           "demo/section": {
             parent: ["demo/container"],
@@ -217,7 +262,10 @@ describe("metadata-core endpoint manifests", () => {
       const blockJson = JSON.parse(
         fs.readFileSync(path.join(root, "block.json"), "utf8")
       );
-      expect(blockJson.allowedBlocks).toEqual(["demo/section"]);
+      expect(blockJson.allowedBlocks).toEqual([
+        "demo/section",
+        "core/paragraph",
+      ]);
       expect(blockJson.ancestor).toBeUndefined();
       expect(blockJson.attributes.title).toEqual({ type: "string" });
 

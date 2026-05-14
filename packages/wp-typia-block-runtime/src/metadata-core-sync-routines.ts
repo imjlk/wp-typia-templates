@@ -63,6 +63,7 @@ export async function syncBlockMetadataArtifacts(
 		) as Record<string, unknown>;
 		if (options.nesting) {
 			validateBlockNestingContract(options.nesting, {
+				allowExternalBlockNames: options.allowExternalBlockNames,
 				knownBlockNames: options.knownBlockNames,
 			});
 			if (typeof blockJson.name !== 'string' || blockJson.name.trim() === '') {
