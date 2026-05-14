@@ -133,7 +133,11 @@ describe("@wp-typia/block-types export contracts", () => {
 							"const registration = await import('@wp-typia/block-types/blocks/registration');",
 							"const supports = await import('@wp-typia/block-types/blocks/supports');",
 							"const registered = registration.registerScaffoldBlockType('wp-typia/demo', { title: 'Demo' });",
+							"const definedSupports = supports.defineSupports({ minWordPress: '6.6', spacing: { padding: true }, typography: { fontSize: true } });",
+							"const supportsManifest = supports.getDefinedSupportsCompatibilityManifest(definedSupports);",
 							"console.log(JSON.stringify({",
+							"  definedSupportsPadding: definedSupports.spacing.padding,",
+							"  definedSupportsManifestFeatures: supportsManifest.supported.map((feature) => feature.feature),",
 							"  rootHasRegister: typeof root.registerScaffoldBlockType === 'function',",
 							"  rootHasSupports: Array.isArray(root.BLOCK_SUPPORT_FEATURES),",
 							"  blockEditorHasSpacing: Array.isArray(blockEditor.SPACING_DIMENSIONS),",
@@ -161,6 +165,8 @@ describe("@wp-typia/block-types export contracts", () => {
 				alignments: string[];
 				aspectRatios: string[];
 				blockEditorHasSpacing: boolean;
+				definedSupportsManifestFeatures: string[];
+				definedSupportsPadding: boolean;
 				layoutTypes: string[];
 				namedColors: string[];
 				registeredName: string | null;
@@ -178,6 +184,11 @@ describe("@wp-typia/block-types export contracts", () => {
 
 		expect(summary.rootHasRegister).toBe(true);
 		expect(summary.rootHasSupports).toBe(true);
+		expect(summary.definedSupportsPadding).toBe(true);
+		expect(summary.definedSupportsManifestFeatures).toEqual([
+			"spacing.padding",
+			"typography.fontSize",
+		]);
 		expect(summary.blockEditorHasSpacing).toBe(true);
 		expect(summary.alignments).toEqual(["left", "center", "right", "wide", "full"]);
 		expect(summary.namedColors).toEqual([

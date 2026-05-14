@@ -172,6 +172,12 @@ export const WORDPRESS_BLOCK_API_COMPATIBILITY = {
       since: '6.5',
       source: 'blockSupportsHandbook',
     },
+    contentRole: {
+      label: 'supports.contentRole',
+      runtime: ['block-json', 'editor-js'],
+      since: '6.9',
+      source: 'blockSupportsHandbook',
+    },
     dimensions: {
       derivedAttributes: ['style'],
       label: 'supports.dimensions',
@@ -185,6 +191,12 @@ export const WORDPRESS_BLOCK_API_COMPATIBILITY = {
       runtime: ['block-json', 'editor-js'],
       since: '5.9',
       source: 'themeJsonStyleVersions',
+    },
+    listView: {
+      label: 'supports.listView',
+      runtime: ['block-json', 'editor-js'],
+      since: '7.0',
+      source: 'blockSupportsHandbook',
     },
     position: {
       derivedAttributes: ['style'],

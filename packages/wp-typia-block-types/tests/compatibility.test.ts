@@ -18,6 +18,14 @@ describe("WordPress block API compatibility matrix", () => {
 			since: "6.9",
 			source: "blockSupportsHandbook",
 		});
+		expect(WORDPRESS_BLOCK_API_COMPATIBILITY.blockSupports.contentRole).toMatchObject({
+			since: "6.9",
+			source: "blockSupportsHandbook",
+		});
+		expect(WORDPRESS_BLOCK_API_COMPATIBILITY.blockSupports.listView).toMatchObject({
+			since: "7.0",
+			source: "blockSupportsHandbook",
+		});
 		expect(
 			WORDPRESS_BLOCK_API_COMPATIBILITY.blockSupports["typography.textAlign"],
 		).toMatchObject({
