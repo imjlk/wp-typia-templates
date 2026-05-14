@@ -512,14 +512,16 @@ export function defineVariations<
 ): DefinedBlockVariations<TVariations> {
   const entries = createBlockVariationRegistrationPlan(variations);
   const strict = options.strict ?? true;
+  const variationDiagnostics = entries.flatMap(
+    (entry) => getDefinedVariationMetadata(entry.variation)?.diagnostics ?? [],
+  );
+  const collectionDiagnostics = createCollectionDiagnostics(entries, strict);
   const diagnostics = [
-    ...entries.flatMap(
-      (entry) => getDefinedVariationMetadata(entry.variation)?.diagnostics ?? [],
-    ),
-    ...createCollectionDiagnostics(entries, strict),
+    ...variationDiagnostics,
+    ...collectionDiagnostics,
   ];
 
-  handleVariationDiagnostics(diagnostics, options.onDiagnostic);
+  handleVariationDiagnostics(collectionDiagnostics, options.onDiagnostic);
 
   const normalizedVariations = [...variations] as unknown as DefinedBlockVariations<
     TVariations

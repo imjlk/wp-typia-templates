@@ -206,6 +206,12 @@ metadata object suitable for `registerBlockVariation(...)`; the target block nam
 and compatibility manifest are stored on a non-enumerable symbol so generated
 registration code can still recover the block target.
 
+Static registration source generation serializes JSON-compatible variation
+metadata. Function-based `isActive` callbacks are accepted by the type helper,
+but `createStaticBlockVariationRegistrationSource()` rejects them; use a dynamic
+registration path aligned with the `blockVariations.phpVariationCallback`
+compatibility entry when callbacks must stay executable.
+
 ```ts
 import {
   createStaticBlockVariationRegistrationSource,

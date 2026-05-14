@@ -290,6 +290,41 @@ describe("defineVariations", () => {
 		]);
 	});
 
+	test("stores per-variation diagnostics without re-emitting them from collections", () => {
+		const variationDiagnostics: BlockVariationDiagnostic[] = [];
+		const collectionDiagnostics: BlockVariationDiagnostic[] = [];
+		const variation = defineVariation<ParagraphAttributes>(
+			"core/paragraph",
+			{
+				attributes: {
+					className: "is-style-passive",
+				},
+				name: "example-passive-paragraph",
+				title: "Passive Paragraph",
+			},
+			{
+				onDiagnostic: (diagnostic) => variationDiagnostics.push(diagnostic),
+			},
+		);
+		const variations = defineVariations([variation] as const, {
+			onDiagnostic: (diagnostic) => collectionDiagnostics.push(diagnostic),
+		});
+
+		expect(variationDiagnostics).toMatchObject([
+			{
+				code: "missing-is-active",
+				variationName: "example-passive-paragraph",
+			},
+		]);
+		expect(collectionDiagnostics).toEqual([]);
+		expect(getDefinedVariationsMetadata(variations)?.diagnostics).toMatchObject([
+			{
+				code: "missing-is-active",
+				variationName: "example-passive-paragraph",
+			},
+		]);
+	});
+
 	test("rejects function-based isActive when generating static registration source", () => {
 		const variation = defineVariation<ParagraphAttributes>("core/paragraph", {
 			attributes: {
