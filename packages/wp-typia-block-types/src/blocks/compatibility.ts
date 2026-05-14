@@ -116,6 +116,14 @@ export const WORDPRESS_BLOCK_API_COMPATIBILITY = {
       since: '6.7',
       source: 'wordpressBlocksPackage',
     },
+    editorFieldsList: {
+      fallback:
+        'Register the source without getFieldsList() or keep a custom editor UI.',
+      label: 'registerBlockBindingsSource() getFieldsList()',
+      runtime: ['editor-js'],
+      since: '6.9',
+      source: 'blockBindingsHandbook',
+    },
     editorSourceLookup: {
       label: 'getBlockBindingsSource() and getBlockBindingsSources()',
       runtime: ['editor-js'],

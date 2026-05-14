@@ -55,11 +55,27 @@ import {
 import {
 	WORDPRESS_BLOCK_API_COMPATIBILITY,
 	createWordPressBlockApiCompatibilityManifest,
+	type WordPressBlockBindingCompatibilityFeature,
 	type WordPressBlockApiCompatibilityFeature,
 	type WordPressBlockSupportCompatibilityFeature,
 	type WordPressCompatibilitySettings,
 	type WordPressVersion,
 } from "@wp-typia/block-types/blocks/compatibility";
+import {
+	createEditorBindingSourceRegistrationSource,
+	createPhpBindingSourceRegistrationSource,
+	defineBindableAttributes,
+	defineBindingSource,
+	defineBlockMetadataBindings,
+	defineTypedBlockMetadataBindings,
+	getDefinedBindingSourceMetadata,
+	getDefinedBindingSourceCompatibilityManifest,
+	type Binding,
+	type BindingSourceField,
+	type BindingSourceRegistrationEntry,
+	type BlockMetadataBindings,
+	type TypedBlockMetadataBindings,
+} from "@wp-typia/block-types/blocks/bindings";
 import {
 	BLOCK_VARIATION_SCOPES,
 	registerScaffoldBlockType,
@@ -132,6 +148,8 @@ const compatibilityFeature: WordPressBlockApiCompatibilityFeature = {
 };
 const supportCompatibilityFeature: WordPressBlockSupportCompatibilityFeature =
 	"typography.textAlign";
+const bindingCompatibilityFeature: WordPressBlockBindingCompatibilityFeature =
+	"editorFieldsList";
 const compatibilityManifest = createWordPressBlockApiCompatibilityManifest(
 	[compatibilityFeature],
 	compatibilitySettings,
@@ -184,6 +202,92 @@ const alignWideDoesNotExposeAlign: "align" extends keyof AlignWideOnlySupportAtt
 
 type ExampleAttributes = SupportAttributes<typeof proseSupports> & {
 	content: string;
+};
+
+type ProfileBindingArgs = {
+	field: "display_name" | "image_url";
+};
+
+type ProfileCardAttributes = {
+	displayName?: string;
+	imageUrl?: string;
+	metadata?: BlockMetadataBindings<{
+		imageUrl: Binding<"example/profile-data", { field: "image_url" }>;
+	}>;
+};
+
+const profileBindableAttributes =
+	defineBindableAttributes<ProfileCardAttributes>("example/profile-card", [
+		"imageUrl",
+	] as const);
+const profileFields = [
+	{
+		args: {
+			field: "display_name",
+		},
+		label: "Display name",
+		name: "display_name",
+		type: "string",
+	},
+	{
+		args: {
+			field: "image_url",
+		},
+		label: "Image URL",
+		name: "image_url",
+		type: "string",
+	},
+] as const satisfies readonly BindingSourceField<ProfileBindingArgs>[];
+const profileDataSource = defineBindingSource({
+	args: {
+		field: "display_name" as ProfileBindingArgs["field"],
+	},
+	bindableAttributes: [profileBindableAttributes],
+	fields: profileFields,
+	getValueCallback: "example_get_profile_binding_value",
+	label: "Profile Data",
+	minWordPress: {
+		editor: "6.7",
+		fieldsList: "6.9",
+		server: "6.5",
+		supportedAttributesFilter: "6.9",
+	},
+	name: "example/profile-data",
+	usesContext: ["postId"],
+});
+const profileSourceManifest =
+	getDefinedBindingSourceCompatibilityManifest(profileDataSource);
+const profileSourceMetadata = getDefinedBindingSourceMetadata(profileDataSource);
+const profileMetadata = defineBlockMetadataBindings({
+	imageUrl: {
+		args: {
+			field: "image_url",
+		},
+		source: profileDataSource.name,
+	} satisfies Binding<typeof profileDataSource, { field: "image_url" }>,
+});
+const typedProfileMetadata =
+	defineTypedBlockMetadataBindings<ProfileCardAttributes>({
+		imageUrl: {
+			args: {
+				field: "display_name",
+			},
+			source: profileDataSource.name,
+		} satisfies Binding<typeof profileDataSource, { field: "display_name" }>,
+	});
+const profileMetadataContract: TypedBlockMetadataBindings<
+	ProfileCardAttributes,
+	{
+		imageUrl: Binding<typeof profileDataSource, { field: "image_url" }>;
+	}
+> = profileMetadata;
+const profilePhpRegistrationSource =
+	createPhpBindingSourceRegistrationSource(profileDataSource);
+const profileEditorRegistrationSource =
+	createEditorBindingSourceRegistrationSource(profileDataSource);
+const profileRegistrationEntry: BindingSourceRegistrationEntry = {
+	metadata: profileSourceMetadata!,
+	source: profileDataSource,
 };
 
 type ParagraphVariationAttributes = {
@@ -360,6 +464,7 @@ void spacingSupportKeys;
 void typographySupportKeys;
 void compatibilityManifest;
 void supportCompatibilityFeature;
+void bindingCompatibilityFeature;
 void supportsTextAlignSince;
 void proseSupports;
 void proseSupportManifest;
@@ -367,6 +472,17 @@ void alignSupports;
 void alignSupportHasAlign;
 void alignWideOnlySupports;
 void alignWideDoesNotExposeAlign;
+void profileBindableAttributes;
+void profileFields;
+void profileDataSource;
+void profileSourceManifest;
+void profileSourceMetadata;
+void profileMetadata;
+void typedProfileMetadata;
+void profileMetadataContract;
+void profilePhpRegistrationSource;
+void profileEditorRegistrationSource;
+void profileRegistrationEntry;
 void paragraphVariation;
 void headingVariation;
 void proseGroupVariation;
@@ -408,8 +524,36 @@ const invalidVariationActiveAttribute = defineVariation<HeadingVariationAttribut
 	},
 );
 
+// @ts-expect-error Binding args must match the source args declared by defineBindingSource().
+const invalidProfileBinding: Binding<typeof profileDataSource, { field: "missing" }> = {
+	args: {
+		field: "missing",
+	},
+	source: profileDataSource.name,
+};
+
+const invalidBindableAttributes =
+	defineBindableAttributes<ProfileCardAttributes>("example/profile-card", [
+		// @ts-expect-error Bindable attributes must reference typed block attributes.
+		"missing",
+	] as const);
+
+const invalidTypedProfileMetadata =
+	defineTypedBlockMetadataBindings<ProfileCardAttributes>({
+		// @ts-expect-error metadata.bindings keys must reference typed block attributes.
+		missing: {
+			args: {
+				field: "image_url",
+			},
+			source: profileDataSource.name,
+		},
+	});
+
 void invalidBlockAlignment;
 void invalidNamedColor;
 void invalidVariationScope;
 void invalidTextAlignments;
 void invalidVariationActiveAttribute;
+void invalidProfileBinding;
+void invalidBindableAttributes;
+void invalidTypedProfileMetadata;

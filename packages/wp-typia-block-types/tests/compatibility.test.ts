@@ -48,6 +48,13 @@ describe("WordPress block API compatibility matrix", () => {
 			source: "blockBindingsReference",
 		});
 		expect(
+			WORDPRESS_BLOCK_API_COMPATIBILITY.blockBindings.editorFieldsList,
+		).toMatchObject({
+			runtime: ["editor-js"],
+			since: "6.9",
+			source: "blockBindingsHandbook",
+		});
+		expect(
 			WORDPRESS_BLOCK_API_COMPATIBILITY.blockBindings.supportedAttributesFilter,
 		).toMatchObject({
 			since: "6.9",

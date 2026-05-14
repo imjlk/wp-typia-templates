@@ -41,6 +41,10 @@ function writeMockWordPressBlocks(projectRoot: string) {
 			"  globalThis.__wpTypiaRegisteredVariations ??= [];",
 			"  globalThis.__wpTypiaRegisteredVariations.push({ blockName, variation });",
 			"}",
+			"export function registerBlockBindingsSource(source) {",
+			"  globalThis.__wpTypiaRegisteredBindingSources ??= [];",
+			"  globalThis.__wpTypiaRegisteredBindingSources.push(source);",
+			"}",
 			"",
 		].join("\n"),
 		"utf8",
@@ -95,6 +99,11 @@ describe("@wp-typia/block-types export contracts", () => {
 			import: "./dist/blocks/index.js",
 			types: "./dist/blocks/index.d.ts",
 		});
+		expect(packageJson.exports?.["./blocks/bindings"]).toEqual({
+			default: "./dist/blocks/bindings.js",
+			import: "./dist/blocks/bindings.js",
+			types: "./dist/blocks/bindings.d.ts",
+		});
 		expect(packageJson.exports?.["./blocks/compatibility"]).toEqual({
 			default: "./dist/blocks/compatibility.js",
 			import: "./dist/blocks/compatibility.js",
@@ -138,6 +147,7 @@ describe("@wp-typia/block-types export contracts", () => {
 							"const styleAttributes = await import('@wp-typia/block-types/block-editor/style-attributes');",
 							"const typography = await import('@wp-typia/block-types/block-editor/typography');",
 							"const blocks = await import('@wp-typia/block-types/blocks');",
+							"const bindings = await import('@wp-typia/block-types/blocks/bindings');",
 							"const compatibility = await import('@wp-typia/block-types/blocks/compatibility');",
 							"const registration = await import('@wp-typia/block-types/blocks/registration');",
 							"const supports = await import('@wp-typia/block-types/blocks/supports');",
@@ -148,11 +158,21 @@ describe("@wp-typia/block-types export contracts", () => {
 							"const paragraphVariation = variations.defineVariation('core/paragraph', { allowMissingIsActive: true, name: 'demo-paragraph', title: 'Demo Paragraph', attributes: { className: 'is-style-demo' } });",
 							"const variationManifest = variations.getDefinedVariationCompatibilityManifest(paragraphVariation);",
 							"const variationSource = variations.createStaticBlockVariationRegistrationSource([paragraphVariation]);",
+							"const profileSource = bindings.defineBindingSource({ name: 'example/profile-data', label: 'Profile Data', getValueCallback: 'example_get_profile_binding_value', minWordPress: { server: '6.5', editor: '6.7', fieldsList: '6.9', supportedAttributesFilter: '6.9' }, fields: [{ name: 'image_url', label: 'Image URL', args: { field: 'image_url' } }], bindableAttributes: [bindings.defineBindableAttributes('example/profile-card', ['imageUrl'])] });",
+							"const bindingManifest = bindings.getDefinedBindingSourceCompatibilityManifest(profileSource);",
+							"const bindingMetadata = bindings.defineBlockMetadataBindings({ imageUrl: { source: profileSource.name, args: { field: 'image_url' } } });",
+							"const bindingPhpSource = bindings.createPhpBindingSourceRegistrationSource(profileSource);",
+							"const bindingEditorSource = bindings.createEditorBindingSourceRegistrationSource(profileSource);",
 							"console.log(JSON.stringify({",
+							"  bindingEditorSourceHasRegistration: bindingEditorSource.includes('registerBlockBindingsSource({'),",
+							"  bindingManifestFeatures: bindingManifest.supported.map((feature) => feature.feature),",
+							"  bindingMetadataSource: bindingMetadata.bindings.imageUrl.source,",
+							"  bindingPhpSourceHasRegistration: bindingPhpSource.includes(\"register_block_bindings_source( 'example/profile-data'\"),",
 							"  definedSupportsPadding: definedSupports.spacing.padding,",
 							"  definedSupportsManifestFeatures: supportsManifest.supported.map((feature) => feature.feature),",
 							"  definedVariationBlockName: variations.getDefinedVariationBlockName(paragraphVariation),",
 							"  definedVariationManifestFeatures: variationManifest.supported.map((feature) => feature.feature),",
+							"  rootHasBindings: typeof root.defineBindingSource === 'function',",
 							"  rootHasVariations: typeof root.defineVariation === 'function',",
 							"  rootHasRegister: typeof root.registerScaffoldBlockType === 'function',",
 							"  rootHasSupports: Array.isArray(root.BLOCK_SUPPORT_FEATURES),",
@@ -181,6 +201,10 @@ describe("@wp-typia/block-types export contracts", () => {
 			) as {
 				alignments: string[];
 				aspectRatios: string[];
+				bindingEditorSourceHasRegistration: boolean;
+				bindingManifestFeatures: string[];
+				bindingMetadataSource: string;
+				bindingPhpSourceHasRegistration: boolean;
 				blockEditorHasSpacing: boolean;
 				definedVariationBlockName: string | undefined;
 				definedVariationManifestFeatures: string[];
@@ -190,6 +214,7 @@ describe("@wp-typia/block-types export contracts", () => {
 				namedColors: string[];
 				registeredName: string | null;
 				registeredTitle: string | null;
+				rootHasBindings: boolean;
 				rootHasRegister: boolean;
 				rootHasSupports: boolean;
 				rootHasVariations: boolean;
@@ -206,6 +231,17 @@ describe("@wp-typia/block-types export contracts", () => {
 		expect(summary.rootHasRegister).toBe(true);
 		expect(summary.rootHasSupports).toBe(true);
 		expect(summary.rootHasVariations).toBe(true);
+		expect(summary.rootHasBindings).toBe(true);
+		expect(summary.bindingManifestFeatures).toEqual([
+			"metadata.bindings",
+			"serverRegistration",
+			"editorRegistration",
+			"editorFieldsList",
+			"supportedAttributesFilter",
+		]);
+		expect(summary.bindingMetadataSource).toBe("example/profile-data");
+		expect(summary.bindingPhpSourceHasRegistration).toBe(true);
+		expect(summary.bindingEditorSourceHasRegistration).toBe(true);
 		expect(summary.definedSupportsPadding).toBe(true);
 		expect(summary.definedSupportsManifestFeatures).toEqual([
 			"spacing.padding",
@@ -262,6 +298,7 @@ describe("@wp-typia/block-types export contracts", () => {
 		expect(builtIndexDts).toContain('export * from "./blocks/index.js";');
 		expect(builtBlockEditorIndexJs).toContain('export * from "./alignment.js";');
 		expect(builtBlockEditorIndexJs).toContain('export * from "./style-attributes.js";');
+		expect(builtBlocksIndexJs).toContain('export * from "./bindings.js";');
 		expect(builtBlocksIndexJs).toContain('export * from "./registration.js";');
 		expect(builtBlocksIndexJs).toContain('export * from "./supports.js";');
 		expect(builtBlocksIndexJs).toContain('export * from "./compatibility.js";');

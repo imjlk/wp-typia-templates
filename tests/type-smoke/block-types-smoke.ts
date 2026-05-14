@@ -41,6 +41,19 @@ import {
   type WordPressVersion,
 } from '@wp-typia/block-types/blocks/compatibility';
 import {
+  createEditorBindingSourceRegistrationSource,
+  createPhpBindingSourceRegistrationSource,
+  defineBindableAttributes,
+  defineBindingSource,
+  defineTypedBlockMetadataBindings,
+} from '@wp-typia/block-types/blocks/bindings';
+import type {
+  Binding,
+  BindingSourceDiagnostic,
+  BindingSourceRegistrationEntry,
+  TypedBlockMetadataBindings,
+} from '@wp-typia/block-types/blocks/bindings';
+import {
   defineSupports,
   getDefinedSupportsCompatibilityManifest,
 } from '@wp-typia/block-types/blocks/supports';
@@ -271,6 +284,10 @@ interface DemoRegistrationAttributes {
   content?: string;
   isVisible?: boolean;
 }
+interface DemoProfileAttributes {
+  displayName?: string;
+  imageUrl?: string;
+}
 
 const DemoEdit = (_props: BlockEditProps<DemoRegistrationAttributes>) => null;
 const DemoSave = (_props: BlockSaveProps<DemoRegistrationAttributes>) => null;
@@ -323,6 +340,61 @@ const typedVariationEntry: BlockVariationRegistrationEntry | undefined =
 const typedVariationSource =
   createStaticBlockVariationRegistrationSource(typedVariations);
 const variationDiagnostic: BlockVariationDiagnostic | undefined = undefined;
+const profileBindableAttributes =
+  defineBindableAttributes<DemoProfileAttributes>('demo/profile-card', [
+    'imageUrl',
+  ] as const);
+const profileBindingSource = defineBindingSource({
+  args: {
+    field: 'display_name' as 'display_name' | 'image_url',
+  },
+  bindableAttributes: [profileBindableAttributes],
+  fields: [
+    {
+      args: {
+        field: 'display_name',
+      },
+      label: 'Display name',
+      name: 'display_name',
+      type: 'string',
+    },
+    {
+      args: {
+        field: 'image_url',
+      },
+      label: 'Image URL',
+      name: 'image_url',
+      type: 'string',
+    },
+  ],
+  getValueCallback: 'demo_get_profile_binding_value',
+  label: 'Profile Data',
+  minWordPress: {
+    editor: '6.7',
+    fieldsList: '6.9',
+    server: '6.5',
+    supportedAttributesFilter: '6.9',
+  },
+  name: 'demo/profile-data',
+  usesContext: ['postId'],
+});
+const profileBindings = defineTypedBlockMetadataBindings<DemoProfileAttributes>({
+  imageUrl: {
+    args: {
+      field: 'image_url',
+    },
+    source: profileBindingSource.name,
+  } satisfies Binding<typeof profileBindingSource, { field: 'image_url' }>,
+});
+const profileBindingsContract: TypedBlockMetadataBindings<DemoProfileAttributes> =
+  profileBindings;
+const profilePhpSource =
+  createPhpBindingSourceRegistrationSource(profileBindingSource);
+const profileEditorSource =
+  createEditorBindingSourceRegistrationSource(profileBindingSource);
+const profileBindingDiagnostic: BindingSourceDiagnostic | undefined = undefined;
+const profileRegistrationEntry: BindingSourceRegistrationEntry | undefined =
+  undefined;
 const parsedBlock: BlockInstance<DemoRegistrationAttributes> = {
   attributes: { content: 'hello', isVisible: true },
   clientId: 'demo-client-id',
@@ -404,4 +476,12 @@ void typedVariationEntries;
 void typedVariationEntry;
 void typedVariationSource;
 void variationDiagnostic;
+void profileBindableAttributes;
+void profileBindingSource;
+void profileBindings;
+void profileBindingsContract;
+void profilePhpSource;
+void profileEditorSource;
+void profileBindingDiagnostic;
+void profileRegistrationEntry;
 void blockVerticalAlignment;
