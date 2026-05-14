@@ -64,8 +64,8 @@ export interface RunAddRestResourceCommandResult {
  * @property secretMaskedResponseFieldName Optional alias for
  * `secretStateFieldName`.
  * @property secretFieldName Optional write-only request secret field.
- * @property secretPreserveOnEmpty Optional true/false string or boolean for
- * blank-secret preservation. Defaults to true when `secretFieldName` is set.
+ * @property secretPreserveOnEmpty Optional normalized boolean for blank-secret
+ * preservation. Defaults to true when `secretFieldName` is set.
  * @property workspace Resolved official workspace project.
  */
 export interface ManualRestContractScaffoldOptions {
@@ -84,7 +84,7 @@ export interface ManualRestContractScaffoldOptions {
 	secretFieldName: string | undefined;
 	secretHasValueFieldName: string | undefined;
 	secretMaskedResponseFieldName: string | undefined;
-	secretPreserveOnEmpty: boolean | string | undefined;
+	secretPreserveOnEmpty: boolean | undefined;
 	secretStateFieldName: string | undefined;
 	workspace: WorkspaceProject;
 }

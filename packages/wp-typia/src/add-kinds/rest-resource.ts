@@ -1,4 +1,9 @@
 import {
+  CLI_DIAGNOSTIC_CODES,
+  createCliDiagnosticCodeError,
+} from '@wp-typia/project-tools/cli-diagnostics';
+
+import {
   readOptionalDashedOrCamelStringFlag,
   readOptionalStrictStringFlag,
 } from '../cli-string-flags';
@@ -20,6 +25,45 @@ const REST_RESOURCE_MISSING_NAME_MESSAGE = [
   `  ${REST_RESOURCE_GENERATED_USAGE}`,
   `  ${REST_RESOURCE_MANUAL_USAGE}`,
 ].join('\n');
+const SECRET_PRESERVE_ON_EMPTY_TRUE_VALUES = new Set(['1', 'true', 'yes']);
+const SECRET_PRESERVE_ON_EMPTY_FALSE_VALUES = new Set(['0', 'false', 'no']);
+
+function readOptionalSecretPreserveOnEmptyFlag(
+  flags: Record<string, unknown>,
+): boolean | undefined {
+  const value = flags['secret-preserve-on-empty'] ?? flags.secretPreserveOnEmpty;
+  if (value === undefined || value === null) {
+    return undefined;
+  }
+  if (typeof value === 'boolean') {
+    return value;
+  }
+  if (typeof value !== 'string') {
+    throw createCliDiagnosticCodeError(
+      CLI_DIAGNOSTIC_CODES.MISSING_ARGUMENT,
+      '`--secret-preserve-on-empty` requires a value.',
+    );
+  }
+
+  const normalized = value.trim().toLowerCase();
+  if (normalized.length === 0) {
+    throw createCliDiagnosticCodeError(
+      CLI_DIAGNOSTIC_CODES.MISSING_ARGUMENT,
+      '`--secret-preserve-on-empty` requires a value.',
+    );
+  }
+  if (SECRET_PRESERVE_ON_EMPTY_TRUE_VALUES.has(normalized)) {
+    return true;
+  }
+  if (SECRET_PRESERVE_ON_EMPTY_FALSE_VALUES.has(normalized)) {
+    return false;
+  }
+
+  throw createCliDiagnosticCodeError(
+    CLI_DIAGNOSTIC_CODES.INVALID_ARGUMENT,
+    'Manual REST contract --secret-preserve-on-empty must be true or false.',
+  );
+}
 
 export const restResourceAddKindEntry =
   defineAddKindRegistryEntry<AddRestResourceResult>({
@@ -152,10 +196,8 @@ export const restResourceAddKindEntry =
         'secret-masked-response-field',
         'secretMaskedResponseField',
       );
-      const secretPreserveOnEmpty = readOptionalDashedOrCamelStringFlag(
+      const secretPreserveOnEmpty = readOptionalSecretPreserveOnEmptyFlag(
         context.flags,
-        'secret-preserve-on-empty',
-        'secretPreserveOnEmpty',
       );
       const secretStateFieldName = readOptionalDashedOrCamelStringFlag(
         context.flags,

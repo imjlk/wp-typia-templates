@@ -304,7 +304,7 @@ export interface RunAddRestResourceCommandOptions {
 	secretFieldName?: string;
 	secretHasValueFieldName?: string;
 	secretMaskedResponseFieldName?: string;
-	secretPreserveOnEmpty?: boolean | string;
+	secretPreserveOnEmpty?: boolean;
 	secretStateFieldName?: string;
 }
 
