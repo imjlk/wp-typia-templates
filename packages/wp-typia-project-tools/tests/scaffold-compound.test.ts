@@ -242,6 +242,8 @@ describe('@wp-typia/project-tools scaffold compound', () => {
       expect(parentBlockJson.allowedBlocks).toEqual([
         'create-block/demo-compound-item',
       ]);
+      expect(blockConfig).toContain('defineBlockNesting');
+      expect(blockConfig).toContain('export const BLOCK_NESTING');
       expect(parentManifest.sourceType).toBe('DemoCompoundAttributes');
       expect(parentManifest.attributes.heading.typia.defaultValue).toBe(
         'Demo Compound',
@@ -842,6 +844,8 @@ describe('@wp-typia/project-tools scaffold compound', () => {
       expect(generatedBlockConfig).toContain(
         'src/blocks/demo-compound-storage/api.openapi.json',
       );
+      expect(generatedBlockConfig).toContain('defineBlockNesting');
+      expect(generatedBlockConfig).toContain('export const BLOCK_NESTING');
       expect(generatedBlockConfig).toContain(
         'restManifest: defineEndpointManifest',
       );

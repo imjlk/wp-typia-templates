@@ -27,6 +27,12 @@ npm run wp-typia:add -- editor-plugin seo-notes --slot document-setting-panel
 npm run wp-typia:add -- hooked-block my-block --anchor core/post-content --position after
 ```
 
+Typed block nesting rules live in `BLOCK_NESTING` inside
+`scripts/block-config.ts`. Declare `parent`, `ancestor`, or `allowedBlocks`
+relationships there and `wp-typia sync --check` will validate referenced block
+names in the workspace namespace while allowing external targets like
+`core/group`, then keep the matching `block.json` metadata current.
+
 ## CLI binary policy
 
 Official workspace projects install `wp-typia` as a local devDependency and

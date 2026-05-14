@@ -127,6 +127,14 @@ Use it for:
 
 The `compound` template creates a parent/child block structure with hidden implementation children, and the generated `add-child` workflow can now grow that into visible container children plus nested ancestor chains for richer document-style `InnerBlocks` hierarchies.
 
+Workspace projects can also keep static nesting metadata in one typed contract.
+Edit `BLOCK_NESTING` in `scripts/block-config.ts`, then run
+`wp-typia sync --check` to verify generated `block.json` `parent`,
+`ancestor`, and `allowedBlocks` fields still match the declared relationships.
+Unknown workspace-local block references fail with actionable diagnostics before
+artifacts are rewritten, while external WordPress or plugin blocks like
+`core/group` remain valid relationship targets.
+
 ### 5. Query Loop variations get a first-class scaffold
 
 The `query-loop` template scaffolds an editor-facing `core/query` variation plugin instead of a standalone block, so you can ship a branded inserter entry with stable namespace identity, default query settings, allowed inspector controls, and inline starter `innerBlocks` without rebuilding the full Query Loop setup flow by hand. Because it owns a variation rather than a standalone custom block, it intentionally does not generate `src/types.ts`, `block.json`, or Typia manifests. It also includes connected `src/patterns/*.php` presets so richer editorial layouts can live in pattern files while `src/index.ts` stays focused on variation identity and query defaults, a dedicated `src/query-extension.ts` seam for custom query params and optional editor-side hook registration, and `inc/query-runtime.php` hooks that keep frontend query mapping and editor preview requests aligned for the same variation.

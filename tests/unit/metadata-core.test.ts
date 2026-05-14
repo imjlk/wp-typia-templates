@@ -5,11 +5,14 @@ import path from "node:path";
 import { describe, expect, test } from "bun:test";
 
 import {
+  defineBlockNesting,
   defineEndpointManifest,
+  runSyncBlockMetadata,
   syncBlockMetadata,
   syncEndpointClient,
   syncRestOpenApi,
   syncTypeSchemas,
+  validateBlockNestingContract,
   type EndpointManifestDefinition,
   type SyncEndpointClientOptions,
   type SyncRestOpenApiContractsOptions,
@@ -131,6 +134,252 @@ function createTempProject(): { root: string; typesFile: string } {
 }
 
 describe("metadata-core endpoint manifests", () => {
+  test("defineBlockNesting preserves typed nesting contracts", () => {
+    const nesting = defineBlockNesting({
+      "demo/container": {
+        allowedBlocks: ["demo/section"],
+      },
+      "demo/section": {
+        parent: ["demo/container"],
+      },
+    } as const);
+
+    expect(nesting["demo/container"].allowedBlocks).toEqual(["demo/section"]);
+    expect(() =>
+      validateBlockNestingContract(nesting, {
+        knownBlockNames: ["demo/container", "demo/section"],
+      })
+    ).not.toThrow();
+  });
+
+  test("validateBlockNestingContract can allow external relationship names", () => {
+    expect(() =>
+      validateBlockNestingContract(
+        defineBlockNesting({
+          "demo/section": {
+            parent: ["core/group"],
+          },
+        }),
+        {
+          allowExternalBlockNames: true,
+          knownBlockNames: ["demo/section"],
+        }
+      )
+    ).not.toThrow();
+
+    expect(() =>
+      validateBlockNestingContract(
+        defineBlockNesting({
+          "demo/section": {
+            parent: ["demo/missing-parent"],
+          },
+        }),
+        {
+          allowExternalBlockNames: true,
+          knownBlockNames: ["demo/section"],
+        }
+      )
+    ).toThrow('parent references unknown block "demo/missing-parent"');
+
+    expect(() =>
+      validateBlockNestingContract(
+        defineBlockNesting({
+          "core/group": {
+            allowedBlocks: ["demo/section"],
+          },
+        }),
+        {
+          allowExternalBlockNames: true,
+          knownBlockNames: ["demo/section"],
+        }
+      )
+    ).toThrow('Contract key references unknown block "core/group"');
+  });
+
+  test("syncBlockMetadata applies typed nesting relationships to block metadata", async () => {
+    const root = fs.mkdtempSync(
+      path.join(os.tmpdir(), "wp-typia-nesting-sync-")
+    );
+    fs.mkdirSync(path.join(root, "src"), { recursive: true });
+    fs.writeFileSync(
+      path.join(root, "block.json"),
+      JSON.stringify(
+        {
+          name: "demo/container",
+          ancestor: ["demo/legacy"],
+          attributes: {},
+          example: { attributes: {} },
+        },
+        null,
+        2
+      ),
+      "utf8"
+    );
+    fs.writeFileSync(
+      path.join(root, "section.json"),
+      JSON.stringify(
+        {
+          name: "demo/section",
+          allowedBlocks: ["demo/legacy-child"],
+          attributes: {},
+          example: { attributes: {} },
+        },
+        null,
+        2
+      ),
+      "utf8"
+    );
+    fs.writeFileSync(
+      path.join(root, "src", "types.ts"),
+      [
+        "export interface ContainerAttributes {",
+        "  title: string;",
+        "}",
+        "",
+      ].join("\n"),
+      "utf8"
+    );
+
+    try {
+      await syncBlockMetadata({
+        allowExternalBlockNames: true,
+        blockJsonFile: "block.json",
+        knownBlockNames: ["demo/container", "demo/section"],
+        manifestFile: "typia.manifest.json",
+        nesting: defineBlockNesting({
+          "demo/container": {
+            allowedBlocks: ["demo/section", "core/paragraph"],
+          },
+          "demo/section": {
+            parent: ["demo/container"],
+          },
+        }),
+        projectRoot: root,
+        sourceTypeName: "ContainerAttributes",
+        typesFile: "src/types.ts",
+      });
+
+      const blockJson = JSON.parse(
+        fs.readFileSync(path.join(root, "block.json"), "utf8")
+      );
+      expect(blockJson.allowedBlocks).toEqual([
+        "demo/section",
+        "core/paragraph",
+      ]);
+      expect(blockJson.ancestor).toBeUndefined();
+      expect(blockJson.attributes.title).toEqual({ type: "string" });
+
+      await syncBlockMetadata({
+        blockJsonFile: "section.json",
+        knownBlockNames: ["demo/root", "demo/container", "demo/section"],
+        manifestFile: "section.manifest.json",
+        nesting: defineBlockNesting({
+          "demo/section": {
+            ancestor: ["demo/root"],
+            parent: ["demo/container"],
+          },
+        }),
+        projectRoot: root,
+        sourceTypeName: "ContainerAttributes",
+        typesFile: "src/types.ts",
+      });
+      const sectionBlockJson = JSON.parse(
+        fs.readFileSync(path.join(root, "section.json"), "utf8")
+      );
+      expect(sectionBlockJson.parent).toEqual(["demo/container"]);
+      expect(sectionBlockJson.ancestor).toEqual(["demo/root"]);
+      expect(sectionBlockJson.allowedBlocks).toBeUndefined();
+
+      fs.writeFileSync(
+        path.join(root, "block.json"),
+        JSON.stringify(
+          {
+            ...blockJson,
+            allowedBlocks: ["demo/other-section"],
+          },
+          null,
+          2
+        ),
+        "utf8"
+      );
+      await expect(
+        syncBlockMetadata(
+          {
+            blockJsonFile: "block.json",
+            knownBlockNames: ["demo/container", "demo/section"],
+            manifestFile: "typia.manifest.json",
+            nesting: defineBlockNesting({
+              "demo/container": {
+                allowedBlocks: ["demo/section"],
+              },
+              "demo/section": {
+                parent: ["demo/container"],
+              },
+            }),
+            projectRoot: root,
+            sourceTypeName: "ContainerAttributes",
+            typesFile: "src/types.ts",
+          },
+          { check: true }
+        )
+      ).rejects.toThrow(path.join(root, "block.json"));
+    } finally {
+      fs.rmSync(root, { force: true, recursive: true });
+    }
+  });
+
+  test("runSyncBlockMetadata reports unknown nesting references", async () => {
+    const root = fs.mkdtempSync(
+      path.join(os.tmpdir(), "wp-typia-nesting-invalid-")
+    );
+    fs.mkdirSync(path.join(root, "src"), { recursive: true });
+    fs.writeFileSync(
+      path.join(root, "block.json"),
+      JSON.stringify(
+        {
+          name: "demo/container",
+          attributes: {},
+          example: { attributes: {} },
+        },
+        null,
+        2
+      ),
+      "utf8"
+    );
+    fs.writeFileSync(
+      path.join(root, "src", "types.ts"),
+      [
+        "export interface ContainerAttributes {",
+        "  title: string;",
+        "}",
+        "",
+      ].join("\n"),
+      "utf8"
+    );
+
+    try {
+      const report = await runSyncBlockMetadata({
+        blockJsonFile: "block.json",
+        knownBlockNames: ["demo/container"],
+        manifestFile: "typia.manifest.json",
+        nesting: defineBlockNesting({
+          "demo/container": {
+            allowedBlocks: ["demo/missing-section"],
+          },
+        }),
+        projectRoot: root,
+        sourceTypeName: "ContainerAttributes",
+        typesFile: "src/types.ts",
+      });
+
+      expect(report.status).toBe("error");
+      expect(report.failure?.code).toBe("invalid-block-nesting-contract");
+      expect(report.failure?.message).toContain("demo/missing-section");
+    } finally {
+      fs.rmSync(root, { force: true, recursive: true });
+    }
+  });
+
   test("defineEndpointManifest preserves the manifest payload", () => {
     expect(manifest.contracts.query.sourceTypeName).toBe("CounterQuery");
     expect(manifest.endpoints[0]).toMatchObject({

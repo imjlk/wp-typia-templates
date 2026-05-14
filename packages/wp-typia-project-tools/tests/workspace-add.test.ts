@@ -224,6 +224,10 @@ test("canonical CLI can add a basic block to an official workspace template", as
     path.join(targetDir, "scripts", "block-config.ts"),
     "utf8"
   );
+  const syncTypesSource = fs.readFileSync(
+    path.join(targetDir, "scripts", "sync-types-to-block-json.ts"),
+    "utf8"
+  );
   const indexSource = fs.readFileSync(
     path.join(targetDir, "src", "blocks", "counter-card", "index.tsx"),
     "utf8"
@@ -235,13 +239,57 @@ test("canonical CLI can add a basic block to an official workspace template", as
     )
   );
 
+  expect(blockConfigSource).toContain("defineBlockNesting");
+  expect(blockConfigSource).toContain("export const BLOCK_NESTING");
   expect(blockConfigSource).toContain('slug: "counter-card"');
+  expect(syncTypesSource).toContain("validateBlockNestingContract");
+  expect(syncTypesSource).toContain("allowExternalBlockNames: true");
+  expect(syncTypesSource).toContain("nesting: BLOCK_NESTING");
   expect(indexSource).toContain("import '../../collection';");
   expect(blockJson.name).toBe("demo-space/counter-card");
   typecheckGeneratedProject(targetDir);
   runGeneratedScript(targetDir, "scripts/sync-types-to-block-json.ts", [
     "--check",
   ]);
+
+  const blockConfigPath = path.join(targetDir, "scripts", "block-config.ts");
+  fs.writeFileSync(
+    blockConfigPath,
+    blockConfigSource.replace(
+      "\t// Add parent, ancestor, and allowedBlocks relationships here.",
+      '\t"demo-space/counter-card": {\n\t\tallowedBlocks: [ "core/group" ],\n\t},'
+    ),
+    "utf8"
+  );
+  runGeneratedScript(targetDir, "scripts/sync-types-to-block-json.ts");
+  const blockJsonWithNesting = JSON.parse(
+    fs.readFileSync(
+      path.join(targetDir, "src", "blocks", "counter-card", "block.json"),
+      "utf8"
+    )
+  );
+  expect(blockJsonWithNesting.allowedBlocks).toEqual(["core/group"]);
+  runGeneratedScript(targetDir, "scripts/sync-types-to-block-json.ts", [
+    "--check",
+  ]);
+
+  fs.writeFileSync(
+    blockConfigPath,
+    fs
+      .readFileSync(blockConfigPath, "utf8")
+      .replace(
+        '\t\tallowedBlocks: [ "core/group" ],',
+        '\t\tallowedBlocks: [ "demo-space/missing-child" ],'
+      ),
+    "utf8"
+  );
+  expect(
+    getCommandErrorMessage(() =>
+      runGeneratedScript(targetDir, "scripts/sync-types-to-block-json.ts", [
+        "--check",
+      ])
+    )
+  ).toContain('allowedBlocks references unknown block "demo-space/missing-child"');
 }, 20_000);
 
 test("canonical CLI can add a basic block with an external layer package", async () => {

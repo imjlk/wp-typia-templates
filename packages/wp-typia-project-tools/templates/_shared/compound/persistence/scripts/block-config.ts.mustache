@@ -1,4 +1,11 @@
-import { defineEndpointManifest } from '@wp-typia/block-runtime/metadata-core';
+import {
+	defineBlockNesting,
+	defineEndpointManifest,
+} from '@wp-typia/block-runtime/metadata-core';
+
+export const BLOCK_NESTING = defineBlockNesting( {
+	// Add parent, ancestor, and allowedBlocks relationships here.
+} );
 
 export const BLOCKS = [
 	{
