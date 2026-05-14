@@ -2959,6 +2959,23 @@ test("canonical CLI can add a pattern to an official workspace template", async 
   });
 
   linkWorkspaceNodeModules(targetDir);
+  const bootstrapPath = path.join(targetDir, "demo-workspace-add-pattern.php");
+  const nestedPatternLoader = [
+    "\t$pattern_modules = array_merge(",
+    "\t\tglob( __DIR__ . '/src/patterns/*.php' ) ?: array(),",
+    "\t\tglob( __DIR__ . '/src/patterns/*/*.php' ) ?: array()",
+    "\t);",
+  ].join("\n");
+  const flatPatternLoader =
+    "\t$pattern_modules = glob( __DIR__ . '/src/patterns/*.php' ) ?: array();";
+  fs.writeFileSync(
+    bootstrapPath,
+    fs.readFileSync(bootstrapPath, "utf8").replace(
+      nestedPatternLoader,
+      flatPatternLoader
+    ),
+    "utf8"
+  );
 
   expect(
     getCommandErrorMessage(() =>
@@ -3002,10 +3019,7 @@ test("canonical CLI can add a pattern to an official workspace template", async 
     path.join(targetDir, "scripts", "block-config.ts"),
     "utf8"
   );
-  const bootstrapSource = fs.readFileSync(
-    path.join(targetDir, "demo-workspace-add-pattern.php"),
-    "utf8"
-  );
+  const bootstrapSource = fs.readFileSync(bootstrapPath, "utf8");
   const patternSource = fs.readFileSync(
     path.join(targetDir, "src", "patterns", "sections", "hero-layout.php"),
     "utf8"

@@ -43,6 +43,11 @@ type ResolvedPatternCatalogOptions = {
 
 const PATTERN_CONTENT_FILE_ROOT = "src/patterns/";
 const PATTERN_TAG_PATTERN = /^[a-z0-9][a-z0-9-]*$/u;
+const FLAT_PATTERN_GLOB = "glob( __DIR__ . '/src/patterns/*.php' ) ?: array()";
+const NESTED_PATTERN_GLOB =
+	"glob( __DIR__ . '/src/patterns/*/*.php' ) ?: array()";
+const LEGACY_FLAT_PATTERN_MODULES_ASSIGNMENT_PATTERN =
+	/^[ \t]*\$pattern_modules\s*=\s*glob\( __DIR__ \. '\/src\/patterns\/\*\.php' \) \?: array\(\);\s*$/mu;
 
 function assertValidPatternRelativePath(
 	label: string,
@@ -233,6 +238,39 @@ function resolvePatternCatalogOptions(
 	};
 }
 
+function buildNestedPatternModulesAssignment(): string {
+	return [
+		"\t$pattern_modules = array_merge(",
+		`\t\t${FLAT_PATTERN_GLOB},`,
+		`\t\t${NESTED_PATTERN_GLOB}`,
+		"\t);",
+	].join("\n");
+}
+
+function ensureNestedPatternLoaderSource(
+	source: string,
+	bootstrapPath: string,
+): string {
+	if (source.includes(NESTED_PATTERN_GLOB)) {
+		return source;
+	}
+	if (LEGACY_FLAT_PATTERN_MODULES_ASSIGNMENT_PATTERN.test(source)) {
+		return source.replace(
+			LEGACY_FLAT_PATTERN_MODULES_ASSIGNMENT_PATTERN,
+			buildNestedPatternModulesAssignment(),
+		);
+	}
+	if (source.includes("array_merge(") && source.includes(FLAT_PATTERN_GLOB)) {
+		return source.replace(
+			FLAT_PATTERN_GLOB,
+			`${FLAT_PATTERN_GLOB},\n\t\t${NESTED_PATTERN_GLOB}`,
+		);
+	}
+	throw new Error(
+		`Unable to repair ${path.basename(bootstrapPath)} pattern loader for nested src/patterns directories.`,
+	);
+}
+
 async function ensurePatternBootstrapAnchors(
 	workspace: WorkspaceProject,
 ): Promise<void> {
@@ -259,8 +297,8 @@ function ${patternCategoryFunctionName}() {
 
 function ${patternRegistrationFunctionName}() {
 \t$pattern_modules = array_merge(
-\t\tglob( __DIR__ . '/src/patterns/*.php' ) ?: array(),
-\t\tglob( __DIR__ . '/src/patterns/*/*.php' ) ?: array()
+\t\t${FLAT_PATTERN_GLOB},
+\t\t${NESTED_PATTERN_GLOB}
 \t);
 \tforeach ( $pattern_modules as $pattern_module ) {
 \t\trequire $pattern_module;
@@ -286,6 +324,8 @@ function ${patternRegistrationFunctionName}() {
 				`Unable to inject pattern bootstrap functions into ${path.basename(bootstrapPath)}.`,
 			);
 		}
+
+		nextSource = ensureNestedPatternLoaderSource(nextSource, bootstrapPath);
 
 		if (!nextSource.includes(patternCategoryHook)) {
 			nextSource = appendPhpSnippetBeforeClosingTag(

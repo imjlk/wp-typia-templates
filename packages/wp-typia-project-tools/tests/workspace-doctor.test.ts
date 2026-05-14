@@ -7,6 +7,7 @@ import {
   createDoctorRunSummary,
   getDoctorChecks,
   getDoctorExitFailureDetailLines,
+  runAddPatternCommand,
 } from "../src/runtime/cli-core.js";
 import {
   getWorkspaceBlockSelectOptions,
@@ -1234,6 +1235,56 @@ test("doctor passes on a healthy multi-block workspace", async () => {
   expect(
     checks.find((check) => check.label === "Block collection author-bio")
       ?.status
+  ).toBe("pass");
+}, 20_000);
+
+test("doctor accepts flat-only legacy pattern loaders for flat catalog files", async () => {
+  const targetDir = path.join(tempRoot, "demo-workspace-doctor-flat-patterns");
+
+  await scaffoldOfficialWorkspace(targetDir, {
+    description: "Demo workspace doctor flat patterns",
+    slug: "demo-workspace-doctor-flat-patterns",
+    title: "Demo Workspace Doctor Flat Patterns",
+  });
+
+  linkWorkspaceNodeModules(targetDir);
+  await runAddPatternCommand({
+    contentFile: "src/patterns/hero-layout.php",
+    cwd: targetDir,
+    patternName: "hero-layout",
+  });
+
+  const bootstrapPath = path.join(
+    targetDir,
+    "demo-workspace-doctor-flat-patterns.php"
+  );
+  const nestedPatternLoader = [
+    "\t$pattern_modules = array_merge(",
+    "\t\tglob( __DIR__ . '/src/patterns/*.php' ) ?: array(),",
+    "\t\tglob( __DIR__ . '/src/patterns/*/*.php' ) ?: array()",
+    "\t);",
+  ].join("\n");
+  const flatPatternLoader =
+    "\t$pattern_modules = glob( __DIR__ . '/src/patterns/*.php' ) ?: array();";
+  fs.writeFileSync(
+    bootstrapPath,
+    fs.readFileSync(bootstrapPath, "utf8").replace(
+      nestedPatternLoader,
+      flatPatternLoader
+    ),
+    "utf8"
+  );
+
+  const checks = await getDoctorChecks(targetDir);
+
+  expect(
+    checks.find((check) => check.label === "Pattern bootstrap")?.status
+  ).toBe("pass");
+  expect(
+    checks.find((check) => check.label === "Pattern catalog")?.status
+  ).toBe("pass");
+  expect(
+    checks.find((check) => check.label === "Pattern hero-layout")?.status
   ).toBe("pass");
 }, 20_000);
 
