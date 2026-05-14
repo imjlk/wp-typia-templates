@@ -3638,11 +3638,11 @@ test("canonical CLI can add a binding source backed by typed post meta", async (
       "--from-post-meta",
       "integration-state",
       "--meta-path",
-      "status",
+      "enabled",
       "--block",
       "counter-card",
       "--attribute",
-      "headline",
+      "isEnabled",
     ],
     {
       cwd: targetDir,
@@ -3673,9 +3673,19 @@ test("canonical CLI can add a binding source backed by typed post meta", async (
     ),
     "utf8"
   );
+  const blockTypesSource = fs.readFileSync(
+    path.join(targetDir, "src", "blocks", "counter-card", "types.ts"),
+    "utf8"
+  );
+  const blockJson = JSON.parse(
+    fs.readFileSync(
+      path.join(targetDir, "src", "blocks", "counter-card", "block.json"),
+      "utf8"
+    )
+  ) as { attributes?: Record<string, unknown> };
 
   expect(blockConfigSource).toContain('postMeta: "integration-state"');
-  expect(blockConfigSource).toContain('metaPath: "status"');
+  expect(blockConfigSource).toContain('metaPath: "enabled"');
   expect(bindingServerSource).toContain("get_post_meta");
   expect(bindingServerSource).toContain("dirname( __DIR__, 3 )");
   expect(bindingServerSource).toContain("_demo_space_integration_state");
@@ -3685,10 +3695,17 @@ test("canonical CLI can add a binding source backed by typed post meta", async (
   expect(bindingServerSource).toContain(
     "'uses_context' => array( 'postId', 'postType' )"
   );
+  expect(bindingServerSource).toContain("current_user_can( 'read_post'");
+  expect(bindingServerSource).toContain(
+    "is_protected_meta( '_demo_space_integration_state', 'post' )"
+  );
+  expect(bindingServerSource).toContain("get_registered_meta_keys");
+  expect(bindingServerSource).toContain("['show_in_rest']");
+  expect(bindingServerSource).not.toContain("get_the_ID");
   expect(bindingServerSource).toContain(
     "src/post-meta/integration-state/meta.schema.json"
   );
-  expect(bindingServerSource).toContain("'status'");
+  expect(bindingServerSource).toContain("'enabled'");
   expect(bindingEditorSource).toContain("POST_META_BINDING_SOURCE");
   expect(bindingEditorSource).toContain("POST_META_BINDING_FIELDS");
   expect(bindingEditorSource).toContain('label: __( "Status", "demo-space" )');
@@ -3703,10 +3720,12 @@ test("canonical CLI can add a binding source backed by typed post meta", async (
   expect(bindingEditorSource).toContain(
     "const values: Record<string, unknown>"
   );
-  expect(bindingEditorSource).toContain('field: "status"');
+  expect(bindingEditorSource).toContain('field: "enabled"');
   expect(bindingEditorSource).toContain(
     'schemaFile: "src/post-meta/integration-state/meta.schema.json"'
   );
+  expect(blockTypesSource).toContain("isEnabled?: boolean;");
+  expect(blockJson.attributes?.isEnabled).toEqual({ type: "boolean" });
 
   const doctorOutput = runCli("node", [entryPath, "doctor", "--format", "json"], {
     cwd: targetDir,

@@ -150,6 +150,7 @@ function buildBindingPostMetaServerSource(options: {
 	const functionPrefix = `${options.phpPrefix}_${bindingSourcePhpId}`;
 	const fieldsFunctionName = `${functionPrefix}_post_meta_binding_fields`;
 	const fallbackValuesFunctionName = `${functionPrefix}_post_meta_preview_values`;
+	const canReadFunctionName = `${functionPrefix}_can_read_post_meta`;
 	const resolveFunctionName = `${functionPrefix}_resolve_binding_source_value`;
 	const supportedAttributesFunctionName = `${functionPrefix}_supported_binding_attributes`;
 	const fieldNames = options.postMeta.fields.map((field) => field.name);
@@ -206,6 +207,26 @@ ${buildPhpPostMetaFallbackMap(options.postMeta.fields)}
 \t}
 }
 
+if ( ! function_exists( '${canReadFunctionName}' ) ) {
+\tfunction ${canReadFunctionName}( int $post_id, string $post_type ) : bool {
+\t\t$post = get_post( $post_id );
+\t\tif ( ! $post ) {
+\t\t\treturn false;
+\t\t}
+\t\tif ( ( ! is_post_publicly_viewable( $post ) && ! current_user_can( 'read_post', $post_id ) ) || post_password_required( $post ) ) {
+\t\t\treturn false;
+\t\t}
+\t\tif ( is_protected_meta( ${quotePhpString(options.postMeta.metaKey)}, 'post' ) ) {
+\t\t\treturn false;
+\t\t}
+
+\t\t$meta_keys = get_registered_meta_keys( 'post', $post_type );
+\t\t$meta_keys = array_merge( $meta_keys, get_registered_meta_keys( 'post', '' ) );
+
+\t\treturn ! empty( $meta_keys[ ${quotePhpString(options.postMeta.metaKey)} ]['show_in_rest'] );
+\t}
+}
+
 if ( ! function_exists( '${resolveFunctionName}' ) ) {
 \tfunction ${resolveFunctionName}( array $source_args, $block_instance = null, $attribute_name = null ) {
 \t\tunset( $attribute_name );
@@ -214,10 +235,11 @@ if ( ! function_exists( '${resolveFunctionName}' ) ) {
 \t\t\t? $source_args['field']
 \t\t\t: ${quotePhpString(options.postMeta.metaPath)};
 \t\tif ( ! in_array( $field, ${fieldsFunctionName}(), true ) ) {
-\t\t\treturn '';
+\t\t\treturn null;
 \t\t}
 
 \t\t$post_id = 0;
+\t\t$post_type = ${quotePhpString(options.postMeta.postType)};
 \t\tif (
 \t\t\tis_object( $block_instance ) &&
 \t\t\tproperty_exists( $block_instance, 'context' ) &&
@@ -226,8 +248,17 @@ if ( ! function_exists( '${resolveFunctionName}' ) ) {
 \t\t) {
 \t\t\t$post_id = absint( $block_instance->context['postId'] );
 \t\t}
-\t\tif ( ! $post_id ) {
-\t\t\t$post_id = absint( get_the_ID() );
+\t\tif (
+\t\t\tis_object( $block_instance ) &&
+\t\t\tproperty_exists( $block_instance, 'context' ) &&
+\t\t\tis_array( $block_instance->context ) &&
+\t\t\tisset( $block_instance->context['postType'] ) &&
+\t\t\tis_string( $block_instance->context['postType'] )
+\t\t) {
+\t\t\t$post_type = $block_instance->context['postType'];
+\t\t}
+\t\tif ( ! $post_id || ! ${canReadFunctionName}( $post_id, $post_type ) ) {
+\t\t\treturn null;
 \t\t}
 
 \t\t$value = null;
@@ -642,15 +673,35 @@ async function resolveBindingPostMetaSource(
 	};
 }
 
-function formatBindingAttributeTypeMember(attributeName: string): string {
+function resolveBindingAttributeTsType(schemaType: string): string {
+	switch (schemaType) {
+		case "array":
+			return "unknown[]";
+		case "boolean":
+			return "boolean";
+		case "integer":
+		case "number":
+			return "number";
+		case "object":
+			return "Record<string, unknown>";
+		default:
+			return "string";
+	}
+}
+
+function formatBindingAttributeTypeMember(
+	attributeName: string,
+	schemaType = "string",
+): string {
 	const propertyName = /^[A-Za-z_$][\w$]*$/u.test(attributeName)
 		? attributeName
 		: JSON.stringify(attributeName);
+	const tsType = resolveBindingAttributeTsType(schemaType);
 	return [
 		"\t/**",
-		"\t * Starter string attribute declared for WordPress Block Bindings.",
+		`\t * Starter ${tsType} attribute declared for WordPress Block Bindings.`,
 		"\t */",
-		`\t${propertyName}?: string;`,
+		`\t${propertyName}?: ${tsType};`,
 	].join("\n");
 }
 
@@ -698,6 +749,7 @@ function insertBindingAttributeTypeMember(
 	source: string,
 	declaration: ts.InterfaceDeclaration,
 	attributeName: string,
+	schemaType = "string",
 ): string {
 	let closeBracePosition = declaration.end - 1;
 	while (closeBracePosition > declaration.pos && source[closeBracePosition] !== "}") {
@@ -710,7 +762,7 @@ function insertBindingAttributeTypeMember(
 	const lineEnding = source.includes("\r\n") ? "\r\n" : "\n";
 	const beforeCloseBrace = source.slice(0, closeBracePosition);
 	const afterCloseBrace = source.slice(closeBracePosition);
-	const memberSource = formatBindingAttributeTypeMember(attributeName)
+	const memberSource = formatBindingAttributeTypeMember(attributeName, schemaType)
 		.split("\n")
 		.join(lineEnding);
 	const prefix = beforeCloseBrace.endsWith(lineEnding) ? "" : lineEnding;
@@ -722,6 +774,7 @@ async function ensureBindingTargetBlockAttributeType(
 	projectDir: string,
 	block: WorkspaceInventory["blocks"][number],
 	target: BindingTarget,
+	schemaType = "string",
 ): Promise<void> {
 	if (!block.attributeTypeName) {
 		throw new Error(
@@ -744,6 +797,7 @@ async function ensureBindingTargetBlockAttributeType(
 			source,
 			targetInterface.declaration,
 			target.attributeName,
+			schemaType,
 		);
 		await fsp.writeFile(typesPath, nextSource, "utf8");
 	}
@@ -1002,7 +1056,15 @@ export async function runAddBindingSourceCommand({
 			"utf8",
 		);
 		if (target && targetBlock) {
-			await ensureBindingTargetBlockAttributeType(workspace.projectDir, targetBlock, target);
+			const targetSchemaType =
+				postMeta?.fields.find((field) => field.name === postMeta.metaPath)?.schemaType ??
+				"string";
+			await ensureBindingTargetBlockAttributeType(
+				workspace.projectDir,
+				targetBlock,
+				target,
+				targetSchemaType,
+			);
 		}
 		await writeBindingSourceRegistry(workspace.projectDir, bindingSourceSlug);
 		await appendWorkspaceInventoryEntries(workspace.projectDir, {
