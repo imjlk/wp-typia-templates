@@ -240,10 +240,15 @@ test("canonical CLI can add a basic block to an official workspace template", as
   );
 
   expect(blockConfigSource).toContain("defineBlockNesting");
+  expect(blockConfigSource).toContain("defineInnerBlocksTemplates");
   expect(blockConfigSource).toContain("export const BLOCK_NESTING");
+  expect(blockConfigSource).toContain("export const BLOCK_TEMPLATES");
   expect(blockConfigSource).toContain('slug: "counter-card"');
+  expect(syncTypesSource).toContain("syncInnerBlocksTemplateModule");
+  expect(syncTypesSource).toContain("validateInnerBlocksTemplates");
   expect(syncTypesSource).toContain("validateBlockNestingContract");
   expect(syncTypesSource).toContain("allowExternalBlockNames: true");
+  expect(syncTypesSource).toContain("inner-blocks-templates.ts");
   expect(syncTypesSource).toContain("nesting: BLOCK_NESTING");
   expect(indexSource).toContain("import '../../collection';");
   expect(blockJson.name).toBe("demo-space/counter-card");
@@ -255,10 +260,15 @@ test("canonical CLI can add a basic block to an official workspace template", as
   const blockConfigPath = path.join(targetDir, "scripts", "block-config.ts");
   fs.writeFileSync(
     blockConfigPath,
-    blockConfigSource.replace(
-      "\t// Add parent, ancestor, and allowedBlocks relationships here.",
-      '\t"demo-space/counter-card": {\n\t\tallowedBlocks: [ "core/group" ],\n\t},'
-    ),
+    blockConfigSource
+      .replace(
+        "\t// Add parent, ancestor, and allowedBlocks relationships here.",
+        '\t"demo-space/counter-card": {\n\t\tallowedBlocks: [ "core/group" ],\n\t},'
+      )
+      .replace(
+        "\t// Add default InnerBlocks templates here.",
+        '\t"demo-space/counter-card": [\n\t\t[ "core/group", { layout: { type: "constrained" } } ],\n\t],'
+      ),
     "utf8"
   );
   runGeneratedScript(targetDir, "scripts/sync-types-to-block-json.ts");
@@ -269,6 +279,15 @@ test("canonical CLI can add a basic block to an official workspace template", as
     )
   );
   expect(blockJsonWithNesting.allowedBlocks).toEqual(["core/group"]);
+  const innerBlocksTemplateSource = fs.readFileSync(
+    path.join(targetDir, "src", "inner-blocks-templates.ts"),
+    "utf8"
+  );
+  expect(innerBlocksTemplateSource).toContain(
+    "export const INNER_BLOCKS_TEMPLATES"
+  );
+  expect(innerBlocksTemplateSource).toContain('"demo-space/counter-card"');
+  expect(innerBlocksTemplateSource).toContain('"core/group"');
   runGeneratedScript(targetDir, "scripts/sync-types-to-block-json.ts", [
     "--check",
   ]);

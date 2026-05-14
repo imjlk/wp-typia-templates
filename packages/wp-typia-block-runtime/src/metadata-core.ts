@@ -13,19 +13,33 @@ import {
 } from './metadata-core-client-render.js';
 import {
   syncBlockMetadataArtifacts,
+  syncInnerBlocksTemplateModuleArtifacts,
   syncRestOpenApiArtifacts,
   syncTypeSchemaArtifacts,
 } from './metadata-core-sync-routines.js';
 export {
   defineBlockNesting,
+  defineInnerBlocksTemplates,
+  getInnerBlocksTemplatesFromNesting,
+  renderInnerBlocksTemplateModule,
+  validateInnerBlocksTemplates,
   validateBlockNestingContract,
 } from './metadata-core-nesting.js';
 export type {
+  BlockInnerBlocksTemplate,
+  BlockInnerBlocksTemplateAttributes,
+  BlockInnerBlocksTemplateContract,
+  BlockInnerBlocksTemplateItem,
   BlockNestingContract,
   BlockNestingRule,
+  RenderInnerBlocksTemplateModuleOptions,
+  ValidateInnerBlocksTemplatesOptions,
   ValidateBlockNestingContractOptions,
 } from './metadata-core-nesting.js';
-import type { BlockNestingContract } from './metadata-core-nesting.js';
+import type {
+  BlockInnerBlocksTemplateContract,
+  BlockNestingContract,
+} from './metadata-core-nesting.js';
 
 export interface SyncBlockMetadataOptions {
   allowExternalBlockNames?: boolean;
@@ -50,6 +64,21 @@ export interface SyncBlockMetadataResult {
   openApiPath?: string;
   phpGenerationWarnings: string[];
   phpValidatorPath: string;
+}
+
+export interface SyncInnerBlocksTemplateModuleOptions {
+  allowExternalBlockNames?: boolean;
+  exportName?: string;
+  knownBlockNames?: readonly string[];
+  nesting: BlockNestingContract;
+  outputFile: string;
+  projectRoot?: string;
+  templates?: BlockInnerBlocksTemplateContract;
+}
+
+export interface SyncInnerBlocksTemplateModuleResult {
+  outputPath: string;
+  templateNames: string[];
 }
 
 export interface ArtifactSyncExecutionOptions {
@@ -333,6 +362,13 @@ export async function syncBlockMetadata(
   executionOptions: ArtifactSyncExecutionOptions = {},
 ): Promise<SyncBlockMetadataResult> {
   return syncBlockMetadataArtifacts(options, executionOptions);
+}
+
+export async function syncInnerBlocksTemplateModule(
+  options: SyncInnerBlocksTemplateModuleOptions,
+  executionOptions: ArtifactSyncExecutionOptions = {},
+): Promise<SyncInnerBlocksTemplateModuleResult> {
+  return syncInnerBlocksTemplateModuleArtifacts(options, executionOptions);
 }
 
 /**

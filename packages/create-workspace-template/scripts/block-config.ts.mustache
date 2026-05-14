@@ -1,4 +1,7 @@
-import { defineBlockNesting } from '@wp-typia/block-runtime/metadata-core';
+import {
+	defineBlockNesting,
+	defineInnerBlocksTemplates,
+} from '@wp-typia/block-runtime/metadata-core';
 
 export interface WorkspaceBlockConfig {
 	slug: string;
@@ -13,6 +16,10 @@ export interface WorkspaceBlockConfig {
 
 export const BLOCK_NESTING = defineBlockNesting( {
 	// Add parent, ancestor, and allowedBlocks relationships here.
+} );
+
+export const BLOCK_TEMPLATES = defineInnerBlocksTemplates( {
+	// Add default InnerBlocks templates here.
 } );
 
 export interface WorkspaceVariationConfig {

@@ -62,7 +62,11 @@ describe('@wp-typia/project-tools import policy', () => {
     );
     expect(Object.keys(migrationTypesModule)).toEqual([]);
     expect(typeof metadataCoreModule.defineBlockNesting).toBe('function');
+    expect(typeof metadataCoreModule.defineInnerBlocksTemplates).toBe('function');
     expect(typeof metadataCoreModule.defineEndpointManifest).toBe('function');
+    expect(typeof metadataCoreModule.syncInnerBlocksTemplateModule).toBe(
+      'function',
+    );
 
     expect('applyTemplateDefaultsFromManifest' in rootModule).toBe(false);
     expect('buildScaffoldBlockRegistration' in rootModule).toBe(false);

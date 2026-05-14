@@ -49,6 +49,9 @@ Typed block nesting rules live in `BLOCK_NESTING` inside
 relationships there and `wp-typia sync --check` will validate referenced block
 names in the workspace namespace while allowing external targets like
 `core/group`, then keep the matching `block.json` metadata current.
+Declare default editor `InnerBlocks` templates in `BLOCK_TEMPLATES` and
+`wp-typia sync` will generate `src/inner-blocks-templates.ts` with constants you
+can import from edit components.
 
 ## CLI Commands
 

@@ -10,6 +10,7 @@ This is the supported generated-project package boundary for:
 - validation-aware attribute updates
 - TypeScript-to-metadata sync
 - typed block nesting contracts for `parent`, `ancestor`, and `allowedBlocks`
+- generated `InnerBlocks` template constants validated against nesting contracts
 - manifest-first REST/OpenAPI/client codegen
 
 It does not include:

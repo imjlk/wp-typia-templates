@@ -66,7 +66,9 @@ describe("@wp-typia/block-runtime", () => {
 		expect(typeof schemaTestModule.createResponseSchemaValidator).toBe("function");
 		expect(Object.keys(migrationTypesModule)).toEqual([]);
 		expect(typeof metadataCoreModule.defineBlockNesting).toBe("function");
+		expect(typeof metadataCoreModule.defineInnerBlocksTemplates).toBe("function");
 		expect(typeof metadataCoreModule.defineEndpointManifest).toBe("function");
+		expect(typeof metadataCoreModule.syncInnerBlocksTemplateModule).toBe("function");
 		expect(typeof metadataCoreModule.runSyncBlockMetadata).toBe("function");
 		expect(typeof metadataCoreModule.syncEndpointClient).toBe("function");
 		expect(typeof metadataCoreModule.syncRestOpenApi).toBe("function");
