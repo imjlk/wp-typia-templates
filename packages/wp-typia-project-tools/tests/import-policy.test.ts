@@ -64,6 +64,12 @@ describe('@wp-typia/project-tools import policy', () => {
     expect(typeof metadataCoreModule.defineBlockNesting).toBe('function');
     expect(typeof metadataCoreModule.defineInnerBlocksTemplates).toBe('function');
     expect(typeof metadataCoreModule.defineEndpointManifest).toBe('function');
+    expect(typeof metadataCoreModule.validateBlockPatternContentNesting).toBe(
+      'function',
+    );
+    expect(
+      typeof metadataCoreModule.formatBlockPatternContentNestingDiagnostics,
+    ).toBe('function');
     expect(typeof metadataCoreModule.syncInnerBlocksTemplateModule).toBe(
       'function',
     );

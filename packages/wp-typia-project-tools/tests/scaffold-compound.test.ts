@@ -246,6 +246,7 @@ describe('@wp-typia/project-tools scaffold compound', () => {
       expect(blockConfig).toContain('defineInnerBlocksTemplates');
       expect(blockConfig).toContain('export const BLOCK_NESTING');
       expect(blockConfig).toContain('export const BLOCK_TEMPLATES');
+      expect(blockConfig).toContain('export const PATTERNS');
       expect(parentManifest.sourceType).toBe('DemoCompoundAttributes');
       expect(parentManifest.attributes.heading.typia.defaultValue).toBe(
         'Demo Compound',
@@ -850,6 +851,7 @@ describe('@wp-typia/project-tools scaffold compound', () => {
       expect(generatedBlockConfig).toContain('defineInnerBlocksTemplates');
       expect(generatedBlockConfig).toContain('export const BLOCK_NESTING');
       expect(generatedBlockConfig).toContain('export const BLOCK_TEMPLATES');
+      expect(generatedBlockConfig).toContain('export const PATTERNS');
       expect(generatedBlockConfig).toContain(
         'restManifest: defineEndpointManifest',
       );

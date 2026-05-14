@@ -3,13 +3,15 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 import {
+	formatBlockPatternContentNestingDiagnostics,
+	validateBlockPatternContentNesting,
 	syncInnerBlocksTemplateModule,
 	syncBlockMetadata,
 	validateBlockNestingContract,
 	validateInnerBlocksTemplates,
 } from '@wp-typia/block-runtime/metadata-core';
 
-import { BLOCK_NESTING, BLOCK_TEMPLATES, BLOCKS } from './block-config';
+import { BLOCK_NESTING, BLOCK_TEMPLATES, BLOCKS, PATTERNS } from './block-config';
 
 function parseCliOptions( argv: string[] ) {
 	const options = {
@@ -49,6 +51,40 @@ function readWorkspaceBlockName( block: ( typeof BLOCKS )[ number ] ): string {
 	return blockJson.name;
 }
 
+function validatePatternContentNesting( knownBlockNames: readonly string[] ) {
+	const diagnostics = PATTERNS.flatMap( ( pattern ) => {
+		const content = fs.readFileSync( pattern.file, 'utf8' );
+		return validateBlockPatternContentNesting( content, {
+			allowExternalBlockNames: true,
+			knownBlockNames,
+			nesting: BLOCK_NESTING,
+			patternFile: pattern.file,
+		} ).diagnostics;
+	} );
+	const warnings = diagnostics.filter(
+		( diagnostic ) => diagnostic.severity === 'warning'
+	);
+	const errors = diagnostics.filter(
+		( diagnostic ) => diagnostic.severity === 'error'
+	);
+
+	if ( warnings.length > 0 ) {
+		console.warn(
+			`⚠️ Pattern nesting validation warnings:\n${ formatBlockPatternContentNestingDiagnostics(
+				warnings
+			) }`
+		);
+	}
+
+	if ( errors.length > 0 ) {
+		throw new Error(
+			`Pattern content violates block nesting contract:\n${ formatBlockPatternContentNestingDiagnostics(
+				errors
+			) }`
+		);
+	}
+}
+
 async function main() {
 	const options = parseCliOptions( process.argv.slice( 2 ) );
 
@@ -62,6 +98,7 @@ async function main() {
 		knownBlockNames,
 		nesting: BLOCK_NESTING,
 	} );
+	validatePatternContentNesting( knownBlockNames );
 	await syncInnerBlocksTemplateModule(
 		{
 			allowExternalBlockNames: true,

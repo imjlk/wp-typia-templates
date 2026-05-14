@@ -11,6 +11,7 @@ This is the supported generated-project package boundary for:
 - TypeScript-to-metadata sync
 - typed block nesting contracts for `parent`, `ancestor`, and `allowedBlocks`
 - generated `InnerBlocks` template constants validated against nesting contracts
+- serialized pattern content validation against typed block nesting contracts
 - manifest-first REST/OpenAPI/client codegen
 
 It does not include:

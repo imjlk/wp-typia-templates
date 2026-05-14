@@ -8,6 +8,7 @@ import {
   defineBlockNesting,
   defineEndpointManifest,
   defineInnerBlocksTemplates,
+  formatBlockPatternContentNestingDiagnostics,
   getInnerBlocksTemplatesFromNesting,
   renderInnerBlocksTemplateModule,
   runSyncBlockMetadata,
@@ -16,6 +17,7 @@ import {
   syncInnerBlocksTemplateModule,
   syncRestOpenApi,
   syncTypeSchemas,
+  validateBlockPatternContentNesting,
   validateBlockNestingContract,
   validateInnerBlocksTemplates,
   type EndpointManifestDefinition,
@@ -259,6 +261,135 @@ describe("metadata-core endpoint manifests", () => {
       )
     ).toThrow(
       'InnerBlocks template "demo/container"[0] uses "demo/body", but demo/container.allowedBlocks does not include "demo/body".'
+    );
+  });
+
+  test("validateBlockPatternContentNesting accepts serialized patterns that follow nesting rules", () => {
+    const nesting = defineBlockNesting({
+      "demo/container": {
+        allowedBlocks: ["demo/section"],
+      },
+      "demo/section": {
+        allowedBlocks: ["demo/title", "core/paragraph"],
+        parent: ["demo/container"],
+      },
+      "demo/title": {
+        ancestor: ["demo/container"],
+      },
+    });
+    const result = validateBlockPatternContentNesting(
+      [
+        "<!-- wp:demo/container -->",
+        '<div class="wp-block-demo-container">',
+        "<!-- wp:demo/section -->",
+        '<section class="wp-block-demo-section">',
+        '<!-- wp:demo/title {"placeholder":"Title"} /-->',
+        '<!-- wp:paragraph {"placeholder":"Body copy"} /-->',
+        "</section>",
+        "<!-- /wp:demo/section -->",
+        "</div>",
+        "<!-- /wp:demo/container -->",
+      ].join("\n"),
+      {
+        allowExternalBlockNames: true,
+        knownBlockNames: ["demo/container", "demo/section", "demo/title"],
+        nesting,
+        patternFile: "src/patterns/valid.php",
+      }
+    );
+
+    expect(result.errors).toEqual([]);
+    expect(result.warnings).toEqual([]);
+    expect(result.blocks[0]?.blockName).toBe("demo/container");
+    expect(result.blocks[0]?.innerBlocks[0]?.innerBlocks[1]?.blockName).toBe(
+      "core/paragraph"
+    );
+  });
+
+  test("validateBlockPatternContentNesting reports invalid block relationships with file and block path", () => {
+    const nesting = defineBlockNesting({
+      "demo/container": {
+        allowedBlocks: ["demo/section"],
+      },
+      "demo/section": {
+        parent: ["demo/container"],
+      },
+      "demo/body": {
+        parent: ["demo/section"],
+      },
+      "demo/eyebrow": {
+        ancestor: ["demo/container"],
+      },
+    });
+    const result = validateBlockPatternContentNesting(
+      [
+        "<!-- wp:demo/container -->",
+        "<!-- wp:demo/body /-->",
+        "<!-- /wp:demo/container -->",
+        "<!-- wp:demo/eyebrow /-->",
+      ].join("\n"),
+      {
+        knownBlockNames: [
+          "demo/container",
+          "demo/section",
+          "demo/body",
+          "demo/eyebrow",
+        ],
+        nesting,
+        patternFile: "src/patterns/invalid.php",
+      }
+    );
+    const formatted = formatBlockPatternContentNestingDiagnostics(result.errors);
+
+    expect(result.warnings).toEqual([]);
+    expect(result.errors.map((diagnostic) => diagnostic.code)).toEqual([
+      "disallowed-child-block",
+      "invalid-block-parent",
+      "invalid-block-ancestor",
+    ]);
+    expect(formatted).toContain("src/patterns/invalid.php");
+    expect(formatted).toContain("demo/container[0] > demo/body[0]");
+    expect(formatted).toContain(
+      'demo/container.allowedBlocks does not include "demo/body"'
+    );
+    expect(formatted).toContain(
+      '"demo/eyebrow" requires one of these ancestor blocks: demo/container'
+    );
+  });
+
+  test("validateBlockPatternContentNesting treats unknown and unparseable pattern content as warnings", () => {
+    const result = validateBlockPatternContentNesting(
+      [
+        '<!-- wp:demo/unknown {"broken":} -->',
+        "<p>Unknown block content</p>",
+        "<!-- /wp:demo/unknown -->",
+        "<!-- /wp:demo/orphan -->",
+      ].join("\n"),
+      {
+        allowExternalBlockNames: true,
+        knownBlockNames: ["demo/container"],
+        nesting: defineBlockNesting({}),
+        patternFile: "src/patterns/warn.php",
+      }
+    );
+    const formattedWarnings = formatBlockPatternContentNestingDiagnostics(
+      result.warnings
+    );
+
+    expect(result.errors).toEqual([]);
+    expect(result.warnings.map((diagnostic) => diagnostic.code)).toContain(
+      "invalid-block-pattern-attributes"
+    );
+    expect(result.warnings.map((diagnostic) => diagnostic.code)).toContain(
+      "unknown-block"
+    );
+    expect(result.warnings.map((diagnostic) => diagnostic.code)).toContain(
+      "unbalanced-block-pattern-comment"
+    );
+    expect(formattedWarnings).toContain("src/patterns/warn.php");
+    expect(formattedWarnings).toContain('unknown block "demo/unknown"');
+    expect(formattedWarnings).toContain(
+      'closing block "demo/orphan" does not match an open block'
     );
   });
 

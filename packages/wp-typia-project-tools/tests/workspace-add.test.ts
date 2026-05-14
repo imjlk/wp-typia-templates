@@ -245,6 +245,8 @@ test("canonical CLI can add a basic block to an official workspace template", as
   expect(blockConfigSource).toContain("export const BLOCK_TEMPLATES");
   expect(blockConfigSource).toContain('slug: "counter-card"');
   expect(syncTypesSource).toContain("syncInnerBlocksTemplateModule");
+  expect(syncTypesSource).toContain("validateBlockPatternContentNesting");
+  expect(syncTypesSource).toContain("PATTERNS");
   expect(syncTypesSource).toContain("validateInnerBlocksTemplates");
   expect(syncTypesSource).toContain("validateBlockNestingContract");
   expect(syncTypesSource).toContain("allowExternalBlockNames: true");
@@ -291,6 +293,44 @@ test("canonical CLI can add a basic block to an official workspace template", as
   runGeneratedScript(targetDir, "scripts/sync-types-to-block-json.ts", [
     "--check",
   ]);
+
+  fs.mkdirSync(path.join(targetDir, "src", "patterns"), { recursive: true });
+  fs.writeFileSync(
+    path.join(targetDir, "src", "patterns", "invalid-nesting.php"),
+    [
+      "<?php",
+      "register_block_pattern(",
+      "\t'demo-space/invalid-nesting',",
+      "\tarray(",
+      "\t\t'title' => 'Invalid nesting',",
+      "\t\t'content' => '<!-- wp:demo-space/counter-card --><!-- wp:paragraph /--><!-- /wp:demo-space/counter-card -->',",
+      "\t)",
+      ");",
+      "",
+    ].join("\n"),
+    "utf8"
+  );
+  fs.writeFileSync(
+    blockConfigPath,
+    fs
+      .readFileSync(blockConfigPath, "utf8")
+      .replace(
+        "\t// wp-typia add pattern entries",
+        '\t{\n\t\tfile: "src/patterns/invalid-nesting.php",\n\t\tslug: "invalid-nesting",\n\t},\n\t// wp-typia add pattern entries'
+      ),
+    "utf8"
+  );
+  const invalidPatternError = getCommandErrorMessage(() =>
+    runGeneratedScript(targetDir, "scripts/sync-types-to-block-json.ts", [
+      "--check",
+    ])
+  );
+  expect(invalidPatternError).toContain(
+    "Pattern content violates block nesting contract"
+  );
+  expect(invalidPatternError).toContain(
+    'demo-space/counter-card.allowedBlocks does not include "core/paragraph"'
+  );
 
   fs.writeFileSync(
     blockConfigPath,
