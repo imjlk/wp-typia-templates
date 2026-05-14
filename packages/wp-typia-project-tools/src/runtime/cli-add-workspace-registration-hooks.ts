@@ -58,6 +58,15 @@ function findMatchingDelimiterEnd(
 	return undefined;
 }
 
+/**
+ * Find the first executable call expression for a named function in source code.
+ *
+ * @param source TypeScript or JavaScript source text to scan.
+ * @param callName Function identifier to locate.
+ * @returns The source range for the first matching executable call, or
+ * `undefined` when the identifier is absent, commented, string-literal-only, or
+ * not followed by a call expression.
+ */
 export function findExecutableCallRange(
 	source: string,
 	callName: string,
@@ -123,6 +132,18 @@ function findBlockRegistrationCallRange(source: string): SourceRange | undefined
 	);
 }
 
+/**
+ * Ensure a block entrypoint imports and calls a workspace registration helper.
+ *
+ * @param options Entrypoint patch options.
+ * @param options.blockIndexPath Absolute path to the block entrypoint file.
+ * @param options.callLine Call expression line to insert when missing.
+ * @param options.callPattern Executable pattern used to detect an existing call.
+ * @param options.importLine Import line to prepend when missing.
+ * @param options.importPattern Uncommented import pattern used to avoid duplicates.
+ * @returns A promise that resolves after the entrypoint has been patched.
+ * @throws {Error} When the call cannot be injected or verified.
+ */
 export async function ensureWorkspaceEntrypointCall({
 	blockIndexPath,
 	callLine,
@@ -167,6 +188,19 @@ export async function ensureWorkspaceEntrypointCall({
 	});
 }
 
+/**
+ * Ensure a scaffold block registration settings hook is imported and called.
+ *
+ * @param options Registration settings patch options.
+ * @param options.blockIndexPath Absolute path to the block entrypoint file.
+ * @param options.callLine Settings mutation call to insert before registration.
+ * @param options.callPattern Executable pattern used to detect an existing call.
+ * @param options.importLine Import line to prepend when missing.
+ * @param options.importPattern Uncommented import pattern used to avoid duplicates.
+ * @returns A promise that resolves after the entrypoint has been patched.
+ * @throws {Error} When the entrypoint does not expose the expected
+ * `registerScaffoldBlockType(registration.name, registration.settings)` call.
+ */
 export async function ensureWorkspaceRegistrationSettingsCall({
 	blockIndexPath,
 	callLine,

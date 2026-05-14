@@ -147,9 +147,18 @@ test('cli-add-workspace delegates workspace add workflows to focused helpers', (
   );
 
   expect(addWorkspaceSource).toContain(
+    'from "./cli-add-workspace-ability.js"',
+  );
+  expect(addWorkspaceSource).toContain(
     'from "./cli-add-workspace-admin-view.js"',
   );
   expect(addWorkspaceSource).toContain('from "./cli-add-workspace-assets.js"');
+  expect(addWorkspaceSource).toContain(
+    'from "./cli-add-workspace-contract.js"',
+  );
+  expect(addWorkspaceSource).toContain(
+    'from "./cli-add-workspace-integration-env.js"',
+  );
   expect(addWorkspaceSource).toContain('from "./cli-add-workspace-rest.js"');
   expect(addWorkspaceSource).toContain(
     'from "./cli-add-workspace-post-meta.js"',
@@ -167,13 +176,16 @@ test('cli-add-workspace delegates workspace add workflows to focused helpers', (
   expect(addWorkspaceSource).toContain(
     'from "./cli-add-workspace-hooked-block.js"',
   );
+  expect(addWorkspaceSource).toContain('runAddAbilityCommand');
   expect(addWorkspaceSource).toContain('runAddAiFeatureCommand');
   expect(addWorkspaceSource).toContain('runAddAdminViewCommand');
   expect(addWorkspaceSource).toContain('runAddBindingSourceCommand');
   expect(addWorkspaceSource).toContain('runAddBlockStyleCommand');
   expect(addWorkspaceSource).toContain('runAddBlockTransformCommand');
+  expect(addWorkspaceSource).toContain('runAddContractCommand');
   expect(addWorkspaceSource).toContain('runAddEditorPluginCommand');
   expect(addWorkspaceSource).toContain('runAddHookedBlockCommand');
+  expect(addWorkspaceSource).toContain('runAddIntegrationEnvCommand');
   expect(addWorkspaceSource).toContain('runAddPatternCommand');
   expect(addWorkspaceSource).toContain('runAddPostMetaCommand');
   expect(addWorkspaceSource).toContain('runAddRestResourceCommand');
@@ -223,13 +235,22 @@ test('cli-add-workspace delegates workspace add workflows to focused helpers', (
     /export\s*\{[^}]*ensureAdminViewBootstrapAnchors[^}]*\}/u,
   );
   expect(addWorkspaceSource).not.toContain(
+    'export async function runAddAbilityCommand(',
+  );
+  expect(addWorkspaceSource).not.toContain(
     'export async function runAddAdminViewCommand(',
   );
   expect(addWorkspaceSource).not.toContain(
     'export async function runAddAiFeatureCommand(',
   );
   expect(addWorkspaceSource).not.toContain(
+    'export async function runAddContractCommand(',
+  );
+  expect(addWorkspaceSource).not.toContain(
     'export async function runAddPatternCommand(',
+  );
+  expect(addWorkspaceSource).not.toContain(
+    'export async function runAddIntegrationEnvCommand(',
   );
   expect(addWorkspaceSource).not.toContain(
     'export async function runAddBindingSourceCommand(',
