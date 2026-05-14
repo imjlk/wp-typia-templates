@@ -205,6 +205,97 @@ test('splits rest-resource usage by generated and manual modes', () => {
   ]);
 });
 
+async function captureRestResourceRuntimeOptions(
+  flags: Record<string, unknown>,
+): Promise<Record<string, unknown>> {
+  const capturedOptions: Record<string, unknown>[] = [];
+  const plan = await ADD_KIND_REGISTRY['rest-resource'].prepareExecution({
+    addRuntime: {
+      runAddRestResourceCommand: async (options: Record<string, unknown>) => {
+        capturedOptions.push(options);
+
+        return {
+          auth: 'public',
+          method: 'POST',
+          methods: [],
+          mode: 'manual',
+          namespace: 'demo/v1',
+          pathPattern: '/integration-settings',
+          projectDir: String(options.cwd),
+          queryTypeName: 'IntegrationSettingsQuery',
+          restResourceSlug: String(options.restResourceName),
+          responseTypeName: 'IntegrationSettingsResponse',
+          secretFieldName: String(options.secretFieldName),
+          secretPreserveOnEmpty: options.secretPreserveOnEmpty as
+            | boolean
+            | undefined,
+          secretStateFieldName: 'hasApiToken',
+        };
+      },
+    } as unknown as AddKindExecutionContext['addRuntime'],
+    cwd: '/tmp/wp-typia-rest-resource-test',
+    flags: {
+      manual: true,
+      method: 'POST',
+      'secret-field': 'apiToken',
+      ...flags,
+    },
+    getOrCreatePrompt: async () => {
+      throw new Error('rest-resource add-kind should not prompt in this test');
+    },
+    isInteractiveSession: false,
+    name: 'integration-settings',
+    warnLine: () => {},
+  });
+
+  await plan.execute('/tmp/wp-typia-rest-resource-test');
+
+  return capturedOptions[0] ?? {};
+}
+
+test('normalizes manual REST secret preserve values before runtime execution', async () => {
+  const cases = [
+    {
+      expected: false,
+      flags: { 'secret-preserve-on-empty': 'false' },
+    },
+    {
+      expected: true,
+      flags: { secretPreserveOnEmpty: 'yes' },
+    },
+    {
+      expected: false,
+      flags: { secretPreserveOnEmpty: false },
+    },
+  ];
+
+  for (const testCase of cases) {
+    const options = await captureRestResourceRuntimeOptions(testCase.flags);
+    expect(options.secretPreserveOnEmpty).toBe(testCase.expected);
+  }
+});
+
+test('rejects invalid manual REST secret preserve values during preparation', async () => {
+  await expect(
+    ADD_KIND_REGISTRY['rest-resource'].prepareExecution({
+      addRuntime: {} as AddKindExecutionContext['addRuntime'],
+      cwd: '/tmp/wp-typia-rest-resource-test',
+      flags: {
+        manual: true,
+        'secret-preserve-on-empty': 'sometimes',
+      },
+      getOrCreatePrompt: async () => {
+        throw new Error('rest-resource add-kind should not prompt in this test');
+      },
+      isInteractiveSession: false,
+      name: 'integration-settings',
+      warnLine: () => {},
+    }),
+  ).rejects.toThrow(
+    'Manual REST contract --secret-preserve-on-empty must be true or false.',
+  );
+});
+
 test('keeps shared add-kind ids aligned with registry sort order', () => {
   expect(
     Object.entries(ADD_KIND_REGISTRY)

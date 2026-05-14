@@ -38,26 +38,9 @@ const MANUAL_REST_RESPONSE_FIELD_NAMES = new Set([
 ]);
 
 function resolveManualRestSecretPreserveOnEmpty(
-	value: boolean | string | undefined,
+	value: boolean | undefined,
 ): boolean {
-	if (value === undefined) {
-		return true;
-	}
-	if (typeof value === "boolean") {
-		return value;
-	}
-
-	const normalized = value.trim().toLowerCase();
-	if (["1", "true", "yes"].includes(normalized)) {
-		return true;
-	}
-	if (["0", "false", "no"].includes(normalized)) {
-		return false;
-	}
-
-	throw new Error(
-		"Manual REST contract --secret-preserve-on-empty must be true or false.",
-	);
+	return value ?? true;
 }
 
 function resolveManualRestSecretStateFieldCandidate(options: {
