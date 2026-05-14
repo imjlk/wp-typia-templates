@@ -169,4 +169,22 @@ describe("defineSupports", () => {
 			}),
 		).toThrow('Unknown WordPress block API feature "blockSupports.futureLayoutMode"');
 	});
+
+	test("ignores disabled unknown future keys when collecting diagnostics", () => {
+		const diagnostics: WordPressBlockApiCompatibilityDiagnostic[] = [];
+		const supports = defineSupports({
+			minWordPress: "6.9",
+			futureLayoutMode: false,
+			onDiagnostic: (diagnostic) => diagnostics.push(diagnostic),
+			strict: false,
+		});
+		const manifest = getDefinedSupportsCompatibilityManifest(supports);
+
+		expect(supports).toEqual({
+			futureLayoutMode: false,
+		});
+		expect(manifest?.unknown).toEqual([]);
+		expect(manifest?.diagnostics).toEqual([]);
+		expect(diagnostics).toEqual([]);
+	});
 });

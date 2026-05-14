@@ -561,7 +561,8 @@ export function collectBlockSupportsCompatibilityFeatures(
   for (const key of Object.keys(supports)) {
     if (
       !KNOWN_BLOCK_SUPPORT_FEATURES.has(key) &&
-      !DEFINE_SUPPORTS_INLINE_OPTION_KEYS.has(key)
+      !DEFINE_SUPPORTS_INLINE_OPTION_KEYS.has(key) &&
+      isEnabledSupportValue(supports[key])
     ) {
       addCompatibilityFeature(features, seen, key);
     }
