@@ -4,7 +4,7 @@ import path from 'node:path';
 
 const runtimeRoot = path.join(import.meta.dir, '..', 'src', 'runtime');
 
-test('cli-add-workspace delegates pattern, binding-source, editor-plugin, rest-resource, post-meta, ai-feature, and admin-view workflows to focused helpers', () => {
+test('cli-add-workspace delegates workspace add workflows to focused helpers', () => {
   const addWorkspaceSource = fs.readFileSync(
     path.join(runtimeRoot, 'cli-add-workspace.ts'),
     'utf8',
@@ -125,23 +125,71 @@ test('cli-add-workspace delegates pattern, binding-source, editor-plugin, rest-r
     path.join(runtimeRoot, 'cli-add-workspace-mutation.ts'),
     'utf8',
   );
+  const variationSource = fs.readFileSync(
+    path.join(runtimeRoot, 'cli-add-workspace-variation.ts'),
+    'utf8',
+  );
+  const blockStyleSource = fs.readFileSync(
+    path.join(runtimeRoot, 'cli-add-workspace-block-style.ts'),
+    'utf8',
+  );
+  const blockTransformSource = fs.readFileSync(
+    path.join(runtimeRoot, 'cli-add-workspace-block-transform.ts'),
+    'utf8',
+  );
+  const hookedBlockSource = fs.readFileSync(
+    path.join(runtimeRoot, 'cli-add-workspace-hooked-block.ts'),
+    'utf8',
+  );
+  const registrationHooksSource = fs.readFileSync(
+    path.join(runtimeRoot, 'cli-add-workspace-registration-hooks.ts'),
+    'utf8',
+  );
 
+  expect(addWorkspaceSource).toContain(
+    'from "./cli-add-workspace-ability.js"',
+  );
   expect(addWorkspaceSource).toContain(
     'from "./cli-add-workspace-admin-view.js"',
   );
   expect(addWorkspaceSource).toContain('from "./cli-add-workspace-assets.js"');
+  expect(addWorkspaceSource).toContain(
+    'from "./cli-add-workspace-contract.js"',
+  );
+  expect(addWorkspaceSource).toContain(
+    'from "./cli-add-workspace-integration-env.js"',
+  );
   expect(addWorkspaceSource).toContain('from "./cli-add-workspace-rest.js"');
   expect(addWorkspaceSource).toContain(
     'from "./cli-add-workspace-post-meta.js"',
   );
   expect(addWorkspaceSource).toContain('from "./cli-add-workspace-ai.js"');
+  expect(addWorkspaceSource).toContain(
+    'from "./cli-add-workspace-variation.js"',
+  );
+  expect(addWorkspaceSource).toContain(
+    'from "./cli-add-workspace-block-style.js"',
+  );
+  expect(addWorkspaceSource).toContain(
+    'from "./cli-add-workspace-block-transform.js"',
+  );
+  expect(addWorkspaceSource).toContain(
+    'from "./cli-add-workspace-hooked-block.js"',
+  );
+  expect(addWorkspaceSource).toContain('runAddAbilityCommand');
   expect(addWorkspaceSource).toContain('runAddAiFeatureCommand');
   expect(addWorkspaceSource).toContain('runAddAdminViewCommand');
   expect(addWorkspaceSource).toContain('runAddBindingSourceCommand');
+  expect(addWorkspaceSource).toContain('runAddBlockStyleCommand');
+  expect(addWorkspaceSource).toContain('runAddBlockTransformCommand');
+  expect(addWorkspaceSource).toContain('runAddContractCommand');
   expect(addWorkspaceSource).toContain('runAddEditorPluginCommand');
+  expect(addWorkspaceSource).toContain('runAddHookedBlockCommand');
+  expect(addWorkspaceSource).toContain('runAddIntegrationEnvCommand');
   expect(addWorkspaceSource).toContain('runAddPatternCommand');
   expect(addWorkspaceSource).toContain('runAddPostMetaCommand');
   expect(addWorkspaceSource).toContain('runAddRestResourceCommand');
+  expect(addWorkspaceSource).toContain('runAddVariationCommand');
   expect(addWorkspaceSource).not.toContain('function buildPatternSource(');
   expect(addWorkspaceSource).not.toContain(
     'function buildAiFeatureTypesSource(',
@@ -171,8 +219,23 @@ test('cli-add-workspace delegates pattern, binding-source, editor-plugin, rest-r
   expect(addWorkspaceSource).not.toContain(
     'async function ensureAdminViewBootstrapAnchors(',
   );
+  expect(addWorkspaceSource).not.toContain('function buildVariationSource(');
+  expect(addWorkspaceSource).not.toContain('function buildBlockStyleSource(');
+  expect(addWorkspaceSource).not.toContain('function buildBlockTransformSource(');
+  expect(addWorkspaceSource).not.toContain(
+    'async function ensureVariationRegistrationHook(',
+  );
+  expect(addWorkspaceSource).not.toContain(
+    'async function ensureBlockStyleRegistrationHook(',
+  );
+  expect(addWorkspaceSource).not.toContain(
+    'async function ensureBlockTransformRegistrationHook(',
+  );
   expect(addWorkspaceSource).not.toMatch(
     /export\s*\{[^}]*ensureAdminViewBootstrapAnchors[^}]*\}/u,
+  );
+  expect(addWorkspaceSource).not.toContain(
+    'export async function runAddAbilityCommand(',
   );
   expect(addWorkspaceSource).not.toContain(
     'export async function runAddAdminViewCommand(',
@@ -181,7 +244,13 @@ test('cli-add-workspace delegates pattern, binding-source, editor-plugin, rest-r
     'export async function runAddAiFeatureCommand(',
   );
   expect(addWorkspaceSource).not.toContain(
+    'export async function runAddContractCommand(',
+  );
+  expect(addWorkspaceSource).not.toContain(
     'export async function runAddPatternCommand(',
+  );
+  expect(addWorkspaceSource).not.toContain(
+    'export async function runAddIntegrationEnvCommand(',
   );
   expect(addWorkspaceSource).not.toContain(
     'export async function runAddBindingSourceCommand(',
@@ -194,6 +263,18 @@ test('cli-add-workspace delegates pattern, binding-source, editor-plugin, rest-r
   );
   expect(addWorkspaceSource).not.toContain(
     'export async function runAddPostMetaCommand(',
+  );
+  expect(addWorkspaceSource).not.toContain(
+    'export async function runAddVariationCommand(',
+  );
+  expect(addWorkspaceSource).not.toContain(
+    'export async function runAddBlockStyleCommand(',
+  );
+  expect(addWorkspaceSource).not.toContain(
+    'export async function runAddBlockTransformCommand(',
+  );
+  expect(addWorkspaceSource).not.toContain(
+    'export async function runAddHookedBlockCommand(',
   );
   expect(assetsSource).toContain(
     'from "./cli-add-workspace-binding-source.js"',
@@ -379,6 +460,57 @@ test('cli-add-workspace delegates pattern, binding-source, editor-plugin, rest-r
   );
   expect(adminViewTemplatesSource).not.toContain(
     'export async function runAddAdminViewCommand(',
+  );
+  expect(variationSource).toContain('function buildVariationSource(');
+  expect(variationSource).toContain(
+    'async function ensureVariationRegistrationHook(',
+  );
+  expect(variationSource).toContain(
+    'export async function runAddVariationCommand(',
+  );
+  expect(variationSource).toContain(
+    'from "./cli-add-workspace-registration-hooks.js"',
+  );
+  expect(variationSource).not.toContain('function buildBlockStyleSource(');
+  expect(variationSource).not.toContain('function buildBlockTransformSource(');
+  expect(blockStyleSource).toContain('function buildBlockStyleSource(');
+  expect(blockStyleSource).toContain(
+    'async function ensureBlockStyleRegistrationHook(',
+  );
+  expect(blockStyleSource).toContain(
+    'export async function runAddBlockStyleCommand(',
+  );
+  expect(blockStyleSource).toContain(
+    'from "./cli-add-workspace-registration-hooks.js"',
+  );
+  expect(blockStyleSource).not.toContain('function buildVariationSource(');
+  expect(blockStyleSource).not.toContain('function buildBlockTransformSource(');
+  expect(blockTransformSource).toContain('function buildBlockTransformSource(');
+  expect(blockTransformSource).toContain(
+    'async function ensureBlockTransformRegistrationHook(',
+  );
+  expect(blockTransformSource).toContain(
+    'export async function runAddBlockTransformCommand(',
+  );
+  expect(blockTransformSource).toContain(
+    'from "./cli-add-workspace-registration-hooks.js"',
+  );
+  expect(blockTransformSource).not.toContain('function buildVariationSource(');
+  expect(blockTransformSource).not.toContain('function buildBlockStyleSource(');
+  expect(hookedBlockSource).toContain(
+    'export async function runAddHookedBlockCommand(',
+  );
+  expect(hookedBlockSource).not.toContain('function buildVariationSource(');
+  expect(hookedBlockSource).not.toContain('function buildBlockStyleSource(');
+  expect(hookedBlockSource).not.toContain('function buildBlockTransformSource(');
+  expect(registrationHooksSource).toContain(
+    'export function findExecutableCallRange(',
+  );
+  expect(registrationHooksSource).toContain(
+    'export async function ensureWorkspaceEntrypointCall(',
+  );
+  expect(registrationHooksSource).toContain(
+    'export async function ensureWorkspaceRegistrationSettingsCall(',
   );
   for (const scaffoldSource of [
     abilityScaffoldSource,
