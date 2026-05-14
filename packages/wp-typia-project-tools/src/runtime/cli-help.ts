@@ -26,7 +26,7 @@ export function formatHelpText(): string {
   wp-typia add variation <name> --block <block-slug>
   wp-typia add style <name> --block <block-slug>
   wp-typia add transform <name> --from <namespace/block> --to <block-slug|namespace/block-slug>
-  wp-typia add pattern <name> [--scope <full|section>] [--section-role <role>]
+  wp-typia add pattern <name> [--scope <full|section>] [--section-role <role>] [--tags <tag,...>] [--thumbnail-url <url>]
   wp-typia add binding-source <name> [--block <block-slug|namespace/block-slug> --attribute <attribute>] [--from-post-meta|--post-meta <post-meta> [--meta-path <field>]]
   wp-typia add rest-resource <name> [--namespace <vendor/v1>] [--methods <method[,method...]>]
   wp-typia add rest-resource <name> --manual [--namespace <vendor/v1>] [--method <GET|POST|PUT|PATCH|DELETE>] [--auth <public|authenticated|public-write-protected>] [--path <route-pattern>|--route-pattern <route-pattern>] [--permission-callback <callback>] [--controller-class <ClassName>] [--controller-extends <BaseClass>] [--query-type <Type>] [--body-type <Type>] [--response-type <Type>] [--secret-field <field>] [--secret-state-field|--secret-has-value-field <field>] [--secret-preserve-on-empty <true|false>]

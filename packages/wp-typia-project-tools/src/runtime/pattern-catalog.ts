@@ -47,6 +47,7 @@ export type PatternCatalogValidationResult = {
 };
 
 const PATTERN_SLUG_PATTERN = /^[a-z][a-z0-9-]*$/u;
+const PATTERN_SECTION_ROLE_PATTERN = PATTERN_SLUG_PATTERN;
 const PATTERN_TAG_PATTERN = /^[a-z0-9][a-z0-9-]*$/u;
 
 function createPatternCatalogDiagnostic(
@@ -63,8 +64,17 @@ function isSafeRelativePath(value: string): boolean {
 	return (
 		value.length > 0 &&
 		!path.isAbsolute(value) &&
+		!value.includes("\\") &&
 		!value.split(/[\\/]+/u).includes("..") &&
 		!/[<>:"|?*\u0000-\u001F]/u.test(value)
+	);
+}
+
+function isPatternContentFilePath(value: string): boolean {
+	return (
+		isSafeRelativePath(value) &&
+		value.startsWith("src/patterns/") &&
+		value.endsWith(".php")
 	);
 }
 
@@ -156,12 +166,12 @@ export function validatePatternCatalog(
 		}
 		if (
 			pattern.sectionRole !== undefined &&
-			!PATTERN_TAG_PATTERN.test(pattern.sectionRole)
+			!PATTERN_SECTION_ROLE_PATTERN.test(pattern.sectionRole)
 		) {
 			diagnostics.push(
 				createPatternCatalogDiagnostic({
 					code: "invalid-pattern-section-role",
-					message: `${label}: sectionRole must contain only lowercase letters, numbers, and hyphens.`,
+					message: `${label}: sectionRole must start with a lowercase letter and contain only lowercase letters, numbers, and hyphens.`,
 					patternSlug: pattern.slug,
 					severity: "error",
 				}),
@@ -207,11 +217,11 @@ export function validatePatternCatalog(
 			);
 			continue;
 		}
-		if (!isSafeRelativePath(contentFile)) {
+		if (!isPatternContentFilePath(contentFile)) {
 			diagnostics.push(
 				createPatternCatalogDiagnostic({
 					code: "invalid-pattern-content-file",
-					message: `${label}: contentFile must be a safe relative project path.`,
+					message: `${label}: contentFile must be a safe relative project path under src/patterns/ and end in .php.`,
 					patternSlug: pattern.slug,
 					severity: "error",
 				}),

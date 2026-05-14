@@ -41,6 +41,7 @@ type ResolvedPatternCatalogOptions = {
 	title: string;
 };
 
+const PATTERN_CONTENT_FILE_ROOT = "src/patterns/";
 const PATTERN_TAG_PATTERN = /^[a-z0-9][a-z0-9-]*$/u;
 
 function assertValidPatternRelativePath(
@@ -57,6 +58,24 @@ function assertValidPatternRelativePath(
 	) {
 		throw new Error(
 			`${label} must be a safe relative project path. Use \`${usage}\`.`,
+		);
+	}
+
+	return normalizedPath;
+}
+
+function assertValidPatternContentFile(value: string, usage: string): string {
+	const normalizedPath = assertValidPatternRelativePath(
+		"Pattern content file",
+		value,
+		usage,
+	);
+	if (
+		!normalizedPath.startsWith(PATTERN_CONTENT_FILE_ROOT) ||
+		!normalizedPath.endsWith(".php")
+	) {
+		throw new Error(
+			"Pattern content file must live under `src/patterns/` and end in `.php` so the generated PHP loader can require it.",
 		);
 	}
 
@@ -164,15 +183,14 @@ function resolvePatternContentFile(
 	contentFile: string | undefined,
 ): string {
 	if (contentFile && contentFile.trim() !== "") {
-		return assertValidPatternRelativePath(
-			"Pattern content file",
+		return assertValidPatternContentFile(
 			contentFile,
 			"wp-typia add pattern <name> [--scope <full|section>]",
 		);
 	}
 
 	const scopeDirectory = patternScope === "section" ? "sections" : "full";
-	return path.join("src", "patterns", scopeDirectory, `${patternSlug}.php`);
+	return path.posix.join("src", "patterns", scopeDirectory, `${patternSlug}.php`);
 }
 
 function resolvePatternCatalogOptions(
@@ -290,15 +308,29 @@ function ${patternRegistrationFunctionName}() {
  * Add one PHP block pattern shell to an official workspace project.
  *
  * @param options Command options for the pattern scaffold workflow.
+ * @param options.catalogTitle Optional human-readable title. Defaults to the
+ * title-cased form of the normalized pattern slug.
+ * @param options.contentFile Optional safe relative project path under
+ * `src/patterns/` for the generated PHP file. Defaults to
+ * `src/patterns/full/<slug>.php` or `src/patterns/sections/<slug>.php`.
  * @param options.cwd Working directory used to resolve the nearest official workspace.
  * Defaults to `process.cwd()`.
  * @param options.patternName Human-entered pattern name that will be normalized
  * and validated before files are written.
- * @returns A promise that resolves with the normalized `patternSlug` and
- * owning `projectDir` after the pattern file and inventory entry have been
- * written successfully.
+ * @param options.patternScope Catalog scope (`full` or `section`). Defaults to `full`.
+ * @param options.sectionRole Section role slug. Required only when
+ * `patternScope` is `section`.
+ * @param options.tags Optional pattern tags as a comma-separated string or
+ * array. Tags are normalized, deduplicated, and sorted.
+ * @param options.thumbnailUrl Optional thumbnail URL or relative asset path
+ * recorded in the inventory entry.
+ * @returns A promise that resolves with the normalized `patternSlug`, owning
+ * `projectDir`, resolved `contentFile`, `patternScope`, `tags`, `title`, and
+ * optional `sectionRole` and `thumbnailUrl` after the pattern file and
+ * inventory entry have been written successfully.
  * @throws {Error} When the command is run outside an official workspace, when
- * the pattern slug is invalid, or when a conflicting file or inventory entry
+ * the pattern slug, scope, section-role coupling, tag values, or content file
+ * path are invalid, or when a conflicting target file or inventory entry
  * already exists.
  */
 export async function runAddPatternCommand({

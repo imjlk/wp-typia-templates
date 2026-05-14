@@ -79,6 +79,7 @@ describe("pattern catalog validation", () => {
 				},
 				{
 					scope: "detail",
+					sectionRole: "1detail",
 					slug: "bad_scope",
 				},
 			],
@@ -94,6 +95,7 @@ describe("pattern catalog validation", () => {
 			"invalid-pattern-content-file",
 			"invalid-pattern-slug",
 			"invalid-pattern-scope",
+			"invalid-pattern-section-role",
 			"missing-pattern-content-file",
 		]);
 		expect(formatPatternCatalogDiagnostics(result.errors)).toContain(

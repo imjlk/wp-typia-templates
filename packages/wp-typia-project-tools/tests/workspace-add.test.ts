@@ -2,7 +2,7 @@ import { afterAll, describe, expect, test } from "bun:test";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { cleanupScaffoldTempRoot, createScaffoldTempRoot, entryPath, getCommandErrorMessage, linkWorkspaceNodeModules, parseJsonObjectFromOutput, runCapturedCli, runCli, runGeneratedScript, scaffoldOfficialWorkspace, templateLayerFixturePath, templateLayerWorkspaceAmbiguousFixturePath, templateLayerWorkspaceFixturePath, typecheckGeneratedProject, workspaceTemplatePackageManifest } from "./helpers/scaffold-test-harness.js";
-import { runAddBlockCommand } from "../src/runtime/cli-core.js";
+import { runAddBlockCommand, runAddPatternCommand } from "../src/runtime/cli-core.js";
 import { scaffoldProject } from "../src/runtime/index.js";
 
 const legacyValidatorToolkitSource = [
@@ -2967,6 +2967,15 @@ test("canonical CLI can add a pattern to an official workspace template", async 
       })
     )
   ).toContain("Pattern name must start with a letter");
+  await expect(
+    runAddPatternCommand({
+      contentFile: "lib/hero-layout.php",
+      cwd: targetDir,
+      patternName: "hero-layout",
+    })
+  ).rejects.toThrow(
+    "Pattern content file must live under `src/patterns/` and end in `.php`"
+  );
 
   runCli(
     "node",
