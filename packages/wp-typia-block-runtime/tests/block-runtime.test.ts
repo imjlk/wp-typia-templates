@@ -68,6 +68,12 @@ describe("@wp-typia/block-runtime", () => {
 		expect(typeof metadataCoreModule.defineBlockNesting).toBe("function");
 		expect(typeof metadataCoreModule.defineInnerBlocksTemplates).toBe("function");
 		expect(typeof metadataCoreModule.defineEndpointManifest).toBe("function");
+		expect(typeof metadataCoreModule.validateBlockPatternContentNesting).toBe(
+			"function",
+		);
+		expect(
+			typeof metadataCoreModule.formatBlockPatternContentNestingDiagnostics,
+		).toBe("function");
 		expect(typeof metadataCoreModule.syncInnerBlocksTemplateModule).toBe("function");
 		expect(typeof metadataCoreModule.runSyncBlockMetadata).toBe("function");
 		expect(typeof metadataCoreModule.syncEndpointClient).toBe("function");

@@ -35,6 +35,13 @@ names in the workspace namespace while allowing external targets like
 Declare default editor `InnerBlocks` templates in `BLOCK_TEMPLATES` and
 `wp-typia sync` will generate `src/inner-blocks-templates.ts` with constants you
 can import from edit components.
+Pattern files listed in `PATTERNS` are parsed during the same sync flow so
+`wp-typia sync --check` can catch serialized block content that violates the
+declared `allowedBlocks`, `parent`, or `ancestor` rules. Unknown or unparseable
+pattern blocks are reported as warnings so the first implementation stays
+non-mutating.
+The validator reads serialized `<!-- wp:* -->` block comment boundaries
+conservatively and does not execute dynamic PHP content.
 
 ## CLI binary policy
 

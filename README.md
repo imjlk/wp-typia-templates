@@ -138,6 +138,12 @@ Default editor templates can live beside those rules in `BLOCK_TEMPLATES` or in
 the optional `template` field on a nesting rule. `wp-typia sync` generates
 `src/inner-blocks-templates.ts`, and `--check` verifies that nested template
 tuples still obey the declared `allowedBlocks`, `parent`, and `ancestor` rules.
+Configured `PATTERNS` files are also parsed during sync so shipped pattern
+content cannot drift from the same nesting contract. Relationship violations
+fail with the pattern file and serialized block path, while unknown or
+unparseable block comments are reported as warnings instead of being rewritten.
+The first validator intentionally reads serialized `<!-- wp:* -->` block
+comment boundaries conservatively and does not execute dynamic PHP content.
 
 ### 5. Query Loop variations get a first-class scaffold
 

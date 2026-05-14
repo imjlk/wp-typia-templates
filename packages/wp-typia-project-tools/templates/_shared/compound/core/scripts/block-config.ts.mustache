@@ -11,6 +11,11 @@ export const BLOCK_TEMPLATES = defineInnerBlocksTemplates( {
 	// Add default InnerBlocks templates here.
 } );
 
+export interface WorkspacePatternConfig {
+	file: string;
+	slug: string;
+}
+
 export const BLOCKS = [
 	{
 		attributeTypeName: '{{pascalCase}}Attributes',
@@ -24,3 +29,7 @@ export const BLOCKS = [
 	},
 	// add-child: insert new block config entries here
 ] as const;
+
+export const PATTERNS: WorkspacePatternConfig[] = [
+	// wp-typia add pattern entries
+];

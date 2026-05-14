@@ -63,7 +63,47 @@ export interface RenderInnerBlocksTemplateModuleOptions {
   exportName?: string;
 }
 
+export type BlockPatternNestingDiagnosticSeverity = 'error' | 'warning';
+
+export type BlockPatternNestingDiagnosticCode =
+  | 'disallowed-child-block'
+  | 'invalid-block-ancestor'
+  | 'invalid-block-parent'
+  | 'invalid-block-pattern-attributes'
+  | 'invalid-block-pattern-comment'
+  | 'unbalanced-block-pattern-comment'
+  | 'unknown-block';
+
+export interface ParsedBlockPatternBlock {
+  attributes: Record<string, unknown>;
+  blockName: string;
+  innerBlocks: ParsedBlockPatternBlock[];
+}
+
+export interface BlockPatternNestingDiagnostic {
+  blockName?: string;
+  blockPath?: string;
+  code: BlockPatternNestingDiagnosticCode;
+  message: string;
+  patternFile?: string;
+  severity: BlockPatternNestingDiagnosticSeverity;
+}
+
+export interface ValidateBlockPatternContentNestingOptions
+  extends ValidateBlockNestingContractOptions {
+  nesting: BlockNestingContract;
+  patternFile?: string;
+}
+
+export interface ValidateBlockPatternContentNestingResult {
+  blocks: ParsedBlockPatternBlock[];
+  diagnostics: BlockPatternNestingDiagnostic[];
+  errors: BlockPatternNestingDiagnostic[];
+  warnings: BlockPatternNestingDiagnostic[];
+}
+
 const TYPESCRIPT_IDENTIFIER_PATTERN = /^[A-Za-z_$][A-Za-z0-9_$]*$/u;
+const WORDPRESS_BLOCK_COMMENT_PATTERN = /<!--([\s\S]*?)-->/gu;
 
 function hasOwn(object: object, key: string): boolean {
   return Object.prototype.hasOwnProperty.call(object, key);
@@ -549,6 +589,472 @@ export function validateInnerBlocksTemplates(
   if (issues.length > 0) {
     throw new Error(`Invalid InnerBlocks template contract:\n${issues.map((issue) => `- ${issue}`).join('\n')}`);
   }
+}
+
+function addBlockPatternDiagnostic(
+  diagnostics: BlockPatternNestingDiagnostic[],
+  diagnostic: BlockPatternNestingDiagnostic,
+): void {
+  diagnostics.push(diagnostic);
+}
+
+function normalizeSerializedBlockName(rawBlockName: string): string | null {
+  const blockName = rawBlockName.includes('/')
+    ? rawBlockName
+    : `core/${rawBlockName}`;
+  try {
+    assertBlockName(blockName, 'Serialized block name');
+  } catch {
+    return null;
+  }
+
+  return blockName;
+}
+
+function parseBlockPatternComment(
+  commentBody: string,
+  diagnostics: BlockPatternNestingDiagnostic[],
+  patternFile?: string,
+):
+  | {
+      attributes: Record<string, unknown>;
+      blockName: string;
+      selfClosing: boolean;
+      type: 'open';
+    }
+  | {
+      blockName: string;
+      type: 'close';
+    }
+  | null {
+  const source = commentBody.trim();
+  if (!source.startsWith('wp:') && !source.startsWith('/wp:')) {
+    return null;
+  }
+
+  if (source.startsWith('/wp:')) {
+    const rawBlockName = source.slice('/wp:'.length).trim().split(/\s+/u)[0];
+    const blockName = rawBlockName
+      ? normalizeSerializedBlockName(rawBlockName)
+      : null;
+    if (!blockName) {
+      addBlockPatternDiagnostic(diagnostics, {
+        code: 'invalid-block-pattern-comment',
+        message: `Unable to parse serialized closing block comment "<!-- ${source} -->".`,
+        patternFile,
+        severity: 'warning',
+      });
+      return null;
+    }
+
+    return {
+      blockName,
+      type: 'close',
+    };
+  }
+
+  const openSource = source.slice('wp:'.length).trim();
+  const whitespaceIndex = openSource.search(/\s/u);
+  let rawBlockName =
+    whitespaceIndex === -1 ? openSource : openSource.slice(0, whitespaceIndex);
+  let remainder =
+    whitespaceIndex === -1 ? '' : openSource.slice(whitespaceIndex).trim();
+  let selfClosing = false;
+
+  if (rawBlockName.endsWith('/')) {
+    rawBlockName = rawBlockName.slice(0, -1);
+    selfClosing = true;
+  }
+
+  if (remainder.endsWith('/')) {
+    remainder = remainder.slice(0, -1).trim();
+    selfClosing = true;
+  }
+
+  const blockName = rawBlockName
+    ? normalizeSerializedBlockName(rawBlockName)
+    : null;
+  if (!blockName) {
+    addBlockPatternDiagnostic(diagnostics, {
+      code: 'invalid-block-pattern-comment',
+      message: `Unable to parse serialized opening block comment "<!-- ${source} -->".`,
+      patternFile,
+      severity: 'warning',
+    });
+    return null;
+  }
+
+  let attributes: Record<string, unknown> = {};
+  if (remainder.length > 0) {
+    try {
+      const parsedAttributes = JSON.parse(remainder) as unknown;
+      if (isRecord(parsedAttributes)) {
+        attributes = parsedAttributes;
+      } else {
+        addBlockPatternDiagnostic(diagnostics, {
+          blockName,
+          code: 'invalid-block-pattern-attributes',
+          message: `Serialized block "${blockName}" attributes must be a JSON object.`,
+          patternFile,
+          severity: 'warning',
+        });
+      }
+    } catch (error) {
+      addBlockPatternDiagnostic(diagnostics, {
+        blockName,
+        code: 'invalid-block-pattern-attributes',
+        message: `Unable to parse serialized block "${blockName}" attributes: ${
+          error instanceof Error ? error.message : String(error)
+        }.`,
+        patternFile,
+        severity: 'warning',
+      });
+    }
+  }
+
+  return {
+    attributes,
+    blockName,
+    selfClosing,
+    type: 'open',
+  };
+}
+
+function formatBlockPatternPath(pathSegments: readonly string[]): string {
+  return pathSegments.join(' > ');
+}
+
+function findOpenBlockStackIndex(
+  stack: readonly {
+    block: ParsedBlockPatternBlock;
+    pathSegments: string[];
+  }[],
+  blockName: string,
+): number {
+  for (let index = stack.length - 1; index > 0; index -= 1) {
+    if (stack[index]?.block.blockName === blockName) {
+      return index;
+    }
+  }
+
+  return -1;
+}
+
+function parseBlockPatternContent(
+  content: string,
+  patternFile?: string,
+): {
+  blocks: ParsedBlockPatternBlock[];
+  diagnostics: BlockPatternNestingDiagnostic[];
+} {
+  const diagnostics: BlockPatternNestingDiagnostic[] = [];
+  const rootBlock: ParsedBlockPatternBlock = {
+    attributes: {},
+    blockName: '__root__',
+    innerBlocks: [],
+  };
+  const stack: {
+    block: ParsedBlockPatternBlock;
+    pathSegments: string[];
+  }[] = [
+    {
+      block: rootBlock,
+      pathSegments: [],
+    },
+  ];
+
+  for (const match of content.matchAll(WORDPRESS_BLOCK_COMMENT_PATTERN)) {
+    const comment = parseBlockPatternComment(match[1] ?? '', diagnostics, patternFile);
+    if (!comment) {
+      continue;
+    }
+
+    if (comment.type === 'close') {
+      const openStackIndex = findOpenBlockStackIndex(stack, comment.blockName);
+      if (openStackIndex === -1) {
+        addBlockPatternDiagnostic(diagnostics, {
+          blockName: comment.blockName,
+          code: 'unbalanced-block-pattern-comment',
+          message: `Serialized closing block "${comment.blockName}" does not match an open block.`,
+          patternFile,
+          severity: 'warning',
+        });
+        continue;
+      }
+
+      if (openStackIndex !== stack.length - 1) {
+        for (
+          let unclosedIndex = stack.length - 1;
+          unclosedIndex > openStackIndex;
+          unclosedIndex -= 1
+        ) {
+          const unclosedBlock = stack[unclosedIndex];
+          if (!unclosedBlock) {
+            continue;
+          }
+          addBlockPatternDiagnostic(diagnostics, {
+            blockName: unclosedBlock.block.blockName,
+            blockPath: formatBlockPatternPath(unclosedBlock.pathSegments),
+            code: 'unbalanced-block-pattern-comment',
+            message: `Serialized opening block "${unclosedBlock.block.blockName}" was not closed before "${comment.blockName}" closed.`,
+            patternFile,
+            severity: 'warning',
+          });
+        }
+        addBlockPatternDiagnostic(diagnostics, {
+          blockName: comment.blockName,
+          blockPath: formatBlockPatternPath(
+            stack[stack.length - 1]?.pathSegments ?? [],
+          ),
+          code: 'unbalanced-block-pattern-comment',
+          message: `Serialized closing block "${comment.blockName}" appeared before all nested blocks were closed.`,
+          patternFile,
+          severity: 'warning',
+        });
+      }
+
+      stack.length = openStackIndex + 1;
+      stack.pop();
+      continue;
+    }
+
+    const parent = stack[stack.length - 1];
+    if (!parent) {
+      continue;
+    }
+
+    const block: ParsedBlockPatternBlock = {
+      attributes: comment.attributes,
+      blockName: comment.blockName,
+      innerBlocks: [],
+    };
+    const blockPathSegments = [
+      ...parent.pathSegments,
+      `${block.blockName}[${parent.block.innerBlocks.length}]`,
+    ];
+    parent.block.innerBlocks.push(block);
+
+    if (!comment.selfClosing) {
+      stack.push({
+        block,
+        pathSegments: blockPathSegments,
+      });
+    }
+  }
+
+  for (let index = stack.length - 1; index > 0; index -= 1) {
+    const openBlock = stack[index];
+    if (!openBlock) {
+      continue;
+    }
+    addBlockPatternDiagnostic(diagnostics, {
+      blockName: openBlock.block.blockName,
+      blockPath: formatBlockPatternPath(openBlock.pathSegments),
+      code: 'unbalanced-block-pattern-comment',
+      message: `Serialized opening block "${openBlock.block.blockName}" was not closed.`,
+      patternFile,
+      severity: 'warning',
+    });
+  }
+
+  return {
+    blocks: rootBlock.innerBlocks,
+    diagnostics,
+  };
+}
+
+function isKnownOrAllowedExternalBlockName(
+  knownBlockNameContext: KnownBlockNameValidationContext | null,
+  blockName: string,
+): boolean {
+  if (!knownBlockNameContext) {
+    return true;
+  }
+
+  if (knownBlockNameContext.knownBlockNames.has(blockName)) {
+    return true;
+  }
+
+  return (
+    knownBlockNameContext.allowExternalBlockNames &&
+    !knownBlockNameContext.knownBlockNamespaces.has(getBlockNamespace(blockName))
+  );
+}
+
+function validateParsedPatternBlocksAgainstNesting(
+  issues: BlockPatternNestingDiagnostic[],
+  blocks: readonly ParsedBlockPatternBlock[],
+  nesting: Record<string, NormalizedBlockNestingRule>,
+  knownBlockNameContext: KnownBlockNameValidationContext | null,
+  patternFile: string | undefined,
+  ancestorBlockNames: readonly string[] = [],
+  pathSegments: readonly string[] = [],
+): void {
+  const parentBlockName = ancestorBlockNames[ancestorBlockNames.length - 1];
+  const parentRule = parentBlockName ? nesting[parentBlockName] : undefined;
+
+  blocks.forEach((block, index) => {
+    const blockPathSegments = [
+      ...pathSegments,
+      `${block.blockName}[${index}]`,
+    ];
+    const blockPath = formatBlockPatternPath(blockPathSegments);
+    const childRule = nesting[block.blockName];
+
+    if (!isKnownOrAllowedExternalBlockName(knownBlockNameContext, block.blockName)) {
+      addBlockPatternDiagnostic(issues, {
+        blockName: block.blockName,
+        blockPath,
+        code: 'unknown-block',
+        message: `Pattern content references unknown block "${block.blockName}". Its own nesting requirements were skipped.`,
+        patternFile,
+        severity: 'warning',
+      });
+    }
+
+    if (
+      parentRule?.allowedBlocks &&
+      parentRule.allowedBlocks.length > 0 &&
+      !parentRule.allowedBlocks.includes(block.blockName)
+    ) {
+      addBlockPatternDiagnostic(issues, {
+        blockName: block.blockName,
+        blockPath,
+        code: 'disallowed-child-block',
+        message: `${parentBlockName}.allowedBlocks does not include "${block.blockName}".`,
+        patternFile,
+        severity: 'error',
+      });
+    }
+
+    if (childRule?.parent && childRule.parent.length > 0) {
+      if (!parentBlockName) {
+        addBlockPatternDiagnostic(issues, {
+          blockName: block.blockName,
+          blockPath,
+          code: 'invalid-block-parent',
+          message: `"${block.blockName}" requires one of these parent blocks: ${childRule.parent.join(', ')}.`,
+          patternFile,
+          severity: 'error',
+        });
+      } else if (!childRule.parent.includes(parentBlockName)) {
+        addBlockPatternDiagnostic(issues, {
+          blockName: block.blockName,
+          blockPath,
+          code: 'invalid-block-parent',
+          message: `"${block.blockName}" requires one of these parent blocks: ${childRule.parent.join(', ')}, but found "${parentBlockName}".`,
+          patternFile,
+          severity: 'error',
+        });
+      }
+    }
+
+    if (
+      childRule?.ancestor &&
+      childRule.ancestor.length > 0 &&
+      !hasRelationshipOverlap(childRule.ancestor, ancestorBlockNames)
+    ) {
+      addBlockPatternDiagnostic(issues, {
+        blockName: block.blockName,
+        blockPath,
+        code: 'invalid-block-ancestor',
+        message: `"${block.blockName}" requires one of these ancestor blocks: ${childRule.ancestor.join(', ')}.`,
+        patternFile,
+        severity: 'error',
+      });
+    }
+
+    validateParsedPatternBlocksAgainstNesting(
+      issues,
+      block.innerBlocks,
+      nesting,
+      knownBlockNameContext,
+      patternFile,
+      [...ancestorBlockNames, block.blockName],
+      blockPathSegments,
+    );
+  });
+}
+
+/**
+ * Parse serialized WordPress block comments in a pattern file and compare the
+ * discovered block tree with a typed block nesting contract.
+ *
+ * Relationship violations are returned as `error` diagnostics. Unknown blocks,
+ * malformed block comments, and unparseable attributes are returned as
+ * `warning` diagnostics so callers can surface them without mutating content.
+ *
+ * @param content PHP or HTML pattern source containing serialized block comments.
+ * @param options Pattern filename, nesting contract, and known block-name policy.
+ * @returns Parsed block tree plus split warning/error diagnostics.
+ */
+export function validateBlockPatternContentNesting(
+  content: string,
+  options: ValidateBlockPatternContentNestingOptions,
+): ValidateBlockPatternContentNestingResult {
+  validateBlockNestingContract(options.nesting, {
+    allowExternalBlockNames: options.allowExternalBlockNames,
+    knownBlockNames: options.knownBlockNames,
+  });
+
+  const nesting = normalizeBlockNestingContract(options.nesting);
+  const knownBlockNameContext = createKnownBlockNameValidationContext(options);
+  const parsed = parseBlockPatternContent(content, options.patternFile);
+  const diagnostics = [...parsed.diagnostics];
+
+  validateParsedPatternBlocksAgainstNesting(
+    diagnostics,
+    parsed.blocks,
+    nesting,
+    knownBlockNameContext,
+    options.patternFile,
+  );
+
+  return {
+    blocks: parsed.blocks,
+    diagnostics,
+    errors: diagnostics.filter((diagnostic) => diagnostic.severity === 'error'),
+    warnings: diagnostics.filter(
+      (diagnostic) => diagnostic.severity === 'warning',
+    ),
+  };
+}
+
+/**
+ * Format one pattern nesting diagnostic with its file and serialized block path.
+ *
+ * @param diagnostic Diagnostic returned by `validateBlockPatternContentNesting`.
+ * @returns Human-readable diagnostic message.
+ */
+export function formatBlockPatternContentNestingDiagnostic(
+  diagnostic: BlockPatternNestingDiagnostic,
+): string {
+  const location = [
+    diagnostic.patternFile,
+    diagnostic.blockPath ? `at ${diagnostic.blockPath}` : undefined,
+  ]
+    .filter(Boolean)
+    .join(' ');
+  const prefix = location.length > 0 ? `${location}: ` : '';
+
+  return `${prefix}${diagnostic.message}`;
+}
+
+/**
+ * Format multiple pattern nesting diagnostics as a bullet list.
+ *
+ * @param diagnostics Diagnostics returned by `validateBlockPatternContentNesting`.
+ * @returns Human-readable bullet list suitable for CLI errors or warnings.
+ */
+export function formatBlockPatternContentNestingDiagnostics(
+  diagnostics: readonly BlockPatternNestingDiagnostic[],
+): string {
+  return diagnostics
+    .map(
+      (diagnostic) =>
+        `- ${formatBlockPatternContentNestingDiagnostic(diagnostic)}`,
+    )
+    .join('\n');
 }
 
 export function renderInnerBlocksTemplateModule(

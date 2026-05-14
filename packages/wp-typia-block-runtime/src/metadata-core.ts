@@ -20,19 +20,28 @@ import {
 export {
   defineBlockNesting,
   defineInnerBlocksTemplates,
+  formatBlockPatternContentNestingDiagnostic,
+  formatBlockPatternContentNestingDiagnostics,
   getInnerBlocksTemplatesFromNesting,
   renderInnerBlocksTemplateModule,
+  validateBlockPatternContentNesting,
   validateInnerBlocksTemplates,
   validateBlockNestingContract,
 } from './metadata-core-nesting.js';
 export type {
+  BlockPatternNestingDiagnostic,
+  BlockPatternNestingDiagnosticCode,
+  BlockPatternNestingDiagnosticSeverity,
   BlockInnerBlocksTemplate,
   BlockInnerBlocksTemplateAttributes,
   BlockInnerBlocksTemplateContract,
   BlockInnerBlocksTemplateItem,
   BlockNestingContract,
   BlockNestingRule,
+  ParsedBlockPatternBlock,
   RenderInnerBlocksTemplateModuleOptions,
+  ValidateBlockPatternContentNestingOptions,
+  ValidateBlockPatternContentNestingResult,
   ValidateInnerBlocksTemplatesOptions,
   ValidateBlockNestingContractOptions,
 } from './metadata-core-nesting.js';
