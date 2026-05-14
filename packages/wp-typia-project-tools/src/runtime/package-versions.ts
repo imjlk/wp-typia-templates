@@ -271,6 +271,14 @@ export function getPackageVersions(): PackageVersions {
       'package.json',
     ),
   );
+  const blockTypesManifestLocation = resolvePackageManifestLocation(
+    path.join(
+      PROJECT_TOOLS_PACKAGE_ROOT,
+      '..',
+      'wp-typia-block-types',
+      'package.json',
+    ),
+  );
   const wpTypiaManifestLocation = resolvePackageManifestLocation(
     path.join(PROJECT_TOOLS_PACKAGE_ROOT, '..', 'wp-typia', 'package.json'),
   );
@@ -298,6 +306,7 @@ export function getPackageVersions(): PackageVersions {
     createManifestLocation,
     monorepoManifestLocation,
     blockRuntimeManifestLocation,
+    blockTypesManifestLocation,
     wpTypiaManifestLocation,
     installedProjectToolsManifestLocation,
     installedApiClientManifestLocation,
@@ -324,12 +333,19 @@ export function getPackageVersions(): PackageVersions {
     readPackageManifest(blockRuntimeManifestLocation) ??
     readPackageManifest(installedBlockRuntimeManifestLocation) ??
     {};
+  const blockTypesManifest =
+    readPackageManifest(blockTypesManifestLocation) ??
+    readPackageManifest(installedBlockTypesManifestLocation) ??
+    {};
   const wpTypiaManifest =
     readPackageManifest(wpTypiaManifestLocation) ??
     readPackageManifest(installedWpTypiaManifestLocation) ??
     {};
   const blockRuntimeDependencyVersion = normalizeVersionRange(
     createManifest.dependencies?.['@wp-typia/block-runtime'],
+  );
+  const blockTypesDependencyVersion = normalizeVersionRange(
+    createManifest.dependencies?.['@wp-typia/block-types'],
   );
   const versions = {
     apiClientPackageVersion: normalizeVersionRange(
@@ -340,10 +356,10 @@ export function getPackageVersions(): PackageVersions {
       blockRuntimeDependencyVersion !== DEFAULT_VERSION_RANGE
         ? blockRuntimeDependencyVersion
         : normalizeVersionRange(blockRuntimeManifest.version),
-    blockTypesPackageVersion: normalizeVersionRange(
-      createManifest.dependencies?.['@wp-typia/block-types'] ??
-        readPackageManifest(installedBlockTypesManifestLocation)?.version,
-    ),
+    blockTypesPackageVersion:
+      blockTypesDependencyVersion !== DEFAULT_VERSION_RANGE
+        ? blockTypesDependencyVersion
+        : normalizeVersionRange(blockTypesManifest.version),
     projectToolsPackageVersion: normalizeVersionRange(createManifest.version),
     restPackageVersion: normalizeVersionRange(
       createManifest.dependencies?.['@wp-typia/rest'] ??
