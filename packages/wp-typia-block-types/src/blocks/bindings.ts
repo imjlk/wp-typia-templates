@@ -228,7 +228,7 @@ const DEFINE_BINDING_SOURCE_INLINE_OPTION_KEYS = new Set<string>([
 ]);
 
 const SOURCE_NAME_PATTERN =
-  /^[a-z0-9]+(?:-[a-z0-9]+)*\/[a-z0-9]+(?:-[a-z0-9]+)*$/u;
+  /^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\/[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/u;
 const FIELD_NAME_PATTERN = /^[A-Za-z_][A-Za-z0-9_-]*$/u;
 
 function isObjectRecord(
@@ -868,6 +868,17 @@ function sanitizePhpIdentifier(value: string): string {
   return /^[A-Za-z_]/u.test(sanitized) ? sanitized : `wp_typia_${sanitized}`;
 }
 
+function createPhpIdentifierHash(value: string): string {
+  let hash = 0x811c9dc5;
+
+  for (const character of value) {
+    hash ^= character.codePointAt(0) ?? 0;
+    hash = Math.imul(hash, 0x01000193) >>> 0;
+  }
+
+  return hash.toString(36);
+}
+
 function createPhpSourceProperties(
   source: DefinedBindingSource,
   options: CreatePhpBindingSourceRegistrationSourceOptions,
@@ -912,7 +923,7 @@ function createPhpBindableAttributeFilterSource(
 
   lines.push("");
   lines.push("if ( function_exists( 'get_block_bindings_supported_attributes' ) ) {");
-  for (const target of targets) {
+  for (const [targetIndex, target] of targets.entries()) {
     if (!shouldGenerateFeature(target.metadata, "supportedAttributesFilter")) {
       lines.push(
         `\t// block_bindings_supported_attributes requires WordPress 6.9+ for ${target.target.blockName}.`,
@@ -920,8 +931,17 @@ function createPhpBindableAttributeFilterSource(
       continue;
     }
 
+    const callbackSeed = [
+      functionName,
+      target.sourceName,
+      target.target.blockName,
+      String(target.index),
+      String(targetIndex),
+    ].join("\0");
     const callbackName = sanitizePhpIdentifier(
-      `${functionName}_${target.sourceName}_${target.target.blockName}_${target.index}_supported_attributes`,
+      `${functionName}_${target.sourceName}_${target.target.blockName}_${target.index}_${targetIndex}_${createPhpIdentifierHash(
+        callbackSeed,
+      )}_supported_attributes`,
     );
     lines.push(
       `\tadd_filter( ${phpString(

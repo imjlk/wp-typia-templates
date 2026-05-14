@@ -191,6 +191,13 @@ describe("defineBindingSource", () => {
     ).toThrow("must be lowercase and namespaced");
     expect(() =>
       defineBindingSource({
+        getValueCallback: "example_get_double_hyphen_binding_value",
+        label: "Double hyphen",
+        name: "example--plugin/profile--data",
+      }),
+    ).not.toThrow();
+    expect(() =>
+      defineBindingSource({
         label: "Missing callback",
         name: "example/missing-callback",
       }),
@@ -300,6 +307,42 @@ describe("binding source registration source generation", () => {
     expect(editorSource).toContain('"name": "example/profile-data"');
     expect(editorSource).toContain('"name": "image_url"');
     expect(editorSource).toContain("getFieldsList: () => fields");
+  });
+
+  test("keeps generated PHP filter callbacks unique after sanitization", () => {
+    const first = defineBindingSource({
+      bindableAttributes: [
+        defineBindableAttributes("example/profile-card", ["imageUrl"] as const),
+      ],
+      getValueCallback: "example_get_first_binding_value",
+      minWordPress: {
+        editor: "6.7",
+        server: "6.5",
+        supportedAttributesFilter: "6.9",
+      },
+      name: "acme-foo/bar",
+    });
+    const second = defineBindingSource({
+      bindableAttributes: [
+        defineBindableAttributes("example/profile-card", ["imageUrl"] as const),
+      ],
+      getValueCallback: "example_get_second_binding_value",
+      minWordPress: {
+        editor: "6.7",
+        server: "6.5",
+        supportedAttributesFilter: "6.9",
+      },
+      name: "acme/foo-bar",
+    });
+    const phpSource = createPhpBindingSourceRegistrationSource([first, second]);
+    const callbackNames = [
+      ...phpSource.matchAll(
+        /function (wp_typia_register_block_binding_sources_[A-Za-z0-9_]+)\(/gu,
+      ),
+    ].map((match) => match[1]);
+
+    expect(callbackNames).toHaveLength(2);
+    expect(new Set(callbackNames).size).toBe(2);
   });
 
   test("exposes a direct compatibility manifest helper", () => {
