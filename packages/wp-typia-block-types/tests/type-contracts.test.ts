@@ -37,6 +37,7 @@ describe("@wp-typia/block-types type contracts", () => {
 		const fixtureSource = readFileSync(fixtureSourcePath, "utf8");
 
 		expect(fixtureSource).toContain("@wp-typia/block-types/blocks/registration");
+		expect(fixtureSource).toContain("@wp-typia/block-types/blocks/bindings");
 		expect(fixtureSource).toContain("@wp-typia/block-types/blocks/compatibility");
 		expect(fixtureSource).toContain("@wp-typia/block-types/blocks/supports");
 		expect(fixtureSource).toContain("@wp-typia/block-types/blocks/variations");
@@ -48,6 +49,8 @@ describe("@wp-typia/block-types type contracts", () => {
 		expect(fixtureSource).toContain("SupportAttributes<typeof proseSupports>");
 		expect(fixtureSource).toContain("defineVariation");
 		expect(fixtureSource).toContain("defineVariations");
+		expect(fixtureSource).toContain("defineBindingSource");
+		expect(fixtureSource).toContain("Binding<typeof profileDataSource");
 		expect(fixtureSource).toContain("registerScaffoldBlockType");
 	});
 });

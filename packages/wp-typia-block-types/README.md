@@ -18,6 +18,7 @@ Shared WordPress block semantic types derived from Gutenberg source and unoffici
 - `@wp-typia/block-types/block-editor/style-attributes`
 - `@wp-typia/block-types/block-editor/typography`
 - `@wp-typia/block-types/blocks`
+- `@wp-typia/block-types/blocks/bindings`
 - `@wp-typia/block-types/blocks/compatibility`
 - `@wp-typia/block-types/blocks/registration`
 - `@wp-typia/block-types/blocks/supports`
@@ -49,6 +50,8 @@ Shared WordPress block semantic types derived from Gutenberg source and unoffici
   Bindings features that codegen and diagnostics can share
 - typed Block Variations authoring helpers with static JavaScript registration
   source generation
+- typed Block Bindings source helpers with PHP/editor source generation and
+  `metadata.bindings` type helpers
 
 ## Registration facade
 
@@ -291,6 +294,85 @@ accepted by the type helper, but static source generation rejects them because
 they cannot be represented safely as JSON-backed registration metadata. PHP or
 dynamic variation registration remains scoped to a future helper built on the
 existing `blockVariations.phpVariationCallback` compatibility entry.
+
+## WordPress block binding helpers
+
+`@wp-typia/block-types/blocks/bindings` provides a type-first layer for the
+Block Bindings API. `defineBindingSource()` returns a plain source metadata
+object, while compatibility diagnostics and codegen metadata are stored on a
+non-enumerable symbol.
+
+The helper tracks the documented WordPress floors for server registration
+(`6.5`), editor registration (`6.7`), and editor field lists/custom bindable
+attribute filters (`6.9`). Strict mode throws for unsupported combinations;
+`strict: false` reports diagnostics and omits unsupported editor-only output.
+
+```ts
+import {
+  createEditorBindingSourceRegistrationSource,
+  createPhpBindingSourceRegistrationSource,
+  defineBindableAttributes,
+  defineBindingSource,
+  defineBlockMetadataBindings,
+  type Binding,
+} from '@wp-typia/block-types/blocks/bindings';
+
+type ProfileCardAttributes = {
+  imageUrl?: string;
+};
+
+const profileSource = defineBindingSource({
+  name: 'example/profile-data',
+  label: 'Profile Data',
+  getValueCallback: 'example_get_profile_binding_value',
+  usesContext: ['postId'],
+  minWordPress: {
+    server: '6.5',
+    editor: '6.7',
+    fieldsList: '6.9',
+    supportedAttributesFilter: '6.9',
+  },
+  args: {
+    field: 'image_url' as 'display_name' | 'image_url',
+  },
+  fields: [
+    {
+      name: 'display_name',
+      label: 'Display name',
+      args: { field: 'display_name' },
+      type: 'string',
+    },
+    {
+      name: 'image_url',
+      label: 'Image URL',
+      args: { field: 'image_url' },
+      type: 'string',
+    },
+  ],
+  bindableAttributes: [
+    defineBindableAttributes<ProfileCardAttributes>('example/profile-card', [
+      'imageUrl',
+    ] as const),
+  ],
+});
+
+const metadata = defineBlockMetadataBindings({
+  imageUrl: {
+    source: profileSource.name,
+    args: { field: 'image_url' },
+  } satisfies Binding<typeof profileSource, { field: 'image_url' }>,
+});
+
+const phpSource = createPhpBindingSourceRegistrationSource(profileSource);
+const editorSource = createEditorBindingSourceRegistrationSource(profileSource);
+```
+
+The generated PHP registers `register_block_bindings_source()` on `init` and,
+when custom bindable attributes are declared, adds the
+`block_bindings_supported_attributes_{$block_type}` filter behind a WordPress
+6.9-compatible guard. The generated editor source registers
+`registerBlockBindingsSource()` and emits `getFieldsList()` only when the
+source compatibility manifest marks field lists as supported.
 
 ## Typia pipeline notes
 

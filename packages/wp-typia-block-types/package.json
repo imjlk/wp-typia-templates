@@ -56,6 +56,11 @@
       "import": "./dist/blocks/index.js",
       "default": "./dist/blocks/index.js"
     },
+    "./blocks/bindings": {
+      "types": "./dist/blocks/bindings.d.ts",
+      "import": "./dist/blocks/bindings.js",
+      "default": "./dist/blocks/bindings.js"
+    },
     "./blocks/compatibility": {
       "types": "./dist/blocks/compatibility.d.ts",
       "import": "./dist/blocks/compatibility.js",
