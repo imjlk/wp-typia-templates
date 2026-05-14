@@ -16,11 +16,23 @@ import {
   syncRestOpenApiArtifacts,
   syncTypeSchemaArtifacts,
 } from './metadata-core-sync-routines.js';
+export {
+  defineBlockNesting,
+  validateBlockNestingContract,
+} from './metadata-core-nesting.js';
+export type {
+  BlockNestingContract,
+  BlockNestingRule,
+  ValidateBlockNestingContractOptions,
+} from './metadata-core-nesting.js';
+import type { BlockNestingContract } from './metadata-core-nesting.js';
 
 export interface SyncBlockMetadataOptions {
   blockJsonFile: string;
   jsonSchemaFile?: string;
+  knownBlockNames?: readonly string[];
   manifestFile?: string;
+  nesting?: BlockNestingContract;
   openApiFile?: string;
   phpValidatorFile?: string;
   projectRoot?: string;
@@ -61,6 +73,8 @@ export type SyncBlockMetadataStatus = 'success' | 'warning' | 'error';
 export type SyncBlockMetadataFailureCode =
   /** Generated artifact files are missing or stale relative to the current sources. */
   | 'stale-generated-artifact'
+  /** A block nesting contract references unknown or contradictory block relationships. */
+  | 'invalid-block-nesting-contract'
   /** A TypeScript node kind is not supported by the metadata parser. */
   | 'unsupported-type-node'
   /** A supported node kind was used in an unsupported pattern or combination. */

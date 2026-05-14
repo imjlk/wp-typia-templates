@@ -9,6 +9,7 @@ This is the supported generated-project package boundary for:
 - manifest-driven inspector helpers
 - validation-aware attribute updates
 - TypeScript-to-metadata sync
+- typed block nesting contracts for `parent`, `ancestor`, and `allowedBlocks`
 - manifest-first REST/OpenAPI/client codegen
 
 It does not include:
@@ -28,7 +29,10 @@ import {
 import { collectPersistentBlockIdentityRepairs } from '@wp-typia/block-runtime/identifiers';
 import { assertResponseMatchesSchema } from '@wp-typia/block-runtime/schema-test';
 import { createNestedAttributeUpdater } from '@wp-typia/block-runtime/validation';
-import { runSyncBlockMetadata } from '@wp-typia/block-runtime/metadata-core';
+import {
+  defineBlockNesting,
+  runSyncBlockMetadata,
+} from '@wp-typia/block-runtime/metadata-core';
 import type { tags } from '@wp-typia/block-runtime/typia-tags';
 ```
 

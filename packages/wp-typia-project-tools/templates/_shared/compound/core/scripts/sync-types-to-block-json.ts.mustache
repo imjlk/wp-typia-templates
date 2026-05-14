@@ -1,9 +1,13 @@
 /* eslint-disable no-console */
+import fs from 'node:fs';
 import path from 'node:path';
 
-import { syncBlockMetadata } from '@wp-typia/block-runtime/metadata-core';
+import {
+	syncBlockMetadata,
+	validateBlockNestingContract,
+} from '@wp-typia/block-runtime/metadata-core';
 
-import { BLOCKS } from './block-config';
+import { BLOCK_NESTING, BLOCKS } from './block-config';
 
 function parseCliOptions( argv: string[] ) {
 	const options = {
@@ -22,15 +26,31 @@ function parseCliOptions( argv: string[] ) {
 	return options;
 }
 
+function readWorkspaceBlockName( block: ( typeof BLOCKS )[ number ] ): string {
+	const blockJsonFile = path.join( 'src', 'blocks', block.slug, 'block.json' );
+	const blockJson = JSON.parse( fs.readFileSync( blockJsonFile, 'utf8' ) ) as {
+		name?: unknown;
+	};
+	if ( typeof blockJson.name !== 'string' || blockJson.name.trim() === '' ) {
+		throw new Error( `${ blockJsonFile } must define a string "name".` );
+	}
+
+	return blockJson.name;
+}
+
 async function main() {
 	const options = parseCliOptions( process.argv.slice( 2 ) );
+	const knownBlockNames = BLOCKS.map( readWorkspaceBlockName );
+	validateBlockNestingContract( BLOCK_NESTING, { knownBlockNames } );
 
 	for ( const block of BLOCKS ) {
 		const baseDir = path.join( 'src', 'blocks', block.slug );
 		const result = await syncBlockMetadata( {
 			blockJsonFile: path.join( baseDir, 'block.json' ),
 			jsonSchemaFile: path.join( baseDir, 'typia.schema.json' ),
+			knownBlockNames,
 			manifestFile: path.join( baseDir, 'typia.manifest.json' ),
+			nesting: BLOCK_NESTING,
 			openApiFile: path.join( baseDir, 'typia.openapi.json' ),
 			sourceTypeName: block.attributeTypeName,
 			typesFile: block.typesFile,

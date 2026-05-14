@@ -158,6 +158,12 @@ function resolveSyncBlockMetadataFailureCode(
     return 'recursive-type';
   }
   if (
+    message.startsWith('Invalid block nesting contract:') ||
+    message.includes('before applying block nesting metadata')
+  ) {
+    return 'invalid-block-nesting-contract';
+  }
+  if (
     message.startsWith('Unable to load types file:') ||
     message.startsWith('Unable to find source type "') ||
     message.startsWith('Unable to resolve type reference "') ||

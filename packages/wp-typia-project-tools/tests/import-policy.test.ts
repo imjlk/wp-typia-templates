@@ -61,6 +61,7 @@ describe('@wp-typia/project-tools import policy', () => {
       'function',
     );
     expect(Object.keys(migrationTypesModule)).toEqual([]);
+    expect(typeof metadataCoreModule.defineBlockNesting).toBe('function');
     expect(typeof metadataCoreModule.defineEndpointManifest).toBe('function');
 
     expect('applyTemplateDefaultsFromManifest' in rootModule).toBe(false);

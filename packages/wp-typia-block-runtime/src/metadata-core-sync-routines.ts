@@ -19,6 +19,10 @@ import {
 	resolveSyncBlockMetadataPaths,
 } from './metadata-core-artifacts.js';
 import { normalizeSyncRestOpenApiOptions } from './metadata-core-endpoint-client.js';
+import {
+	applyBlockNestingMetadata,
+	validateBlockNestingContract,
+} from './metadata-core-nesting.js';
 import { renderPhpValidator } from './metadata-php-render.js';
 import { analyzeSourceType, analyzeSourceTypes } from './metadata-parser.js';
 import {
@@ -57,6 +61,21 @@ export async function syncBlockMetadataArtifacts(
 		const blockJson = JSON.parse(
 			fs.readFileSync(blockJsonPath, 'utf8'),
 		) as Record<string, unknown>;
+		if (options.nesting) {
+			validateBlockNestingContract(options.nesting, {
+				knownBlockNames: options.knownBlockNames,
+			});
+			if (typeof blockJson.name !== 'string' || blockJson.name.trim() === '') {
+				throw new Error(
+					`block.json at ${blockJsonPath} must define a string "name" before applying block nesting metadata.`,
+				);
+			}
+			applyBlockNestingMetadata({
+				blockJson,
+				blockName: blockJson.name,
+				nesting: options.nesting,
+			});
+		}
 
 		blockJson.attributes = Object.fromEntries(
 			Object.entries(rootNode.properties).map(([key, node]) => [
