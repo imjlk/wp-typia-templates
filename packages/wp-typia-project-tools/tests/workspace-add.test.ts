@@ -3686,6 +3686,10 @@ test("canonical CLI can add a binding source backed by typed post meta", async (
   expect(bindingEditorSource).toContain("POST_META_BINDING_SOURCE");
   expect(bindingEditorSource).toContain("POST_META_BINDING_FIELDS");
   expect(bindingEditorSource).toContain('label: __( "Status", "demo-space" )');
+  expect(bindingEditorSource).toContain('schemaType: "boolean"');
+  expect(bindingEditorSource).toContain(
+    "type: resolveBindingFieldType( field.schemaType )"
+  );
   expect(bindingEditorSource).toContain('field: "status"');
   expect(bindingEditorSource).toContain(
     'schemaFile: "src/post-meta/integration-state/meta.schema.json"'

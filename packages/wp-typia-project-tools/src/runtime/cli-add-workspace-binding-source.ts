@@ -425,6 +425,10 @@ const POST_META_PREVIEW_VALUES: Record<string, string> = Object.fromEntries(
 );
 ${targetSource}
 
+function resolveBindingFieldType( schemaType: string ): string {
+\treturn schemaType === 'unknown' ? 'string' : schemaType;
+}
+
 function resolveBindingSourceValue( field: string ): string {
 \treturn POST_META_PREVIEW_VALUES[ field ] ?? '';
 }
@@ -435,7 +439,7 @@ registerBlockBindingsSource( {
 \tgetFieldsList() {
 \t\treturn POST_META_BINDING_FIELDS.map( ( field ) => ( {
 \t\t\tlabel: field.label,
-\t\t\ttype: 'string',
+\t\t\ttype: resolveBindingFieldType( field.schemaType ),
 \t\t\targs: {
 \t\t\t\tfield: field.name,
 \t\t\t},
