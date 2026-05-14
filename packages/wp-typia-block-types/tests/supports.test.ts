@@ -124,6 +124,39 @@ describe("defineSupports", () => {
 		expect(manifest.evaluations).toEqual([]);
 	});
 
+	test("skips disabled object supports during compatibility checks", () => {
+		const disabledFeatures = collectBlockSupportsCompatibilityFeatures({
+			background: {
+				backgroundImage: false,
+				backgroundSize: false,
+			},
+			dimensions: {
+				aspectRatio: false,
+				height: false,
+				minHeight: false,
+				width: false,
+			},
+			position: {
+				fixed: false,
+				sticky: false,
+			},
+		}).map((feature) => feature.feature);
+		const enabledFeatures = collectBlockSupportsCompatibilityFeatures({
+			background: {
+				backgroundImage: true,
+			},
+			dimensions: {
+				aspectRatio: true,
+			},
+			position: {
+				sticky: true,
+			},
+		}).map((feature) => feature.feature);
+
+		expect(disabledFeatures).toEqual([]);
+		expect(enabledFeatures).toEqual(["background", "dimensions", "position"]);
+	});
+
 	test("throws in strict mode when supports require a newer WordPress floor", () => {
 		expect(() =>
 			defineSupports({

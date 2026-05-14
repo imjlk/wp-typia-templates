@@ -158,6 +158,22 @@ const proseSupports = defineSupports({
 });
 const proseSupportManifest =
 	getDefinedSupportsCompatibilityManifest(proseSupports);
+const alignSupports = defineSupports({
+	align: ["wide", "full"],
+});
+type AlignSupportAttributes = SupportAttributes<typeof alignSupports>;
+const alignSupportHasAlign: "align" extends keyof AlignSupportAttributes
+	? true
+	: never = true;
+const alignWideOnlySupports = defineSupports({
+	alignWide: true,
+});
+type AlignWideOnlySupportAttributes = SupportAttributes<
+	typeof alignWideOnlySupports
+>;
+const alignWideDoesNotExposeAlign: "align" extends keyof AlignWideOnlySupportAttributes
+	? never
+	: true = true;
 
 type ExampleAttributes = SupportAttributes<typeof proseSupports> & {
 	content: string;
@@ -279,6 +295,10 @@ void supportCompatibilityFeature;
 void supportsTextAlignSince;
 void proseSupports;
 void proseSupportManifest;
+void alignSupports;
+void alignSupportHasAlign;
+void alignWideOnlySupports;
+void alignWideDoesNotExposeAlign;
 void registrationResult;
 void content;
 void maybeVariationTitle;

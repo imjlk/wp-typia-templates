@@ -415,7 +415,7 @@ export type SupportAttributes<TSupports> =
 
 export type SupportAttributesFromBlockSupports<TSupports> =
   IfSupport<
-    HasSupport<TSupports, "align"> | HasSupport<TSupports, "alignWide">,
+    HasSupport<TSupports, "align">,
     BlockAlignSupportAttributes
   > &
     IfSupport<
@@ -490,6 +490,18 @@ function isEnabledSupportValue(value: unknown): boolean {
   return value !== false && value !== null && value !== undefined;
 }
 
+function isEnabledTopLevelSupportValue(value: unknown): boolean {
+  if (!isSupportObject(value)) {
+    return isEnabledSupportValue(value);
+  }
+
+  return Object.entries(value).some(
+    ([key, nestedValue]) =>
+      !key.startsWith("__experimental") &&
+      isEnabledSupportValue(nestedValue),
+  );
+}
+
 function hasEnabledNestedSupport(
   section: unknown,
   key: string,
@@ -522,7 +534,7 @@ export function collectBlockSupportsCompatibilityFeatures(
   const seen = new Set<string>();
 
   for (const key of TOP_LEVEL_COMPATIBILITY_SUPPORT_KEYS) {
-    if (isEnabledSupportValue(supports[key])) {
+    if (isEnabledTopLevelSupportValue(supports[key])) {
       addCompatibilityFeature(features, seen, key);
     }
   }
@@ -558,7 +570,7 @@ export function collectBlockSupportsCompatibilityFeatures(
     if (
       !KNOWN_BLOCK_SUPPORT_FEATURES.has(key) &&
       !DEFINE_SUPPORTS_INLINE_OPTION_KEYS.has(key) &&
-      isEnabledSupportValue(supports[key])
+      isEnabledTopLevelSupportValue(supports[key])
     ) {
       addCompatibilityFeature(features, seen, key);
     }
