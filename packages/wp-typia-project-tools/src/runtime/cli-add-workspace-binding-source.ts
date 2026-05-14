@@ -252,6 +252,7 @@ register_block_bindings_source(
 \tarray(
 \t\t'label' => __( ${quotePhpString(bindingSourceTitle)}, ${quotePhpString(options.textDomain)} ),
 \t\t'get_value_callback' => ${quotePhpString(resolveFunctionName)},
+\t\t'uses_context' => array( 'postId', 'postType' ),
 \t)
 );
 ${supportedAttributesHook}`;
@@ -346,6 +347,24 @@ register_block_bindings_source(
 ${supportedAttributesHook}`;
 }
 
+function buildTsPostMetaPreviewValue(field: PostMetaBindingField): string {
+	switch (field.schemaType) {
+		case "array":
+			return "[]";
+		case "boolean":
+			return field.fallbackValue === "true" ? "true" : "false";
+		case "integer":
+		case "number": {
+			const value = Number(field.fallbackValue);
+			return Number.isFinite(value) ? String(value) : "0";
+		}
+		case "object":
+			return "{}";
+		default:
+			return quoteTsString(field.fallbackValue);
+	}
+}
+
 function buildTsPostMetaFieldEntries(
 	fields: readonly PostMetaBindingField[],
 	textDomain: string,
@@ -357,6 +376,7 @@ function buildTsPostMetaFieldEntries(
 				`\t\tfallbackValue: ${quoteTsString(field.fallbackValue)},`,
 				`\t\tlabel: __( ${quoteTsString(field.label)}, ${quoteTsString(textDomain)} ),`,
 				`\t\tname: ${quoteTsString(field.name)},`,
+				`\t\tpreviewValue: ${buildTsPostMetaPreviewValue(field)},`,
 				`\t\trequired: ${field.required ? "true" : "false"},`,
 				`\t\tschemaType: ${quoteTsString(field.schemaType)},`,
 				"\t},",
@@ -406,10 +426,10 @@ const POST_META_BINDING_FIELDS = [
 ${buildTsPostMetaFieldEntries(options.postMeta.fields, options.textDomain)}
 ] as const;
 
-const POST_META_PREVIEW_VALUES: Record<string, string> = Object.fromEntries(
+const POST_META_PREVIEW_VALUES: Record<string, unknown> = Object.fromEntries(
 \tPOST_META_BINDING_FIELDS.map( ( field ) => [
 \t\tfield.name,
-\t\tfield.fallbackValue,
+\t\tfield.previewValue,
 \t] )
 );
 ${targetSource}
@@ -418,7 +438,7 @@ function resolveBindingFieldType( schemaType: string ): string {
 \treturn schemaType === 'unknown' ? 'string' : schemaType;
 }
 
-function resolveBindingSourceValue( field: string ): string {
+function resolveBindingSourceValue( field: string ): unknown {
 \treturn POST_META_PREVIEW_VALUES[ field ] ?? '';
 }
 
@@ -435,7 +455,7 @@ registerBlockBindingsSource( {
 \t\t} ) );
 \t},
 \tgetValues( { bindings } ) {
-\t\tconst values: Record<string, string> = {};
+\t\tconst values: Record<string, unknown> = {};
 \t\tfor ( const [ attributeName, binding ] of Object.entries(
 \t\t\tbindings as Record<string, BindingSourceRegistration>
 \t\t) ) {

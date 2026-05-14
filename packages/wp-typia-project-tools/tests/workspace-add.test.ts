@@ -3683,6 +3683,9 @@ test("canonical CLI can add a binding source backed by typed post meta", async (
   expect(bindingServerSource).not.toContain("_format_binding_value");
   expect(bindingServerSource).toContain("return $value;");
   expect(bindingServerSource).toContain(
+    "'uses_context' => array( 'postId', 'postType' )"
+  );
+  expect(bindingServerSource).toContain(
     "src/post-meta/integration-state/meta.schema.json"
   );
   expect(bindingServerSource).toContain("'status'");
@@ -3690,8 +3693,15 @@ test("canonical CLI can add a binding source backed by typed post meta", async (
   expect(bindingEditorSource).toContain("POST_META_BINDING_FIELDS");
   expect(bindingEditorSource).toContain('label: __( "Status", "demo-space" )');
   expect(bindingEditorSource).toContain('schemaType: "boolean"');
+  expect(bindingEditorSource).toContain("previewValue: false");
+  expect(bindingEditorSource).toContain(
+    "const POST_META_PREVIEW_VALUES: Record<string, unknown>"
+  );
   expect(bindingEditorSource).toContain(
     "type: resolveBindingFieldType( field.schemaType )"
+  );
+  expect(bindingEditorSource).toContain(
+    "const values: Record<string, unknown>"
   );
   expect(bindingEditorSource).toContain('field: "status"');
   expect(bindingEditorSource).toContain(
