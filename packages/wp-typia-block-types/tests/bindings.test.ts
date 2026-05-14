@@ -184,6 +184,13 @@ describe("defineBindingSource", () => {
     ).toThrow("must be lowercase and namespaced");
     expect(() =>
       defineBindingSource({
+        getValueCallback: "example_get_invalid_binding_value",
+        label: "Invalid hyphen",
+        name: "-example/profile-",
+      }),
+    ).toThrow("must be lowercase and namespaced");
+    expect(() =>
+      defineBindingSource({
         label: "Missing callback",
         name: "example/missing-callback",
       }),

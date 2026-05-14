@@ -227,7 +227,8 @@ const DEFINE_BINDING_SOURCE_INLINE_OPTION_KEYS = new Set<string>([
   "supportedAttributesFilter",
 ]);
 
-const SOURCE_NAME_PATTERN = /^[a-z0-9-]+\/[a-z0-9-]+$/u;
+const SOURCE_NAME_PATTERN =
+  /^[a-z0-9]+(?:-[a-z0-9]+)*\/[a-z0-9]+(?:-[a-z0-9]+)*$/u;
 const FIELD_NAME_PATTERN = /^[A-Za-z_][A-Za-z0-9_-]*$/u;
 
 function isObjectRecord(
