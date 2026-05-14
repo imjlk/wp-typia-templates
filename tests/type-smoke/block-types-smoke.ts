@@ -50,6 +50,16 @@ import type {
   SupportAttributes,
   TypographySupportKey,
 } from '@wp-typia/block-types/blocks/supports';
+import {
+  createStaticBlockVariationRegistrationSource,
+  defineVariation,
+  defineVariations,
+  getDefinedVariationsMetadata,
+} from '@wp-typia/block-types/blocks/variations';
+import type {
+  BlockVariationDiagnostic,
+  BlockVariationRegistrationEntry,
+} from '@wp-typia/block-types/blocks/variations';
 
 const aspectRatio: AspectRatio = '16/9';
 const blockAlignment: BlockAlignment = 'wide';
@@ -276,6 +286,43 @@ const variation = {
   scope: ['inserter'],
   title: 'Smoke Variation',
 } satisfies BlockVariation<DemoRegistrationAttributes>;
+const typedParagraphVariation = defineVariation<DemoRegistrationAttributes>(
+  'core/paragraph',
+  {
+    attributes: {
+      content: 'Typed paragraph',
+      isVisible: true,
+    },
+    isActive: ['isVisible'],
+    name: 'typed-paragraph',
+    scope: ['inserter', 'transform'],
+    title: 'Typed Paragraph',
+  },
+);
+const typedGroupVariation = defineVariation('core/group', {
+  attributes: {
+    className: 'is-style-smoke-group',
+  },
+  innerBlocks: [
+    ['core/heading', { level: 2, placeholder: 'Title' }],
+    ['core/paragraph', { placeholder: 'Write...' }],
+  ],
+  isActive: ['className'],
+  name: 'typed-group',
+  scope: ['inserter'],
+  title: 'Typed Group',
+});
+const typedVariations = defineVariations([
+  typedParagraphVariation,
+  typedGroupVariation,
+] as const);
+const typedVariationEntries = getDefinedVariationsMetadata(typedVariations)
+  ?.entries;
+const typedVariationEntry: BlockVariationRegistrationEntry | undefined =
+  typedVariationEntries?.[0];
+const typedVariationSource =
+  createStaticBlockVariationRegistrationSource(typedVariations);
+const variationDiagnostic: BlockVariationDiagnostic | undefined = undefined;
 const parsedBlock: BlockInstance<DemoRegistrationAttributes> = {
   attributes: { content: 'hello', isVisible: true },
   clientId: 'demo-client-id',
@@ -350,4 +397,11 @@ void textAlignment;
 void textColor;
 void textTransform;
 void variation;
+void typedParagraphVariation;
+void typedGroupVariation;
+void typedVariations;
+void typedVariationEntries;
+void typedVariationEntry;
+void typedVariationSource;
+void variationDiagnostic;
 void blockVerticalAlignment;

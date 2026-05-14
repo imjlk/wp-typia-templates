@@ -37,6 +37,10 @@ function writeMockWordPressBlocks(projectRoot: string) {
 			"export function registerBlockType(name, settings) {",
 			"  return { name, settings, source: '@wordpress/blocks' };",
 			"}",
+			"export function registerBlockVariation(blockName, variation) {",
+			"  globalThis.__wpTypiaRegisteredVariations ??= [];",
+			"  globalThis.__wpTypiaRegisteredVariations.push({ blockName, variation });",
+			"}",
 			"",
 		].join("\n"),
 		"utf8",
@@ -106,6 +110,11 @@ describe("@wp-typia/block-types export contracts", () => {
 			import: "./dist/blocks/supports.js",
 			types: "./dist/blocks/supports.d.ts",
 		});
+		expect(packageJson.exports?.["./blocks/variations"]).toEqual({
+			default: "./dist/blocks/variations.js",
+			import: "./dist/blocks/variations.js",
+			types: "./dist/blocks/variations.d.ts",
+		});
 	});
 
 	test("published self imports resolve through the package entrypoints with the expected runtime values", () => {
@@ -132,12 +141,19 @@ describe("@wp-typia/block-types export contracts", () => {
 							"const compatibility = await import('@wp-typia/block-types/blocks/compatibility');",
 							"const registration = await import('@wp-typia/block-types/blocks/registration');",
 							"const supports = await import('@wp-typia/block-types/blocks/supports');",
+							"const variations = await import('@wp-typia/block-types/blocks/variations');",
 							"const registered = registration.registerScaffoldBlockType('wp-typia/demo', { title: 'Demo' });",
 							"const definedSupports = supports.defineSupports({ minWordPress: '6.6', spacing: { padding: true }, typography: { fontSize: true } });",
 							"const supportsManifest = supports.getDefinedSupportsCompatibilityManifest(definedSupports);",
+							"const paragraphVariation = variations.defineVariation('core/paragraph', { allowMissingIsActive: true, name: 'demo-paragraph', title: 'Demo Paragraph', attributes: { className: 'is-style-demo' } });",
+							"const variationManifest = variations.getDefinedVariationCompatibilityManifest(paragraphVariation);",
+							"const variationSource = variations.createStaticBlockVariationRegistrationSource([paragraphVariation]);",
 							"console.log(JSON.stringify({",
 							"  definedSupportsPadding: definedSupports.spacing.padding,",
 							"  definedSupportsManifestFeatures: supportsManifest.supported.map((feature) => feature.feature),",
+							"  definedVariationBlockName: variations.getDefinedVariationBlockName(paragraphVariation),",
+							"  definedVariationManifestFeatures: variationManifest.supported.map((feature) => feature.feature),",
+							"  rootHasVariations: typeof root.defineVariation === 'function',",
 							"  rootHasRegister: typeof root.registerScaffoldBlockType === 'function',",
 							"  rootHasSupports: Array.isArray(root.BLOCK_SUPPORT_FEATURES),",
 							"  blockEditorHasSpacing: Array.isArray(blockEditor.SPACING_DIMENSIONS),",
@@ -149,6 +165,7 @@ describe("@wp-typia/block-types export contracts", () => {
 							"  spacingDimensions: spacing.SPACING_DIMENSIONS,",
 							"  textDecorations: typography.TEXT_DECORATIONS,",
 							"  supportsFeatures: supports.BLOCK_SUPPORT_FEATURES,",
+							"  variationSourceHasRegistration: variationSource.includes('registerBlockVariation(blockName, variation);'),",
 							"  variationScopes: registration.BLOCK_VARIATION_SCOPES,",
 							"  registeredName: registered?.name ?? null,",
 							"  registeredTitle: registered?.settings?.title ?? null,",
@@ -165,6 +182,8 @@ describe("@wp-typia/block-types export contracts", () => {
 				alignments: string[];
 				aspectRatios: string[];
 				blockEditorHasSpacing: boolean;
+				definedVariationBlockName: string | undefined;
+				definedVariationManifestFeatures: string[];
 				definedSupportsManifestFeatures: string[];
 				definedSupportsPadding: boolean;
 				layoutTypes: string[];
@@ -173,21 +192,28 @@ describe("@wp-typia/block-types export contracts", () => {
 				registeredTitle: string | null;
 				rootHasRegister: boolean;
 				rootHasSupports: boolean;
+				rootHasVariations: boolean;
 				manifestStatus: string | null;
 				spacingDimensions: string[];
 				styleAttributeKeys: string[];
 				supportsFeatures: string[];
 				textDecorations: string[];
+				variationSourceHasRegistration: boolean;
 				variationScopes: string[];
 			},
 		);
 
 		expect(summary.rootHasRegister).toBe(true);
 		expect(summary.rootHasSupports).toBe(true);
+		expect(summary.rootHasVariations).toBe(true);
 		expect(summary.definedSupportsPadding).toBe(true);
 		expect(summary.definedSupportsManifestFeatures).toEqual([
 			"spacing.padding",
 			"typography.fontSize",
+		]);
+		expect(summary.definedVariationBlockName).toBe("core/paragraph");
+		expect(summary.definedVariationManifestFeatures).toEqual([
+			"editorRegistration",
 		]);
 		expect(summary.blockEditorHasSpacing).toBe(true);
 		expect(summary.alignments).toEqual(["left", "center", "right", "wide", "full"]);
@@ -211,6 +237,7 @@ describe("@wp-typia/block-types export contracts", () => {
 		]);
 		expect(summary.textDecorations).toEqual(["none", "underline", "line-through"]);
 		expect(summary.supportsFeatures).toContain("interactivity");
+		expect(summary.variationSourceHasRegistration).toBe(true);
 		expect(summary.variationScopes).toEqual(["block", "inserter", "transform"]);
 		expect(summary.registeredName).toBe("wp-typia/demo");
 		expect(summary.registeredTitle).toBe("Demo");
@@ -238,5 +265,6 @@ describe("@wp-typia/block-types export contracts", () => {
 		expect(builtBlocksIndexJs).toContain('export * from "./registration.js";');
 		expect(builtBlocksIndexJs).toContain('export * from "./supports.js";');
 		expect(builtBlocksIndexJs).toContain('export * from "./compatibility.js";');
+		expect(builtBlocksIndexJs).toContain('export * from "./variations.js";');
 	});
 });
