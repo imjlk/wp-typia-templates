@@ -106,6 +106,10 @@ export default defineConfig({
             { label: 'Architecture Guide', link: '/guides/architecture/' },
             { label: 'Interactivity Guide', link: '/guides/interactivity/' },
             { label: 'Migration Guide', link: '/guides/migrations/' },
+            {
+              label: 'Nesting Contracts Guide',
+              link: '/guides/nesting-contracts/',
+            },
             { label: 'Union Support Guide', link: '/guides/union-support/' },
           ],
         },
