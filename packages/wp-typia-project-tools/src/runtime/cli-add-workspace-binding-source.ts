@@ -99,20 +99,31 @@ function assertValidBindingAttributeName(attributeName: string): string {
 	return trimmed;
 }
 
-function buildPhpArrayStringMap(
-	values: readonly {
-		key: string;
-		value: string;
-	}[],
-): string {
-	if (values.length === 0) {
+function buildPhpPostMetaFallbackValue(field: PostMetaBindingField): string {
+	switch (field.schemaType) {
+		case "array":
+		case "object":
+			return "array()";
+		case "boolean":
+			return "false";
+		case "integer":
+		case "number":
+			return "0";
+		default:
+			return quotePhpString(field.fallbackValue);
+	}
+}
+
+function buildPhpPostMetaFallbackMap(fields: readonly PostMetaBindingField[]): string {
+	if (fields.length === 0) {
 		return "\t\treturn array();";
 	}
 
 	return [
 		"\t\treturn array(",
-		...values.map(
-			(entry) => `\t\t\t${quotePhpString(entry.key)} => ${quotePhpString(entry.value)},`,
+		...fields.map(
+			(field) =>
+				`\t\t\t${quotePhpString(field.name)} => ${buildPhpPostMetaFallbackValue(field)},`,
 		),
 		"\t\t);",
 	].join("\n");
@@ -139,14 +150,9 @@ function buildBindingPostMetaServerSource(options: {
 	const functionPrefix = `${options.phpPrefix}_${bindingSourcePhpId}`;
 	const fieldsFunctionName = `${functionPrefix}_post_meta_binding_fields`;
 	const fallbackValuesFunctionName = `${functionPrefix}_post_meta_preview_values`;
-	const formatFunctionName = `${functionPrefix}_format_binding_value`;
 	const resolveFunctionName = `${functionPrefix}_resolve_binding_source_value`;
 	const supportedAttributesFunctionName = `${functionPrefix}_supported_binding_attributes`;
 	const fieldNames = options.postMeta.fields.map((field) => field.name);
-	const fallbackValues = options.postMeta.fields.map((field) => ({
-		key: field.name,
-		value: field.fallbackValue,
-	}));
 	const supportedAttributesSource = options.target
 		? `
 if ( ! function_exists( '${supportedAttributesFunctionName}' ) ) {
@@ -196,29 +202,12 @@ if ( ! function_exists( '${fieldsFunctionName}' ) ) {
 
 if ( ! function_exists( '${fallbackValuesFunctionName}' ) ) {
 \tfunction ${fallbackValuesFunctionName}() : array {
-${buildPhpArrayStringMap(fallbackValues)}
-\t}
-}
-
-if ( ! function_exists( '${formatFunctionName}' ) ) {
-\tfunction ${formatFunctionName}( $value ) : string {
-\t\tif ( is_bool( $value ) ) {
-\t\t\treturn $value ? 'true' : 'false';
-\t\t}
-\t\tif ( is_scalar( $value ) ) {
-\t\t\treturn (string) $value;
-\t\t}
-\t\tif ( null === $value ) {
-\t\t\treturn '';
-\t\t}
-
-\t\t$encoded = wp_json_encode( $value );
-\t\treturn is_string( $encoded ) ? $encoded : '';
+${buildPhpPostMetaFallbackMap(options.postMeta.fields)}
 \t}
 }
 
 if ( ! function_exists( '${resolveFunctionName}' ) ) {
-\tfunction ${resolveFunctionName}( array $source_args, $block_instance = null, $attribute_name = null ) : string {
+\tfunction ${resolveFunctionName}( array $source_args, $block_instance = null, $attribute_name = null ) {
 \t\tunset( $attribute_name );
 
 \t\t$field = isset( $source_args['field'] ) && is_string( $source_args['field'] )
@@ -253,7 +242,7 @@ if ( ! function_exists( '${resolveFunctionName}' ) ) {
 \t\t\t$value = $fallback_values[ $field ] ?? '';
 \t\t}
 
-\t\treturn ${formatFunctionName}( $value );
+\t\treturn $value;
 \t}
 }
 ${supportedAttributesSource}
