@@ -54,6 +54,14 @@ import {
 	type WritingMode,
 } from "@wp-typia/block-types/block-editor/typography";
 import {
+	WORDPRESS_BLOCK_API_COMPATIBILITY,
+	createWordPressBlockApiCompatibilityManifest,
+	type WordPressBlockApiCompatibilityFeature,
+	type WordPressBlockSupportCompatibilityFeature,
+	type WordPressCompatibilitySettings,
+	type WordPressVersion,
+} from "@wp-typia/block-types/blocks/compatibility";
+import {
 	BLOCK_VARIATION_SCOPES,
 	registerScaffoldBlockType,
 	type BlockConfiguration,
@@ -107,6 +115,24 @@ const spacingSupportKeys =
 	SPACING_SUPPORT_KEYS satisfies readonly SpacingSupportKey[];
 const typographySupportKeys =
 	TYPOGRAPHY_SUPPORT_KEYS satisfies readonly TypographySupportKey[];
+const compatibilityMinVersion: WordPressVersion = "6.7";
+const compatibilitySettings: WordPressCompatibilitySettings = {
+	allowUnknownFutureKeys: false,
+	minVersion: compatibilityMinVersion,
+	strict: true,
+};
+const compatibilityFeature: WordPressBlockApiCompatibilityFeature = {
+	area: "blockSupports",
+	feature: "allowedBlocks",
+};
+const supportCompatibilityFeature: WordPressBlockSupportCompatibilityFeature =
+	"typography.textAlign";
+const compatibilityManifest = createWordPressBlockApiCompatibilityManifest(
+	[compatibilityFeature],
+	compatibilitySettings,
+);
+const supportsTextAlignSince =
+	WORDPRESS_BLOCK_API_COMPATIBILITY.blockSupports["typography.textAlign"].since;
 
 declare const configuration: BlockConfiguration<ExampleAttributes>;
 declare const editProps: BlockEditProps<ExampleAttributes>;
@@ -148,6 +174,7 @@ const styleAttributes: BlockStyleAttributes = {
 };
 
 const supports: BlockSupports = {
+	allowedBlocks: true,
 	color: {
 		button: true,
 		gradients: true,
@@ -169,6 +196,7 @@ const supports: BlockSupports = {
 		dropCap: true,
 		textAlign: ["left", "center"],
 	},
+	visibility: true,
 };
 
 void alignments;
@@ -193,6 +221,9 @@ void variationScopes;
 void supportFeatures;
 void spacingSupportKeys;
 void typographySupportKeys;
+void compatibilityManifest;
+void supportCompatibilityFeature;
+void supportsTextAlignSince;
 void registrationResult;
 void content;
 void maybeVariationTitle;

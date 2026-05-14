@@ -37,6 +37,7 @@ describe("@wp-typia/block-types type contracts", () => {
 		const fixtureSource = readFileSync(fixtureSourcePath, "utf8");
 
 		expect(fixtureSource).toContain("@wp-typia/block-types/blocks/registration");
+		expect(fixtureSource).toContain("@wp-typia/block-types/blocks/compatibility");
 		expect(fixtureSource).toContain("@wp-typia/block-types/blocks/supports");
 		expect(fixtureSource).toContain(
 			"@wp-typia/block-types/block-editor/style-attributes",

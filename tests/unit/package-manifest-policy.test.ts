@@ -92,7 +92,7 @@ function createManifestRepo() {
 		dependencies: {
 			"@wp-typia/api-client": "^0.4.3",
 			"@wp-typia/block-runtime": "workspace:*",
-			"@wp-typia/block-types": "^0.2.1",
+			"@wp-typia/block-types": "workspace:*",
 			"@wp-typia/rest": "^0.3.6",
 		},
 		devDependencies: {

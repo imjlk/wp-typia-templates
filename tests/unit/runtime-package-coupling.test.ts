@@ -283,7 +283,7 @@ describe("validate-runtime-package-coupling", () => {
 		expect(result.errors).toEqual([]);
 	});
 
-	test("passes when project-tools uses the sanctioned workspace protocol edge for block-runtime", () => {
+	test("passes when project-tools uses sanctioned workspace protocol edges", () => {
 		const repoRoot = createRuntimeRepo();
 		const packageJsonPath = path.join(
 			repoRoot,
@@ -293,6 +293,7 @@ describe("validate-runtime-package-coupling", () => {
 		);
 		const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf8"));
 		packageJson.dependencies["@wp-typia/block-runtime"] = "workspace:*";
+		packageJson.dependencies["@wp-typia/block-types"] = "workspace:*";
 		fs.writeFileSync(packageJsonPath, `${JSON.stringify(packageJson, null, 2)}\n`, "utf8");
 
 		const result = validateRuntimePackageCoupling(repoRoot);

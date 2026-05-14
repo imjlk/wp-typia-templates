@@ -163,7 +163,7 @@
     "@wp-typia/api-client": "^0.4.5",
     "@wp-typia/block-runtime": "workspace:*",
     "@wp-typia/rest": "^0.3.13",
-    "@wp-typia/block-types": "^0.2.4",
+    "@wp-typia/block-types": "workspace:*",
     "mustache": "^4.2.0",
     "npm-package-arg": "^13.0.0",
     "semver": "^7.7.3",

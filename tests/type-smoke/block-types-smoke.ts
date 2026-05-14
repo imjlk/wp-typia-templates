@@ -35,6 +35,11 @@ import type {
   RegisterBlockTypeResult,
 } from '@wp-typia/block-types/blocks/registration';
 import { registerScaffoldBlockType } from '@wp-typia/block-types/blocks/registration';
+import {
+  createWordPressBlockApiCompatibilityManifest,
+  type WordPressBlockApiCompatibilityFeature,
+  type WordPressVersion,
+} from '@wp-typia/block-types/blocks/compatibility';
 import type {
   BlockSupports,
   SpacingSize,
@@ -58,8 +63,26 @@ const spacingSize: SpacingSize = {
   slug: 'xl',
 };
 const supportKey: TypographySupportKey = 'dropCap';
+const minWordPressVersion: WordPressVersion = '6.7';
+const compatibilityFeatures: WordPressBlockApiCompatibilityFeature[] = [
+  {
+    area: 'blockSupports',
+    feature: 'typography.textAlign',
+  },
+  {
+    area: 'blockBindings',
+    feature: 'serverRegistration',
+  },
+];
+const compatibilityManifest = createWordPressBlockApiCompatibilityManifest(
+  compatibilityFeatures,
+  {
+    minVersion: minWordPressVersion,
+  },
+);
 const blockSupports: BlockSupports = {
   align: ['wide', 'full'],
+  allowedBlocks: true,
   background: {
     backgroundImage: true,
     backgroundSize: true,
@@ -120,6 +143,7 @@ const blockSupports: BlockSupports = {
     textTransform: true,
     __experimentalSkipSerialization: true,
   },
+  visibility: true,
 };
 const textAlignment: TextAlignment = 'justify';
 const textTransform: TextTransform = 'capitalize';
@@ -243,6 +267,7 @@ void aspectRatio;
 void blockAlignment;
 void blockConfiguration;
 void blockSupports;
+void compatibilityManifest;
 void contentPosition;
 void colorSupportAttrs;
 void deprecatedEntries;

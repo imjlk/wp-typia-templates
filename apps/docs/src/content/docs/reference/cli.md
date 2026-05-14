@@ -46,6 +46,14 @@ For example, this project config:
 
 ```json
 {
+  "wordpress": {
+    "minVersion": "6.7",
+    "testedVersions": ["6.7", "6.8", "6.9"]
+  },
+  "compatibility": {
+    "strict": true,
+    "allowUnknownFutureKeys": false
+  },
   "mcp": {
     "schemaSources": [{ "namespace": "base", "path": "./base.ts" }]
   }
@@ -67,6 +75,13 @@ combined with this later `package.json` override:
 resolves to only the `app` source. To keep both entries, include both in the
 later array. Additive array merging is intentionally out of scope for the
 current config contract.
+
+The `wordpress` and `compatibility` sections describe project-level block API
+intent. `wordpress.minVersion` is the target floor for generated Supports,
+Variations, and Bindings features, while `compatibility.strict` controls whether
+unsupported known features should fail diagnostics or stay as warnings.
+Unknown future keys are guarded unless `compatibility.allowUnknownFutureKeys`
+is explicitly enabled.
 
 ## Machine-readable diagnostics
 

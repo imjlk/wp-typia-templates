@@ -9,9 +9,11 @@ import {
   loadWpTypiaUserConfigFromSource,
   mergeWpTypiaUserConfig,
   validateWpTypiaUserConfig,
+  type getWordPressCompatibilitySettings,
   type getMcpSchemaSources,
   type WpTypiaSchemaSource,
   type WpTypiaUserConfig,
+  type WpTypiaWordPressCompatibilitySettings,
   type wpTypiaUserConfigSchema,
 } from '../src/config';
 import { extractWpTypiaConfigOverride } from '../src/config-override';
@@ -29,13 +31,21 @@ type UserConfigSchemaCompatibility = ExpectTrue<
 type SchemaSourceReturnCompatibility = ExpectTrue<
   IsEqual<ReturnType<typeof getMcpSchemaSources>, WpTypiaSchemaSource[]>
 >;
+type WordPressCompatibilitySettingsReturnCompatibility = ExpectTrue<
+  IsEqual<
+    ReturnType<typeof getWordPressCompatibilitySettings>,
+    WpTypiaWordPressCompatibilitySettings
+  >
+>;
 
 const configTypeCompatibilityChecks = {
   schemaSources: true,
   userConfig: true,
+  wordpressCompatibility: true,
 } satisfies {
   schemaSources: SchemaSourceReturnCompatibility;
   userConfig: UserConfigSchemaCompatibility;
+  wordpressCompatibility: WordPressCompatibilitySettingsReturnCompatibility;
 };
 
 function writeJson(filePath: string, value: unknown): void {
@@ -48,6 +58,7 @@ describe('wp-typia user config loading', () => {
     expect(configTypeCompatibilityChecks).toEqual({
       schemaSources: true,
       userConfig: true,
+      wordpressCompatibility: true,
     });
   });
 
@@ -57,6 +68,10 @@ describe('wp-typia user config loading', () => {
         namespace: 'base-space',
         template: 'basic',
         yes: true,
+      },
+      wordpress: {
+        minVersion: '6.7',
+        testedVersions: ['6.7', '6.8'],
       },
       mcp: {
         schemaSources: [
@@ -71,6 +86,13 @@ describe('wp-typia user config loading', () => {
       create: {
         'package-manager': 'pnpm',
         template: 'persistence',
+      },
+      compatibility: {
+        allowUnknownFutureKeys: true,
+        strict: false,
+      },
+      wordpress: {
+        testedVersions: ['6.9'],
       },
       mcp: {
         schemaSources: [
@@ -89,6 +111,14 @@ describe('wp-typia user config loading', () => {
       'package-manager': 'pnpm',
       template: 'persistence',
       yes: true,
+    });
+    expect(merged.compatibility).toEqual({
+      allowUnknownFutureKeys: true,
+      strict: false,
+    });
+    expect(merged.wordpress).toEqual({
+      minVersion: '6.7',
+      testedVersions: ['6.9'],
     });
     expect(merged.mcp?.schemaSources).toEqual([
       {
@@ -115,6 +145,14 @@ describe('wp-typia user config loading', () => {
               },
             ],
           },
+          compatibility: {
+            allowUnknownFutureKeys: false,
+            strict: true,
+          },
+          wordpress: {
+            minVersion: '6.5',
+            testedVersions: ['6.5', '6.6', '6.7'],
+          },
         },
         'test config',
       ),
@@ -122,6 +160,10 @@ describe('wp-typia user config loading', () => {
       create: {
         'dry-run': true,
         template: 'basic',
+      },
+      compatibility: {
+        allowUnknownFutureKeys: false,
+        strict: true,
       },
       mcp: {
         schemaSources: [
@@ -131,7 +173,40 @@ describe('wp-typia user config loading', () => {
           },
         ],
       },
+      wordpress: {
+        minVersion: '6.5',
+        testedVersions: ['6.5', '6.6', '6.7'],
+      },
     });
+  });
+
+  test('rejects malformed WordPress compatibility versions', () => {
+    let thrown: unknown;
+    try {
+      validateWpTypiaUserConfig(
+        {
+          wordpress: {
+            minVersion: '6.x',
+            testedVersions: ['6.7', 'trunk'],
+          },
+        },
+        'test config',
+      );
+    } catch (error) {
+      thrown = error;
+    }
+
+    expect(thrown).toBeInstanceOf(Error);
+    expect(thrown).toHaveProperty('code', 'invalid-argument');
+    expect(String((thrown as Error).message)).toContain(
+      'wordpress.minVersion',
+    );
+    expect(String((thrown as Error).message)).toContain(
+      'expected dotted numeric WordPress version',
+    );
+    expect(String((thrown as Error).message)).toContain(
+      'wordpress.testedVersions[1]',
+    );
   });
 
   test('loads explicit config sources relative to the requested working directory', async () => {

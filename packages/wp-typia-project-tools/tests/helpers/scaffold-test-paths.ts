@@ -103,7 +103,24 @@ if (
 }
 
 export const normalizedBlockRuntimePackageVersion = `^${blockRuntimePackageVersion}`;
-export const blockTypesPackageVersion =
-	createPackageManifest.dependencies["@wp-typia/block-types"];
+export const blockTypesPackageManifest = JSON.parse(
+	fs.readFileSync(
+		path.resolve(packageRoot, "..", "wp-typia-block-types", "package.json"),
+		"utf8",
+	),
+);
+
+export const blockTypesPackageManifestVersion = blockTypesPackageManifest.version;
+
+if (
+	typeof blockTypesPackageManifestVersion !== "string" ||
+	blockTypesPackageManifestVersion.length === 0
+) {
+	throw new Error(
+		'Expected "packages/wp-typia-block-types/package.json" to define a version.',
+	);
+}
+
+export const blockTypesPackageVersion = `^${blockTypesPackageManifestVersion}`;
 export const restPackageVersion =
 	createPackageManifest.dependencies["@wp-typia/rest"];
