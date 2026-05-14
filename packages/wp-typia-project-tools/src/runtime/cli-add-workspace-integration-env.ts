@@ -12,6 +12,7 @@ import {
 	formatRunScript,
 	type PackageManagerId,
 } from "./package-managers.js";
+import { DEFAULT_WORDPRESS_ENV_VERSION } from "./package-versions.js";
 import { pathExists, readOptionalUtf8File } from "./fs-async.js";
 import { readJsonFile } from "./json-utils.js";
 import { executeWorkspaceMutationPlan } from "./cli-add-workspace-mutation.js";
@@ -43,8 +44,6 @@ export interface RunAddIntegrationEnvCommandResult {
 	withReleaseZip: boolean;
 	withWpEnv: boolean;
 }
-
-const WP_ENV_PACKAGE_VERSION = "^11.2.0";
 
 function buildWpEnvConfigSource(): string {
 	return `${JSON.stringify(
@@ -397,7 +396,7 @@ function addIntegrationEnvPackageJsonEntries({
 		...(packageJson.devDependencies ?? {}),
 	};
 	if (withWpEnv && devDependencies["@wordpress/env"] === undefined) {
-		devDependencies["@wordpress/env"] = WP_ENV_PACKAGE_VERSION;
+		devDependencies["@wordpress/env"] = DEFAULT_WORDPRESS_ENV_VERSION;
 	}
 	packageJson.devDependencies = devDependencies;
 	const scripts = {
