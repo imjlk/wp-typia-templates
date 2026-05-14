@@ -13,6 +13,10 @@ import {
 } from "./cli-doctor-workspace-shared.js";
 import { readJsonFileSync } from "./json-utils.js";
 import { escapeRegex } from "./php-utils.js";
+import {
+	assertPostMetaBindingPath,
+	loadPostMetaBindingFieldsSync,
+} from "./post-meta-binding-fields.js";
 
 import type { DoctorCheck } from "./cli-doctor.js";
 import type { WorkspaceInventory } from "./workspace-inventory.js";
@@ -200,6 +204,79 @@ function checkWorkspaceBindingTarget(
 	);
 }
 
+function checkWorkspaceBindingPostMeta(
+	projectDir: string,
+	inventory: WorkspaceInventory,
+	bindingSource: WorkspaceInventory["bindingSources"][number],
+): DoctorCheck | undefined {
+	if (!bindingSource.postMeta) {
+		return undefined;
+	}
+
+	const postMeta = inventory.postMeta.find(
+		(entry) => entry.slug === bindingSource.postMeta,
+	);
+	if (!postMeta) {
+		return createDoctorCheck(
+			`Binding post meta ${bindingSource.slug}`,
+			"fail",
+			`Binding source references unknown post meta contract "${bindingSource.postMeta}".`,
+		);
+	}
+
+	const issues: string[] = [];
+	try {
+		const fields = loadPostMetaBindingFieldsSync(projectDir, postMeta);
+		if (bindingSource.metaPath) {
+			assertPostMetaBindingPath(fields, postMeta.slug, bindingSource.metaPath);
+		}
+	} catch (error) {
+		issues.push(error instanceof Error ? error.message : String(error));
+	}
+
+	const serverPath = path.join(projectDir, bindingSource.serverFile);
+	if (fs.existsSync(serverPath)) {
+		const serverSource = fs.readFileSync(serverPath, "utf8");
+		if (!serverSource.includes("get_post_meta")) {
+			issues.push(`${bindingSource.serverFile} must read post meta values`);
+		}
+		if (!serverSource.includes(postMeta.metaKey)) {
+			issues.push(`${bindingSource.serverFile} must reference ${postMeta.metaKey}`);
+		}
+		if (!serverSource.includes(postMeta.schemaFile)) {
+			issues.push(`${bindingSource.serverFile} must reference ${postMeta.schemaFile}`);
+		}
+	} else {
+		issues.push(`Missing ${bindingSource.serverFile}`);
+	}
+
+	const editorPath = path.join(projectDir, bindingSource.editorFile);
+	if (fs.existsSync(editorPath)) {
+		const editorSource = fs.readFileSync(editorPath, "utf8");
+		if (!editorSource.includes("POST_META_BINDING_FIELDS")) {
+			issues.push(`${bindingSource.editorFile} must define post meta binding fields`);
+		}
+		if (!editorSource.includes(postMeta.schemaFile)) {
+			issues.push(`${bindingSource.editorFile} must reference ${postMeta.schemaFile}`);
+		}
+		if (bindingSource.metaPath && !editorSource.includes(bindingSource.metaPath)) {
+			issues.push(
+				`${bindingSource.editorFile} must reference default meta path "${bindingSource.metaPath}"`,
+			);
+		}
+	} else {
+		issues.push(`Missing ${bindingSource.editorFile}`);
+	}
+
+	return createDoctorCheck(
+		`Binding post meta ${bindingSource.slug}`,
+		issues.length === 0 ? "pass" : "fail",
+		issues.length === 0
+			? `${bindingSource.slug} reads ${postMeta.slug} via ${postMeta.schemaFile}`
+			: issues.join("; "),
+	);
+}
+
 /**
  * Collect workspace doctor checks for extracted binding-source diagnostics.
  *
@@ -236,6 +313,14 @@ export function getWorkspaceBindingDoctorChecks(
 		);
 		if (bindingTargetCheck) {
 			checks.push(bindingTargetCheck);
+		}
+		const bindingPostMetaCheck = checkWorkspaceBindingPostMeta(
+			workspace.projectDir,
+			inventory,
+			bindingSource,
+		);
+		if (bindingPostMetaCheck) {
+			checks.push(bindingPostMetaCheck);
 		}
 	}
 

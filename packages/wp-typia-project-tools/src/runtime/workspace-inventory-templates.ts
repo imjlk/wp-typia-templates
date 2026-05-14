@@ -99,6 +99,8 @@ export interface WorkspaceBindingSourceConfig {
 \tattribute?: string;
 \tblock?: string;
 \teditorFile: string;
+\tmetaPath?: string;
+\tpostMeta?: string;
 \tserverFile: string;
 \tslug: string;
 }

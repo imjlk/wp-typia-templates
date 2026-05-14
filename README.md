@@ -165,6 +165,7 @@ bun run wp-typia:add rest-resource external-record --manual --namespace legacy/v
 bun run wp-typia:add rest-resource integration-settings --manual --namespace my-plugin/v1 --method POST --secret-field apiKey --secret-preserve-on-empty true
 bun run wp-typia:add admin-view integration-settings --source rest-resource:integration-settings
 bun run wp-typia:add post-meta integration-state --post-type post --type IntegrationStateMeta
+bun run wp-typia:add binding-source integration-state-source --from-post-meta integration-state --meta-path status --block counter-card --attribute headline
 bun run wp-typia:add editor-plugin review-workflow --slot sidebar
 bun run wp-typia:add editor-plugin seo-notes --slot document-setting-panel
 bun run wp-typia:add hooked-block counter-card --anchor core/post-content --position after
@@ -241,6 +242,11 @@ missing or malformed schema files.
 - Need typed post meta as shared integration state? Use
   `wp-typia add post-meta <name> --post-type <post-type>` to generate a
   TypeScript shape, schema artifact, and `register_post_meta()` helper.
+- Need a Block Bindings source backed by that typed meta? Use
+  `wp-typia add binding-source <name> --from-post-meta <post-meta> --meta-path <field>`
+  to read top-level schema fields with `get_post_meta()` and generated editor
+  preview fallbacks. Nested meta paths are intentionally rejected for now; keep
+  binding fields at the post-meta schema root.
 - Need schema evolution for a long-lived block? Enable `--with-migration-ui`.
 - Need smoke tests for external/manual payloads? Use `@wp-typia/block-runtime/schema-test`
   to assert responses against generated `*.schema.json` contract artifacts.

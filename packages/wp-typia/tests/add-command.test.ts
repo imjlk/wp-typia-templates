@@ -5,7 +5,12 @@ import * as path from 'node:path';
 
 import type { ReadlinePrompt } from '@wp-typia/project-tools/cli-prompt';
 import { CLI_DIAGNOSTIC_CODES } from '@wp-typia/project-tools/cli-diagnostics';
-import { ADD_KIND_IDS, supportsAddKindDryRun } from '../src/add-kind-registry';
+import {
+  ADD_KIND_IDS,
+  ADD_KIND_REGISTRY,
+  supportsAddKindDryRun,
+  type AddKindExecutionContext,
+} from '../src/add-kind-registry';
 import { WP_TYPIA_COMMAND_REGISTRY } from '../src/command-registry';
 import {
   executeAddCommand,
@@ -318,6 +323,56 @@ describe('wp-typia add command bridge', () => {
     expect(blockJson.attributes.headline).toEqual({ type: 'string' });
   }, 30_000);
 
+  test('passes binding-source post-meta flags through the add bridge', async () => {
+    const capturedOptions: Record<string, unknown>[] = [];
+    const plan =
+      await ADD_KIND_REGISTRY['binding-source'].prepareExecution({
+        addRuntime: ({
+          runAddBindingSourceCommand: async (options: Record<string, unknown>) => {
+            capturedOptions.push(options);
+
+            return {
+              bindingSourceSlug: String(options.bindingSourceName),
+              metaKey: '_demo_space_integration_state',
+              metaPath: String(options.metaPath),
+              postMetaSlug: String(options.postMetaName),
+              postType: 'post',
+              projectDir: String(options.cwd),
+              schemaFile: 'src/post-meta/integration-state/meta.schema.json',
+            };
+          },
+        } as unknown) as AddKindExecutionContext['addRuntime'],
+        cwd: '/tmp/wp-typia-binding-post-meta',
+        flags: {
+          'from-post-meta': 'integration-state',
+          'meta-path': 'status',
+        },
+        getOrCreatePrompt: async () => {
+          throw new Error('prompt should not be used');
+        },
+        isInteractiveSession: false,
+        name: 'integration-state-source',
+        warnLine: () => {},
+      });
+
+    const result = await plan.execute('/tmp/wp-typia-binding-post-meta');
+
+    expect(capturedOptions).toEqual([
+      {
+        bindingSourceName: 'integration-state-source',
+        cwd: '/tmp/wp-typia-binding-post-meta',
+        metaPath: 'status',
+        postMetaName: 'integration-state',
+      },
+    ]);
+    expect(plan.getValues(result)).toMatchObject({
+      bindingSourceSlug: 'integration-state-source',
+      metaPath: 'status',
+      postMetaSlug: 'integration-state',
+      schemaFile: 'src/post-meta/integration-state/meta.schema.json',
+    });
+  });
+
   test('passes block style and transform flags through the add bridge', async () => {
     const projectDir = path.join(tempRoot, 'demo-add-style-transform');
 
@@ -573,7 +628,7 @@ describe('wp-typia add command bridge', () => {
         },
         kind: 'binding-source' as const,
         message:
-          '`wp-typia add binding-source` requires <name>. Usage: wp-typia add binding-source <name> [--block <block-slug|namespace/block-slug> --attribute <attribute>].',
+          '`wp-typia add binding-source` requires <name>. Usage: wp-typia add binding-source <name> [--block <block-slug|namespace/block-slug> --attribute <attribute>] [--from-post-meta <post-meta> --meta-path <field>].',
       },
     ] satisfies Array<{
       flags: Record<string, unknown>;

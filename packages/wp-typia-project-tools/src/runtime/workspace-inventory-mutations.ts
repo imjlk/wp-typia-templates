@@ -274,6 +274,18 @@ export function updateWorkspaceInventorySource(
 	);
 	nextSource = ensureInterfaceField(
 		nextSource,
+		"WorkspaceBindingSourceConfig",
+		"metaPath",
+		"\tmetaPath?: string;",
+	);
+	nextSource = ensureInterfaceField(
+		nextSource,
+		"WorkspaceBindingSourceConfig",
+		"postMeta",
+		"\tpostMeta?: string;",
+	);
+	nextSource = ensureInterfaceField(
+		nextSource,
 		"WorkspaceAbilityConfig",
 		"compatibility",
 		WORKSPACE_COMPATIBILITY_CONFIG_FIELD,

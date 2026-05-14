@@ -41,6 +41,7 @@ bun run wp-typia:add pattern hero-layout
 bun run wp-typia:add rest-resource snapshots --namespace {{namespace}}/v1 --methods list,read,create
 bun run wp-typia:add rest-resource external-record --manual --namespace legacy/v1 --route-pattern '/records/(?P<post_id>[\d]+)' --permission-callback legacy_can_read_records --controller-class Legacy\\Records\\Controller
 bun run wp-typia:add post-meta integration-state --post-type post
+bun run wp-typia:add binding-source integration-state-source --from-post-meta integration-state --meta-path status --block counter-card --attribute headline
 ```
 
 ## CLI Commands

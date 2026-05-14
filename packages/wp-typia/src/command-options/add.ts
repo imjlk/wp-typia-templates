@@ -63,6 +63,11 @@ export const ADD_OPTION_METADATA = {
       'Source full block name (namespace/block) for transform workflows.',
     type: 'string',
   },
+  'from-post-meta': {
+    description:
+      'Alias for --post-meta when backing a binding-source scaffold from a typed post-meta contract.',
+    type: 'string',
+  },
   'inner-blocks-preset': {
     description:
       'Compound-only InnerBlocks preset (freeform, ordered, horizontal, locked-structure).',
@@ -83,6 +88,11 @@ export const ADD_OPTION_METADATA = {
   'meta-key': {
     description:
       'WordPress meta key for post-meta workflows; defaults to _<phpPrefix>_<name>.',
+    type: 'string',
+  },
+  'meta-path': {
+    description:
+      'Top-level post-meta field used as the default binding-source field when --post-meta or --from-post-meta is provided.',
     type: 'string',
   },
   method: {
@@ -106,6 +116,11 @@ export const ADD_OPTION_METADATA = {
   },
   'post-type': {
     description: 'WordPress post type key for post-meta workflows.',
+    type: 'string',
+  },
+  'post-meta': {
+    description:
+      'Typed post-meta contract slug used to back a binding-source scaffold.',
     type: 'string',
   },
   'persistence-policy': {
