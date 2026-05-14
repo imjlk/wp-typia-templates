@@ -1,7 +1,9 @@
 import { expect, test } from "bun:test";
-import { readFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 
+import { runDoctor } from "../src/runtime/cli-doctor.js";
 import { resolveWorkspaceBootstrapPath } from "../src/runtime/cli-doctor-workspace-shared.js";
 
 const sourceRoot = resolve(import.meta.dir, "..", "src", "runtime");
@@ -79,7 +81,13 @@ test("cli-doctor keeps environment and workspace checks in dedicated modules", (
 
 	expect(cliDoctorSource).toContain('from "./cli-doctor-environment.js"');
 	expect(cliDoctorSource).toContain('from "./cli-doctor-workspace.js"');
-	expect(cliDoctorSource).toContain("...(await getWorkspaceDoctorChecks(cwd)),");
+	expect(cliDoctorSource).toContain(
+		'...annotateDoctorChecks(await getWorkspaceDoctorChecks(cwd), "workspace"),',
+	);
+	expect(cliDoctorSource).toContain("const defaultDoctorLinePrinter");
+	expect(cliDoctorSource).toContain("process.stdout.write(`${line}\\n`)");
+	expect(cliDoctorSource).not.toContain("console.log(formatDoctorCheckLine");
+	expect(cliDoctorSource).not.toContain("console.log(summaryLine");
 	expect(cliDoctorSource).not.toContain("function readCommandVersion(");
 	expect(cliDoctorSource).not.toContain("function checkWorkspacePackageMetadata(");
 	expect(cliDoctorSource).not.toContain("function checkWorkspaceBindingBootstrap(");
@@ -171,4 +179,35 @@ test("cli-doctor resolves workspace bootstrap paths for scoped and unscoped pack
 	expect(resolveWorkspaceBootstrapPath(projectDir, "demo-plugin")).toBe(
 		join(projectDir, "demo-plugin.php"),
 	);
+});
+
+test("cli-doctor default output writes through the stdout line printer", async () => {
+	const tempDir = mkdtempSync(join(tmpdir(), "wp-typia-doctor-printer-"));
+	const originalLog = console.log;
+	const originalWrite = process.stdout.write;
+	const stdoutChunks: string[] = [];
+
+	console.log = () => {
+		throw new Error("runDoctor should not use console.log as its default printer");
+	};
+	process.stdout.write = ((chunk: unknown, ...args: unknown[]) => {
+		stdoutChunks.push(Buffer.isBuffer(chunk) ? chunk.toString("utf8") : String(chunk));
+		const callback = args.find(
+			(arg): arg is (error?: Error | null) => void => typeof arg === "function",
+		);
+		callback?.();
+		return true;
+	}) as typeof process.stdout.write;
+
+	try {
+		await runDoctor(tempDir, { exitPolicy: "workspace-only" });
+	} finally {
+		process.stdout.write = originalWrite;
+		console.log = originalLog;
+		rmSync(tempDir, { force: true, recursive: true });
+	}
+
+	expect(stdoutChunks.length).toBeGreaterThan(0);
+	expect(stdoutChunks.every((chunk) => chunk.endsWith("\n"))).toBe(true);
+	expect(stdoutChunks.join("")).toContain("wp-typia doctor summary:");
 });

@@ -61,7 +61,21 @@ interface DoctorSummaryOptions {
 	exitPolicy?: DoctorExitPolicy;
 }
 
+type DoctorLinePrinter = (line: string) => void;
+
 const DEFAULT_DOCTOR_EXIT_POLICY: DoctorExitPolicy = "strict";
+
+const defaultDoctorLinePrinter: DoctorLinePrinter = (line) => {
+	process.stdout.write(`${line}\n`);
+};
+
+function renderDefaultDoctorCheckLine(check: DoctorCheck): void {
+	defaultDoctorLinePrinter(formatDoctorCheckLine(check));
+}
+
+function renderDefaultDoctorSummaryLine(summaryLine: string): void {
+	defaultDoctorLinePrinter(summaryLine);
+}
 
 function annotateDoctorChecks(
 	checks: DoctorCheck[],
@@ -196,11 +210,10 @@ export async function runDoctor(
 	options: RunDoctorOptions = {},
 ): Promise<DoctorCheck[]> {
 	const exitPolicy = resolveDoctorExitPolicy(options);
-	const renderLine =
-		options.renderLine ?? ((check: DoctorCheck) => console.log(formatDoctorCheckLine(check)));
+	const renderLine = options.renderLine ?? renderDefaultDoctorCheckLine;
 	const renderSummaryLine =
 		options.renderSummaryLine ??
-		(options.renderLine ? () => undefined : (summaryLine: string) => console.log(summaryLine));
+		(options.renderLine ? () => undefined : renderDefaultDoctorSummaryLine);
 	const checks = await getDoctorChecks(cwd);
 
 	for (const check of checks) {
