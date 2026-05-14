@@ -3689,16 +3689,15 @@ test("canonical CLI can add a binding source backed by typed post meta", async (
   expect(bindingServerSource).toContain("get_post_meta");
   expect(bindingServerSource).toContain("dirname( __DIR__, 3 )");
   expect(bindingServerSource).toContain("_demo_space_integration_state");
-  expect(bindingServerSource).toContain("'enabled' => false");
+  expect(bindingServerSource).not.toContain("_post_meta_preview_values");
   expect(bindingServerSource).not.toContain("_format_binding_value");
+  expect(bindingServerSource).toContain("return null;");
   expect(bindingServerSource).toContain("return $value;");
   expect(bindingServerSource).toContain(
     "'uses_context' => array( 'postId', 'postType' )"
   );
   expect(bindingServerSource).toContain("current_user_can( 'read_post'");
-  expect(bindingServerSource).toContain(
-    "is_protected_meta( '_demo_space_integration_state', 'post' )"
-  );
+  expect(bindingServerSource).not.toContain("is_protected_meta");
   expect(bindingServerSource).toContain("get_registered_meta_keys");
   expect(bindingServerSource).toContain("['show_in_rest']");
   expect(bindingServerSource).not.toContain("get_the_ID");

@@ -99,36 +99,6 @@ function assertValidBindingAttributeName(attributeName: string): string {
 	return trimmed;
 }
 
-function buildPhpPostMetaFallbackValue(field: PostMetaBindingField): string {
-	switch (field.schemaType) {
-		case "array":
-		case "object":
-			return "array()";
-		case "boolean":
-			return "false";
-		case "integer":
-		case "number":
-			return "0";
-		default:
-			return quotePhpString(field.fallbackValue);
-	}
-}
-
-function buildPhpPostMetaFallbackMap(fields: readonly PostMetaBindingField[]): string {
-	if (fields.length === 0) {
-		return "\t\treturn array();";
-	}
-
-	return [
-		"\t\treturn array(",
-		...fields.map(
-			(field) =>
-				`\t\t\t${quotePhpString(field.name)} => ${buildPhpPostMetaFallbackValue(field)},`,
-		),
-		"\t\t);",
-	].join("\n");
-}
-
 function buildPhpStringList(values: readonly string[]): string {
 	if (values.length === 0) {
 		return "array()";
@@ -149,7 +119,6 @@ function buildBindingPostMetaServerSource(options: {
 	const bindingSourcePhpId = options.bindingSourceSlug.replace(/-/g, "_");
 	const functionPrefix = `${options.phpPrefix}_${bindingSourcePhpId}`;
 	const fieldsFunctionName = `${functionPrefix}_post_meta_binding_fields`;
-	const fallbackValuesFunctionName = `${functionPrefix}_post_meta_preview_values`;
 	const canReadFunctionName = `${functionPrefix}_can_read_post_meta`;
 	const resolveFunctionName = `${functionPrefix}_resolve_binding_source_value`;
 	const supportedAttributesFunctionName = `${functionPrefix}_supported_binding_attributes`;
@@ -201,12 +170,6 @@ if ( ! function_exists( '${fieldsFunctionName}' ) ) {
 \t}
 }
 
-if ( ! function_exists( '${fallbackValuesFunctionName}' ) ) {
-\tfunction ${fallbackValuesFunctionName}() : array {
-${buildPhpPostMetaFallbackMap(options.postMeta.fields)}
-\t}
-}
-
 if ( ! function_exists( '${canReadFunctionName}' ) ) {
 \tfunction ${canReadFunctionName}( int $post_id, string $post_type ) : bool {
 \t\t$post = get_post( $post_id );
@@ -214,9 +177,6 @@ if ( ! function_exists( '${canReadFunctionName}' ) ) {
 \t\t\treturn false;
 \t\t}
 \t\tif ( ( ! is_post_publicly_viewable( $post ) && ! current_user_can( 'read_post', $post_id ) ) || post_password_required( $post ) ) {
-\t\t\treturn false;
-\t\t}
-\t\tif ( is_protected_meta( ${quotePhpString(options.postMeta.metaKey)}, 'post' ) ) {
 \t\t\treturn false;
 \t\t}
 
@@ -269,8 +229,7 @@ if ( ! function_exists( '${resolveFunctionName}' ) ) {
 \t\t\t}
 \t\t}
 \t\tif ( null === $value ) {
-\t\t\t$fallback_values = ${fallbackValuesFunctionName}();
-\t\t\t$value = $fallback_values[ $field ] ?? '';
+\t\t\treturn null;
 \t\t}
 
 \t\treturn $value;
