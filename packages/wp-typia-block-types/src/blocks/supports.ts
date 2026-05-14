@@ -494,10 +494,6 @@ function hasEnabledNestedSupport(
   section: unknown,
   key: string,
 ): boolean {
-  if (section === true) {
-    return true;
-  }
-
   return isSupportObject(section) && isEnabledSupportValue(section[key]);
 }
 

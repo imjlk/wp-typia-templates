@@ -3,6 +3,7 @@ import { describe, expect, test } from "bun:test";
 import type { WordPressBlockApiCompatibilityDiagnostic } from "../src/blocks/compatibility";
 import {
 	collectBlockSupportsCompatibilityFeatures,
+	createBlockSupportsCompatibilityManifest,
 	defineSupports,
 	getDefinedSupportsCompatibilityManifest,
 } from "../src/blocks/supports";
@@ -86,7 +87,11 @@ describe("defineSupports", () => {
 			filter: {
 				duotone: true,
 			},
-			spacing: true,
+			spacing: {
+				blockGap: true,
+				margin: true,
+				padding: true,
+			},
 			typography: {
 				dropCap: true,
 				fontSize: true,
@@ -102,6 +107,21 @@ describe("defineSupports", () => {
 			"color.button",
 			"filter.duotone",
 		]);
+	});
+
+	test("does not expand boolean parent supports into version-gated nested keys", () => {
+		const manifest = createBlockSupportsCompatibilityManifest(
+			{
+				spacing: true,
+				typography: true,
+			},
+			{
+				minWordPress: "6.5",
+			},
+		);
+
+		expect(manifest.diagnostics).toEqual([]);
+		expect(manifest.evaluations).toEqual([]);
 	});
 
 	test("throws in strict mode when supports require a newer WordPress floor", () => {
