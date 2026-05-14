@@ -81,6 +81,13 @@ import {
 	type SupportAttributes,
 	type TypographySupportKey,
 } from "@wp-typia/block-types/blocks/supports";
+import {
+	createStaticBlockVariationRegistrationSource,
+	defineVariation,
+	defineVariations,
+	getDefinedVariationsMetadata,
+	type BlockVariationRegistrationEntry,
+} from "@wp-typia/block-types/blocks/variations";
 
 const alignments = BLOCK_ALIGNMENTS satisfies readonly BlockAlignment[];
 const contentPositions =
@@ -178,6 +185,67 @@ const alignWideDoesNotExposeAlign: "align" extends keyof AlignWideOnlySupportAtt
 type ExampleAttributes = SupportAttributes<typeof proseSupports> & {
 	content: string;
 };
+
+type ParagraphVariationAttributes = {
+	className?: string;
+	content?: string;
+};
+type HeadingVariationAttributes = {
+	className?: string;
+	level?: number;
+};
+
+const paragraphVariation = defineVariation<ParagraphVariationAttributes>(
+	"core/paragraph",
+	{
+		attributes: {
+			className: "is-style-balanced",
+		},
+		isActive: ["className"],
+		name: "example-balanced-paragraph",
+		scope: ["inserter", "transform"],
+		title: "Balanced Paragraph",
+	},
+);
+const headingVariation = defineVariation<HeadingVariationAttributes>(
+	"core/heading",
+	{
+		attributes: {
+			className: "is-style-balanced-heading",
+			level: 2,
+		},
+		isActive: ["className", "level"],
+		name: "example-balanced-heading",
+		scope: ["inserter", "transform"],
+		title: "Balanced Heading",
+	},
+);
+const proseGroupVariation = defineVariation("core/group", {
+	attributes: {
+		className: "is-style-prose-group",
+	},
+	innerBlocks: [
+		["core/heading", { level: 2, placeholder: "Title" }],
+		["core/paragraph", { placeholder: "Write..." }],
+	],
+	isActive: ["className"],
+	name: "example-prose-group",
+	scope: ["inserter"],
+	title: "Prose Group",
+});
+const blockVariations = defineVariations([
+	paragraphVariation,
+	headingVariation,
+	proseGroupVariation,
+] as const);
+const variationEntries = getDefinedVariationsMetadata(blockVariations)?.entries;
+const variationRegistrationEntry: BlockVariationRegistrationEntry =
+	variationEntries?.[0] ?? {
+		blockName: "core/paragraph",
+		variation: paragraphVariation,
+	};
+const variationRegistrationSource =
+	createStaticBlockVariationRegistrationSource(blockVariations);
 
 declare const configuration: BlockConfiguration<ExampleAttributes>;
 declare const editProps: BlockEditProps<ExampleAttributes>;
@@ -299,6 +367,13 @@ void alignSupports;
 void alignSupportHasAlign;
 void alignWideOnlySupports;
 void alignWideDoesNotExposeAlign;
+void paragraphVariation;
+void headingVariation;
+void proseGroupVariation;
+void blockVariations;
+void variationEntries;
+void variationRegistrationEntry;
+void variationRegistrationSource;
 void registrationResult;
 void content;
 void maybeVariationTitle;
@@ -320,7 +395,21 @@ const invalidVariationScope: BlockVariationScope = "toolbar";
 // @ts-expect-error Typography textAlign should only accept text alignment values.
 const invalidTextAlignments = ["wide"] satisfies readonly TextAlignment[];
 
+const invalidVariationActiveAttribute = defineVariation<HeadingVariationAttributes>(
+	"core/heading",
+	{
+		attributes: {
+			level: 2,
+		},
+		// @ts-expect-error Variation isActive should reference typed variation attributes.
+		isActive: ["missing"],
+		name: "invalid-heading-variation",
+		title: "Invalid Heading Variation",
+	},
+);
+
 void invalidBlockAlignment;
 void invalidNamedColor;
 void invalidVariationScope;
 void invalidTextAlignments;
+void invalidVariationActiveAttribute;

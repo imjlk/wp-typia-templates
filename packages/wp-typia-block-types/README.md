@@ -21,6 +21,7 @@ Shared WordPress block semantic types derived from Gutenberg source and unoffici
 - `@wp-typia/block-types/blocks/compatibility`
 - `@wp-typia/block-types/blocks/registration`
 - `@wp-typia/block-types/blocks/supports`
+- `@wp-typia/block-types/blocks/variations`
 
 ## Current policy
 
@@ -46,6 +47,8 @@ Shared WordPress block semantic types derived from Gutenberg source and unoffici
   duotone, per-side border widths, and `js` / `locking`
 - a WordPress block API compatibility matrix for Supports, Variations, and
   Bindings features that codegen and diagnostics can share
+- typed Block Variations authoring helpers with static JavaScript registration
+  source generation
 
 ## Registration facade
 
@@ -194,6 +197,94 @@ recently stabilized support keys.
 for blocks that compute style output on the server. This follows Gutenberg's
 current experimental surface and should not be treated as a long-term
 stability guarantee.
+
+## WordPress block variation helpers
+
+`@wp-typia/block-types/blocks/variations` provides a type-first layer over the
+native Block Variations API. `defineVariation()` returns a plain variation
+metadata object suitable for `registerBlockVariation(...)`; the target block name
+and compatibility manifest are stored on a non-enumerable symbol so generated
+registration code can still recover the block target.
+
+```ts
+import {
+  createStaticBlockVariationRegistrationSource,
+  defineVariation,
+  defineVariations,
+} from '@wp-typia/block-types/blocks/variations';
+
+type HeadingVariationAttributes = {
+  className?: string;
+  level?: number;
+};
+
+const paragraphVariation = defineVariation('core/paragraph', {
+  name: 'example-balanced-paragraph',
+  title: 'Balanced Paragraph',
+  attributes: {
+    className: 'is-style-example-balanced',
+  },
+  scope: ['inserter', 'transform'],
+  isActive: ['className'],
+});
+
+const headingVariation = defineVariation<HeadingVariationAttributes>(
+  'core/heading',
+  {
+    name: 'example-balanced-heading',
+    title: 'Balanced Heading',
+    attributes: {
+      className: 'is-style-example-heading',
+      level: 2,
+    },
+    scope: ['inserter', 'transform'],
+    isActive: ['className', 'level'],
+  },
+);
+
+const variations = defineVariations([
+  paragraphVariation,
+  headingVariation,
+] as const);
+
+const registrationSource =
+  createStaticBlockVariationRegistrationSource(variations);
+```
+
+Custom block variations use the same helper. Pass the custom block name and a
+local attribute type when the variation should be checked against project-owned
+metadata:
+
+```ts
+type TestimonialAttributes = {
+  className?: string;
+  layout?: 'quote' | 'card';
+};
+
+export const featuredTestimonialVariation =
+  defineVariation<TestimonialAttributes>('acme/testimonial', {
+    name: 'acme-featured-testimonial',
+    title: 'Featured Testimonial',
+    attributes: {
+      className: 'is-style-acme-featured',
+      layout: 'card',
+    },
+    isActive: ['className', 'layout'],
+  });
+```
+
+`defineVariation()` warns when active-state detection is missing or points at an
+attribute not present in the variation metadata. Use `allowMissingIsActive: true`
+for intentionally passive/default-style variations. `defineVariations()` detects
+duplicate variation names and shared active discriminators for the same target
+block.
+
+Static code generation currently targets editor-side
+`registerBlockVariation(...)` calls. Function-based `isActive` callbacks are
+accepted by the type helper, but static source generation rejects them because
+they cannot be represented safely as JSON-backed registration metadata. PHP or
+dynamic variation registration remains scoped to a future helper built on the
+existing `blockVariations.phpVariationCallback` compatibility entry.
 
 ## Typia pipeline notes
 

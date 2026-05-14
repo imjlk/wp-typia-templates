@@ -71,6 +71,11 @@
       "import": "./dist/blocks/supports.js",
       "default": "./dist/blocks/supports.js"
     },
+    "./blocks/variations": {
+      "types": "./dist/blocks/variations.d.ts",
+      "import": "./dist/blocks/variations.js",
+      "default": "./dist/blocks/variations.js"
+    },
     "./package.json": "./package.json"
   },
   "files": [

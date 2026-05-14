@@ -39,12 +39,15 @@ describe("@wp-typia/block-types type contracts", () => {
 		expect(fixtureSource).toContain("@wp-typia/block-types/blocks/registration");
 		expect(fixtureSource).toContain("@wp-typia/block-types/blocks/compatibility");
 		expect(fixtureSource).toContain("@wp-typia/block-types/blocks/supports");
+		expect(fixtureSource).toContain("@wp-typia/block-types/blocks/variations");
 		expect(fixtureSource).toContain(
 			"@wp-typia/block-types/block-editor/style-attributes",
 		);
 		expect(fixtureSource).toContain("@ts-expect-error");
 		expect(fixtureSource).toContain("defineSupports");
 		expect(fixtureSource).toContain("SupportAttributes<typeof proseSupports>");
+		expect(fixtureSource).toContain("defineVariation");
+		expect(fixtureSource).toContain("defineVariations");
 		expect(fixtureSource).toContain("registerScaffoldBlockType");
 	});
 });
