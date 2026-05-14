@@ -24,12 +24,14 @@ export type AddFieldName =
   | 'anchor'
   | 'methods'
   | 'namespace'
+  | 'post-meta'
   | 'post-type'
   | 'position'
   | 'slot'
   | 'to'
   | 'alternate-render-targets'
   | 'inner-blocks-preset'
+  | 'meta-path'
   | 'data-storage'
   | 'persistence-policy';
 
@@ -174,6 +176,14 @@ export const NAME_BLOCK_ATTRIBUTE_VISIBLE_FIELDS = [
   'name',
   'block',
   'attribute',
+] as const satisfies ReadonlyArray<AddFieldName>;
+export const NAME_BLOCK_ATTRIBUTE_POST_META_VISIBLE_FIELDS = [
+  'kind',
+  'name',
+  'block',
+  'attribute',
+  'post-meta',
+  'meta-path',
 ] as const satisfies ReadonlyArray<AddFieldName>;
 export const NAME_BLOCK_VISIBLE_FIELDS = [
   'kind',

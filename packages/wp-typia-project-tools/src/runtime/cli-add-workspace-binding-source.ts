@@ -38,6 +38,12 @@ import { resolveWorkspaceBlockTargetName } from "./block-targets.js";
 import { pathExists } from "./fs-async.js";
 import { normalizeOptionalCliString } from "./cli-validation.js";
 import { getPropertyNameText } from "./ts-property-names.js";
+import {
+	assertPostMetaBindingPath,
+	loadPostMetaBindingFields,
+	type PostMetaBindingField,
+} from "./post-meta-binding-fields.js";
+import type { WorkspacePostMetaInventoryEntry } from "./workspace-inventory-types.js";
 
 const BINDING_SOURCE_SERVER_GLOB = "/src/bindings/*/server.php";
 const BINDING_SOURCE_EDITOR_SCRIPT = "build/bindings/index.js";
@@ -49,15 +55,28 @@ type BindingTarget = {
 	blockSlug: string;
 };
 
+type BindingPostMetaSource = {
+	fields: PostMetaBindingField[];
+	metaKey: string;
+	metaPath: string;
+	postMetaSlug: string;
+	postType: string;
+	schemaFile: string;
+	sourceTypeName: string;
+};
+
 function buildBindingSourceConfigEntry(
 	bindingSourceSlug: string,
 	target?: BindingTarget,
+	postMeta?: BindingPostMetaSource,
 ): string {
 	return [
 		"\t{",
 		...(target ? [`\t\tattribute: ${quoteTsString(target.attributeName)},`] : []),
 		...(target ? [`\t\tblock: ${quoteTsString(target.blockSlug)},`] : []),
 		`\t\teditorFile: ${quoteTsString(`src/bindings/${bindingSourceSlug}/editor.ts`)},`,
+		...(postMeta ? [`\t\tmetaPath: ${quoteTsString(postMeta.metaPath)},`] : []),
+		...(postMeta ? [`\t\tpostMeta: ${quoteTsString(postMeta.postMetaSlug)},`] : []),
 		`\t\tserverFile: ${quoteTsString(`src/bindings/${bindingSourceSlug}/server.php`)},`,
 		`\t\tslug: ${quoteTsString(bindingSourceSlug)},`,
 		"\t},",
@@ -80,13 +99,194 @@ function assertValidBindingAttributeName(attributeName: string): string {
 	return trimmed;
 }
 
+function buildPhpArrayStringMap(
+	values: readonly {
+		key: string;
+		value: string;
+	}[],
+): string {
+	if (values.length === 0) {
+		return "\t\treturn array();";
+	}
+
+	return [
+		"\t\treturn array(",
+		...values.map(
+			(entry) => `\t\t\t${quotePhpString(entry.key)} => ${quotePhpString(entry.value)},`,
+		),
+		"\t\t);",
+	].join("\n");
+}
+
+function buildPhpStringList(values: readonly string[]): string {
+	if (values.length === 0) {
+		return "array()";
+	}
+
+	return `array( ${values.map((value) => quotePhpString(value)).join(", ")} )`;
+}
+
+function buildBindingPostMetaServerSource(options: {
+	bindingSourceSlug: string;
+	namespace: string;
+	phpPrefix: string;
+	postMeta: BindingPostMetaSource;
+	target?: BindingTarget;
+	textDomain: string;
+}): string {
+	const bindingSourceTitle = toTitleCase(options.bindingSourceSlug);
+	const bindingSourcePhpId = options.bindingSourceSlug.replace(/-/g, "_");
+	const functionPrefix = `${options.phpPrefix}_${bindingSourcePhpId}`;
+	const fieldsFunctionName = `${functionPrefix}_post_meta_binding_fields`;
+	const fallbackValuesFunctionName = `${functionPrefix}_post_meta_preview_values`;
+	const formatFunctionName = `${functionPrefix}_format_binding_value`;
+	const resolveFunctionName = `${functionPrefix}_resolve_binding_source_value`;
+	const supportedAttributesFunctionName = `${functionPrefix}_supported_binding_attributes`;
+	const fieldNames = options.postMeta.fields.map((field) => field.name);
+	const fallbackValues = options.postMeta.fields.map((field) => ({
+		key: field.name,
+		value: field.fallbackValue,
+	}));
+	const supportedAttributesSource = options.target
+		? `
+if ( ! function_exists( '${supportedAttributesFunctionName}' ) ) {
+\tfunction ${supportedAttributesFunctionName}( array $supported_attributes ) : array {
+\t\tif ( ! in_array( ${quotePhpString(options.target.attributeName)}, $supported_attributes, true ) ) {
+\t\t\t$supported_attributes[] = ${quotePhpString(options.target.attributeName)};
+\t\t}
+
+\t\treturn $supported_attributes;
+\t}
+}
+`
+		: "";
+	const supportedAttributesHook = options.target
+		? `
+if ( function_exists( '${supportedAttributesFunctionName}' ) ) {
+\tadd_filter(
+\t\t${quotePhpString(`block_bindings_supported_attributes_${options.namespace}/${options.target.blockSlug}`)},
+\t\t${quotePhpString(supportedAttributesFunctionName)}
+\t);
+}
+`
+		: "";
+
+	return `<?php
+if ( ! defined( 'ABSPATH' ) ) {
+\treturn;
+}
+
+if ( ! function_exists( 'register_block_bindings_source' ) ) {
+\treturn;
+}
+
+if ( ! function_exists( '${fieldsFunctionName}' ) ) {
+\tfunction ${fieldsFunctionName}() : array {
+\t\t$schema_file = dirname( __DIR__, 2 ) . '/${options.postMeta.schemaFile}';
+\t\tif ( file_exists( $schema_file ) ) {
+\t\t\t$schema = json_decode( (string) file_get_contents( $schema_file ), true );
+\t\t\tif ( is_array( $schema ) && isset( $schema['properties'] ) && is_array( $schema['properties'] ) ) {
+\t\t\t\treturn array_values( array_filter( array_keys( $schema['properties'] ), 'is_string' ) );
+\t\t\t}
+\t\t}
+
+\t\treturn ${buildPhpStringList(fieldNames)};
+\t}
+}
+
+if ( ! function_exists( '${fallbackValuesFunctionName}' ) ) {
+\tfunction ${fallbackValuesFunctionName}() : array {
+${buildPhpArrayStringMap(fallbackValues)}
+\t}
+}
+
+if ( ! function_exists( '${formatFunctionName}' ) ) {
+\tfunction ${formatFunctionName}( $value ) : string {
+\t\tif ( is_bool( $value ) ) {
+\t\t\treturn $value ? 'true' : 'false';
+\t\t}
+\t\tif ( is_scalar( $value ) ) {
+\t\t\treturn (string) $value;
+\t\t}
+\t\tif ( null === $value ) {
+\t\t\treturn '';
+\t\t}
+
+\t\t$encoded = wp_json_encode( $value );
+\t\treturn is_string( $encoded ) ? $encoded : '';
+\t}
+}
+
+if ( ! function_exists( '${resolveFunctionName}' ) ) {
+\tfunction ${resolveFunctionName}( array $source_args, $block_instance = null, $attribute_name = null ) : string {
+\t\tunset( $attribute_name );
+
+\t\t$field = isset( $source_args['field'] ) && is_string( $source_args['field'] )
+\t\t\t? $source_args['field']
+\t\t\t: ${quotePhpString(options.postMeta.metaPath)};
+\t\tif ( ! in_array( $field, ${fieldsFunctionName}(), true ) ) {
+\t\t\treturn '';
+\t\t}
+
+\t\t$post_id = 0;
+\t\tif (
+\t\t\tis_object( $block_instance ) &&
+\t\t\tproperty_exists( $block_instance, 'context' ) &&
+\t\t\tis_array( $block_instance->context ) &&
+\t\t\tisset( $block_instance->context['postId'] )
+\t\t) {
+\t\t\t$post_id = absint( $block_instance->context['postId'] );
+\t\t}
+\t\tif ( ! $post_id ) {
+\t\t\t$post_id = absint( get_the_ID() );
+\t\t}
+
+\t\t$value = null;
+\t\tif ( $post_id ) {
+\t\t\t$meta = get_post_meta( $post_id, ${quotePhpString(options.postMeta.metaKey)}, true );
+\t\t\tif ( is_array( $meta ) && array_key_exists( $field, $meta ) ) {
+\t\t\t\t$value = $meta[ $field ];
+\t\t\t}
+\t\t}
+\t\tif ( null === $value ) {
+\t\t\t$fallback_values = ${fallbackValuesFunctionName}();
+\t\t\t$value = $fallback_values[ $field ] ?? '';
+\t\t}
+
+\t\treturn ${formatFunctionName}( $value );
+\t}
+}
+${supportedAttributesSource}
+
+register_block_bindings_source(
+\t${quotePhpString(`${options.namespace}/${options.bindingSourceSlug}`)},
+\tarray(
+\t\t'label' => __( ${quotePhpString(bindingSourceTitle)}, ${quotePhpString(options.textDomain)} ),
+\t\t'get_value_callback' => ${quotePhpString(resolveFunctionName)},
+\t)
+);
+${supportedAttributesHook}`;
+}
+
 function buildBindingSourceServerSource(
 	bindingSourceSlug: string,
 	phpPrefix: string,
 	namespace: string,
 	textDomain: string,
 	target?: BindingTarget,
+	postMeta?: BindingPostMetaSource,
 ): string {
+	if (postMeta) {
+		return buildBindingPostMetaServerSource({
+			bindingSourceSlug,
+			namespace,
+			phpPrefix,
+			postMeta,
+			target,
+			textDomain,
+		});
+	}
+
 	const bindingSourceTitle = toTitleCase(bindingSourceSlug);
 	const bindingSourcePhpId = bindingSourceSlug.replace(/-/g, "_");
 	const bindingSourceValueFunctionName = `${phpPrefix}_${bindingSourcePhpId}_binding_source_values`;
@@ -157,12 +357,121 @@ register_block_bindings_source(
 ${supportedAttributesHook}`;
 }
 
+function buildTsPostMetaFieldEntries(fields: readonly PostMetaBindingField[]): string {
+	return fields
+		.map((field) =>
+			[
+				"\t{",
+				`\t\tfallbackValue: ${quoteTsString(field.fallbackValue)},`,
+				`\t\tlabel: ${quoteTsString(field.label)},`,
+				`\t\tname: ${quoteTsString(field.name)},`,
+				`\t\trequired: ${field.required ? "true" : "false"},`,
+				`\t\tschemaType: ${quoteTsString(field.schemaType)},`,
+				"\t},",
+			].join("\n"),
+		)
+		.join("\n");
+}
+
+function buildBindingPostMetaEditorSource(options: {
+	bindingSourceSlug: string;
+	namespace: string;
+	postMeta: BindingPostMetaSource;
+	target?: BindingTarget;
+	textDomain: string;
+}): string {
+	const bindingSourceTitle = toTitleCase(options.bindingSourceSlug);
+	const bindingSourceName = `${options.namespace}/${options.bindingSourceSlug}`;
+	const targetSource = options.target
+		? `
+export const BINDING_SOURCE_TARGET = {
+\tattribute: ${quoteTsString(options.target.attributeName)},
+\tblock: ${quoteTsString(`${options.namespace}/${options.target.blockSlug}`)},
+\tfield: ${quoteTsString(options.postMeta.metaPath)},
+\tsource: ${quoteTsString(bindingSourceName)},
+} as const;
+`
+		: "";
+
+	return `import { registerBlockBindingsSource } from '@wordpress/blocks';
+import { __ } from '@wordpress/i18n';
+
+interface BindingSourceRegistration {
+\targs?: {
+\t\tfield?: string;
+\t};
+}
+
+export const POST_META_BINDING_SOURCE = {
+\tmetaKey: ${quoteTsString(options.postMeta.metaKey)},
+\tpostMeta: ${quoteTsString(options.postMeta.postMetaSlug)},
+\tpostType: ${quoteTsString(options.postMeta.postType)},
+\tschemaFile: ${quoteTsString(options.postMeta.schemaFile)},
+\tsourceTypeName: ${quoteTsString(options.postMeta.sourceTypeName)},
+} as const;
+
+const POST_META_BINDING_FIELDS = [
+${buildTsPostMetaFieldEntries(options.postMeta.fields)}
+] as const;
+
+const POST_META_PREVIEW_VALUES: Record<string, string> = Object.fromEntries(
+\tPOST_META_BINDING_FIELDS.map( ( field ) => [
+\t\tfield.name,
+\t\tfield.fallbackValue,
+\t] )
+);
+${targetSource}
+
+function resolveBindingSourceValue( field: string ): string {
+\treturn POST_META_PREVIEW_VALUES[ field ] ?? '';
+}
+
+registerBlockBindingsSource( {
+\tname: ${quoteTsString(bindingSourceName)},
+\tlabel: __( ${quoteTsString(bindingSourceTitle)}, ${quoteTsString(options.textDomain)} ),
+\tgetFieldsList() {
+\t\treturn POST_META_BINDING_FIELDS.map( ( field ) => ( {
+\t\t\tlabel: __( field.label, ${quoteTsString(options.textDomain)} ),
+\t\t\ttype: 'string',
+\t\t\targs: {
+\t\t\t\tfield: field.name,
+\t\t\t},
+\t\t} ) );
+\t},
+\tgetValues( { bindings } ) {
+\t\tconst values: Record<string, string> = {};
+\t\tfor ( const [ attributeName, binding ] of Object.entries(
+\t\t\tbindings as Record<string, BindingSourceRegistration>
+\t\t) ) {
+\t\t\tconst field =
+\t\t\t\ttypeof binding?.args?.field === 'string'
+\t\t\t\t\t? binding.args.field
+\t\t\t\t\t: ${quoteTsString(options.postMeta.metaPath)};
+\t\t\tvalues[ attributeName ] = resolveBindingSourceValue( field );
+\t\t}
+\t\treturn values;
+\t},
+} );
+`;
+}
+
 function buildBindingSourceEditorSource(
 	bindingSourceSlug: string,
 	namespace: string,
 	textDomain: string,
 	target?: BindingTarget,
+	postMeta?: BindingPostMetaSource,
 ): string {
+	if (postMeta) {
+		return buildBindingPostMetaEditorSource({
+			bindingSourceSlug,
+			namespace,
+			postMeta,
+			target,
+			textDomain,
+		});
+	}
+
 	const bindingSourceTitle = toTitleCase(bindingSourceSlug);
 	const starterValue = `${bindingSourceTitle} starter value`;
 	const bindingSourceName = `${namespace}/${bindingSourceSlug}`;
@@ -257,6 +566,63 @@ function resolveBindingTarget(
 	return {
 		attributeName: assertValidBindingAttributeName(attributeName ?? ""),
 		blockSlug: targetBlock.blockSlug,
+	};
+}
+
+function resolvePostMetaInventoryEntry(
+	inventory: WorkspaceInventory,
+	postMetaName: string,
+): WorkspacePostMetaInventoryEntry {
+	const postMetaSlug = assertValidGeneratedSlug(
+		"Post meta source",
+		normalizeBlockSlug(postMetaName),
+		"wp-typia add binding-source <name> --from-post-meta <post-meta> [--meta-path <field>]",
+	);
+	const postMeta = inventory.postMeta.find((entry) => entry.slug === postMetaSlug);
+	if (!postMeta) {
+		throw new Error(
+			`Post meta contract "${postMetaSlug}" does not exist in scripts/block-config.ts. Run \`wp-typia add post-meta ${postMetaSlug} --post-type <post-type>\` first, then retry \`wp-typia add binding-source\`.`,
+		);
+	}
+
+	return postMeta;
+}
+
+async function resolveBindingPostMetaSource(
+	projectDir: string,
+	inventory: WorkspaceInventory,
+	options: Pick<RunAddBindingSourceCommandOptions, "metaPath" | "postMetaName">,
+): Promise<BindingPostMetaSource | undefined> {
+	const postMetaName = normalizeOptionalCliString(options.postMetaName);
+	const metaPath = normalizeOptionalCliString(options.metaPath);
+	if (!postMetaName && !metaPath) {
+		return undefined;
+	}
+	if (!postMetaName) {
+		throw new Error(
+			"`wp-typia add binding-source` requires --from-post-meta <post-meta> or --post-meta <post-meta> when --meta-path is provided.",
+		);
+	}
+
+	const postMeta = resolvePostMetaInventoryEntry(inventory, postMetaName);
+	const fields = await loadPostMetaBindingFields(projectDir, postMeta);
+	const selectedField = metaPath
+		? assertPostMetaBindingPath(fields, postMeta.slug, metaPath)
+		: fields[0];
+	if (!selectedField) {
+		throw new Error(
+			`Post meta contract "${postMeta.slug}" does not expose a top-level field for binding-source defaults.`,
+		);
+	}
+
+	return {
+		fields,
+		metaKey: postMeta.metaKey,
+		metaPath: selectedField.name,
+		postMetaSlug: postMeta.slug,
+		postType: postMeta.postType,
+		schemaFile: postMeta.schemaFile,
+		sourceTypeName: postMeta.sourceTypeName,
 	};
 }
 
@@ -520,17 +886,24 @@ export async function runAddBindingSourceCommand({
 	bindingSourceName,
 	blockName,
 	cwd = process.cwd(),
+	metaPath,
+	postMetaName,
 }: RunAddBindingSourceCommandOptions): Promise<{
 	attributeName?: string;
 	bindingSourceSlug: string;
 	blockSlug?: string;
+	metaKey?: string;
+	metaPath?: string;
+	postMetaSlug?: string;
+	postType?: string;
 	projectDir: string;
+	schemaFile?: string;
 }> {
 	const workspace = resolveWorkspaceProject(cwd);
 	const bindingSourceSlug = assertValidGeneratedSlug(
 		"Binding source name",
 		normalizeBlockSlug(bindingSourceName),
-		"wp-typia add binding-source <name> [--block <block-slug|namespace/block-slug> --attribute <attribute>]",
+		"wp-typia add binding-source <name> [--block <block-slug|namespace/block-slug> --attribute <attribute>] [--from-post-meta <post-meta> --meta-path <field>]",
 	);
 
 	const inventory = await readWorkspaceInventoryAsync(workspace.projectDir);
@@ -543,6 +916,10 @@ export async function runAddBindingSourceCommand({
 		workspace.workspace.namespace,
 	);
 	const targetBlock = target ? resolveWorkspaceBlock(inventory, target.blockSlug) : undefined;
+	const postMeta = await resolveBindingPostMetaSource(workspace.projectDir, inventory, {
+		metaPath,
+		postMetaName,
+	});
 
 	const blockConfigPath = path.join(workspace.projectDir, "scripts", "block-config.ts");
 	const bootstrapPath = getWorkspaceBootstrapPath(workspace);
@@ -585,6 +962,7 @@ export async function runAddBindingSourceCommand({
 				workspace.workspace.namespace,
 				workspace.workspace.textDomain,
 				target,
+				postMeta,
 			),
 			"utf8",
 		);
@@ -595,6 +973,7 @@ export async function runAddBindingSourceCommand({
 				workspace.workspace.namespace,
 				workspace.workspace.textDomain,
 				target,
+				postMeta,
 			),
 			"utf8",
 		);
@@ -603,12 +982,23 @@ export async function runAddBindingSourceCommand({
 		}
 		await writeBindingSourceRegistry(workspace.projectDir, bindingSourceSlug);
 		await appendWorkspaceInventoryEntries(workspace.projectDir, {
-			bindingSourceEntries: [buildBindingSourceConfigEntry(bindingSourceSlug, target)],
+			bindingSourceEntries: [
+				buildBindingSourceConfigEntry(bindingSourceSlug, target, postMeta),
+			],
 		});
 
 		return {
 			...(target ? { attributeName: target.attributeName, blockSlug: target.blockSlug } : {}),
 			bindingSourceSlug,
+			...(postMeta
+				? {
+						metaKey: postMeta.metaKey,
+						metaPath: postMeta.metaPath,
+						postMetaSlug: postMeta.postMetaSlug,
+						postType: postMeta.postType,
+						schemaFile: postMeta.schemaFile,
+					}
+				: {}),
 			projectDir: workspace.projectDir,
 		};
 	} catch (error) {

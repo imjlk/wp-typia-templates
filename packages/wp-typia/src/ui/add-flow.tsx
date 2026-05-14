@@ -303,6 +303,28 @@ function AddFlowFields({
             placeholder: 'headline',
           })
         : null,
+      visibleFields.has('post-meta')
+        ? createElement(FirstPartyTextField, {
+            ...getWrappedFieldNeighbors(orderedVisibleFields, 'post-meta'),
+            description:
+              'Optional generated post-meta contract slug used as the binding source data provider',
+            key: 'post-meta',
+            label: 'Post meta contract',
+            name: 'post-meta',
+            placeholder: 'integration-state',
+          })
+        : null,
+      visibleFields.has('meta-path')
+        ? createElement(FirstPartyTextField, {
+            ...getWrappedFieldNeighbors(orderedVisibleFields, 'meta-path'),
+            description:
+              'Optional top-level post-meta field used as the default binding arg',
+            key: 'meta-path',
+            label: 'Meta field',
+            name: 'meta-path',
+            placeholder: 'status',
+          })
+        : null,
       visibleFields.has('namespace')
         ? createElement(FirstPartyTextField, {
             ...getWrappedFieldNeighbors(orderedVisibleFields, 'namespace'),

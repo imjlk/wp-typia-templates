@@ -225,6 +225,8 @@ export const INVENTORY_SECTIONS: readonly InventorySectionDescriptor[] = [
 						{ key: "attribute" },
 						{ key: "block" },
 						{ key: "editorFile", required: true },
+						{ key: "metaPath" },
+						{ key: "postMeta" },
 						{ key: "serverFile", required: true },
 						{ key: "slug", required: true },
 					],

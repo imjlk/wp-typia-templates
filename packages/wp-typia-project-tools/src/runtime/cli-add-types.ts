@@ -197,12 +197,18 @@ export interface RunAddPatternCommandOptions {
  * @property blockName Optional existing workspace block slug or full block name.
  * @property bindingSourceName Human-entered binding source name normalized into a slug.
  * @property cwd Working directory used to resolve the nearest official workspace.
+ * @property metaPath Optional top-level post-meta field used as the default
+ * source argument when `postMetaName` is provided.
+ * @property postMetaName Optional generated post-meta contract slug used to
+ * back the binding source with `get_post_meta()`.
  */
 export interface RunAddBindingSourceCommandOptions {
 	attributeName?: string;
 	blockName?: string;
 	bindingSourceName: string;
 	cwd?: string;
+	metaPath?: string;
+	postMetaName?: string;
 }
 
 /**

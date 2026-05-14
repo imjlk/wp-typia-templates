@@ -3568,6 +3568,148 @@ test("canonical CLI can add a typed post meta contract to an official workspace 
   typecheckGeneratedProject(targetDir);
 }, 120_000);
 
+test("canonical CLI can add a binding source backed by typed post meta", async () => {
+  const targetDir = path.join(
+    tempRoot,
+    "demo-workspace-add-post-meta-binding-source"
+  );
+
+  await scaffoldOfficialWorkspace(targetDir, {
+    description: "Demo workspace add post meta binding source",
+    slug: "demo-workspace-add-post-meta-binding-source",
+    title: "Demo Workspace Add Post Meta Binding Source",
+  });
+
+  linkWorkspaceNodeModules(targetDir);
+  runCli(
+    "node",
+    [entryPath, "add", "block", "counter-card", "--template", "basic"],
+    {
+      cwd: targetDir,
+    }
+  );
+  runCli(
+    "node",
+    [
+      entryPath,
+      "add",
+      "post-meta",
+      "integration-state",
+      "--post-type",
+      "post",
+      "--type",
+      "IntegrationStateMeta",
+      "--meta-key",
+      "_demo_space_integration_state",
+    ],
+    {
+      cwd: targetDir,
+    }
+  );
+
+  expect(
+    getCommandErrorMessage(() =>
+      runCli(
+        "node",
+        [
+          entryPath,
+          "add",
+          "binding-source",
+          "integration-state-source",
+          "--from-post-meta",
+          "integration-state",
+          "--meta-path",
+          "missing",
+        ],
+        {
+          cwd: targetDir,
+        }
+      )
+    )
+  ).toContain("does not exist in the \"integration-state\" schema");
+
+  runCli(
+    "node",
+    [
+      entryPath,
+      "add",
+      "binding-source",
+      "integration-state-source",
+      "--from-post-meta",
+      "integration-state",
+      "--meta-path",
+      "status",
+      "--block",
+      "counter-card",
+      "--attribute",
+      "headline",
+    ],
+    {
+      cwd: targetDir,
+    }
+  );
+
+  const blockConfigSource = fs.readFileSync(
+    path.join(targetDir, "scripts", "block-config.ts"),
+    "utf8"
+  );
+  const bindingServerSource = fs.readFileSync(
+    path.join(
+      targetDir,
+      "src",
+      "bindings",
+      "integration-state-source",
+      "server.php"
+    ),
+    "utf8"
+  );
+  const bindingEditorSource = fs.readFileSync(
+    path.join(
+      targetDir,
+      "src",
+      "bindings",
+      "integration-state-source",
+      "editor.ts"
+    ),
+    "utf8"
+  );
+
+  expect(blockConfigSource).toContain('postMeta: "integration-state"');
+  expect(blockConfigSource).toContain('metaPath: "status"');
+  expect(bindingServerSource).toContain("get_post_meta");
+  expect(bindingServerSource).toContain("_demo_space_integration_state");
+  expect(bindingServerSource).toContain(
+    "src/post-meta/integration-state/meta.schema.json"
+  );
+  expect(bindingServerSource).toContain("'status'");
+  expect(bindingEditorSource).toContain("POST_META_BINDING_SOURCE");
+  expect(bindingEditorSource).toContain("POST_META_BINDING_FIELDS");
+  expect(bindingEditorSource).toContain('field: "status"');
+  expect(bindingEditorSource).toContain(
+    'schemaFile: "src/post-meta/integration-state/meta.schema.json"'
+  );
+
+  const doctorOutput = runCli("node", [entryPath, "doctor", "--format", "json"], {
+    cwd: targetDir,
+  });
+  const doctorChecks = parseJsonObjectFromOutput<{
+    checks: Array<{ detail: string; label: string; status: string }>;
+  }>(doctorOutput);
+  expect(
+    doctorChecks.checks.find(
+      (check) => check.label === "Binding post meta integration-state-source"
+    )?.status
+  ).toBe("pass");
+  expect(
+    doctorChecks.checks.find(
+      (check) => check.label === "Binding target integration-state-source"
+    )?.status
+  ).toBe("pass");
+
+  runCli("npm", ["run", "sync-rest", "--", "--check"], { cwd: targetDir });
+  runCli("npm", ["run", "build"], { cwd: targetDir });
+}, 120_000);
+
 test("canonical CLI can add a type-only manual REST contract to an official workspace template", async () => {
   const targetDir = path.join(tempRoot, "demo-workspace-add-manual-rest-contract");
 

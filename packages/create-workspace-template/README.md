@@ -21,6 +21,7 @@ npm run wp-typia:add -- binding-source hero-data --block my-block --attribute he
 npm run wp-typia:add -- contract external-retrieve-response --type ExternalRetrieveResponse
 npm run wp-typia:add -- rest-resource external-record --manual --namespace legacy/v1 --route-pattern '/records/(?P<post_id>[\d]+)' --permission-callback legacy_can_read_records --controller-class Legacy\\Records\\Controller
 npm run wp-typia:add -- post-meta integration-state --post-type post --type IntegrationStateMeta
+npm run wp-typia:add -- binding-source integration-state-source --from-post-meta integration-state --meta-path status --block my-block --attribute headline
 npm run wp-typia:add -- editor-plugin review-workflow --slot sidebar
 npm run wp-typia:add -- editor-plugin seo-notes --slot document-setting-panel
 npm run wp-typia:add -- hooked-block my-block --anchor core/post-content --position after

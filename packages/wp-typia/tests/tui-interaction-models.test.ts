@@ -66,6 +66,8 @@ describe("first-party TUI interaction models", () => {
 			"name",
 			"block",
 			"attribute",
+			"post-meta",
+			"meta-path",
 		]);
 		expect(getVisibleAddFieldNames({ kind: "contract" })).toEqual([
 			"kind",

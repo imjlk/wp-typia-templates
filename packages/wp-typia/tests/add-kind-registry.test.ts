@@ -347,6 +347,14 @@ test('keeps shared visible-field groups aligned for refactored add kinds', () =>
     'post-type',
     'type',
   ]);
+  expect(getAddVisibleFieldNames({ kind: 'binding-source' })).toEqual([
+    'kind',
+    'name',
+    'block',
+    'attribute',
+    'post-meta',
+    'meta-path',
+  ]);
   expect(getAddVisibleFieldNames({ kind: 'block', template: 'basic' })).toEqual(
     ['kind', 'name', 'template'],
   );

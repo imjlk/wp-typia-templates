@@ -35,6 +35,8 @@ export interface WorkspaceBindingSourceInventoryEntry {
 	attribute?: string;
 	block?: string;
 	editorFile: string;
+	metaPath?: string;
+	postMeta?: string;
 	serverFile: string;
 	slug: string;
 }
