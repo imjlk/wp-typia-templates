@@ -10,6 +10,7 @@ import {
 	readWorkspaceInventoryAsync,
 } from "./workspace-inventory.js";
 import { toTitleCase } from "./string-case.js";
+import { hasPhpFunctionDefinition } from "./php-utils.js";
 import {
 	assertPatternDoesNotExist,
 	assertValidGeneratedSlug,
@@ -22,8 +23,10 @@ import {
 	type WorkspaceMutationSnapshot,
 	snapshotWorkspaceFiles,
 } from "./cli-add-shared.js";
-
-const PATTERN_BOOTSTRAP_CATEGORY = "register_block_pattern_category";
+import {
+	appendPhpSnippetBeforeClosingTag,
+	insertPhpSnippetBeforeWorkspaceAnchors,
+} from "./cli-add-workspace-mutation.js";
 
 function buildPatternConfigEntry(patternSlug: string): string {
 	return [
@@ -89,30 +92,19 @@ function ${patternRegistrationFunctionName}() {
 }
 `;
 
-		if (!nextSource.includes(PATTERN_BOOTSTRAP_CATEGORY)) {
-			const insertionAnchors = [
-				/add_action\(\s*["']init["']\s*,\s*["'][^"']+_load_textdomain["']\s*\);\s*\n/u,
-				/\?>\s*$/u,
-			];
-			let inserted = false;
-
-			for (const anchor of insertionAnchors) {
-				const candidate = nextSource.replace(anchor, (match) => `${patternFunctions}\n${match}`);
-				if (candidate !== nextSource) {
-					nextSource = candidate;
-					inserted = true;
-					break;
-				}
-			}
-
-			if (!inserted) {
-				nextSource = `${nextSource.trimEnd()}\n${patternFunctions}\n`;
-			}
+		if (
+			!hasPhpFunctionDefinition(nextSource, patternCategoryFunctionName) &&
+			!hasPhpFunctionDefinition(nextSource, patternRegistrationFunctionName)
+		) {
+			nextSource = insertPhpSnippetBeforeWorkspaceAnchors(
+				nextSource,
+				patternFunctions,
+			);
 		}
 
 		if (
-			!nextSource.includes(patternCategoryFunctionName) ||
-			!nextSource.includes(patternRegistrationFunctionName)
+			!hasPhpFunctionDefinition(nextSource, patternCategoryFunctionName) ||
+			!hasPhpFunctionDefinition(nextSource, patternRegistrationFunctionName)
 		) {
 			throw new Error(
 				`Unable to inject pattern bootstrap functions into ${path.basename(bootstrapPath)}.`,
@@ -120,10 +112,16 @@ function ${patternRegistrationFunctionName}() {
 		}
 
 		if (!nextSource.includes(patternCategoryHook)) {
-			nextSource = `${nextSource.trimEnd()}\n${patternCategoryHook}\n`;
+			nextSource = appendPhpSnippetBeforeClosingTag(
+				nextSource,
+				patternCategoryHook,
+			);
 		}
 		if (!nextSource.includes(patternRegistrationHook)) {
-			nextSource = `${nextSource.trimEnd()}\n${patternRegistrationHook}\n`;
+			nextSource = appendPhpSnippetBeforeClosingTag(
+				nextSource,
+				patternRegistrationHook,
+			);
 		}
 
 		return nextSource;

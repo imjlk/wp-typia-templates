@@ -73,7 +73,7 @@ function assertValidBindingAttributeName(attributeName: string): string {
 	}
 	if (!BINDING_ATTRIBUTE_NAME_PATTERN.test(trimmed)) {
 		throw new Error(
-			`Binding attribute "${attributeName}" must start with a letter and use only letters, numbers, underscores, or hyphens.`,
+			`Binding attribute "${trimmed}" must start with a letter and use only letters, numbers, underscores, or hyphens.`,
 		);
 	}
 

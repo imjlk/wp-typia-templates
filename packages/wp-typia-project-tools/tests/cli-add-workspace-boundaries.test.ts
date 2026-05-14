@@ -4,7 +4,7 @@ import path from 'node:path';
 
 const runtimeRoot = path.join(import.meta.dir, '..', 'src', 'runtime');
 
-test('cli-add-workspace delegates asset, rest-resource, post-meta, ai-feature, and admin-view workflows to focused helpers', () => {
+test('cli-add-workspace delegates pattern, binding-source, editor-plugin, rest-resource, post-meta, ai-feature, and admin-view workflows to focused helpers', () => {
   const addWorkspaceSource = fs.readFileSync(
     path.join(runtimeRoot, 'cli-add-workspace.ts'),
     'utf8',
@@ -395,6 +395,7 @@ test('cli-add-workspace delegates asset, rest-resource, post-meta, ai-feature, a
     aiAnchorsSource,
     bindingSource,
     editorPluginSource,
+    patternSource,
     postMetaAnchorsSource,
     restAnchorsSource,
   ]) {

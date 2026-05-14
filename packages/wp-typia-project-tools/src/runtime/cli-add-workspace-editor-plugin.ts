@@ -381,11 +381,28 @@ async function ensureEditorPluginWebpackAnchors(
 
 		const legacySharedEntriesBlockPattern =
 			/for\s*\(\s*const\s+relativePath\s+of\s+\[\s*['"]src\/bindings\/index\.ts['"]\s*,\s*['"]src\/bindings\/index\.js['"]\s*(?:,\s*)?\]\s*\)\s*\{[\s\S]*?entries\.push\(\s*\[\s*['"]bindings\/index['"]\s*,\s*entryPath\s*\]\s*\);\s*break;\s*\}/u;
-		const nextSharedEntriesBlock = `\tfor ( const [ entryName, candidates ] of [\n\t\t[\n\t\t\t'bindings/index',\n\t\t\t[ 'src/bindings/index.ts', 'src/bindings/index.js' ],\n\t\t],\n\t\t[\n\t\t\t'editor-plugins/index',\n\t\t\t[ 'src/editor-plugins/index.ts', 'src/editor-plugins/index.js' ],\n\t\t],\n\t] ) {\n\t\tfor ( const relativePath of candidates ) {\n\t\t\tconst entryPath = path.resolve( process.cwd(), relativePath );\n\t\t\tif ( ! fs.existsSync( entryPath ) ) {\n\t\t\t\tcontinue;\n\t\t\t}\n+
-\t\t\tentries.push( [ entryName, entryPath ] );
-\t\t\tbreak;
-\t\t}
-\t}`;
+		const nextSharedEntriesBlock = [
+			"\tfor ( const [ entryName, candidates ] of [",
+			"\t\t[",
+			"\t\t\t'bindings/index',",
+			"\t\t\t[ 'src/bindings/index.ts', 'src/bindings/index.js' ],",
+			"\t\t],",
+			"\t\t[",
+			"\t\t\t'editor-plugins/index',",
+			"\t\t\t[ 'src/editor-plugins/index.ts', 'src/editor-plugins/index.js' ],",
+			"\t\t],",
+			"\t] ) {",
+			"\t\tfor ( const relativePath of candidates ) {",
+			"\t\t\tconst entryPath = path.resolve( process.cwd(), relativePath );",
+			"\t\t\tif ( ! fs.existsSync( entryPath ) ) {",
+			"\t\t\t\tcontinue;",
+			"\t\t\t}",
+			"",
+			"\t\t\tentries.push( [ entryName, entryPath ] );",
+			"\t\t\tbreak;",
+			"\t\t}",
+			"\t}",
+		].join("\n");
 		const nextSource = source.replace(
 			legacySharedEntriesBlockPattern,
 			nextSharedEntriesBlock,
