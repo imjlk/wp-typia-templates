@@ -40,9 +40,14 @@ import {
   type WordPressBlockApiCompatibilityFeature,
   type WordPressVersion,
 } from '@wp-typia/block-types/blocks/compatibility';
+import {
+  defineSupports,
+  getDefinedSupportsCompatibilityManifest,
+} from '@wp-typia/block-types/blocks/supports';
 import type {
   BlockSupports,
   SpacingSize,
+  SupportAttributes,
   TypographySupportKey,
 } from '@wp-typia/block-types/blocks/supports';
 
@@ -144,6 +149,57 @@ const blockSupports: BlockSupports = {
     __experimentalSkipSerialization: true,
   },
   visibility: true,
+};
+const typedSupports = defineSupports({
+  minWordPress: '6.6',
+  anchor: true,
+  color: {
+    background: true,
+    text: true,
+  },
+  html: false,
+  layout: {
+    default: {
+      type: 'constrained',
+    },
+  },
+  spacing: {
+    blockGap: true,
+    margin: true,
+    padding: true,
+  },
+  typography: {
+    fontSize: true,
+    letterSpacing: true,
+    lineHeight: true,
+    textAlign: ['left', 'center'],
+  },
+});
+const typedSupportManifest = getDefinedSupportsCompatibilityManifest(typedSupports);
+const derivedSupportAttrs: SupportAttributes<typeof typedSupports> = {
+  backgroundColor: 'primary',
+  fontSize: 'large',
+  layout: {
+    type: 'constrained',
+  },
+  style: {
+    color: {
+      text: 'var(--wp--preset--color--primary)',
+    },
+    spacing: {
+      blockGap: '1rem',
+      margin: '1rem',
+      padding: {
+        top: '1rem',
+      },
+    },
+    typography: {
+      letterSpacing: '0.02em',
+      lineHeight: 1.5,
+      textAlign: 'center',
+    },
+  },
+  textColor: 'foreground',
 };
 const textAlignment: TextAlignment = 'justify';
 const textTransform: TextTransform = 'capitalize';
@@ -286,6 +342,9 @@ void spacingDimension;
 void spacingSize;
 void styleBag;
 void supportStyleAttributes;
+void typedSupports;
+void typedSupportManifest;
+void derivedSupportAttrs;
 void supportKey;
 void textAlignment;
 void textColor;

@@ -41,7 +41,6 @@ import {
 import type {
 	BlockStyleAttributes,
 	BlockStyleColorValue,
-	BlockStyleSupportAttributes,
 } from "@wp-typia/block-types/block-editor/style-attributes";
 import {
 	FONT_STYLES,
@@ -74,15 +73,14 @@ import {
 	BLOCK_SUPPORT_FEATURES,
 	SPACING_SUPPORT_KEYS,
 	TYPOGRAPHY_SUPPORT_KEYS,
+	defineSupports,
+	getDefinedSupportsCompatibilityManifest,
 	type BlockSupportFeature,
 	type BlockSupports,
 	type SpacingSupportKey,
+	type SupportAttributes,
 	type TypographySupportKey,
 } from "@wp-typia/block-types/blocks/supports";
-
-type ExampleAttributes = BlockStyleSupportAttributes & {
-	content: string;
-};
 
 const alignments = BLOCK_ALIGNMENTS satisfies readonly BlockAlignment[];
 const contentPositions =
@@ -133,6 +131,37 @@ const compatibilityManifest = createWordPressBlockApiCompatibilityManifest(
 );
 const supportsTextAlignSince =
 	WORDPRESS_BLOCK_API_COMPATIBILITY.blockSupports["typography.textAlign"].since;
+const proseSupports = defineSupports({
+	minWordPress: "6.6",
+	anchor: true,
+	color: {
+		background: true,
+		text: true,
+	},
+	html: false,
+	layout: {
+		default: {
+			type: "constrained",
+		},
+	},
+	spacing: {
+		blockGap: true,
+		margin: true,
+		padding: true,
+	},
+	typography: {
+		fontSize: true,
+		letterSpacing: true,
+		lineHeight: true,
+		textAlign: ["left", "center"],
+	},
+});
+const proseSupportManifest =
+	getDefinedSupportsCompatibilityManifest(proseSupports);
+
+type ExampleAttributes = SupportAttributes<typeof proseSupports> & {
+	content: string;
+};
 
 declare const configuration: BlockConfiguration<ExampleAttributes>;
 declare const editProps: BlockEditProps<ExampleAttributes>;
@@ -171,6 +200,30 @@ const styleAttributes: BlockStyleAttributes = {
 		textAlign: "center",
 		textDecoration: "underline",
 	},
+};
+const derivedSupportAttributes: SupportAttributes<typeof proseSupports> = {
+	backgroundColor: "primary",
+	fontSize: "large",
+	layout: {
+		type: "constrained",
+	},
+	style: {
+		color: {
+			text: "var:preset|color|primary",
+		},
+		spacing: {
+			margin: "1rem",
+			padding: {
+				top: "1rem",
+			},
+		},
+		typography: {
+			letterSpacing: "0.02em",
+			lineHeight: 1.5,
+			textAlign: "center",
+		},
+	},
+	textColor: "foreground",
 };
 
 const supports: BlockSupports = {
@@ -224,10 +277,13 @@ void typographySupportKeys;
 void compatibilityManifest;
 void supportCompatibilityFeature;
 void supportsTextAlignSince;
+void proseSupports;
+void proseSupportManifest;
 void registrationResult;
 void content;
 void maybeVariationTitle;
 void styleAttributes;
+void derivedSupportAttributes;
 void supports;
 void duotonePalette;
 void validMinHeightValue;

@@ -4,8 +4,24 @@ import type {
   JustifyContent,
   TextAlignment,
 } from "../block-editor/alignment.js";
+import type {
+  BlockBorderSupportAttributes,
+  BlockColorSupportAttributes,
+  BlockDimensionsSupportAttributes,
+  BlockSpacingSupportAttributes,
+  BlockStyleAttributes,
+  BlockTypographySupportAttributes,
+} from "../block-editor/style-attributes.js";
 import type { FlexWrap, LayoutType, Orientation } from "../block-editor/layout.js";
 import type { SpacingAxis, SpacingDimension } from "../block-editor/spacing.js";
+import {
+  createWordPressBlockApiCompatibilityManifest,
+  type WordPressBlockApiCompatibilityDiagnostic,
+  type WordPressBlockApiCompatibilityFeature,
+  type WordPressBlockApiCompatibilityManifest,
+  type WordPressCompatibilitySettings,
+  type WordPressVersion,
+} from "./compatibility.js";
 
 /**
  * Derived from Gutenberg block support keys and commonly used block.json
@@ -309,4 +325,384 @@ export interface BlockSupports {
   readonly splitting?: boolean;
   readonly typography?: boolean | BlockTypographySupport;
   readonly visibility?: boolean;
+}
+
+export type BlockSupportsInput = BlockSupports & Readonly<Record<string, unknown>>;
+
+export interface BlockAlignSupportAttributes {
+  readonly align?: BlockAlignment;
+}
+
+export interface BlockAllowedBlocksSupportAttributes {
+  readonly allowedBlocks?: readonly string[];
+}
+
+export interface BlockLayoutSupportAttributes {
+  readonly layout?: BlockLayoutDefault;
+}
+
+export interface BlockStyleAttributeSupportAttributes {
+  readonly style?: BlockStyleAttributes;
+}
+
+type SupportTruthy<TValue> = [TValue] extends [false | null | undefined]
+  ? false
+  : true;
+
+type HasSupport<TSupports, TKey extends PropertyKey> = TKey extends keyof TSupports
+  ? SupportTruthy<TSupports[TKey]>
+  : false;
+
+type HasNestedSupport<
+  TSupports,
+  TSection extends keyof BlockSupports,
+  TKey extends PropertyKey,
+> = TSection extends keyof TSupports
+  ? TSupports[TSection] extends true
+    ? true
+    : TSupports[TSection] extends Readonly<Record<TKey, infer TValue>>
+      ? SupportTruthy<TValue>
+      : false
+  : false;
+
+type IfSupport<TCondition, TAttributes> = TCondition extends true
+  ? TAttributes
+  : {};
+
+export interface DefineSupportsInlineOptions {
+  readonly allowUnknownFutureKeys?: boolean;
+  readonly minVersion?: WordPressVersion;
+  readonly minWordPress?: WordPressVersion;
+  readonly onDiagnostic?: (diagnostic: WordPressBlockApiCompatibilityDiagnostic) => void;
+  readonly strict?: boolean;
+}
+
+export interface DefineSupportsOptions extends WordPressCompatibilitySettings {
+  readonly minWordPress?: WordPressVersion;
+  readonly onDiagnostic?: (diagnostic: WordPressBlockApiCompatibilityDiagnostic) => void;
+}
+
+export type StripDefineSupportsOptions<TSupports> = Omit<
+  TSupports,
+  keyof DefineSupportsInlineOptions
+>;
+
+export const DEFINED_BLOCK_SUPPORTS_METADATA: unique symbol = Symbol.for(
+  "@wp-typia/block-types/defined-supports",
+) as never;
+
+export type DefinedBlockSupportsMetadataKey =
+  typeof DEFINED_BLOCK_SUPPORTS_METADATA;
+
+export interface DefinedBlockSupportsMetadata {
+  readonly diagnostics: readonly WordPressBlockApiCompatibilityDiagnostic[];
+  readonly manifest: WordPressBlockApiCompatibilityManifest;
+}
+
+export type DefinedBlockSupports<TSupports extends BlockSupportsInput = BlockSupportsInput> =
+  Readonly<StripDefineSupportsOptions<TSupports>> & {
+    readonly [DEFINED_BLOCK_SUPPORTS_METADATA]?: DefinedBlockSupportsMetadata;
+  };
+
+export type SupportAttributes<TSupports> =
+  TSupports extends DefinedBlockSupports<infer TDefinedSupports>
+    ? SupportAttributesFromBlockSupports<
+        StripDefineSupportsOptions<TDefinedSupports>
+      >
+    : TSupports extends BlockSupportsInput
+      ? SupportAttributesFromBlockSupports<StripDefineSupportsOptions<TSupports>>
+      : {};
+
+export type SupportAttributesFromBlockSupports<TSupports> =
+  IfSupport<
+    HasSupport<TSupports, "align"> | HasSupport<TSupports, "alignWide">,
+    BlockAlignSupportAttributes
+  > &
+    IfSupport<
+      HasSupport<TSupports, "allowedBlocks">,
+      BlockAllowedBlocksSupportAttributes
+    > &
+    IfSupport<HasSupport<TSupports, "layout">, BlockLayoutSupportAttributes> &
+    IfSupport<HasSupport<TSupports, "color">, BlockColorSupportAttributes> &
+    IfSupport<
+      HasSupport<TSupports, "typography">,
+      BlockTypographySupportAttributes
+    > &
+    IfSupport<HasSupport<TSupports, "spacing">, BlockSpacingSupportAttributes> &
+    IfSupport<
+      HasSupport<TSupports, "dimensions">,
+      BlockDimensionsSupportAttributes
+    > &
+    IfSupport<HasSupport<TSupports, "border">, BlockBorderSupportAttributes> &
+    IfSupport<
+      HasSupport<TSupports, "background">,
+      BlockStyleAttributeSupportAttributes
+    > &
+    IfSupport<
+      HasNestedSupport<TSupports, "filter", "duotone">,
+      BlockStyleAttributeSupportAttributes
+    > &
+    IfSupport<
+      HasSupport<TSupports, "position">,
+      BlockStyleAttributeSupportAttributes
+    > &
+    IfSupport<
+      HasSupport<TSupports, "shadow">,
+      BlockStyleAttributeSupportAttributes
+    >;
+
+const KNOWN_BLOCK_SUPPORT_FEATURES = new Set<string>(BLOCK_SUPPORT_FEATURES);
+const DEFINE_SUPPORTS_INLINE_OPTION_KEYS = new Set<string>([
+  "allowUnknownFutureKeys",
+  "minVersion",
+  "minWordPress",
+  "onDiagnostic",
+  "strict",
+]);
+const COLOR_COMPATIBILITY_SUPPORT_KEYS = [
+  "button",
+  "enableContrastChecker",
+  "heading",
+] as const;
+const TYPOGRAPHY_COMPATIBILITY_SUPPORT_KEYS = [
+  "fontSize",
+  "letterSpacing",
+  "lineHeight",
+  "textAlign",
+  "textDecoration",
+  "textTransform",
+] as const satisfies readonly TypographySupportKey[];
+const TOP_LEVEL_COMPATIBILITY_SUPPORT_KEYS = [
+  "allowedBlocks",
+  "background",
+  "dimensions",
+  "position",
+  "renaming",
+  "shadow",
+  "visibility",
+] as const satisfies readonly BlockSupportFeature[];
+
+function isSupportObject(value: unknown): value is Readonly<Record<string, unknown>> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function isEnabledSupportValue(value: unknown): boolean {
+  return value !== false && value !== null && value !== undefined;
+}
+
+function hasEnabledNestedSupport(
+  section: unknown,
+  key: string,
+): boolean {
+  if (section === true) {
+    return true;
+  }
+
+  return isSupportObject(section) && isEnabledSupportValue(section[key]);
+}
+
+function addCompatibilityFeature(
+  features: WordPressBlockApiCompatibilityFeature[],
+  seen: Set<string>,
+  feature: string,
+): void {
+  const id = `blockSupports.${feature}`;
+
+  if (seen.has(id)) {
+    return;
+  }
+
+  seen.add(id);
+  features.push({
+    area: "blockSupports",
+    feature,
+  });
+}
+
+export function collectBlockSupportsCompatibilityFeatures(
+  supports: BlockSupportsInput,
+): readonly WordPressBlockApiCompatibilityFeature[] {
+  const features: WordPressBlockApiCompatibilityFeature[] = [];
+  const seen = new Set<string>();
+
+  for (const key of TOP_LEVEL_COMPATIBILITY_SUPPORT_KEYS) {
+    if (isEnabledSupportValue(supports[key])) {
+      addCompatibilityFeature(features, seen, key);
+    }
+  }
+
+  const spacing = supports.spacing;
+  for (const key of SPACING_SUPPORT_KEYS) {
+    if (hasEnabledNestedSupport(spacing, key)) {
+      addCompatibilityFeature(features, seen, `spacing.${key}`);
+    }
+  }
+
+  const typography = supports.typography;
+  for (const key of TYPOGRAPHY_COMPATIBILITY_SUPPORT_KEYS) {
+    if (hasEnabledNestedSupport(typography, key)) {
+      addCompatibilityFeature(features, seen, `typography.${key}`);
+    }
+  }
+
+  const color = supports.color;
+  if (isSupportObject(color)) {
+    for (const key of COLOR_COMPATIBILITY_SUPPORT_KEYS) {
+      if (isEnabledSupportValue(color[key])) {
+        addCompatibilityFeature(features, seen, `color.${key}`);
+      }
+    }
+  }
+
+  if (hasEnabledNestedSupport(supports.filter, "duotone")) {
+    addCompatibilityFeature(features, seen, "filter.duotone");
+  }
+
+  for (const key of Object.keys(supports)) {
+    if (
+      !KNOWN_BLOCK_SUPPORT_FEATURES.has(key) &&
+      !DEFINE_SUPPORTS_INLINE_OPTION_KEYS.has(key)
+    ) {
+      addCompatibilityFeature(features, seen, key);
+    }
+  }
+
+  return features;
+}
+
+function splitDefineSupportsInput<TSupports extends BlockSupportsInput>(
+  supports: TSupports & DefineSupportsInlineOptions,
+): {
+  inlineOptions: DefineSupportsInlineOptions;
+  supports: StripDefineSupportsOptions<TSupports> & BlockSupportsInput;
+} {
+  const normalizedSupports: Record<string, unknown> = {};
+  const inlineOptions: DefineSupportsInlineOptions = {};
+
+  for (const [key, value] of Object.entries(supports)) {
+    if (DEFINE_SUPPORTS_INLINE_OPTION_KEYS.has(key)) {
+      Object.assign(inlineOptions, { [key]: value });
+      continue;
+    }
+
+    normalizedSupports[key] = value;
+  }
+
+  return {
+    inlineOptions,
+    supports: normalizedSupports as StripDefineSupportsOptions<TSupports> &
+      BlockSupportsInput,
+  };
+}
+
+function resolveDefineSupportsSettings(
+  inlineOptions: DefineSupportsInlineOptions,
+  options: DefineSupportsOptions,
+): WordPressCompatibilitySettings {
+  const settings: WordPressCompatibilitySettings = {};
+  const allowUnknownFutureKeys =
+    options.allowUnknownFutureKeys ?? inlineOptions.allowUnknownFutureKeys;
+  const minVersion =
+    options.minVersion ??
+    options.minWordPress ??
+    inlineOptions.minVersion ??
+    inlineOptions.minWordPress;
+  const strict = options.strict ?? inlineOptions.strict;
+
+  if (allowUnknownFutureKeys !== undefined) {
+    Object.assign(settings, { allowUnknownFutureKeys });
+  }
+  if (minVersion !== undefined) {
+    Object.assign(settings, { minVersion });
+  }
+  if (strict !== undefined) {
+    Object.assign(settings, { strict });
+  }
+
+  return settings;
+}
+
+export function createBlockSupportsCompatibilityManifest(
+  supports: BlockSupportsInput,
+  settings: DefineSupportsOptions = {},
+): WordPressBlockApiCompatibilityManifest {
+  const compatibilitySettings = resolveDefineSupportsSettings({}, settings);
+
+  return createWordPressBlockApiCompatibilityManifest(
+    collectBlockSupportsCompatibilityFeatures(supports),
+    compatibilitySettings,
+  );
+}
+
+function handleDefineSupportsDiagnostics(
+  diagnostics: readonly WordPressBlockApiCompatibilityDiagnostic[],
+  onDiagnostic: DefineSupportsOptions["onDiagnostic"],
+): void {
+  const errors = diagnostics.filter(
+    (diagnostic) => diagnostic.severity === "error",
+  );
+
+  if (errors.length > 0) {
+    throw new Error(
+      [
+        "WordPress block supports compatibility check failed:",
+        ...errors.map((diagnostic) => `- ${diagnostic.message}`),
+      ].join("\n"),
+    );
+  }
+
+  for (const diagnostic of diagnostics) {
+    if (onDiagnostic) {
+      onDiagnostic(diagnostic);
+      continue;
+    }
+
+    console.warn(`[wp-typia] ${diagnostic.message}`);
+  }
+}
+
+export function getDefinedSupportsCompatibilityManifest(
+  supports: unknown,
+): WordPressBlockApiCompatibilityManifest | undefined {
+  return isSupportObject(supports)
+    ? (
+        supports as {
+          readonly [DEFINED_BLOCK_SUPPORTS_METADATA]?:
+            | DefinedBlockSupportsMetadata
+            | undefined;
+        }
+      )[DEFINED_BLOCK_SUPPORTS_METADATA]?.manifest
+    : undefined;
+}
+
+export function defineSupports<
+  const TSupports extends BlockSupportsInput & DefineSupportsInlineOptions,
+>(
+  supports: TSupports,
+  options: DefineSupportsOptions = {},
+): DefinedBlockSupports<TSupports> {
+  const { inlineOptions, supports: normalizedSupports } =
+    splitDefineSupportsInput(supports);
+  const settings = resolveDefineSupportsSettings(inlineOptions, options);
+  const manifest = createBlockSupportsCompatibilityManifest(
+    normalizedSupports,
+    settings,
+  );
+
+  handleDefineSupportsDiagnostics(
+    manifest.diagnostics,
+    options.onDiagnostic ?? inlineOptions.onDiagnostic,
+  );
+
+  Object.defineProperty(normalizedSupports, DEFINED_BLOCK_SUPPORTS_METADATA, {
+    configurable: false,
+    enumerable: false,
+    value: {
+      diagnostics: manifest.diagnostics,
+      manifest,
+    } satisfies DefinedBlockSupportsMetadata,
+    writable: false,
+  });
+
+  return normalizedSupports as DefinedBlockSupports<TSupports>;
 }

@@ -1,0 +1,172 @@
+import { describe, expect, test } from "bun:test";
+
+import type { WordPressBlockApiCompatibilityDiagnostic } from "../src/blocks/compatibility";
+import {
+	collectBlockSupportsCompatibilityFeatures,
+	defineSupports,
+	getDefinedSupportsCompatibilityManifest,
+} from "../src/blocks/supports";
+
+describe("defineSupports", () => {
+	test("returns block.json-ready supports metadata and stores diagnostics out of band", () => {
+		const supports = defineSupports({
+			minWordPress: "6.6",
+			anchor: true,
+			color: {
+				background: true,
+				text: true,
+			},
+			html: false,
+			layout: {
+				default: {
+					type: "constrained",
+				},
+			},
+			spacing: {
+				blockGap: true,
+				margin: true,
+				padding: true,
+			},
+			typography: {
+				fontSize: true,
+				letterSpacing: true,
+				lineHeight: true,
+				textAlign: ["left", "center"],
+			},
+		});
+
+		expect(supports).toEqual({
+			anchor: true,
+			color: {
+				background: true,
+				text: true,
+			},
+			html: false,
+			layout: {
+				default: {
+					type: "constrained",
+				},
+			},
+			spacing: {
+				blockGap: true,
+				margin: true,
+				padding: true,
+			},
+			typography: {
+				fontSize: true,
+				letterSpacing: true,
+				lineHeight: true,
+				textAlign: ["left", "center"],
+			},
+		});
+		expect(Object.keys(supports)).not.toContain("minWordPress");
+		expect(JSON.parse(JSON.stringify(supports))).toEqual(supports);
+
+		const manifest = getDefinedSupportsCompatibilityManifest(supports);
+
+		expect(manifest?.diagnostics).toEqual([]);
+		expect(manifest?.supported.map((feature) => feature.feature)).toEqual([
+			"spacing.blockGap",
+			"spacing.margin",
+			"spacing.padding",
+			"typography.fontSize",
+			"typography.letterSpacing",
+			"typography.lineHeight",
+			"typography.textAlign",
+		]);
+	});
+
+	test("collects only version-gated support keys from nested supports", () => {
+		const features = collectBlockSupportsCompatibilityFeatures({
+			color: {
+				button: true,
+				heading: false,
+				text: true,
+			},
+			filter: {
+				duotone: true,
+			},
+			spacing: true,
+			typography: {
+				dropCap: true,
+				fontSize: true,
+				textDecoration: false,
+			},
+		}).map((feature) => feature.feature);
+
+		expect(features).toEqual([
+			"spacing.blockGap",
+			"spacing.margin",
+			"spacing.padding",
+			"typography.fontSize",
+			"color.button",
+			"filter.duotone",
+		]);
+	});
+
+	test("throws in strict mode when supports require a newer WordPress floor", () => {
+		expect(() =>
+			defineSupports({
+				minWordPress: "6.8",
+				allowedBlocks: true,
+			}),
+		).toThrow("supports.allowedBlocks requires WordPress 6.9+");
+	});
+
+	test("reports non-strict compatibility warnings without dropping metadata", () => {
+		const diagnostics: WordPressBlockApiCompatibilityDiagnostic[] = [];
+		const supports = defineSupports({
+			minWordPress: "6.8",
+			allowedBlocks: true,
+			onDiagnostic: (diagnostic) => diagnostics.push(diagnostic),
+			strict: false,
+		});
+
+		expect(supports).toEqual({
+			allowedBlocks: true,
+		});
+		expect(diagnostics).toHaveLength(1);
+		expect(diagnostics[0]).toMatchObject({
+			code: "unsupported-wordpress-block-api-feature",
+			feature: "allowedBlocks",
+			requiredVersion: "6.9",
+			severity: "warning",
+		});
+	});
+
+	test("passes through unknown future keys only when explicitly allowed", () => {
+		const supports = defineSupports({
+			minWordPress: "6.9",
+			allowUnknownFutureKeys: true,
+			futureLayoutMode: {
+				enabled: true,
+			},
+			spacing: {
+				padding: true,
+			},
+		});
+		const manifest = getDefinedSupportsCompatibilityManifest(supports);
+
+		expect(supports).toEqual({
+			futureLayoutMode: {
+				enabled: true,
+			},
+			spacing: {
+				padding: true,
+			},
+		});
+		expect(manifest?.diagnostics).toEqual([]);
+		expect(manifest?.unknown).toMatchObject([
+			{
+				action: "pass-through",
+				feature: "futureLayoutMode",
+			},
+		]);
+		expect(() =>
+			defineSupports({
+				minWordPress: "6.9",
+				futureLayoutMode: true,
+			}),
+		).toThrow('Unknown WordPress block API feature "blockSupports.futureLayoutMode"');
+	});
+});

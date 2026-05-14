@@ -119,34 +119,72 @@ breakage in scaffold or runtime packages.
 
 ## WordPress style support helpers
 
-The package now exposes two complementary surfaces:
+The package now exposes three complementary surfaces:
 
-- `@wp-typia/block-types/blocks/supports` for typed `block.json` `supports`
+- `@wp-typia/block-types/blocks/supports` for typed `block.json` `supports`,
+  the `defineSupports()` helper, and `SupportAttributes<typeof supports>`
 - `@wp-typia/block-types/block-editor/style-attributes` for the attribute and `style` shapes WordPress injects when those supports are enabled
+- `@wp-typia/block-types/blocks/compatibility` for version-aware diagnostics
+  when a support key requires a newer WordPress floor
 
 Example:
 
 ```ts
-import type { BlockStyleSupportAttributes } from '@wp-typia/block-types/block-editor/style-attributes';
-import type { BlockSupports } from '@wp-typia/block-types/blocks/supports';
+import {
+  defineSupports,
+  type SupportAttributes,
+} from '@wp-typia/block-types/blocks/supports';
 
-const supports: BlockSupports = {
-  color: { text: true, background: true, gradients: true, enableAlpha: true },
+const supports = defineSupports({
+  minWordPress: '6.6',
+  color: { text: true, background: true },
   spacing: {
     padding: true,
-    units: ['px', 'rem'],
-    spacingSizes: [{ name: 'Large', slug: 'large', size: '2rem' }],
+    margin: true,
+    blockGap: true,
   },
-  typography: { fontSize: true, dropCap: true },
-  js: true,
-  locking: true,
+  typography: {
+    fontSize: true,
+    lineHeight: true,
+    letterSpacing: true,
+    textAlign: ['left', 'center'],
+  },
+  layout: {
+    default: {
+      type: 'constrained',
+    },
+  },
+  anchor: true,
+  html: false,
+});
+
+type OwnAttributes = {
+  content: string;
+  density: 'compact' | 'balanced' | 'airy';
 };
 
-type MyBlockStyleAttrs = Pick<
-  BlockStyleSupportAttributes,
-  'backgroundColor' | 'fontSize' | 'style' | 'textColor'
->;
+type BlockAttributes = OwnAttributes & SupportAttributes<typeof supports>;
 ```
+
+`defineSupports()` returns a plain object that can be written directly to
+`block.json.supports`; inline helper controls such as `minWordPress`, `strict`,
+and `allowUnknownFutureKeys` are stripped from the returned metadata. The helper
+stores its compatibility manifest on a non-enumerable symbol so generated JSON
+stays clean while tests and codegen can still inspect diagnostics through
+`getDefinedSupportsCompatibilityManifest()`.
+
+Strict mode is enabled by default. Known support keys that require a newer
+WordPress version throw, while `strict: false` reports warnings through
+`onDiagnostic` and keeps the metadata pass-through. Unknown future top-level
+support keys are rejected unless `allowUnknownFutureKeys` is enabled.
+
+`SupportAttributes<typeof supports>` is intentionally conservative where
+Gutenberg behavior is broad. Enabling color, spacing, typography, border,
+dimensions, background, filter duotone, position, or shadow includes the shared
+`style` attribute shape. Typography also exposes slug attributes such as
+`fontSize` and `fontFamily` when typography support is enabled; the compatibility
+matrix tracks version-gated typography keys like `textAlign` separately from
+longstanding keys such as `dropCap`.
 
 Stable Core coverage now also includes support/style helpers for layout
 `rowGap` / `columnGap`, color `duotone`, per-side border widths, and other

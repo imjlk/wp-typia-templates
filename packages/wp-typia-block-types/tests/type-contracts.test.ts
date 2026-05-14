@@ -43,6 +43,8 @@ describe("@wp-typia/block-types type contracts", () => {
 			"@wp-typia/block-types/block-editor/style-attributes",
 		);
 		expect(fixtureSource).toContain("@ts-expect-error");
+		expect(fixtureSource).toContain("defineSupports");
+		expect(fixtureSource).toContain("SupportAttributes<typeof proseSupports>");
 		expect(fixtureSource).toContain("registerScaffoldBlockType");
 	});
 });
