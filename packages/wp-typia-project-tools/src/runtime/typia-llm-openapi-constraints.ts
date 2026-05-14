@@ -316,6 +316,13 @@ function applyOpenApiQueryParameterConstraints(
   }
 }
 
+/**
+ * Clone a projected function artifact before mutation-oriented constraint work.
+ *
+ * @param functionArtifact Projected artifact to clone.
+ * @returns A cloned artifact with parameters and optional output deep-cloned,
+ * and tags shallow-copied when present.
+ */
 export function cloneProjectedTypiaLlmFunctionArtifact(
   functionArtifact: ProjectedTypiaLlmFunctionArtifact,
 ): ProjectedTypiaLlmFunctionArtifact {

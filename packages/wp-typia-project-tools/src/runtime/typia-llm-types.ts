@@ -219,7 +219,12 @@ export interface ProjectTypiaLlmStructuredOutputArtifactOptions {
   structuredOutput: TypiaLlmStructuredOutputLike;
 }
 
+/**
+ * Generated Typia LLM artifact payload and destination.
+ */
 export type GeneratedTypiaLlmArtifactFile = {
+  /** File contents to write or compare. */
   content: string;
+  /** Destination path for the generated artifact file. */
   filePath: string;
 };
