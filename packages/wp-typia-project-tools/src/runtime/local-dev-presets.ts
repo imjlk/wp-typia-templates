@@ -12,6 +12,7 @@ import {
 	formatRunScript,
 	type PackageManagerId,
 } from "./package-managers.js";
+import { DEFAULT_WORDPRESS_ENV_VERSION } from "./package-versions.js";
 import { readJsonFile } from "./json-utils.js";
 import {
 	OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE,
@@ -193,7 +194,7 @@ export async function applyGeneratedProjectDxPackageJson({
 		};
 
 		if (withWpEnv || withTestPreset) {
-			packageJson.devDependencies["@wordpress/env"] = "^11.2.0";
+			packageJson.devDependencies["@wordpress/env"] = DEFAULT_WORDPRESS_ENV_VERSION;
 		}
 
 		if (withTestPreset) {

@@ -157,6 +157,7 @@ describe('package version cache invalidation', () => {
       DEFAULT_WORDPRESS_CORE_DATA_VERSION,
       DEFAULT_WORDPRESS_DATA_VERSION,
       DEFAULT_WORDPRESS_DATAVIEWS_VERSION,
+      DEFAULT_WORDPRESS_ENV_VERSION,
       DEFAULT_WP_TYPIA_DATAVIEWS_VERSION,
     } = await import(packageVersionsModuleUrl);
 
@@ -200,6 +201,26 @@ describe('package version cache invalidation', () => {
       ),
       'utf8',
     );
+    const integrationEnvRuntimeSource = fs.readFileSync(
+      path.join(
+        import.meta.dir,
+        '..',
+        'src',
+        'runtime',
+        'cli-add-workspace-integration-env.ts',
+      ),
+      'utf8',
+    );
+    const localDevPresetsSource = fs.readFileSync(
+      path.join(
+        import.meta.dir,
+        '..',
+        'src',
+        'runtime',
+        'local-dev-presets.ts',
+      ),
+      'utf8',
+    );
     const dataViewsPackageJson = JSON.parse(
       fs.readFileSync(
         path.join(
@@ -224,6 +245,7 @@ describe('package version cache invalidation', () => {
     expect(DEFAULT_WORDPRESS_CORE_DATA_VERSION).toBe('^7.44.0');
     expect(DEFAULT_WORDPRESS_DATA_VERSION).toBe('^9.28.0');
     expect(DEFAULT_WORDPRESS_DATAVIEWS_VERSION).toBe('^14.1.0');
+    expect(DEFAULT_WORDPRESS_ENV_VERSION).toBe('^11.2.0');
     expect(DEFAULT_WP_TYPIA_DATAVIEWS_VERSION).toBe(
       `^${dataViewsPackageJson.version}`,
     );
@@ -244,6 +266,16 @@ describe('package version cache invalidation', () => {
     );
     expect(adminViewScaffoldSource).not.toContain(
       'const DEFAULT_WORDPRESS_DATA_VERSION',
+    );
+    expect(integrationEnvRuntimeSource).not.toContain(
+      'const WP_ENV_PACKAGE_VERSION',
+    );
+    expect(integrationEnvRuntimeSource).toContain(
+      'DEFAULT_WORDPRESS_ENV_VERSION',
+    );
+    expect(localDevPresetsSource).toContain('DEFAULT_WORDPRESS_ENV_VERSION');
+    expect(localDevPresetsSource).not.toContain(
+      '["@wordpress/env"] = "^11.2.0"',
     );
     expect(abilityRuntimeSource).not.toContain('from "./package-versions.js"');
     expect(abilityScaffoldSource).toContain('from "./package-versions.js"');
