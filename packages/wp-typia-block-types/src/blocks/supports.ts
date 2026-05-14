@@ -475,7 +475,9 @@ const TYPOGRAPHY_COMPATIBILITY_SUPPORT_KEYS = [
 const TOP_LEVEL_COMPATIBILITY_SUPPORT_KEYS = [
   "allowedBlocks",
   "background",
+  "contentRole",
   "dimensions",
+  "listView",
   "position",
   "renaming",
   "shadow",

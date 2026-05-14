@@ -166,6 +166,27 @@ describe("defineSupports", () => {
 		).toThrow("supports.allowedBlocks requires WordPress 6.9+");
 	});
 
+	test("checks version gates for newer top-level supports", () => {
+		const features = collectBlockSupportsCompatibilityFeatures({
+			contentRole: true,
+			listView: true,
+		}).map((feature) => feature.feature);
+
+		expect(features).toEqual(["contentRole", "listView"]);
+		expect(() =>
+			defineSupports({
+				minWordPress: "6.8",
+				contentRole: true,
+			}),
+		).toThrow("supports.contentRole requires WordPress 6.9+");
+		expect(() =>
+			defineSupports({
+				minWordPress: "6.9",
+				listView: true,
+			}),
+		).toThrow("supports.listView requires WordPress 7.0+");
+	});
+
 	test("reports non-strict compatibility warnings without dropping metadata", () => {
 		const diagnostics: WordPressBlockApiCompatibilityDiagnostic[] = [];
 		const supports = defineSupports({
