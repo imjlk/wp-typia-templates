@@ -393,6 +393,36 @@ describe("metadata-core endpoint manifests", () => {
     );
   });
 
+  test("validateBlockPatternContentNesting reports every block dropped by a mid-stack close", () => {
+    const result = validateBlockPatternContentNesting(
+      [
+        "<!-- wp:demo/container -->",
+        "<!-- wp:demo/section -->",
+        "<!-- wp:demo/body -->",
+        "<!-- /wp:demo/container -->",
+      ].join("\n"),
+      {
+        knownBlockNames: ["demo/container", "demo/section", "demo/body"],
+        nesting: defineBlockNesting({}),
+        patternFile: "src/patterns/unbalanced.php",
+      }
+    );
+    const formattedWarnings = formatBlockPatternContentNestingDiagnostics(
+      result.warnings
+    );
+
+    expect(result.errors).toEqual([]);
+    expect(formattedWarnings).toContain(
+      'Serialized opening block "demo/body" was not closed before "demo/container" closed.'
+    );
+    expect(formattedWarnings).toContain(
+      'Serialized opening block "demo/section" was not closed before "demo/container" closed.'
+    );
+    expect(formattedWarnings).toContain(
+      'Serialized closing block "demo/container" appeared before all nested blocks were closed.'
+    );
+  });
+
   test("block nesting contracts can carry generated InnerBlocks templates", () => {
     const nesting = defineBlockNesting({
       "demo/container": {

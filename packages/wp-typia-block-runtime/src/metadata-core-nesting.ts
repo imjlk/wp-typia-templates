@@ -782,13 +782,32 @@ function parseBlockPatternContent(
         continue;
       }
 
-      const activeBlock = stack[stack.length - 1];
-      if (activeBlock && activeBlock.block.blockName !== comment.blockName) {
+      if (openStackIndex !== stack.length - 1) {
+        for (
+          let unclosedIndex = stack.length - 1;
+          unclosedIndex > openStackIndex;
+          unclosedIndex -= 1
+        ) {
+          const unclosedBlock = stack[unclosedIndex];
+          if (!unclosedBlock) {
+            continue;
+          }
+          addBlockPatternDiagnostic(diagnostics, {
+            blockName: unclosedBlock.block.blockName,
+            blockPath: formatBlockPatternPath(unclosedBlock.pathSegments),
+            code: 'unbalanced-block-pattern-comment',
+            message: `Serialized opening block "${unclosedBlock.block.blockName}" was not closed before "${comment.blockName}" closed.`,
+            patternFile,
+            severity: 'warning',
+          });
+        }
         addBlockPatternDiagnostic(diagnostics, {
           blockName: comment.blockName,
-          blockPath: formatBlockPatternPath(activeBlock.pathSegments),
+          blockPath: formatBlockPatternPath(
+            stack[stack.length - 1]?.pathSegments ?? [],
+          ),
           code: 'unbalanced-block-pattern-comment',
-          message: `Serialized closing block "${comment.blockName}" appeared while "${activeBlock.block.blockName}" was still open.`,
+          message: `Serialized closing block "${comment.blockName}" appeared before all nested blocks were closed.`,
           patternFile,
           severity: 'warning',
         });

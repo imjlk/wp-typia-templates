@@ -51,9 +51,21 @@ function readWorkspaceBlockName( block: ( typeof BLOCKS )[ number ] ): string {
 	return blockJson.name;
 }
 
+function readPatternFileContent( pattern: ( typeof PATTERNS )[ number ] ): string {
+	try {
+		return fs.readFileSync( pattern.file, 'utf8' );
+	} catch ( error ) {
+		throw new Error(
+			`Failed to read pattern "${ pattern.slug }" at ${ pattern.file }: ${
+				error instanceof Error ? error.message : String( error )
+			}`
+		);
+	}
+}
+
 function validatePatternContentNesting( knownBlockNames: readonly string[] ) {
 	const diagnostics = PATTERNS.flatMap( ( pattern ) => {
-		const content = fs.readFileSync( pattern.file, 'utf8' );
+		const content = readPatternFileContent( pattern );
 		return validateBlockPatternContentNesting( content, {
 			allowExternalBlockNames: true,
 			knownBlockNames,
