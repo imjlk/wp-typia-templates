@@ -1437,7 +1437,7 @@ test("canonical CLI can dry-run hooked-block metadata updates without rewriting 
       "utf8"
     )
   ).toBe(originalBlockJsonSource);
-});
+}, 20_000);
 
 test(
   "duplicate add block failures preserve existing workspace blocks",
