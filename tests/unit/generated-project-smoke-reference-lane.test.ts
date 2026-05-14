@@ -239,6 +239,76 @@ test("generated project smoke assertions accept local project-tools smoke rewrit
 	expect(() => assertGeneratedPackageBoundary(projectDir)).not.toThrow();
 });
 
+test("generated project smoke assertions allow official workspace CLI helper scripts", async () => {
+	const projectDir = fs.mkdtempSync(
+		join(os.tmpdir(), "wp-typia-generated-smoke-workspace-boundary-"),
+	);
+	tempDirs.push(projectDir);
+
+	fs.writeFileSync(
+		join(projectDir, "package.json"),
+		`${JSON.stringify(
+			{
+				name: "demo-smoke-workspace-boundary",
+				private: true,
+				scripts: {
+					"wp-typia:add": "wp-typia add",
+					"wp-typia:doctor": "wp-typia doctor",
+					"wp-typia:sync": "wp-typia sync",
+				},
+				wpTypia: {
+					projectType: "workspace",
+					templatePackage: "@wp-typia/create-workspace-template",
+				},
+			},
+			null,
+			2,
+		)}\n`,
+		"utf8",
+	);
+
+	const { assertGeneratedPackageBoundary } = (await import(
+		new URL("../../scripts/lib/generated-project-smoke-assertions.mjs", import.meta.url).href
+	)) as {
+		assertGeneratedPackageBoundary: (projectDir: string) => void;
+	};
+
+	expect(() => assertGeneratedPackageBoundary(projectDir)).not.toThrow();
+});
+
+test("generated project smoke assertions reject non-workspace wp-typia scripts", async () => {
+	const projectDir = fs.mkdtempSync(
+		join(os.tmpdir(), "wp-typia-generated-smoke-script-boundary-"),
+	);
+	tempDirs.push(projectDir);
+
+	fs.writeFileSync(
+		join(projectDir, "package.json"),
+		`${JSON.stringify(
+			{
+				name: "demo-smoke-script-boundary",
+				private: true,
+				scripts: {
+					"wp-typia:sync": "wp-typia sync",
+				},
+			},
+			null,
+			2,
+		)}\n`,
+		"utf8",
+	);
+
+	const { assertGeneratedPackageBoundary } = (await import(
+		new URL("../../scripts/lib/generated-project-smoke-assertions.mjs", import.meta.url).href
+	)) as {
+		assertGeneratedPackageBoundary: (projectDir: string) => void;
+	};
+
+	expect(() => assertGeneratedPackageBoundary(projectDir)).toThrow(
+		/Expected generated project script "wp-typia:sync" to avoid wp-typia/,
+	);
+});
+
 test("generated project smoke assertions still reject published project-tools dependencies", async () => {
 	const projectDir = fs.mkdtempSync(
 		join(os.tmpdir(), "wp-typia-generated-smoke-boundary-reject-"),
