@@ -182,7 +182,7 @@ if ( ! function_exists( 'register_block_bindings_source' ) ) {
 
 if ( ! function_exists( '${fieldsFunctionName}' ) ) {
 \tfunction ${fieldsFunctionName}() : array {
-\t\t$schema_file = dirname( __DIR__, 2 ) . '/${options.postMeta.schemaFile}';
+\t\t$schema_file = dirname( __DIR__, 3 ) . '/${options.postMeta.schemaFile}';
 \t\tif ( file_exists( $schema_file ) ) {
 \t\t\t$schema = json_decode( (string) file_get_contents( $schema_file ), true );
 \t\t\tif ( is_array( $schema ) && isset( $schema['properties'] ) && is_array( $schema['properties'] ) ) {
@@ -357,13 +357,16 @@ register_block_bindings_source(
 ${supportedAttributesHook}`;
 }
 
-function buildTsPostMetaFieldEntries(fields: readonly PostMetaBindingField[]): string {
+function buildTsPostMetaFieldEntries(
+	fields: readonly PostMetaBindingField[],
+	textDomain: string,
+): string {
 	return fields
 		.map((field) =>
 			[
 				"\t{",
 				`\t\tfallbackValue: ${quoteTsString(field.fallbackValue)},`,
-				`\t\tlabel: ${quoteTsString(field.label)},`,
+				`\t\tlabel: __( ${quoteTsString(field.label)}, ${quoteTsString(textDomain)} ),`,
 				`\t\tname: ${quoteTsString(field.name)},`,
 				`\t\trequired: ${field.required ? "true" : "false"},`,
 				`\t\tschemaType: ${quoteTsString(field.schemaType)},`,
@@ -411,7 +414,7 @@ export const POST_META_BINDING_SOURCE = {
 } as const;
 
 const POST_META_BINDING_FIELDS = [
-${buildTsPostMetaFieldEntries(options.postMeta.fields)}
+${buildTsPostMetaFieldEntries(options.postMeta.fields, options.textDomain)}
 ] as const;
 
 const POST_META_PREVIEW_VALUES: Record<string, string> = Object.fromEntries(
@@ -431,7 +434,7 @@ registerBlockBindingsSource( {
 \tlabel: __( ${quoteTsString(bindingSourceTitle)}, ${quoteTsString(options.textDomain)} ),
 \tgetFieldsList() {
 \t\treturn POST_META_BINDING_FIELDS.map( ( field ) => ( {
-\t\t\tlabel: __( field.label, ${quoteTsString(options.textDomain)} ),
+\t\t\tlabel: field.label,
 \t\t\ttype: 'string',
 \t\t\targs: {
 \t\t\t\tfield: field.name,
@@ -874,12 +877,20 @@ async function writeBindingSourceRegistry(
  * be normalized and validated before files are written.
  * @param options.cwd Working directory used to resolve the nearest official
  * workspace. Defaults to `process.cwd()`.
+ * @param options.metaPath Optional top-level post-meta field used as the
+ * binding source's default `field` arg. Requires `postMetaName`.
+ * @param options.postMetaName Optional generated post-meta contract slug used
+ * to back the binding source with `get_post_meta()`.
  * @returns A promise that resolves with the normalized `bindingSourceSlug` and
  * owning `projectDir` after the server/editor files, optional target block
- * metadata, and inventory entry have been written successfully.
+ * metadata, and inventory entry have been written successfully. Post-meta
+ * backed results additionally include `metaKey`, `metaPath`, `postMetaSlug`,
+ * `postType`, and `schemaFile`.
  * @throws {Error} When the command is run outside an official workspace, when
  * the slug is invalid, when a binding target is incomplete or unknown, or when
- * a conflicting file or inventory entry exists.
+ * a conflicting file or inventory entry exists. Post-meta backed runs also
+ * throw when the referenced contract or requested top-level field cannot be
+ * resolved.
  */
 export async function runAddBindingSourceCommand({
 	attributeName,

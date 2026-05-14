@@ -3,6 +3,16 @@ import path from "node:path";
 import { readJsonFile, readJsonFileSync } from "./json-utils.js";
 import type { WorkspacePostMetaInventoryEntry } from "./workspace-inventory-types.js";
 
+/**
+ * Field metadata extracted from a typed post-meta schema for a generated block
+ * bindings source.
+ *
+ * @property fallbackValue Editor preview value used when live post meta is unavailable.
+ * @property label Human-readable label derived from the schema property name.
+ * @property name Top-level schema property name used as the binding `field` arg.
+ * @property required Whether the field is listed in the schema's required array.
+ * @property schemaType Resolved JSON Schema type used to choose a preview value.
+ */
 export interface PostMetaBindingField {
 	fallbackValue: string;
 	label: string;
@@ -33,10 +43,14 @@ function resolveSchemaType(schema: JsonRecord): string {
 	}
 	if (
 		Array.isArray(type) &&
-		type.every((entry) => typeof entry === "string") &&
-		type.includes("string")
+		type.every((entry) => typeof entry === "string")
 	) {
-		return "string";
+		const nonNullType = type.find(
+			(entry) => entry !== "null" && SUPPORTED_SCHEMA_TYPES.has(entry),
+		);
+		if (nonNullType) {
+			return nonNullType;
+		}
 	}
 	if (Array.isArray(schema.enum) && schema.enum.length > 0) {
 		return "string";
@@ -112,6 +126,14 @@ function extractPostMetaBindingFields(
 	return fields;
 }
 
+/**
+ * Load and extract binding fields from a post-meta JSON Schema artifact.
+ *
+ * @param projectDir Workspace root directory.
+ * @param postMeta Post-meta inventory entry that points to the schema file.
+ * @returns Promise resolving to the extracted top-level binding fields.
+ * @throws If the schema cannot be read or does not expose object properties.
+ */
 export async function loadPostMetaBindingFields(
 	projectDir: string,
 	postMeta: WorkspacePostMetaInventoryEntry,
@@ -124,6 +146,14 @@ export async function loadPostMetaBindingFields(
 	return extractPostMetaBindingFields(schema, postMeta.schemaFile);
 }
 
+/**
+ * Synchronously load and extract binding fields from a post-meta JSON Schema artifact.
+ *
+ * @param projectDir Workspace root directory.
+ * @param postMeta Post-meta inventory entry that points to the schema file.
+ * @returns Extracted top-level binding fields.
+ * @throws If the schema cannot be read or does not expose object properties.
+ */
 export function loadPostMetaBindingFieldsSync(
 	projectDir: string,
 	postMeta: WorkspacePostMetaInventoryEntry,
@@ -136,6 +166,15 @@ export function loadPostMetaBindingFieldsSync(
 	return extractPostMetaBindingFields(schema, postMeta.schemaFile);
 }
 
+/**
+ * Validate and resolve a top-level post-meta binding path.
+ *
+ * @param fields Binding fields extracted from the post-meta schema.
+ * @param postMetaSlug Post-meta contract slug used in diagnostics.
+ * @param metaPath User-provided field path to validate.
+ * @returns The matching binding field.
+ * @throws If the path is empty, nested, or missing from the schema fields.
+ */
 export function assertPostMetaBindingPath(
 	fields: readonly PostMetaBindingField[],
 	postMetaSlug: string,
