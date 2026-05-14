@@ -61,7 +61,21 @@ interface DoctorSummaryOptions {
 	exitPolicy?: DoctorExitPolicy;
 }
 
+type DoctorLinePrinter = (line: string) => void;
+
 const DEFAULT_DOCTOR_EXIT_POLICY: DoctorExitPolicy = "strict";
+
+const defaultDoctorLinePrinter: DoctorLinePrinter = (line) => {
+	process.stdout.write(`${line}\n`);
+};
+
+function renderDefaultDoctorCheckLine(check: DoctorCheck): void {
+	defaultDoctorLinePrinter(formatDoctorCheckLine(check));
+}
+
+function renderDefaultDoctorSummaryLine(summaryLine: string): void {
+	defaultDoctorLinePrinter(summaryLine);
+}
 
 function annotateDoctorChecks(
 	checks: DoctorCheck[],
@@ -188,6 +202,8 @@ export function createDoctorRunSummary(
  * @param cwd Working directory to validate.
  * @param options Optional renderer overrides and exit-policy selection.
  * @param options.exitPolicy Policy deciding which failed checks contribute to the process exit code.
+ * @param options.renderLine Optional renderer for each check row. Defaults to the stdout line printer.
+ * @param options.renderSummaryLine Optional renderer for the summary row. Defaults to the stdout line printer unless a custom `renderLine` suppresses implicit summary output.
  * @returns The completed list of doctor checks.
  * @throws {Error} When one or more failed checks contribute to the exit code under the active policy.
  */
@@ -196,11 +212,10 @@ export async function runDoctor(
 	options: RunDoctorOptions = {},
 ): Promise<DoctorCheck[]> {
 	const exitPolicy = resolveDoctorExitPolicy(options);
-	const renderLine =
-		options.renderLine ?? ((check: DoctorCheck) => console.log(formatDoctorCheckLine(check)));
+	const renderLine = options.renderLine ?? renderDefaultDoctorCheckLine;
 	const renderSummaryLine =
 		options.renderSummaryLine ??
-		(options.renderLine ? () => undefined : (summaryLine: string) => console.log(summaryLine));
+		(options.renderLine ? () => undefined : renderDefaultDoctorSummaryLine);
 	const checks = await getDoctorChecks(cwd);
 
 	for (const check of checks) {
