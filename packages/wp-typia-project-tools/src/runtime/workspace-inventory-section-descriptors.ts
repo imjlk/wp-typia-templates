@@ -196,8 +196,14 @@ export const INVENTORY_SECTIONS: readonly InventorySectionDescriptor[] = [
 			entry: defineInventoryEntryParser<WorkspacePatternInventoryEntry>()({
 				entryName: "PATTERNS",
 				fields: [
-					{ key: "file", required: true },
+					{ key: "contentFile" },
+					{ key: "file" },
+					{ key: "scope" },
+					{ key: "sectionRole" },
 					{ key: "slug", required: true },
+					{ key: "tags", kind: "stringArray" },
+					{ key: "thumbnailUrl" },
+					{ key: "title" },
 				],
 			}),
 			hasSectionKey: "hasPatternsSection",

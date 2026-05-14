@@ -81,8 +81,14 @@ export const BLOCK_TRANSFORMS: WorkspaceBlockTransformConfig[] = [
 export const PATTERNS_INTERFACE_SECTION = `
 
 export interface WorkspacePatternConfig {
-\tfile: string;
+\tcontentFile?: string;
+\tfile?: string;
+\tscope?: 'full' | 'section';
+\tsectionRole?: string;
 \tslug: string;
+\ttags?: string[];
+\tthumbnailUrl?: string;
+\ttitle?: string;
 }
 `;
 

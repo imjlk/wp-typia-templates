@@ -85,7 +85,7 @@ export function assertWorkspaceVariationArtifacts(projectDir, blockSlug, variati
 }
 
 export function assertWorkspacePatternArtifacts(projectDir, patternSlug) {
-  const patternPath = path.join(projectDir, "src", "patterns", `${patternSlug}.php`);
+  const patternPath = path.join(projectDir, "src", "patterns", "full", `${patternSlug}.php`);
   if (!fs.existsSync(patternPath)) {
     throw new Error(`Expected workspace pattern to exist at ${patternPath}`);
   }

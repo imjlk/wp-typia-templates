@@ -2968,9 +2968,26 @@ test("canonical CLI can add a pattern to an official workspace template", async 
     )
   ).toContain("Pattern name must start with a letter");
 
-  runCli("node", [entryPath, "add", "pattern", "hero-layout"], {
-    cwd: targetDir,
-  });
+  runCli(
+    "node",
+    [
+      entryPath,
+      "add",
+      "pattern",
+      "hero-layout",
+      "--scope",
+      "section",
+      "--section-role",
+      "hero",
+      "--tags",
+      "landing,hero",
+      "--thumbnail-url",
+      "./thumbnails/hero-layout.png",
+    ],
+    {
+      cwd: targetDir,
+    }
+  );
 
   const blockConfigSource = fs.readFileSync(
     path.join(targetDir, "scripts", "block-config.ts"),
@@ -2981,14 +2998,23 @@ test("canonical CLI can add a pattern to an official workspace template", async 
     "utf8"
   );
   const patternSource = fs.readFileSync(
-    path.join(targetDir, "src", "patterns", "hero-layout.php"),
+    path.join(targetDir, "src", "patterns", "sections", "hero-layout.php"),
     "utf8"
   );
 
   expect(blockConfigSource).toContain('slug: "hero-layout"');
-  expect(blockConfigSource).toContain('file: "src/patterns/hero-layout.php"');
+  expect(blockConfigSource).toContain(
+    'contentFile: "src/patterns/sections/hero-layout.php"'
+  );
+  expect(blockConfigSource).toContain('scope: "section"');
+  expect(blockConfigSource).toContain('sectionRole: "hero"');
+  expect(blockConfigSource).toContain('tags: ["hero", "landing"]');
+  expect(blockConfigSource).toContain(
+    'thumbnailUrl: "./thumbnails/hero-layout.png"'
+  );
   expect(bootstrapSource).toContain("register_block_pattern_category");
   expect(bootstrapSource).toContain("/src/patterns/*.php");
+  expect(bootstrapSource).toContain("/src/patterns/*/*.php");
   expect(patternSource).toContain("demo-space/hero-layout");
 
   const doctorOutput = runCli("node", [entryPath, "doctor", "--format", "json"], {
@@ -2999,6 +3025,10 @@ test("canonical CLI can add a pattern to an official workspace template", async 
   }>(doctorOutput);
   expect(
     doctorChecks.checks.find((check) => check.label === "Pattern bootstrap")
+      ?.status
+  ).toBe("pass");
+  expect(
+    doctorChecks.checks.find((check) => check.label === "Pattern catalog")
       ?.status
   ).toBe("pass");
   expect(

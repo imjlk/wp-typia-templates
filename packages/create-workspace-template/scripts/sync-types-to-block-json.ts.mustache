@@ -10,6 +10,11 @@ import {
 	validateBlockNestingContract,
 	validateInnerBlocksTemplates,
 } from '@wp-typia/block-runtime/metadata-core';
+import {
+	formatPatternCatalogDiagnostics,
+	resolvePatternCatalogContentFile,
+	validatePatternCatalog,
+} from '@wp-typia/project-tools/pattern-catalog';
 
 import { BLOCK_NESTING, BLOCK_TEMPLATES, BLOCKS, PATTERNS } from './block-config';
 
@@ -52,13 +57,41 @@ function readWorkspaceBlockName( block: ( typeof BLOCKS )[ number ] ): string {
 }
 
 function readPatternFileContent( pattern: ( typeof PATTERNS )[ number ] ): string {
+	const patternFile = resolvePatternCatalogContentFile( pattern );
+	if ( ! patternFile ) {
+		throw new Error(
+			`Pattern "${ pattern.slug }" must declare contentFile or file in scripts/block-config.ts.`
+		);
+	}
 	try {
-		return fs.readFileSync( pattern.file, 'utf8' );
+		return fs.readFileSync( patternFile, 'utf8' );
 	} catch ( error ) {
 		throw new Error(
-			`Failed to read pattern "${ pattern.slug }" at ${ pattern.file }: ${
+			`Failed to read pattern "${ pattern.slug }" at ${ patternFile }: ${
 				error instanceof Error ? error.message : String( error )
 			}`
+		);
+	}
+}
+
+function validatePatternCatalogMetadata() {
+	const result = validatePatternCatalog( PATTERNS, {
+		projectDir: process.cwd(),
+	} );
+
+	if ( result.warnings.length > 0 ) {
+		console.warn(
+			`⚠️ Pattern catalog validation warnings:\n${ formatPatternCatalogDiagnostics(
+				result.warnings
+			) }`
+		);
+	}
+
+	if ( result.errors.length > 0 ) {
+		throw new Error(
+			`Pattern catalog metadata is invalid:\n${ formatPatternCatalogDiagnostics(
+				result.errors
+			) }`
 		);
 	}
 }
@@ -70,7 +103,7 @@ function validatePatternContentNesting( knownBlockNames: readonly string[] ) {
 			allowExternalBlockNames: true,
 			knownBlockNames,
 			nesting: BLOCK_NESTING,
-			patternFile: pattern.file,
+			patternFile: resolvePatternCatalogContentFile( pattern ),
 		} ).diagnostics;
 	} );
 	const warnings = diagnostics.filter(
@@ -110,6 +143,7 @@ async function main() {
 		knownBlockNames,
 		nesting: BLOCK_NESTING,
 	} );
+	validatePatternCatalogMetadata();
 	validatePatternContentNesting( knownBlockNames );
 	await syncInnerBlocksTemplateModule(
 		{

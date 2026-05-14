@@ -8,6 +8,11 @@ import {
 	WORKSPACE_FULL_BLOCK_NAME_PATTERN,
 } from "./cli-doctor-workspace-shared.js";
 import {
+	formatPatternCatalogDiagnostics,
+	resolvePatternCatalogContentFile,
+	validatePatternCatalog,
+} from "./pattern-catalog.js";
+import {
 	hasExecutablePattern,
 	hasUncommentedPattern,
 } from "./ts-source-masking.js";
@@ -36,10 +41,11 @@ function checkWorkspacePatternBootstrap(projectDir: string, packageName: string)
 	const source = fs.readFileSync(bootstrapPath, "utf8");
 	const hasCategoryAnchor = source.includes("register_block_pattern_category");
 	const hasPatternGlob = source.includes("/src/patterns/*.php");
+	const hasNestedPatternGlob = source.includes("/src/patterns/*/*.php");
 	return createDoctorCheck(
 		"Pattern bootstrap",
-		hasCategoryAnchor && hasPatternGlob ? "pass" : "fail",
-		hasCategoryAnchor && hasPatternGlob
+		hasCategoryAnchor && hasPatternGlob && hasNestedPatternGlob ? "pass" : "fail",
+		hasCategoryAnchor && hasPatternGlob && hasNestedPatternGlob
 			? "Pattern category and loader hooks are present"
 			: "Missing pattern category registration or src/patterns loader hook",
 	);
@@ -245,9 +251,29 @@ export function getWorkspaceBlockAddonDoctorChecks(
 	if (shouldCheckPatternBootstrap) {
 		checks.push(checkWorkspacePatternBootstrap(workspace.projectDir, workspace.packageName));
 	}
+	if (inventory.patterns.length > 0) {
+		const catalogValidation = validatePatternCatalog(inventory.patterns, {
+			projectDir: workspace.projectDir,
+		});
+		checks.push(
+			createDoctorCheck(
+				"Pattern catalog",
+				catalogValidation.errors.length > 0
+					? "fail"
+					: catalogValidation.warnings.length > 0
+						? "warn"
+						: "pass",
+				catalogValidation.diagnostics.length > 0
+					? formatPatternCatalogDiagnostics(catalogValidation.diagnostics)
+					: "Pattern catalog metadata is valid",
+			),
+		);
+	}
 	for (const pattern of inventory.patterns) {
 		checks.push(
-			checkExistingFiles(workspace.projectDir, `Pattern ${pattern.slug}`, [pattern.file]),
+			checkExistingFiles(workspace.projectDir, `Pattern ${pattern.slug}`, [
+				resolvePatternCatalogContentFile(pattern),
+			]),
 		);
 	}
 

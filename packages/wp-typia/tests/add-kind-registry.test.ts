@@ -205,6 +205,59 @@ test('splits rest-resource usage by generated and manual modes', () => {
   ]);
 });
 
+test('passes typed pattern catalog flags to the runtime', async () => {
+  const capturedOptions: Record<string, unknown>[] = [];
+  const plan = await ADD_KIND_REGISTRY.pattern.prepareExecution({
+    addRuntime: {
+      runAddPatternCommand: async (options: Record<string, unknown>) => {
+        capturedOptions.push(options);
+
+        return {
+          contentFile: 'src/patterns/sections/hero-photo.php',
+          patternScope: String(options.patternScope),
+          patternSlug: String(options.patternName),
+          projectDir: String(options.cwd),
+          sectionRole: String(options.sectionRole),
+          tags: String(options.tags).split(','),
+          title: 'Hero Photo',
+          thumbnailUrl: String(options.thumbnailUrl),
+        };
+      },
+    } as unknown as AddKindExecutionContext['addRuntime'],
+    cwd: '/tmp/wp-typia-pattern-test',
+    flags: {
+      scope: 'section',
+      'section-role': 'hero',
+      tags: 'landing,hero',
+      'thumbnail-url': './thumbnails/hero.png',
+    },
+    getOrCreatePrompt: async () => {
+      throw new Error('pattern add-kind should not prompt in this test');
+    },
+    isInteractiveSession: false,
+    name: 'hero-photo',
+    warnLine: () => {},
+  });
+
+  const result = await plan.execute('/tmp/wp-typia-pattern-test');
+
+  expect(capturedOptions).toEqual([
+    {
+      cwd: '/tmp/wp-typia-pattern-test',
+      patternName: 'hero-photo',
+      patternScope: 'section',
+      sectionRole: 'hero',
+      tags: 'landing,hero',
+      thumbnailUrl: './thumbnails/hero.png',
+    },
+  ]);
+  expect(plan.getValues(result)).toMatchObject({
+    contentFile: 'src/patterns/sections/hero-photo.php',
+    patternScope: 'section',
+    sectionRole: 'hero',
+  });
+});
+
 async function captureRestResourceRuntimeOptions(
   flags: Record<string, unknown>,
 ): Promise<Record<string, unknown>> {

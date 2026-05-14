@@ -43,8 +43,14 @@ export interface WorkspaceBlockTransformConfig {
 }
 
 export interface WorkspacePatternConfig {
-	file: string;
+	contentFile?: string;
+	file?: string;
+	scope?: 'full' | 'section';
+	sectionRole?: string;
 	slug: string;
+	tags?: string[];
+	thumbnailUrl?: string;
+	title?: string;
 }
 
 export interface WorkspaceBindingSourceConfig {

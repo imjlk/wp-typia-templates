@@ -66,6 +66,7 @@ export {
 	formatAddHelpText,
 	getWorkspaceBlockSelectOptions,
 	getWorkspaceBlockSelectOptionsAsync,
+	PATTERN_CATALOG_SCOPE_IDS,
 	runAddAdminViewCommand,
 	runAddAbilityCommand,
 	runAddBindingSourceCommand,
@@ -82,6 +83,7 @@ export {
 	runAddVariationCommand,
 	seedWorkspaceMigrationProject,
 } from "./cli-add.js";
+export type { PatternCatalogScope } from "./cli-add.js";
 export {
 	COMPOUND_INNER_BLOCKS_PRESET_IDS,
 	getCompoundInnerBlocksPresetDefinition,

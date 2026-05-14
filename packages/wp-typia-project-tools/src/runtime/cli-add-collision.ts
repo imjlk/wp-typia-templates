@@ -179,6 +179,16 @@ const PATTERN_COLLISION_DESCRIPTOR: ScaffoldCollisionDescriptor<
 			label: "A pattern",
 			relativePath: ({ slug }) => path.join("src", "patterns", `${slug}.php`),
 		},
+		{
+			label: "A full pattern",
+			relativePath: ({ slug }) =>
+				path.join("src", "patterns", "full", `${slug}.php`),
+		},
+		{
+			label: "A section pattern",
+			relativePath: ({ slug }) =>
+				path.join("src", "patterns", "sections", `${slug}.php`),
+		},
 	],
 	inventoryCollision: {
 		entries: (inventory) => inventory.patterns,

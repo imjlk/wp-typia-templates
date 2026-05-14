@@ -92,6 +92,11 @@
       "import": "./dist/runtime/package-managers.js",
       "default": "./dist/runtime/package-managers.js"
     },
+    "./pattern-catalog": {
+      "types": "./dist/runtime/pattern-catalog.d.ts",
+      "import": "./dist/runtime/pattern-catalog.js",
+      "default": "./dist/runtime/pattern-catalog.js"
+    },
     "./schema-core": {
       "types": "./dist/runtime/schema-core.d.ts",
       "import": "./dist/runtime/schema-core.js",

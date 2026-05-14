@@ -16,6 +16,8 @@ npm run wp-typia:add -- block my-block --template basic
 npm run wp-typia:add -- integration-env local-smoke --wp-env --release-zip --service docker-compose
 npm run wp-typia:add -- style callout-emphasis --block my-block
 npm run wp-typia:add -- transform quote-to-block --from core/quote --to my-block
+npm run wp-typia:add -- pattern hero-layout
+npm run wp-typia:add -- pattern hero-photo-section --scope section --section-role hero --tags hero,image
 npm run wp-typia:add -- binding-source hero-data
 npm run wp-typia:add -- binding-source hero-data --block my-block --attribute headline
 npm run wp-typia:add -- contract external-retrieve-response --type ExternalRetrieveResponse
@@ -36,10 +38,11 @@ Declare default editor `InnerBlocks` templates in `BLOCK_TEMPLATES` and
 `wp-typia sync` will generate `src/inner-blocks-templates.ts` with constants you
 can import from edit components.
 Pattern files listed in `PATTERNS` are parsed during the same sync flow so
-`wp-typia sync --check` can catch serialized block content that violates the
-declared `allowedBlocks`, `parent`, or `ancestor` rules. Unknown or unparseable
-pattern blocks are reported as warnings so the first implementation stays
-non-mutating.
+`wp-typia sync --check` can first validate typed catalog metadata such as
+duplicate slugs, `scope`, `sectionRole`, `tags`, `thumbnailUrl`, and
+`contentFile`, then catch serialized block content that violates the declared
+`allowedBlocks`, `parent`, or `ancestor` rules. Unknown or unparseable pattern
+blocks are reported as warnings so the first implementation stays non-mutating.
 The validator reads serialized `<!-- wp:* -->` block comment boundaries
 conservatively and does not execute dynamic PHP content.
 For a complete generic family with a container, section, title, body, and media

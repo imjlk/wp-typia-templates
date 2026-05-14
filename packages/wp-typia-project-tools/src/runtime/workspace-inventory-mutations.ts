@@ -260,6 +260,22 @@ export function updateWorkspaceInventorySource(
 		nextSource = options.transformSource(nextSource);
 	}
 	nextSource = appendInventorySectionEntries(nextSource, options);
+	for (const [fieldName, fieldSource] of [
+		["contentFile", "\tcontentFile?: string;"],
+		["file", "\tfile?: string;"],
+		["scope", "\tscope?: 'full' | 'section';"],
+		["sectionRole", "\tsectionRole?: string;"],
+		["tags", "\ttags?: string[];"],
+		["thumbnailUrl", "\tthumbnailUrl?: string;"],
+		["title", "\ttitle?: string;"],
+	] as const) {
+		nextSource = upsertInterfaceField(
+			nextSource,
+			"WorkspacePatternConfig",
+			fieldName,
+			fieldSource,
+		);
+	}
 	nextSource = ensureInterfaceField(
 		nextSource,
 		"WorkspaceBindingSourceConfig",
