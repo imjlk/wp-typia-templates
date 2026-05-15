@@ -795,6 +795,7 @@ wp-typia add variation hero-card --block counter-card
 wp-typia add style callout-emphasis --block counter-card
 wp-typia add transform quote-to-counter --from core/quote --to counter-card
 wp-typia add pattern hero-layout
+wp-typia add pattern hero-photo-section --scope section --section-role hero --tags hero,image
 wp-typia add binding-source hero-data
 wp-typia add binding-source hero-data --block counter-card --attribute headline
 wp-typia add ability review-workflow
@@ -806,8 +807,10 @@ Variations are generated under `src/blocks/<block>/variations/*.ts`, styles
 under `src/blocks/<block>/styles/*.ts`, and transforms under
 `src/blocks/<block>/transforms/*.ts`; each flow is wired through the target
 block entrypoint and recorded in `scripts/block-config.ts`. Patterns are
-generated as namespaced PHP shells under `src/patterns/*.php` and loaded by the
-workspace bootstrap.
+generated as namespaced PHP shells under `src/patterns/full/*.php` or
+`src/patterns/sections/*.php`, recorded in the typed `PATTERNS` catalog with
+`scope`, optional `sectionRole`, `tags`, `thumbnailUrl`, and `contentFile`
+metadata, and loaded by the workspace bootstrap.
 Choose variations for alternate inserter presets, Block Styles for named visual
 class options on the same block, transforms for converting from another source
 block into the generated block, and patterns for reusable multi-block layouts.

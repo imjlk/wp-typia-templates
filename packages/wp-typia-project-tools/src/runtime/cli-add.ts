@@ -13,12 +13,14 @@ export {
 	EDITOR_PLUGIN_SLOT_IDS,
 	formatAddHelpText,
 	isAddBlockTemplateId,
+	PATTERN_CATALOG_SCOPE_IDS,
 	suggestAddBlockTemplateId,
 } from "./cli-add-shared.js";
 export type {
 	AddBlockTemplateId,
 	AddKindId,
 	EditorPluginSlotId,
+	PatternCatalogScope,
 } from "./cli-add-shared.js";
 export {
 	runAddBlockCommand,

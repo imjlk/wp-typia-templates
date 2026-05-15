@@ -8,6 +8,11 @@ import {
 	WORKSPACE_FULL_BLOCK_NAME_PATTERN,
 } from "./cli-doctor-workspace-shared.js";
 import {
+	formatPatternCatalogDiagnostics,
+	resolvePatternCatalogContentFile,
+	validatePatternCatalog,
+} from "./pattern-catalog.js";
+import {
 	hasExecutablePattern,
 	hasUncommentedPattern,
 } from "./ts-source-masking.js";
@@ -28,7 +33,22 @@ const WORKSPACE_BLOCK_TRANSFORMS_IMPORT_PATTERN =
 const WORKSPACE_BLOCK_TRANSFORMS_CALL_PATTERN =
 	/applyWorkspaceBlockTransforms\s*\(\s*registration\s*\.\s*settings\s*\)\s*;?/u;
 
-function checkWorkspacePatternBootstrap(projectDir: string, packageName: string): DoctorCheck {
+function isNestedPatternContentFile(patternFile: string | undefined): boolean {
+	if (!patternFile) {
+		return false;
+	}
+	const normalizedPath = patternFile.replace(/\\/gu, "/");
+	return (
+		normalizedPath.startsWith("src/patterns/") &&
+		normalizedPath.slice("src/patterns/".length).includes("/")
+	);
+}
+
+function checkWorkspacePatternBootstrap(
+	projectDir: string,
+	packageName: string,
+	requiresNestedPatternGlob: boolean,
+): DoctorCheck {
 	const bootstrapPath = resolveWorkspaceBootstrapPath(projectDir, packageName);
 	if (!fs.existsSync(bootstrapPath)) {
 		return createDoctorCheck("Pattern bootstrap", "fail", `Missing ${path.basename(bootstrapPath)}`);
@@ -36,12 +56,17 @@ function checkWorkspacePatternBootstrap(projectDir: string, packageName: string)
 	const source = fs.readFileSync(bootstrapPath, "utf8");
 	const hasCategoryAnchor = source.includes("register_block_pattern_category");
 	const hasPatternGlob = source.includes("/src/patterns/*.php");
+	const hasNestedPatternGlob = source.includes("/src/patterns/*/*.php");
+	const hasRequiredPatternGlobs =
+		hasPatternGlob && (!requiresNestedPatternGlob || hasNestedPatternGlob);
 	return createDoctorCheck(
 		"Pattern bootstrap",
-		hasCategoryAnchor && hasPatternGlob ? "pass" : "fail",
-		hasCategoryAnchor && hasPatternGlob
+		hasCategoryAnchor && hasRequiredPatternGlobs ? "pass" : "fail",
+		hasCategoryAnchor && hasRequiredPatternGlobs
 			? "Pattern category and loader hooks are present"
-			: "Missing pattern category registration or src/patterns loader hook",
+			: requiresNestedPatternGlob
+				? "Missing pattern category registration or nested src/patterns loader hook"
+				: "Missing pattern category registration or src/patterns loader hook",
 	);
 }
 
@@ -243,11 +268,40 @@ export function getWorkspaceBlockAddonDoctorChecks(
 		inventory.patterns.length > 0 ||
 		fs.existsSync(path.join(workspace.projectDir, "src", "patterns"));
 	if (shouldCheckPatternBootstrap) {
-		checks.push(checkWorkspacePatternBootstrap(workspace.projectDir, workspace.packageName));
+		const requiresNestedPatternGlob = inventory.patterns.some((pattern) =>
+			isNestedPatternContentFile(resolvePatternCatalogContentFile(pattern)),
+		);
+		checks.push(
+			checkWorkspacePatternBootstrap(
+				workspace.projectDir,
+				workspace.packageName,
+				requiresNestedPatternGlob,
+			),
+		);
+	}
+	if (inventory.patterns.length > 0) {
+		const catalogValidation = validatePatternCatalog(inventory.patterns, {
+			projectDir: workspace.projectDir,
+		});
+		checks.push(
+			createDoctorCheck(
+				"Pattern catalog",
+				catalogValidation.errors.length > 0
+					? "fail"
+					: catalogValidation.warnings.length > 0
+						? "warn"
+						: "pass",
+				catalogValidation.diagnostics.length > 0
+					? formatPatternCatalogDiagnostics(catalogValidation.diagnostics)
+					: "Pattern catalog metadata is valid",
+			),
+		);
 	}
 	for (const pattern of inventory.patterns) {
 		checks.push(
-			checkExistingFiles(workspace.projectDir, `Pattern ${pattern.slug}`, [pattern.file]),
+			checkExistingFiles(workspace.projectDir, `Pattern ${pattern.slug}`, [
+				resolvePatternCatalogContentFile(pattern),
+			]),
 		);
 	}
 

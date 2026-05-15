@@ -27,8 +27,14 @@ export interface WorkspaceBlockTransformInventoryEntry {
 }
 
 export interface WorkspacePatternInventoryEntry {
-	file: string;
+	contentFile?: string;
+	file?: string;
+	scope?: string;
+	sectionRole?: string;
 	slug: string;
+	tags?: string[];
+	thumbnailUrl?: string;
+	title?: string;
 }
 
 export interface WorkspaceBindingSourceInventoryEntry {

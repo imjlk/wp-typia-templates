@@ -7,6 +7,7 @@ import {
   createDoctorRunSummary,
   getDoctorChecks,
   getDoctorExitFailureDetailLines,
+  runAddPatternCommand,
 } from "../src/runtime/cli-core.js";
 import {
   getWorkspaceBlockSelectOptions,
@@ -729,7 +730,7 @@ export const BLOCK_TRANSFORMS = [
   { block: "counter-card", file: "src/blocks/counter-card/transforms/card.ts", from: "core/paragraph", slug: "paragraph-card", to: "demo/counter-card" },
 ];
 export const PATTERNS = [
-  { file: "src/patterns/hero-layout.php", slug: "hero-layout" },
+  { contentFile: "src/patterns/full/hero-layout.php", file: "src/patterns/full/hero-layout.php", scope: "full", slug: "hero-layout", tags: ["hero"], title: "Hero Layout" },
 ];
 export const BINDING_SOURCES = [
   { attribute: "content", block: "counter-card", editorFile: "src/bindings/hero-data/editor.ts", serverFile: "src/bindings/hero-data/server.php", slug: "hero-data" },
@@ -998,7 +999,9 @@ export const EDITOR_PLUGINS: WorkspaceEditorPluginConfig[] = [
 ];
 `,
     {
-      patternEntries: ['\t{ file: "src/patterns/hero.php", slug: "hero" },'],
+      patternEntries: [
+        '\t{ contentFile: "src/patterns/full/hero.php", file: "src/patterns/full/hero.php", scope: "full", slug: "hero", tags: [], title: "Hero" },',
+      ],
       variationEntries: [
         '\t{ block: "counter-card", file: "src/blocks/counter-card/variations/hero.ts", slug: "hero" },',
       ],
@@ -1232,6 +1235,56 @@ test("doctor passes on a healthy multi-block workspace", async () => {
   expect(
     checks.find((check) => check.label === "Block collection author-bio")
       ?.status
+  ).toBe("pass");
+}, 20_000);
+
+test("doctor accepts flat-only legacy pattern loaders for flat catalog files", async () => {
+  const targetDir = path.join(tempRoot, "demo-workspace-doctor-flat-patterns");
+
+  await scaffoldOfficialWorkspace(targetDir, {
+    description: "Demo workspace doctor flat patterns",
+    slug: "demo-workspace-doctor-flat-patterns",
+    title: "Demo Workspace Doctor Flat Patterns",
+  });
+
+  linkWorkspaceNodeModules(targetDir);
+  await runAddPatternCommand({
+    contentFile: "src/patterns/hero-layout.php",
+    cwd: targetDir,
+    patternName: "hero-layout",
+  });
+
+  const bootstrapPath = path.join(
+    targetDir,
+    "demo-workspace-doctor-flat-patterns.php"
+  );
+  const nestedPatternLoader = [
+    "\t$pattern_modules = array_merge(",
+    "\t\tglob( __DIR__ . '/src/patterns/*.php' ) ?: array(),",
+    "\t\tglob( __DIR__ . '/src/patterns/*/*.php' ) ?: array()",
+    "\t);",
+  ].join("\n");
+  const flatPatternLoader =
+    "\t$pattern_modules = glob( __DIR__ . '/src/patterns/*.php' ) ?: array();";
+  fs.writeFileSync(
+    bootstrapPath,
+    fs.readFileSync(bootstrapPath, "utf8").replace(
+      nestedPatternLoader,
+      flatPatternLoader
+    ),
+    "utf8"
+  );
+
+  const checks = await getDoctorChecks(targetDir);
+
+  expect(
+    checks.find((check) => check.label === "Pattern bootstrap")?.status
+  ).toBe("pass");
+  expect(
+    checks.find((check) => check.label === "Pattern catalog")?.status
+  ).toBe("pass");
+  expect(
+    checks.find((check) => check.label === "Pattern hero-layout")?.status
   ).toBe("pass");
 }, 20_000);
 
@@ -1577,7 +1630,9 @@ test("doctor fails on missing variation and pattern inventory files", async () =
       "hero-card.ts"
     )
   );
-  fs.rmSync(path.join(targetDir, "src", "patterns", "hero-layout.php"));
+  fs.rmSync(
+    path.join(targetDir, "src", "patterns", "full", "hero-layout.php")
+  );
 
   const errorMessage = getCommandErrorMessage(() =>
     runCli("node", [entryPath, "doctor"], {
@@ -1588,6 +1643,7 @@ test("doctor fails on missing variation and pattern inventory files", async () =
 
   expect(errorMessage).toContain("Summary: One or more doctor checks failed.");
   expect(errorMessage).toContain("Variation counter-card/hero-card");
+  expect(errorMessage).toContain("Pattern catalog");
   expect(errorMessage).toContain("Pattern hero-layout");
 }, 15_000);
 
@@ -1621,7 +1677,7 @@ test("doctor fails when workspace inventory entries are malformed", async () => 
     blockConfigPath,
     blockConfigSource.replace(
       "// wp-typia add pattern entries",
-      `\t{\n\t\tslug: "broken-pattern",\n\t},\n\t// wp-typia add pattern entries`
+      `\t{\n\t\tcontentFile: "../broken.php",\n\t\tslug: "broken-pattern",\n\t},\n\t// wp-typia add pattern entries`
     ),
     "utf8"
   );
@@ -1633,8 +1689,8 @@ test("doctor fails when workspace inventory entries are malformed", async () => 
     })
   );
 
-  expect(errorMessage).toContain("Workspace inventory");
-  expect(errorMessage).toContain("PATTERNS[0] is missing required");
+  expect(errorMessage).toContain("Pattern catalog");
+  expect(errorMessage).toContain("invalid-pattern-content-file");
 });
 
 test("doctor fails when workspace inventory exports use non-array initializers", async () => {

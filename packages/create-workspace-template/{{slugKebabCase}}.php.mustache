@@ -177,7 +177,11 @@ function {{phpPrefix}}_register_pattern_category() {
 }
 
 function {{phpPrefix}}_register_patterns() {
-	foreach ( glob( __DIR__ . '/src/patterns/*.php' ) ?: array() as $pattern_module ) {
+	$pattern_modules = array_merge(
+		glob( __DIR__ . '/src/patterns/*.php' ) ?: array(),
+		glob( __DIR__ . '/src/patterns/*/*.php' ) ?: array()
+	);
+	foreach ( $pattern_modules as $pattern_module ) {
 		require $pattern_module;
 	}
 }

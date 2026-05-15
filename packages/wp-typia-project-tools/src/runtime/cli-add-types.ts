@@ -1,7 +1,13 @@
 import { suggestCloseId } from "./id-suggestions.js";
+import {
+	PATTERN_CATALOG_SCOPE_IDS,
+	type PatternCatalogScope,
+} from "./pattern-catalog.js";
 
 export { ADD_KIND_IDS } from "./cli-add-kind-ids.js";
 export type { AddKindId } from "./cli-add-kind-ids.js";
+export { PATTERN_CATALOG_SCOPE_IDS };
+export type { PatternCatalogScope };
 
 /**
  * Supported plugin-level REST resource methods accepted by
@@ -186,8 +192,14 @@ export interface RunAddBlockTransformCommandOptions {
  * @property patternName Human-entered pattern name normalized into a slug.
  */
 export interface RunAddPatternCommandOptions {
+	catalogTitle?: string;
+	contentFile?: string;
 	cwd?: string;
 	patternName: string;
+	patternScope?: PatternCatalogScope | string;
+	sectionRole?: string;
+	tags?: readonly string[] | string;
+	thumbnailUrl?: string;
 }
 
 /**

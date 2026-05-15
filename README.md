@@ -144,6 +144,10 @@ fail with the pattern file and serialized block path, while unknown or
 unparseable block comments are reported as warnings instead of being rewritten.
 The first validator intentionally reads serialized `<!-- wp:* -->` block
 comment boundaries conservatively and does not execute dynamic PHP content.
+The typed pattern catalog records `scope`, optional `sectionRole`, `tags`,
+`thumbnailUrl`, and `contentFile` metadata so `wp-typia sync --check` can catch
+duplicate slugs, missing pattern files, and invalid manifest metadata before
+validating markup.
 For an end-to-end generic `example/container` → `example/section` → leaf block
 family, see the Nesting Contracts Guide in `apps/docs/src/content/docs/guides`
 and the checked fixture in `tests/fixtures/nested-block-family.ts`.

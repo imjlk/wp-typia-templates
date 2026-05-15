@@ -2,7 +2,7 @@ import { afterAll, describe, expect, test } from "bun:test";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { cleanupScaffoldTempRoot, createScaffoldTempRoot, entryPath, getCommandErrorMessage, linkWorkspaceNodeModules, parseJsonObjectFromOutput, runCapturedCli, runCli, runGeneratedScript, scaffoldOfficialWorkspace, templateLayerFixturePath, templateLayerWorkspaceAmbiguousFixturePath, templateLayerWorkspaceFixturePath, typecheckGeneratedProject, workspaceTemplatePackageManifest } from "./helpers/scaffold-test-harness.js";
-import { runAddBlockCommand } from "../src/runtime/cli-core.js";
+import { runAddBlockCommand, runAddPatternCommand } from "../src/runtime/cli-core.js";
 import { scaffoldProject } from "../src/runtime/index.js";
 
 const legacyValidatorToolkitSource = [
@@ -2959,6 +2959,26 @@ test("canonical CLI can add a pattern to an official workspace template", async 
   });
 
   linkWorkspaceNodeModules(targetDir);
+  const bootstrapPath = path.join(targetDir, "demo-workspace-add-pattern.php");
+  const nestedPatternLoader = [
+    "\t$pattern_modules = array_merge(",
+    "\t\tglob( __DIR__ . '/src/patterns/*.php' ) ?: array(),",
+    "\t\tglob( __DIR__ . '/src/patterns/*/*.php' ) ?: array()",
+    "\t);",
+  ].join("\n");
+  const flatPatternLoader = [
+    "\tforeach ( glob( __DIR__ . '/src/patterns/*.php' ) ?: array() as $pattern_module ) {",
+    "\t\trequire $pattern_module;",
+    "\t}",
+  ].join("\n");
+  fs.writeFileSync(
+    bootstrapPath,
+    fs.readFileSync(bootstrapPath, "utf8").replace(
+      nestedPatternLoader,
+      flatPatternLoader
+    ),
+    "utf8"
+  );
 
   expect(
     getCommandErrorMessage(() =>
@@ -2967,28 +2987,78 @@ test("canonical CLI can add a pattern to an official workspace template", async 
       })
     )
   ).toContain("Pattern name must start with a letter");
+  await expect(
+    runAddPatternCommand({
+      contentFile: "lib/hero-layout.php",
+      cwd: targetDir,
+      patternName: "hero-layout",
+    })
+  ).rejects.toThrow(
+    "Pattern content file must live directly under `src/patterns/` or one nested directory under `src/patterns/` and end in `.php`"
+  );
+  await expect(
+    runAddPatternCommand({
+      contentFile: "src/patterns/sections/hero/primary.php",
+      cwd: targetDir,
+      patternName: "deep-hero-layout",
+    })
+  ).rejects.toThrow(
+    "Pattern content file must live directly under `src/patterns/` or one nested directory under `src/patterns/` and end in `.php`"
+  );
+  await expect(
+    runAddPatternCommand({
+      cwd: targetDir,
+      patternName: "bad-thumbnail",
+      thumbnailUrl: "ftp://example.com/hero.png",
+    })
+  ).rejects.toThrow(
+    "Pattern thumbnail URL must be an http(s) URL or safe relative project path."
+  );
 
-  runCli("node", [entryPath, "add", "pattern", "hero-layout"], {
-    cwd: targetDir,
-  });
+  runCli(
+    "node",
+    [
+      entryPath,
+      "add",
+      "pattern",
+      "hero-layout",
+      "--scope",
+      "section",
+      "--section-role",
+      "hero",
+      "--tags",
+      "landing,hero",
+      "--thumbnail-url",
+      "./thumbnails/hero-layout.png",
+    ],
+    {
+      cwd: targetDir,
+    }
+  );
 
   const blockConfigSource = fs.readFileSync(
     path.join(targetDir, "scripts", "block-config.ts"),
     "utf8"
   );
-  const bootstrapSource = fs.readFileSync(
-    path.join(targetDir, "demo-workspace-add-pattern.php"),
-    "utf8"
-  );
+  const bootstrapSource = fs.readFileSync(bootstrapPath, "utf8");
   const patternSource = fs.readFileSync(
-    path.join(targetDir, "src", "patterns", "hero-layout.php"),
+    path.join(targetDir, "src", "patterns", "sections", "hero-layout.php"),
     "utf8"
   );
 
   expect(blockConfigSource).toContain('slug: "hero-layout"');
-  expect(blockConfigSource).toContain('file: "src/patterns/hero-layout.php"');
+  expect(blockConfigSource).toContain(
+    'contentFile: "src/patterns/sections/hero-layout.php"'
+  );
+  expect(blockConfigSource).toContain('scope: "section"');
+  expect(blockConfigSource).toContain('sectionRole: "hero"');
+  expect(blockConfigSource).toContain('tags: ["hero", "landing"]');
+  expect(blockConfigSource).toContain(
+    'thumbnailUrl: "./thumbnails/hero-layout.png"'
+  );
   expect(bootstrapSource).toContain("register_block_pattern_category");
   expect(bootstrapSource).toContain("/src/patterns/*.php");
+  expect(bootstrapSource).toContain("/src/patterns/*/*.php");
   expect(patternSource).toContain("demo-space/hero-layout");
 
   const doctorOutput = runCli("node", [entryPath, "doctor", "--format", "json"], {
@@ -2999,6 +3069,10 @@ test("canonical CLI can add a pattern to an official workspace template", async 
   }>(doctorOutput);
   expect(
     doctorChecks.checks.find((check) => check.label === "Pattern bootstrap")
+      ?.status
+  ).toBe("pass");
+  expect(
+    doctorChecks.checks.find((check) => check.label === "Pattern catalog")
       ?.status
   ).toBe("pass");
   expect(

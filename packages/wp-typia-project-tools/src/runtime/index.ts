@@ -214,6 +214,12 @@ export {
 	runAddVariationCommand,
 	runScaffoldFlow,
 } from "./cli-core.js";
+export {
+	formatPatternCatalogDiagnostics,
+	PATTERN_CATALOG_SCOPE_IDS,
+	resolvePatternCatalogContentFile,
+	validatePatternCatalog,
+} from "./pattern-catalog.js";
 export type {
 	CliDiagnosticCode,
 	CliDiagnosticCodeError,
@@ -228,3 +234,12 @@ export type {
 	ReadlinePrompt,
 	WorkspaceBlockSelectOption,
 } from "./cli-core.js";
+export type {
+	PatternCatalogDiagnostic,
+	PatternCatalogDiagnosticCode,
+	PatternCatalogDiagnosticSeverity,
+	PatternCatalogEntry,
+	PatternCatalogScope,
+	PatternCatalogValidationOptions,
+	PatternCatalogValidationResult,
+} from "./pattern-catalog.js";
