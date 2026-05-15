@@ -14,7 +14,9 @@ import {
 	type WorkspaceMutationSnapshot,
 	snapshotWorkspaceFiles,
 } from "./cli-add-shared.js";
-import { ensureRestResourceSyncScriptAnchors } from "./cli-add-workspace-rest-anchors.js";
+import {
+	ensureRestResourceSyncScriptAnchors,
+} from "./cli-add-workspace-rest-resource-sync-anchors.js";
 import {
 	buildManualRestContractApiSource,
 	buildManualRestContractConfigEntry,

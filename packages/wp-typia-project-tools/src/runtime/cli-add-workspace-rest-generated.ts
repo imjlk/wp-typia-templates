@@ -18,7 +18,7 @@ import {
 } from "./cli-add-workspace-rest-bootstrap-anchors.js";
 import {
 	ensureRestResourceSyncScriptAnchors,
-} from "./cli-add-workspace-rest-anchors.js";
+} from "./cli-add-workspace-rest-resource-sync-anchors.js";
 import {
 	buildRestResourcePhpSource,
 	buildWorkspaceRestSchemaHelperPhpSource,
