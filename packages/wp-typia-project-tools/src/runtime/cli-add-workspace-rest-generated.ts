@@ -27,7 +27,7 @@ import {
 	buildRestResourceDataSource,
 	buildRestResourceTypesSource,
 	buildRestResourceValidatorsSource,
-} from "./cli-add-workspace-rest-source-emitters.js";
+} from "./cli-add-workspace-rest-generated-source-emitters.js";
 import {
 	type GeneratedRestResourceScaffoldOptions,
 	type RunAddRestResourceCommandResult,
