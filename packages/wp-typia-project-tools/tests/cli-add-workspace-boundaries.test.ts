@@ -77,6 +77,10 @@ test('cli-add-workspace delegates workspace add workflows to focused helpers', (
 		path.join(runtimeRoot, 'cli-add-workspace-rest-anchors.ts'),
 		'utf8',
 	);
+	const restBootstrapAnchorsSource = fs.readFileSync(
+		path.join(runtimeRoot, 'cli-add-workspace-rest-bootstrap-anchors.ts'),
+		'utf8',
+	);
 	const restSourceEmittersSource = fs.readFileSync(
 		path.join(runtimeRoot, 'cli-add-workspace-rest-source-emitters.ts'),
 		'utf8',
@@ -545,6 +549,9 @@ test('cli-add-workspace delegates workspace add workflows to focused helpers', (
 	expect(restGeneratedSource).toContain(
 		'from "./cli-add-workspace-rest-generated-source-emitters.js"',
 	);
+	expect(restGeneratedSource).toContain(
+		'from "./cli-add-workspace-rest-bootstrap-anchors.js"',
+	);
 	expect(restGeneratedSource).toContain('syncRestResourceArtifacts');
 	expect(restManualSource).toContain(
 		'export async function scaffoldManualRestContract(',
@@ -597,12 +604,27 @@ test('cli-add-workspace delegates workspace add workflows to focused helpers', (
 	);
 	expect(restSourceUtilsSource).not.toContain('buildRestResource');
 	expect(restSourceUtilsSource).not.toContain('buildManualRestContract');
-  expect(restAnchorsSource).toContain(
-    'async function ensureRestResourceBootstrapAnchors(',
-  );
-  expect(restAnchorsSource).toContain(
-    'async function ensureRestResourceSyncScriptAnchors(',
-  );
+	expect(restAnchorsSource).toContain(
+		'from "./cli-add-workspace-rest-bootstrap-anchors.js"',
+	);
+	expect(restAnchorsSource).not.toContain(
+		'async function ensureRestResourceBootstrapAnchors(',
+	);
+	expect(restAnchorsSource).not.toContain(
+		'async function ensureRestSchemaHelperBootstrapAnchors(',
+	);
+	expect(restAnchorsSource).toContain(
+		'async function ensureRestResourceSyncScriptAnchors(',
+	);
+	expect(restBootstrapAnchorsSource).toContain(
+		'async function ensureRestResourceBootstrapAnchors(',
+	);
+	expect(restBootstrapAnchorsSource).toContain(
+		'async function ensureRestSchemaHelperBootstrapAnchors(',
+	);
+	expect(restBootstrapAnchorsSource).not.toContain(
+		'async function ensureRestResourceSyncScriptAnchors(',
+	);
   expect(postMetaSource).toContain(
     'from "./cli-add-workspace-post-meta-anchors.js"',
   );
@@ -861,7 +883,7 @@ test('cli-add-workspace delegates workspace add workflows to focused helpers', (
 		editorPluginAnchorsSource,
 		patternAnchorsSource,
 		postMetaAnchorsSource,
-		restAnchorsSource,
+		restBootstrapAnchorsSource,
 	]) {
     expect(bootstrapAnchorSource).toContain(
       'insertPhpSnippetBeforeWorkspaceAnchors',
