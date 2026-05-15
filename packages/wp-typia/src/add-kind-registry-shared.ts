@@ -42,6 +42,7 @@ export type AddKindExecutionContext = {
   getOrCreatePrompt: () => Promise<ReadlinePrompt>;
   isInteractiveSession: boolean;
   name?: string;
+  positionalArgs?: readonly string[];
   warnLine: PrintLine;
 };
 
@@ -123,6 +124,9 @@ export type AddBlockTransformResult = Awaited<
 export type AddVariationResult = Awaited<
   ReturnType<AddRuntime['runAddVariationCommand']>
 >;
+export type AddCoreVariationResult = Awaited<
+  ReturnType<AddRuntime['runAddCoreVariationCommand']>
+>;
 
 export type AddKindExecutionResultById = {
   'admin-view': AddAdminViewResult;
@@ -131,6 +135,7 @@ export type AddKindExecutionResultById = {
   'binding-source': AddBindingSourceResult;
   block: AddBlockResult;
   contract: AddContractResult;
+  'core-variation': AddCoreVariationResult;
   'editor-plugin': AddEditorPluginResult;
   'hooked-block': AddHookedBlockResult;
   'integration-env': AddIntegrationEnvResult;

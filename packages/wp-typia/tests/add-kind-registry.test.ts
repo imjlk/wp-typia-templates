@@ -39,6 +39,15 @@ type VariationPlanCompatibility = ExpectTrue<
   >
 >;
 
+type CoreVariationPlanCompatibility = ExpectTrue<
+  IsEqual<
+    Awaited<
+      ReturnType<AddKindExecutionPlanFor<'core-variation'>['execute']>
+    >,
+    Parameters<AddKindExecutionPlanFor<'core-variation'>['getValues']>[0]
+  >
+>;
+
 type StylePlanCompatibility = ExpectTrue<
   IsEqual<
     Awaited<ReturnType<AddKindExecutionPlanFor<'style'>['execute']>>,
@@ -133,6 +142,7 @@ const addKindPlanCompatibilityChecks = {
   'admin-view': true,
   block: true,
   'integration-env': true,
+  'core-variation': true,
   variation: true,
   style: true,
   transform: true,
@@ -149,6 +159,7 @@ const addKindPlanCompatibilityChecks = {
 } satisfies {
   'admin-view': AdminViewPlanCompatibility;
   block: BlockPlanCompatibility;
+  'core-variation': CoreVariationPlanCompatibility;
   'integration-env': IntegrationEnvPlanCompatibility;
   variation: VariationPlanCompatibility;
   style: StylePlanCompatibility;
@@ -169,6 +180,7 @@ test('preserves compile-time compatibility between execute and getValues for eve
   expect(addKindPlanCompatibilityChecks).toEqual({
     'admin-view': true,
     block: true,
+    'core-variation': true,
     'integration-env': true,
     variation: true,
     style: true,
@@ -372,6 +384,11 @@ test('keeps shared visible-field groups aligned for refactored add kinds', () =>
     'name',
     'block',
   ]);
+  expect(getAddVisibleFieldNames({ kind: 'core-variation' })).toEqual([
+    'kind',
+    'name',
+    'block',
+  ]);
   expect(getAddVisibleFieldNames({ kind: 'variation' })).toEqual([
     'kind',
     'name',
@@ -448,6 +465,12 @@ const warnLinePlanFixtures = {
   contract: {
     flags: {},
     name: 'sample-contract',
+  },
+  'core-variation': {
+    flags: {
+      block: 'core/group',
+    },
+    name: 'sample-core-variation',
   },
   'integration-env': {
     flags: {},
@@ -535,6 +558,7 @@ test('passes the warning line printer through every add-kind execution plan', as
     'binding-source': true,
     block: true,
     contract: true,
+    'core-variation': true,
     'integration-env': true,
     'editor-plugin': true,
     'hooked-block': true,

@@ -50,6 +50,11 @@ describe("first-party TUI interaction models", () => {
 			"name",
 			"block",
 		]);
+		expect(getVisibleAddFieldNames({ kind: "core-variation" })).toEqual([
+			"kind",
+			"name",
+			"block",
+		]);
 		expect(getVisibleAddFieldNames({ kind: "style" })).toEqual([
 			"kind",
 			"name",

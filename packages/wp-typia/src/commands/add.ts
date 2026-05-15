@@ -38,6 +38,14 @@ function loadAddFlow() {
 
 const addOptions = buildCommandOptions(ADD_OPTION_METADATA);
 
+function resolveAddCommandName(positional: readonly string[]): string | undefined {
+  if (positional[0] === 'core-variation' && positional[2]) {
+    return positional[2];
+  }
+
+  return positional[1];
+}
+
 export const addCommand = defineCommand({
   defaultFormat: 'toon',
   description:
@@ -54,7 +62,8 @@ export const addCommand = defineCommand({
           flags: args.flags as Record<string, unknown>,
           interactive: false,
           kind: args.positional[0],
-          name: args.positional[1],
+          name: resolveAddCommandName(args.positional),
+          positionalArgs: args.positional,
           printLine,
           warnLine,
         });
@@ -62,7 +71,7 @@ export const addCommand = defineCommand({
           buildStructuredCompletionSuccessPayload('add', completion, {
             dryRun: Boolean(args.flags['dry-run']),
             kind: args.positional[0],
-            name: args.positional[1],
+            name: resolveAddCommandName(args.positional),
             projectDir: extractCompletionProjectDir(completion) ?? args.cwd,
           }),
         );
@@ -73,7 +82,8 @@ export const addCommand = defineCommand({
         cwd: args.cwd,
         flags: args.flags as Record<string, unknown>,
         kind: args.positional[0],
-        name: args.positional[1],
+        name: resolveAddCommandName(args.positional),
+        positionalArgs: args.positional,
         printLine,
         warnLine,
       });
@@ -111,7 +121,11 @@ export const addCommand = defineCommand({
               initialValues: {
                 ...initialValues,
                 kind: (args.positional[0] as AddKindId | undefined) ?? 'block',
-                name: args.positional[1] ?? '',
+                name: resolveAddCommandName(args.positional) ?? '',
+                ...(args.positional[0] === 'core-variation' &&
+                args.positional[1]
+                  ? { block: args.positional[1] }
+                  : {}),
                 position: initialValues.position ?? 'after',
                 slot: initialValues.slot ?? 'sidebar',
               },

@@ -160,6 +160,15 @@ and the checked fixture in `tests/fixtures/nested-block-family.ts`.
 
 The `query-loop` template scaffolds an editor-facing `core/query` variation plugin instead of a standalone block, so you can ship a branded inserter entry with stable namespace identity, default query settings, allowed inspector controls, and inline starter `innerBlocks` without rebuilding the full Query Loop setup flow by hand. Because it owns a variation rather than a standalone custom block, it intentionally does not generate `src/types.ts`, `block.json`, or Typia manifests. It also includes connected `src/patterns/*.php` presets so richer editorial layouts can live in pattern files while `src/index.ts` stays focused on variation identity and query defaults, a dedicated `src/query-extension.ts` seam for custom query params and optional editor-side hook registration, and `inc/query-runtime.php` hooks that keep frontend query mapping and editor preview requests aligned for the same variation.
 
+Generic core block variations are available in official workspaces with
+`wp-typia add core-variation <namespace/block> <name>`. Use this when you want
+an opinionated preset for an existing core or third-party block, such as a
+section wrapper based on `core/group` or a branded `core/paragraph` style, but
+do not need a new custom block contract. The scaffold registers editor-side
+attributes, `innerBlocks`, `isActive`, scope, and inserter metadata under
+`src/editor-plugins/core-variations/` and intentionally skips `block.json` and
+Typia manifests.
+
 ## Example flows
 
 ```bash
@@ -183,6 +192,7 @@ bun install
 bun run wp-typia:add block counter-card --template basic
 bun run wp-typia:add block faq-stack --template compound --persistence-policy public --data-storage custom-table
 bun run wp-typia:add integration-env local-smoke --wp-env --release-zip --service docker-compose
+bun run wp-typia:add core-variation core/group section-hero
 bun run wp-typia:add style callout-emphasis --block counter-card
 bun run wp-typia:add transform quote-to-counter --from core/quote --to counter-card
 bun run wp-typia:add binding-source hero-data

@@ -720,6 +720,101 @@ test("canonical CLI can add a variation to an official workspace template", asyn
   runCli("npm", ["run", "build"], { cwd: targetDir });
 }, 60_000);
 
+test("canonical CLI can add core block variations without generating block manifests", async () => {
+  const targetDir = path.join(tempRoot, "demo-workspace-add-core-variation");
+
+  await scaffoldOfficialWorkspace(targetDir);
+
+  linkWorkspaceNodeModules(targetDir);
+
+  runCli(
+    "node",
+    [entryPath, "add", "core-variation", "core/group", "section-hero"],
+    {
+      cwd: targetDir,
+    }
+  );
+  runCli(
+    "node",
+    [
+      entryPath,
+      "add",
+      "core-variation",
+      "editorial-paragraph",
+      "--block",
+      "core/paragraph",
+    ],
+    {
+      cwd: targetDir,
+    }
+  );
+
+  const editorPluginIndexSource = fs.readFileSync(
+    path.join(targetDir, "src", "editor-plugins", "index.ts"),
+    "utf8"
+  );
+  const coreVariationsIndexSource = fs.readFileSync(
+    path.join(targetDir, "src", "editor-plugins", "core-variations", "index.ts"),
+    "utf8"
+  );
+  const groupVariationSource = fs.readFileSync(
+    path.join(
+      targetDir,
+      "src",
+      "editor-plugins",
+      "core-variations",
+      "core",
+      "group",
+      "section-hero.ts"
+    ),
+    "utf8"
+  );
+  const paragraphVariationSource = fs.readFileSync(
+    path.join(
+      targetDir,
+      "src",
+      "editor-plugins",
+      "core-variations",
+      "core",
+      "paragraph",
+      "editorial-paragraph.ts"
+    ),
+    "utf8"
+  );
+
+  expect(editorPluginIndexSource).toContain("import './core-variations';");
+  expect(coreVariationsIndexSource).toContain("registerBlockVariation");
+  expect(coreVariationsIndexSource).toContain("core/group");
+  expect(coreVariationsIndexSource).toContain("core/paragraph");
+  expect(coreVariationsIndexSource).toContain(
+    "coreVariation_core_group_section_hero"
+  );
+  expect(groupVariationSource).toContain("BlockVariation");
+  expect(groupVariationSource).toContain("BlockTemplate");
+  expect(groupVariationSource).toContain("category: 'design'");
+  expect(groupVariationSource).toContain("icon: 'layout'");
+  expect(groupVariationSource).toContain("keywords:");
+  expect(groupVariationSource).toContain("innerBlocks:");
+  expect(groupVariationSource).toContain("isActive: ['className']");
+  expect(groupVariationSource).toContain(
+    "scope: ['block', 'inserter', 'transform']"
+  );
+  expect(groupVariationSource).toContain("'core/heading'");
+  expect(groupVariationSource).toContain("'core/paragraph'");
+  expect(paragraphVariationSource).toContain(
+    'export const CORE_PARAGRAPH_EDITORIAL_PARAGRAPH_BLOCK_NAME = "core/paragraph"'
+  );
+  expect(paragraphVariationSource).toContain("[] satisfies BlockTemplate");
+  expect(
+    fs.existsSync(path.join(targetDir, "src", "blocks", "core", "group"))
+  ).toBe(false);
+  expect(
+    fs.existsSync(path.join(targetDir, "src", "blocks", "core-group"))
+  ).toBe(false);
+
+  runCli("npm", ["run", "build"], { cwd: targetDir });
+}, 60_000);
+
 test("variation workflow keeps registry identifiers unique for similar slugs", async () => {
   const targetDir = path.join(
     tempRoot,

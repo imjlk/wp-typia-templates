@@ -18,6 +18,7 @@ export function formatAddHelpText(): string {
   wp-typia add admin-view <name> [--source <rest-resource:slug|core-data:kind/name>] [--dry-run]
   wp-typia add block <name> [--template <${ADD_BLOCK_TEMPLATE_IDS.join("|")}>] [--external-layer-source <./path|github:owner/repo/path[#ref]|npm-package>] [--external-layer-id <layer-id>] [--inner-blocks-preset <freeform|ordered|horizontal|locked-structure>] [--alternate-render-targets <email,mjml,plain-text>] [--data-storage <post-meta|custom-table>] [--persistence-policy <authenticated|public>] [--dry-run]
   wp-typia add integration-env <name> [--wp-env] [--release-zip] [--service <none|docker-compose>] [--dry-run]
+  wp-typia add core-variation <block-name> <name> [--dry-run]
 	wp-typia add variation <name> --block <block-slug> [--dry-run]
 	wp-typia add style <name> --block <block-slug> [--dry-run]
 	wp-typia add transform <name> --from <namespace/block> --to <block-slug|namespace/block-slug> [--dry-run]
@@ -36,6 +37,7 @@ Notes:
   \`wp-typia add\` runs only inside official ${WORKSPACE_TEMPLATE_PACKAGE} workspaces scaffolded via \`wp-typia create <project-dir> --template workspace\`.
   Pass \`--dry-run\` to preview the workspace files that would change without writing them.
   Interactive add flows let you choose a template when \`--template\` is omitted; non-interactive runs default to \`basic\`.
+  \`add core-variation\` registers editor-side variations for existing core or external blocks without generating block.json or Typia manifests.
   \`add admin-view\` scaffolds an opt-in DataViews-powered WordPress admin screen under \`src/admin-views/\`.
   Pass \`--source rest-resource:<slug>\` to reuse a list-capable REST resource.
   Pass \`--source core-data:postType/post\` or \`--source core-data:taxonomy/category\` to bind a WordPress-owned entity collection.

@@ -248,7 +248,7 @@ function buildEditorPluginRegistrySource(editorPluginSlugs: string[]): string {
 	return `${importLines}${importLines ? "\n\n" : ""}// wp-typia add editor-plugin entries\n`;
 }
 
-async function ensureEditorPluginBootstrapAnchors(
+export async function ensureEditorPluginBootstrapAnchors(
 	workspace: WorkspaceProject,
 ): Promise<void> {
 	const bootstrapPath = getWorkspaceBootstrapPath(workspace);
@@ -337,7 +337,7 @@ function ${enqueueFunctionName}() {
 	});
 }
 
-async function ensureEditorPluginBuildScriptAnchors(
+export async function ensureEditorPluginBuildScriptAnchors(
 	workspace: WorkspaceProject,
 ): Promise<void> {
 	const buildScriptPath = path.join(workspace.projectDir, "scripts", "build-workspace.mjs");
@@ -369,7 +369,7 @@ async function ensureEditorPluginBuildScriptAnchors(
 	});
 }
 
-async function ensureEditorPluginWebpackAnchors(
+export async function ensureEditorPluginWebpackAnchors(
 	workspace: WorkspaceProject,
 ): Promise<void> {
 	const webpackConfigPath = path.join(workspace.projectDir, "webpack.config.js");
@@ -418,7 +418,7 @@ async function ensureEditorPluginWebpackAnchors(
 	});
 }
 
-async function resolveEditorPluginRegistryPath(projectDir: string): Promise<string> {
+export async function resolveEditorPluginRegistryPath(projectDir: string): Promise<string> {
 	const editorPluginsDir = path.join(projectDir, "src", "editor-plugins");
 	for (const candidatePath of [
 		path.join(editorPluginsDir, "index.ts"),
@@ -446,7 +446,7 @@ async function readEditorPluginRegistrySlugs(
 	).map((match) => match[1]);
 }
 
-async function writeEditorPluginRegistry(
+export async function writeEditorPluginRegistry(
 	projectDir: string,
 	editorPluginSlug: string,
 ): Promise<void> {
