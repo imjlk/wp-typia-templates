@@ -389,8 +389,8 @@ test('cli-add-workspace delegates workspace add workflows to focused helpers', (
   expect(editorPluginSource).not.toContain(
     'async function ensureEditorPluginWebpackAnchors(',
   );
-  expect(editorPluginSource).toContain(
-    'export {',
+  expect(editorPluginSource).toMatch(
+    /export\s*\{[^}]*ensureEditorPluginBootstrapAnchors[^}]*\}\s*from\s+["']\.\/cli-add-workspace-editor-plugin-anchors\.js["']/u,
   );
   expect(editorPluginEmittersSource).toContain(
     'export function buildEditorPluginEntrySource(',
