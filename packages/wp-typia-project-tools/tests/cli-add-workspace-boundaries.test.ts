@@ -17,6 +17,18 @@ test('cli-add-workspace delegates workspace add workflows to focused helpers', (
     path.join(runtimeRoot, 'cli-add-workspace-pattern.ts'),
     'utf8',
   );
+  const patternAnchorsSource = fs.readFileSync(
+    path.join(runtimeRoot, 'cli-add-workspace-pattern-anchors.ts'),
+    'utf8',
+  );
+  const patternOptionsSource = fs.readFileSync(
+    path.join(runtimeRoot, 'cli-add-workspace-pattern-options.ts'),
+    'utf8',
+  );
+  const patternSourceEmittersSource = fs.readFileSync(
+    path.join(runtimeRoot, 'cli-add-workspace-pattern-source-emitters.ts'),
+    'utf8',
+  );
   const bindingSource = fs.readFileSync(
     path.join(runtimeRoot, 'cli-add-workspace-binding-source.ts'),
     'utf8',
@@ -306,9 +318,44 @@ test('cli-add-workspace delegates workspace add workflows to focused helpers', (
   expect(assetsSource).not.toContain('function buildPatternSource(');
   expect(assetsSource).not.toContain('function buildBindingSourceServerSource(');
   expect(assetsSource).not.toContain('function buildEditorPluginEntrySource(');
-  expect(patternSource).toContain('function buildPatternSource(');
-  expect(patternSource).toContain('async function ensurePatternBootstrapAnchors(');
+  expect(patternSource).toContain(
+    'from "./cli-add-workspace-pattern-anchors.js"',
+  );
+  expect(patternSource).toContain(
+    'from "./cli-add-workspace-pattern-options.js"',
+  );
+  expect(patternSource).toContain(
+    'from "./cli-add-workspace-pattern-source-emitters.js"',
+  );
+  expect(patternSource).not.toContain('function buildPatternSource(');
+  expect(patternSource).not.toContain(
+    'async function ensurePatternBootstrapAnchors(',
+  );
+  expect(patternSource).not.toContain('function resolvePatternCatalogOptions(');
   expect(patternSource).toContain('export async function runAddPatternCommand(');
+  expect(patternAnchorsSource).toContain(
+    'export async function ensurePatternBootstrapAnchors(',
+  );
+  expect(patternAnchorsSource).toContain(
+    'function ensureNestedPatternLoaderSource(',
+  );
+  expect(patternAnchorsSource).not.toContain('function buildPatternSource(');
+  expect(patternOptionsSource).toContain(
+    'export function resolvePatternCatalogOptions(',
+  );
+  expect(patternOptionsSource).toContain('function normalizePatternTags(');
+  expect(patternOptionsSource).not.toContain(
+    'async function ensurePatternBootstrapAnchors(',
+  );
+  expect(patternSourceEmittersSource).toContain(
+    'export function buildPatternConfigEntry(',
+  );
+  expect(patternSourceEmittersSource).toContain(
+    'export function buildPatternSource(',
+  );
+  expect(patternSourceEmittersSource).not.toContain(
+    'async function ensurePatternBootstrapAnchors(',
+  );
   expect(patternSource).not.toContain('function buildBindingSourceServerSource(');
   expect(patternSource).not.toContain('function buildEditorPluginEntrySource(');
   expect(bindingSource).toContain(
@@ -642,7 +689,7 @@ test('cli-add-workspace delegates workspace add workflows to focused helpers', (
 		aiAnchorsSource,
 		bindingSourceAnchorsSource,
 		editorPluginAnchorsSource,
-		patternSource,
+		patternAnchorsSource,
 		postMetaAnchorsSource,
 		restAnchorsSource,
 	]) {
