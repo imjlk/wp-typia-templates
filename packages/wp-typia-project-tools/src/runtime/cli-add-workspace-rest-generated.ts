@@ -21,8 +21,10 @@ import {
 } from "./cli-add-workspace-rest-resource-sync-anchors.js";
 import {
 	buildRestResourcePhpSource,
-	buildWorkspaceRestSchemaHelperPhpSource,
 } from "./cli-add-workspace-rest-php-templates.js";
+import {
+	buildWorkspaceRestSchemaHelperPhpSource,
+} from "./cli-add-workspace-rest-schema-helper-php-template.js";
 import {
 	buildRestResourceApiSource,
 	buildRestResourceConfigEntry,
