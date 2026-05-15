@@ -21,6 +21,18 @@ test('cli-add-workspace delegates workspace add workflows to focused helpers', (
     path.join(runtimeRoot, 'cli-add-workspace-binding-source.ts'),
     'utf8',
   );
+  const bindingSourceAnchorsSource = fs.readFileSync(
+    path.join(runtimeRoot, 'cli-add-workspace-binding-source-anchors.ts'),
+    'utf8',
+  );
+  const bindingSourceEmittersSource = fs.readFileSync(
+    path.join(runtimeRoot, 'cli-add-workspace-binding-source-source-emitters.ts'),
+    'utf8',
+  );
+  const bindingSourceTypesSource = fs.readFileSync(
+    path.join(runtimeRoot, 'cli-add-workspace-binding-source-types.ts'),
+    'utf8',
+  );
   const editorPluginSource = fs.readFileSync(
     path.join(runtimeRoot, 'cli-add-workspace-editor-plugin.ts'),
     'utf8',
@@ -291,13 +303,58 @@ test('cli-add-workspace delegates workspace add workflows to focused helpers', (
   expect(patternSource).toContain('export async function runAddPatternCommand(');
   expect(patternSource).not.toContain('function buildBindingSourceServerSource(');
   expect(patternSource).not.toContain('function buildEditorPluginEntrySource(');
-  expect(bindingSource).toContain('function buildBindingSourceServerSource(');
   expect(bindingSource).toContain(
-    'async function ensureBindingSourceBootstrapAnchors(',
+    'from "./cli-add-workspace-binding-source-anchors.js"',
+  );
+  expect(bindingSource).toContain(
+    'from "./cli-add-workspace-binding-source-source-emitters.js"',
+  );
+  expect(bindingSource).toContain(
+    'from "./cli-add-workspace-binding-source-types.js"',
   );
   expect(bindingSource).toContain(
     'export async function runAddBindingSourceCommand(',
   );
+  expect(bindingSource).toContain('await ensureBindingSourceBootstrapAnchors(');
+  expect(bindingSource).toContain('await resolveBindingSourceRegistryPath(');
+  expect(bindingSource).toContain('await writeBindingSourceRegistry(');
+  expect(bindingSource).not.toContain('function buildBindingSourceServerSource(');
+  expect(bindingSource).not.toContain(
+    'async function ensureBindingSourceBootstrapAnchors(',
+  );
+  expect(bindingSource).not.toContain('function buildBindingSourceIndexSource(');
+  expect(bindingSource).not.toContain(
+    'async function resolveBindingSourceRegistryPath(',
+  );
+  expect(bindingSource).not.toContain(
+    'async function writeBindingSourceRegistry(',
+  );
+  expect(bindingSourceEmittersSource).toContain(
+    'export function buildBindingSourceServerSource(',
+  );
+  expect(bindingSourceEmittersSource).toContain(
+    'export function buildBindingSourceEditorSource(',
+  );
+  expect(bindingSourceEmittersSource).toContain(
+    'export function buildBindingSourceConfigEntry(',
+  );
+  expect(bindingSourceEmittersSource).not.toContain(
+    'async function ensureBindingSourceBootstrapAnchors(',
+  );
+  expect(bindingSourceAnchorsSource).toContain(
+    'export async function ensureBindingSourceBootstrapAnchors(',
+  );
+  expect(bindingSourceAnchorsSource).toContain(
+    'export async function resolveBindingSourceRegistryPath(',
+  );
+  expect(bindingSourceAnchorsSource).toContain(
+    'export async function writeBindingSourceRegistry(',
+  );
+  expect(bindingSourceAnchorsSource).not.toContain(
+    'function buildBindingSourceServerSource(',
+  );
+  expect(bindingSourceTypesSource).toContain('export type BindingTarget');
+  expect(bindingSourceTypesSource).toContain('export type BindingPostMetaSource');
   expect(bindingSource).not.toContain('function buildPatternSource(');
   expect(bindingSource).not.toContain('function buildEditorPluginEntrySource(');
   expect(editorPluginSource).toContain('function buildEditorPluginEntrySource(');
@@ -525,7 +582,7 @@ test('cli-add-workspace delegates workspace add workflows to focused helpers', (
   expect(mutationSource).toContain('appendPhpSnippetBeforeClosingTag');
   for (const bootstrapAnchorSource of [
     aiAnchorsSource,
-    bindingSource,
+    bindingSourceAnchorsSource,
     editorPluginSource,
     patternSource,
     postMetaAnchorsSource,
