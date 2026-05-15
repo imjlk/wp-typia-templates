@@ -327,6 +327,17 @@ function collectSectionRoleMatches(
 	});
 }
 
+function unescapeSerializedBlockCommentJsonQuotes(content: string): string {
+	return content.replace(/<!--([\s\S]*?)-->/gu, (comment, body: string) => {
+		const source = body.trim();
+		if (!source.startsWith("wp:") && !source.startsWith("/wp:")) {
+			return comment;
+		}
+
+		return `<!--${body.replace(/\\"/gu, '"')}-->`;
+	});
+}
+
 /**
  * Extract section role slugs from serialized block attributes using the
  * configured class and metadata marker convention.
@@ -427,7 +438,28 @@ function validatePatternContentSectionRoles({
 		nesting: {},
 		patternFile: contentFile,
 	});
-	const matches = collectSectionRoleMatches(parsed.blocks, convention);
+	let matches = collectSectionRoleMatches(parsed.blocks, convention);
+	const unescapedContent = unescapeSerializedBlockCommentJsonQuotes(content);
+	if (unescapedContent !== content) {
+		const unescapedParsed = validateBlockPatternContentNesting(
+			unescapedContent,
+			{
+				allowExternalBlockNames: true,
+				nesting: {},
+				patternFile: contentFile,
+			},
+		);
+		const unescapedMatches = collectSectionRoleMatches(
+			unescapedParsed.blocks,
+			convention,
+		);
+		if (
+			unescapedMatches.some((match) => match.roles.length > 0) ||
+			matches.length === 0
+		) {
+			matches = unescapedMatches;
+		}
+	}
 	const locatedRoles = matches.flatMap<LocatedPatternSectionRole>((match) =>
 		match.roles.map((role) => ({
 			blockPath: match.blockPath,

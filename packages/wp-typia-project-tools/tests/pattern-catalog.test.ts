@@ -170,6 +170,46 @@ describe("pattern catalog validation", () => {
 		}
 	});
 
+	test("accepts section role markers with PHP-escaped JSON attributes", () => {
+		const projectDir = fs.mkdtempSync(
+			path.join(os.tmpdir(), "wp-typia-pattern-catalog-escaped-"),
+		);
+		try {
+			fs.mkdirSync(path.join(projectDir, "src", "patterns", "sections"), {
+				recursive: true,
+			});
+			fs.writeFileSync(
+				path.join(projectDir, "src", "patterns", "sections", "hero.php"),
+				[
+					"<?php",
+					"register_block_pattern(",
+					"\t'demo/hero',",
+					"\tarray(",
+					'\t\t"content" => "<!-- wp:group {\\"className\\":\\"section section--hero\\"} --><!-- /wp:group -->",',
+					"\t)",
+					");",
+				].join("\n"),
+				"utf8",
+			);
+
+			const result = validatePatternCatalog(
+				[
+					{
+						contentFile: "src/patterns/sections/hero.php",
+						scope: "section",
+						sectionRole: "hero",
+						slug: "hero",
+					},
+				],
+				{ projectDir },
+			);
+
+			expect(result.diagnostics).toEqual([]);
+		} finally {
+			fs.rmSync(projectDir, { force: true, recursive: true });
+		}
+	});
+
 	test("warns for duplicate section role markers in full patterns when uniqueness is expected", () => {
 		const projectDir = fs.mkdtempSync(
 			path.join(os.tmpdir(), "wp-typia-pattern-catalog-full-roles-"),
