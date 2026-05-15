@@ -1,5 +1,14 @@
 import path from "node:path";
 
+/**
+ * Build the standard sync-rest patch failure message for missing anchors.
+ *
+ * @param functionName Name of the patcher that could not complete.
+ * @param syncRestScriptPath Path to the workspace sync-rest script.
+ * @param anchorDescription Human-readable description of the missing anchor.
+ * @param subject Configuration subject the patcher was trying to wire.
+ * @returns A formatted error message with manual recovery guidance.
+ */
 export function getSyncRestPatchErrorMessage(
 	functionName: string,
 	syncRestScriptPath: string,
@@ -34,6 +43,17 @@ const BLOCK_CONFIG_TYPE_IMPORT_ORDER = [
 	"WorkspaceRestResourceConfig",
 ] as const;
 
+/**
+ * Add a required block-config value and type import to sync-rest source.
+ *
+ * @param options Import patching options.
+ * @param options.functionName Name of the calling patcher for error messages.
+ * @param options.nextSource Current sync-rest script source.
+ * @param options.subject Value and type names that must be imported.
+ * @param options.syncRestScriptPath Path to the target sync-rest script.
+ * @returns Source with the block-config import updated or left unchanged.
+ * @throws When the generated block-config import anchor cannot be found.
+ */
 export function replaceBlockConfigImport({
 	functionName,
 	nextSource,
@@ -113,6 +133,13 @@ function formatNoResourcesSubject(subjects: readonly string[]): string {
 	return `${subjects.slice(0, -1).join(", ")}, or ${lastSubject}`;
 }
 
+/**
+ * Render a sync-rest guard for the selected empty resource collections.
+ *
+ * @param options Guard rendering options.
+ * @param options.subjects Candidate guard subjects and conditions.
+ * @returns TypeScript source for the no-resources guard block.
+ */
 export function buildNoResourcesGuard({
 	subjects,
 }: {
@@ -147,6 +174,17 @@ export function buildNoResourcesGuard({
 const NO_RESOURCES_GUARD_PATTERN =
 	/if \(\s*restBlocks\.length === 0(?:\s*&&\s*standaloneContracts\.length === 0)?(?:\s*&&\s*postMetaContracts\.length === 0)?(?:\s*&&\s*restResources\.length === 0)?(?:\s*&&\s*aiFeatures\.length === 0)?\s*\) \{[\s\S]*?\n\t\treturn;\n\t\}/u;
 
+/**
+ * Replace the generated no-resources guard in sync-rest source.
+ *
+ * @param nextSource Current sync-rest script source.
+ * @param replacement New no-resources guard source.
+ * @param functionName Name of the calling patcher for error messages.
+ * @param syncRestScriptPath Path to the target sync-rest script.
+ * @param subject Configuration subject the patcher was trying to wire.
+ * @returns Source with the no-resources guard replaced.
+ * @throws When the generated no-resources guard cannot be found.
+ */
 export function replaceNoResourcesGuard(
 	nextSource: string,
 	replacement: string,

@@ -166,6 +166,13 @@ function insertStandaloneContractSyncLoop(
 	);
 }
 
+/**
+ * Ensure sync-rest can repair and validate standalone workspace contracts.
+ *
+ * @param workspace Workspace project whose sync-rest script should be patched.
+ * @returns A promise that resolves after the sync-rest script is updated.
+ * @throws When the generated sync-rest anchors cannot be found.
+ */
 export async function ensureContractSyncScriptAnchors(
 	workspace: WorkspaceProject,
 ): Promise<void> {
