@@ -117,6 +117,11 @@ function getEnv(name, fallback) {
 	return process.env[name] ?? envFile[name] ?? fallback;
 }
 
+function getPositiveIntegerEnv(name, fallback) {
+	const value = Number.parseInt(getEnv(name, String(fallback)), 10);
+	return Number.isFinite(value) && value > 0 ? value : fallback;
+}
+
 function resolveEndpointUrl(baseUrl, endpointPath) {
 	const normalizedBaseUrl = new URL(baseUrl);
 	if (!normalizedBaseUrl.pathname.endsWith("/")) {
@@ -128,12 +133,15 @@ function resolveEndpointUrl(baseUrl, endpointPath) {
 }
 
 async function assertJsonEndpoint(label, url) {
-	const REQUEST_TIMEOUT_MS = 15_000;
+	const requestTimeoutMs = getPositiveIntegerEnv(
+		"WP_TYPIA_SMOKE_TIMEOUT_MS",
+		30_000,
+	);
 	const response = await fetch(url, {
 		headers: {
 			accept: "application/json",
 		},
-		signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+		signal: AbortSignal.timeout(requestTimeoutMs),
 	});
 
 	if (!response.ok) {
@@ -190,6 +198,7 @@ export function buildEnvExampleSource(service: IntegrationEnvServiceId): string 
 		"WP_TYPIA_SMOKE_BASE_URL=http://localhost:8888",
 		"WP_TYPIA_SMOKE_USERNAME=admin",
 		"WP_TYPIA_SMOKE_PASSWORD=password",
+		"WP_TYPIA_SMOKE_TIMEOUT_MS=30000",
 		...(service === "docker-compose"
 			? [
 					"",
