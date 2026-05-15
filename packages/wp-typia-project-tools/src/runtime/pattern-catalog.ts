@@ -88,7 +88,14 @@ function isPatternContentFilePath(value: string): boolean {
 	);
 }
 
-function isValidThumbnailUrl(value: string): boolean {
+/**
+ * Validate pattern thumbnail references with the same URL/path rules used by
+ * catalog diagnostics and `wp-typia add pattern`.
+ *
+ * @param value Candidate thumbnail URL or relative project path.
+ * @returns Whether the value is an http(s) URL or safe relative project path.
+ */
+export function isValidPatternThumbnailUrl(value: string): boolean {
 	if (value.length === 0) {
 		return false;
 	}
@@ -203,7 +210,7 @@ export function validatePatternCatalog(
 
 		if (
 			pattern.thumbnailUrl !== undefined &&
-			!isValidThumbnailUrl(pattern.thumbnailUrl)
+			!isValidPatternThumbnailUrl(pattern.thumbnailUrl)
 		) {
 			diagnostics.push(
 				createPatternCatalogDiagnostic({

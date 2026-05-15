@@ -24,6 +24,7 @@ import {
 	snapshotWorkspaceFiles,
 } from "./cli-add-shared.js";
 import {
+	isValidPatternThumbnailUrl,
 	PATTERN_CATALOG_SCOPE_IDS,
 	type PatternCatalogScope,
 } from "./pattern-catalog.js";
@@ -197,6 +198,20 @@ function normalizePatternTags(tags: readonly string[] | string | undefined): str
 	return [...new Set(normalizedTags)].sort();
 }
 
+function normalizePatternThumbnailUrl(value: string | undefined): string | undefined {
+	if (value === undefined || value.trim() === "") {
+		return undefined;
+	}
+	const thumbnailUrl = value.trim();
+	if (!isValidPatternThumbnailUrl(thumbnailUrl)) {
+		throw new Error(
+			"Pattern thumbnail URL must be an http(s) URL or safe relative project path.",
+		);
+	}
+
+	return thumbnailUrl;
+}
+
 function resolvePatternContentFile(
 	patternSlug: string,
 	patternScope: PatternCatalogScope,
@@ -236,6 +251,7 @@ function resolvePatternCatalogOptions(
 		options.catalogTitle && options.catalogTitle.trim() !== ""
 			? options.catalogTitle.trim()
 			: toTitleCase(patternSlug);
+	const thumbnailUrl = normalizePatternThumbnailUrl(options.thumbnailUrl);
 
 	return {
 		contentFile: resolvePatternContentFile(
@@ -246,9 +262,7 @@ function resolvePatternCatalogOptions(
 		patternScope,
 		...(sectionRole ? { sectionRole } : {}),
 		tags: normalizePatternTags(options.tags),
-		...(options.thumbnailUrl && options.thumbnailUrl.trim() !== ""
-			? { thumbnailUrl: options.thumbnailUrl.trim() }
-			: {}),
+		...(thumbnailUrl ? { thumbnailUrl } : {}),
 		title,
 	};
 }

@@ -3005,6 +3005,15 @@ test("canonical CLI can add a pattern to an official workspace template", async 
   ).rejects.toThrow(
     "Pattern content file must live directly under `src/patterns/` or one nested directory under `src/patterns/` and end in `.php`"
   );
+  await expect(
+    runAddPatternCommand({
+      cwd: targetDir,
+      patternName: "bad-thumbnail",
+      thumbnailUrl: "ftp://example.com/hero.png",
+    })
+  ).rejects.toThrow(
+    "Pattern thumbnail URL must be an http(s) URL or safe relative project path."
+  );
 
   runCli(
     "node",
