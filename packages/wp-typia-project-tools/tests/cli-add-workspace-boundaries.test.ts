@@ -161,6 +161,10 @@ test('cli-add-workspace delegates workspace add workflows to focused helpers', (
     path.join(runtimeRoot, 'cli-add-workspace-ai-source-emitters.ts'),
     'utf8',
   );
+  const aiSyncScriptSource = fs.readFileSync(
+    path.join(runtimeRoot, 'cli-add-workspace-ai-sync-script-source.ts'),
+    'utf8',
+  );
   const aiScaffoldSource = fs.readFileSync(
     path.join(runtimeRoot, 'cli-add-workspace-ai-scaffold.ts'),
     'utf8',
@@ -771,6 +775,9 @@ test('cli-add-workspace delegates workspace add workflows to focused helpers', (
   expect(aiScaffoldSource).toContain(
     'from "./cli-add-workspace-ai-source-emitters.js"',
   );
+  expect(aiScaffoldSource).toContain(
+    'from "./cli-add-workspace-ai-sync-script-source.js"',
+  );
   expect(aiScaffoldSource).not.toContain('function buildAiFeatureTypesSource(');
   expect(aiScaffoldSource).not.toContain(
     'async function ensureAiFeatureBootstrapAnchors(',
@@ -786,6 +793,19 @@ test('cli-add-workspace delegates workspace add workflows to focused helpers', (
   expect(aiSourceEmittersSource).toContain(
     'function buildAiFeatureDataSource(',
   );
+  expect(aiSourceEmittersSource).toContain(
+    'from "./cli-add-workspace-ai-sync-script-source.js"',
+  );
+  expect(aiSourceEmittersSource).not.toContain(
+    'function buildAiFeatureSyncScriptSource(',
+  );
+  expect(aiSyncScriptSource).toContain(
+    'export function buildAiFeatureSyncScriptSource(',
+  );
+  expect(aiSyncScriptSource).toContain(
+    "projectWordPressAiSchema",
+  );
+  expect(aiSyncScriptSource).not.toContain('function buildAiFeatureApiSource(');
   expect(aiAnchorsSource).toContain(
     'async function ensureAiFeatureBootstrapAnchors(',
   );
