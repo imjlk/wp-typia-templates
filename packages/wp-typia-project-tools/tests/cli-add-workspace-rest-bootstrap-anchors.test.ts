@@ -1,0 +1,69 @@
+import { afterAll, expect, test } from "bun:test";
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
+
+import {
+	ensureRestResourceBootstrapAnchors,
+	ensureRestSchemaHelperBootstrapAnchors,
+} from "../src/runtime/cli-add-workspace-rest-bootstrap-anchors.js";
+import type { WorkspaceProject } from "../src/runtime/workspace-project.js";
+
+const tempRoot = fs.mkdtempSync(
+	path.join(os.tmpdir(), "wp-typia-rest-bootstrap-anchors-"),
+);
+
+afterAll(() => {
+	fs.rmSync(tempRoot, { force: true, recursive: true });
+});
+
+function createWorkspaceFixture(bootstrapSource: string): WorkspaceProject {
+	const projectDir = fs.mkdtempSync(path.join(tempRoot, "workspace-"));
+	fs.writeFileSync(path.join(projectDir, "demo-workspace.php"), bootstrapSource, "utf8");
+
+	return {
+		author: "Demo",
+		packageManager: "npm",
+		packageName: "demo-workspace",
+		projectDir,
+		workspace: {
+			namespace: "demo/v1",
+			phpPrefix: "demo_space",
+			projectType: "workspace",
+			templatePackage: "@wp-typia/create-workspace-template",
+			textDomain: "demo",
+		},
+	};
+}
+
+test("REST schema helper bootstrap validation inspects the existing loader body", async () => {
+	const workspace = createWorkspaceFixture(`<?php
+// The expected helper path may appear elsewhere without making the loader valid.
+// /inc/rest-schema.php
+function demo_space_load_rest_schema_helpers() {
+\t$helper_path = __DIR__ . '/inc/not-rest-schema.php';
+}
+demo_space_load_rest_schema_helpers();
+`);
+
+	await expect(ensureRestSchemaHelperBootstrapAnchors(workspace)).rejects.toThrow(
+		"does not include /inc/rest-schema.php",
+	);
+});
+
+test("REST resource bootstrap validation inspects the existing loader body", async () => {
+	const workspace = createWorkspaceFixture(`<?php
+// The expected REST glob may appear elsewhere without making the loader valid.
+// /inc/rest/*.php
+function demo_space_register_rest_resources() {
+\tforeach ( glob( __DIR__ . '/inc/not-rest/*.php' ) ?: array() as $rest_resource_module ) {
+\t\trequire_once $rest_resource_module;
+\t}
+}
+add_action( 'init', 'demo_space_register_rest_resources', 20 );
+`);
+
+	await expect(ensureRestResourceBootstrapAnchors(workspace)).rejects.toThrow(
+		"does not include /inc/rest/*.php",
+	);
+});

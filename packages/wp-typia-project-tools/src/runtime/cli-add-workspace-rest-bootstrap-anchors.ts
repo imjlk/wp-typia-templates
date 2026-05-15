@@ -15,6 +15,32 @@ const REST_RESOURCE_SERVER_GLOB = "/inc/rest/*.php";
 const REST_SCHEMA_HELPER_PATH = "/inc/rest-schema.php";
 
 /**
+ * Check that an expected generated path appears inside the named PHP function.
+ *
+ * @param source Complete PHP bootstrap source.
+ * @param functionName PHP function name to inspect.
+ * @param needle Source fragment that must be present inside the function block.
+ * @returns True when the named function block contains the expected fragment.
+ */
+function phpFunctionBlockIncludes(
+	source: string,
+	functionName: string,
+	needle: string,
+): boolean {
+	const start = source.indexOf(`function ${functionName}(`);
+	if (start === -1) {
+		return false;
+	}
+
+	const nextFunction = source.indexOf("\nfunction ", start + 1);
+	const closingTag = source.indexOf("\n?>", start + 1);
+	const endCandidates = [nextFunction, closingTag].filter((index) => index !== -1);
+	const end = endCandidates.length > 0 ? Math.min(...endCandidates) : source.length;
+
+	return source.slice(start, end).includes(needle);
+}
+
+/**
  * Ensure the workspace bootstrap loads the shared REST schema helper file.
  *
  * @param workspace Resolved workspace project metadata and PHP prefix.
@@ -44,7 +70,13 @@ ${loadCall}
 
 		if (!hasPhpFunctionDefinition(nextSource, loadFunctionName)) {
 			nextSource = insertPhpSnippetBeforeWorkspaceAnchors(nextSource, helperFunction);
-		} else if (!nextSource.includes(REST_SCHEMA_HELPER_PATH)) {
+		} else if (
+			!phpFunctionBlockIncludes(
+				nextSource,
+				loadFunctionName,
+				REST_SCHEMA_HELPER_PATH,
+			)
+		) {
 			throw new Error(
 				[
 					`Unable to patch ${path.basename(bootstrapPath)} in ensureRestSchemaHelperBootstrapAnchors.`,
@@ -86,7 +118,13 @@ function ${registerFunctionName}() {
 `;
 		if (!hasPhpFunctionDefinition(nextSource, registerFunctionName)) {
 			nextSource = insertPhpSnippetBeforeWorkspaceAnchors(nextSource, registerFunction);
-		} else if (!nextSource.includes(REST_RESOURCE_SERVER_GLOB)) {
+		} else if (
+			!phpFunctionBlockIncludes(
+				nextSource,
+				registerFunctionName,
+				REST_RESOURCE_SERVER_GLOB,
+			)
+		) {
 			throw new Error(
 				[
 					`Unable to patch ${path.basename(bootstrapPath)} in ensureRestResourceBootstrapAnchors.`,
