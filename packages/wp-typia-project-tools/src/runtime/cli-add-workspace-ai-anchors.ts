@@ -16,6 +16,9 @@ import type { WorkspaceProject } from "./workspace-project.js";
 
 const AI_FEATURE_SERVER_GLOB = "/inc/ai-features/*.php";
 
+/**
+ * Patch generated sync-rest scripts so AI feature REST artifacts join workspace REST synchronization.
+ */
 export {
 	ensureAiFeatureSyncRestAnchors,
 } from "./cli-add-workspace-ai-sync-rest-anchors.js";
