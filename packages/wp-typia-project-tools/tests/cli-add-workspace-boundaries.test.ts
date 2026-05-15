@@ -77,6 +77,13 @@ test('cli-add-workspace delegates workspace add workflows to focused helpers', (
 		path.join(runtimeRoot, 'cli-add-workspace-rest-php-templates.ts'),
 		'utf8',
 	);
+	const restResourcePhpRoutingTemplateSource = fs.readFileSync(
+		path.join(
+			runtimeRoot,
+			'cli-add-workspace-rest-resource-php-routing-template.ts',
+		),
+		'utf8',
+	);
 	const restSchemaHelperPhpTemplateSource = fs.readFileSync(
 		path.join(
 			runtimeRoot,
@@ -596,10 +603,31 @@ test('cli-add-workspace delegates workspace add workflows to focused helpers', (
 		'export function buildRestResourcePhpSource(',
 	);
 	expect(restPhpTemplatesSource).toContain(
+		'from "./cli-add-workspace-rest-resource-php-routing-template.js"',
+	);
+	expect(restPhpTemplatesSource).toContain(
 		'from "./cli-add-workspace-rest-schema-helper-php-template.js"',
 	);
 	expect(restPhpTemplatesSource).not.toContain(
+		'function buildRestResourceRouteRegistrations(',
+	);
+	expect(restPhpTemplatesSource).not.toContain(
+		'function buildRestResourceControllerClassSource(',
+	);
+	expect(restPhpTemplatesSource).not.toContain(
 		'function buildWorkspaceRestSchemaHelperPhpSource(',
+	);
+	expect(restResourcePhpRoutingTemplateSource).toContain(
+		'export function buildRestResourceRouteRegistrations(',
+	);
+	expect(restResourcePhpRoutingTemplateSource).toContain(
+		'export function buildRestResourceControllerClassSource(',
+	);
+	expect(restResourcePhpRoutingTemplateSource).toContain(
+		'export function buildRestResourceControllerBootstrapSource(',
+	);
+	expect(restResourcePhpRoutingTemplateSource).not.toContain(
+		'buildRestResourcePhpSource',
 	);
 	expect(restSchemaHelperPhpTemplateSource).toContain(
 		'export function buildWorkspaceRestSchemaHelperPhpSource(',
