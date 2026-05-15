@@ -117,6 +117,25 @@ test('cli-add-workspace delegates workspace add workflows to focused helpers', (
     path.join(runtimeRoot, 'cli-add-workspace-ability-scaffold.ts'),
     'utf8',
   );
+  const integrationEnvSource = fs.readFileSync(
+    path.join(runtimeRoot, 'cli-add-workspace-integration-env.ts'),
+    'utf8',
+  );
+  const integrationEnvFilesSource = fs.readFileSync(
+    path.join(runtimeRoot, 'cli-add-workspace-integration-env-files.ts'),
+    'utf8',
+  );
+  const integrationEnvPackageJsonSource = fs.readFileSync(
+    path.join(runtimeRoot, 'cli-add-workspace-integration-env-package-json.ts'),
+    'utf8',
+  );
+  const integrationEnvSourceEmittersSource = fs.readFileSync(
+    path.join(
+      runtimeRoot,
+      'cli-add-workspace-integration-env-source-emitters.ts',
+    ),
+    'utf8',
+  );
   const adminViewSource = fs.readFileSync(
     path.join(runtimeRoot, 'cli-add-workspace-admin-view.ts'),
     'utf8',
@@ -570,6 +589,64 @@ test('cli-add-workspace delegates workspace add workflows to focused helpers', (
   expect(aiAnchorsSource).toContain(
     'async function ensureAiFeatureSyncRestAnchors(',
   );
+  expect(integrationEnvSource).toContain(
+    'from "./cli-add-workspace-integration-env-files.js"',
+  );
+  expect(integrationEnvSource).toContain(
+    'from "./cli-add-workspace-integration-env-package-json.js"',
+  );
+  expect(integrationEnvSource).toContain(
+    'from "./cli-add-workspace-integration-env-source-emitters.js"',
+  );
+  expect(integrationEnvSource).toContain(
+    'export async function runAddIntegrationEnvCommand(',
+  );
+  expect(integrationEnvSource).not.toContain(
+    'function buildIntegrationSmokeScriptSource(',
+  );
+  expect(integrationEnvSource).not.toContain(
+    'function addIntegrationEnvPackageJsonEntries(',
+  );
+  expect(integrationEnvSource).not.toContain(
+    'async function appendMissingLines(',
+  );
+  expect(integrationEnvSource).not.toContain('DEFAULT_WORDPRESS_ENV_VERSION');
+  expect(integrationEnvFilesSource).toContain(
+    'export async function appendMissingLines(',
+  );
+  expect(integrationEnvFilesSource).toContain(
+    'export async function writeFileIfAbsent(',
+  );
+  expect(integrationEnvFilesSource).toContain(
+    'export async function writeNewScaffoldFile(',
+  );
+  expect(integrationEnvFilesSource).not.toContain(
+    'function buildIntegrationSmokeScriptSource(',
+  );
+  expect(integrationEnvPackageJsonSource).toContain(
+    'export function addIntegrationEnvPackageJsonEntries(',
+  );
+  expect(integrationEnvPackageJsonSource).toContain(
+    'export async function mutateIntegrationEnvPackageJson(',
+  );
+  expect(integrationEnvPackageJsonSource).toContain(
+    'DEFAULT_WORDPRESS_ENV_VERSION',
+  );
+  expect(integrationEnvPackageJsonSource).not.toContain(
+    'function buildIntegrationSmokeScriptSource(',
+  );
+  expect(integrationEnvSourceEmittersSource).toContain(
+    'export function buildIntegrationSmokeScriptSource(',
+  );
+  expect(integrationEnvSourceEmittersSource).toContain(
+    'export function buildIntegrationEnvReadmeSource(',
+  );
+  expect(integrationEnvSourceEmittersSource).toContain(
+    'export function buildWpEnvConfigSource(',
+  );
+  expect(integrationEnvSourceEmittersSource).not.toContain(
+    'function addIntegrationEnvPackageJsonEntries(',
+  );
   expect(adminViewSource).toContain(
     'export async function runAddAdminViewCommand(',
   );
@@ -678,6 +755,7 @@ test('cli-add-workspace delegates workspace add workflows to focused helpers', (
     abilityScaffoldSource,
     adminViewScaffoldSource,
     aiScaffoldSource,
+    integrationEnvSource,
   ]) {
     expect(scaffoldSource).toContain('executeWorkspaceMutationPlan');
     expect(scaffoldSource).not.toContain('rollbackWorkspaceMutation');
