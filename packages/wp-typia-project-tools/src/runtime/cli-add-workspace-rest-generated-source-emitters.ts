@@ -71,6 +71,13 @@ export function buildRestResourceConfigEntry(options: {
 	].join("\n");
 }
 
+/**
+ * Build editable TypeScript type definitions for a generated REST resource.
+ *
+ * @param restResourceSlug Normalized REST resource slug.
+ * @param methods Enabled generated REST methods.
+ * @returns TypeScript source for `api-types.ts`.
+ */
 export function buildRestResourceTypesSource(
 	restResourceSlug: string,
 	methods: RestResourceMethodId[],
@@ -166,6 +173,13 @@ export function buildRestResourceTypesSource(
 	return `${lines.join("\n")}\n`;
 }
 
+/**
+ * Build Typia validators for a generated REST resource.
+ *
+ * @param restResourceSlug Normalized REST resource slug.
+ * @param methods Enabled generated REST methods.
+ * @returns TypeScript source for `api-validators.ts`.
+ */
 export function buildRestResourceValidatorsSource(
 	restResourceSlug: string,
 	methods: RestResourceMethodId[],
@@ -226,6 +240,13 @@ ${validatorEntries.join("\n")}
 `;
 }
 
+/**
+ * Build the public API shim for a generated REST resource.
+ *
+ * @param restResourceSlug Normalized REST resource slug.
+ * @param methods Enabled generated REST methods.
+ * @returns TypeScript source for `api.ts`.
+ */
 export function buildRestResourceApiSource(
 	restResourceSlug: string,
 	methods: RestResourceMethodId[],
@@ -381,6 +402,13 @@ ${exportedBindings.join("\n\n")}
 `;
 }
 
+/**
+ * Build React query and mutation hooks for a generated REST resource.
+ *
+ * @param restResourceSlug Normalized REST resource slug.
+ * @param methods Enabled generated REST methods.
+ * @returns TypeScript source for `data.ts`.
+ */
 export function buildRestResourceDataSource(
 	restResourceSlug: string,
 	methods: RestResourceMethodId[],
