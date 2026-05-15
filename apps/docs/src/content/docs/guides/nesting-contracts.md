@@ -141,6 +141,22 @@ path, for example when `example/body` appears directly under
 attributes are warnings so teams can adopt validation without rewriting pattern
 files automatically.
 
+Pattern catalogs can also validate section role markers against the typed
+manifest. By default, section-scoped patterns use `core/group` wrappers with
+`section section--{role}` class tokens or a `metadata.sectionRole` attribute:
+
+```html
+<!-- wp:group {"className":"section section--hero"} -->
+<div class="wp-block-group section section--hero">
+  <!-- wp:heading {"content":"Hero"} /-->
+</div>
+<!-- /wp:group -->
+```
+
+Projects with a different convention can call `validatePatternCatalog()` with a
+custom `sectionRoleConvention`, including another wrapper block name, class
+pattern, metadata path, or duplicate-role policy for full-page patterns.
+
 ## Fixture checklist
 
 For reusable nested block families, keep these pieces together:

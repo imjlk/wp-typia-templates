@@ -147,7 +147,11 @@ comment boundaries conservatively and does not execute dynamic PHP content.
 The typed pattern catalog records `scope`, optional `sectionRole`, `tags`,
 `thumbnailUrl`, and `contentFile` metadata so `wp-typia sync --check` can catch
 duplicate slugs, missing pattern files, and invalid manifest metadata before
-validating markup.
+validating markup. Section-scoped patterns are also checked against their
+serialized wrapper markers: by default, `core/group` wrappers can declare roles
+with `section section--{role}` classes or `metadata.sectionRole` attributes.
+The same validator accepts a custom marker convention when projects use a
+different group-like wrapper block, class pattern, or metadata path.
 For an end-to-end generic `example/container` → `example/section` → leaf block
 family, see the Nesting Contracts Guide in `apps/docs/src/content/docs/guides`
 and the checked fixture in `tests/fixtures/nested-block-family.ts`.
