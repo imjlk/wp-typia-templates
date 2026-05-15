@@ -166,7 +166,7 @@ register_block_bindings_source(
 \tarray(
 \t\t'label' => __( ${quotePhpString(bindingSourceTitle)}, ${quotePhpString(options.textDomain)} ),
 \t\t'get_value_callback' => ${quotePhpString(resolveFunctionName)},
-\t\t'uses_context' => array( 'postId' ),
+\t\t'uses_context' => array( 'postId', 'postType' ),
 \t)
 );
 ${supportedAttributesHook}`;
