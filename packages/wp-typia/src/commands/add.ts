@@ -123,7 +123,7 @@ export const addCommand = defineCommand({
                 kind: (args.positional[0] as AddKindId | undefined) ?? 'block',
                 name: resolveAddCommandName(args.positional) ?? '',
                 ...(args.positional[0] === 'core-variation' &&
-                args.positional[1]
+                args.positional[2]
                   ? { block: args.positional[1] }
                   : {}),
                 position: initialValues.position ?? 'after',

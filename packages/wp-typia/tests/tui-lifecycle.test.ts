@@ -35,6 +35,31 @@ function renderStaticMarkupSilently(element: ReturnType<typeof createElement>): 
 	}
 }
 
+function renderAddCommandInitialValues(options: {
+	flags: Record<string, unknown>;
+	positional: readonly string[];
+}): Record<string, unknown> | undefined {
+	if (typeof addCommand.render !== "function") {
+		return undefined;
+	}
+
+	const element = addCommand.render({
+		context: { store: {} },
+		cwd: "/tmp/wp-typia-demo",
+		flags: options.flags,
+		output: () => {},
+		positional: options.positional,
+	} as unknown as Parameters<NonNullable<typeof addCommand.render>>[0]) as ReturnType<
+		typeof createElement
+	>;
+
+	return (
+		element.props as {
+			props: { initialValues: Record<string, unknown> };
+		}
+	).props.initialValues;
+}
+
 describe("alternate-buffer TUI lifecycle", () => {
 	test("matches the shared quit keys", () => {
 		expect(isAlternateBufferExitKey({ name: "q" })).toBe(true);
@@ -312,6 +337,34 @@ describe("alternate-buffer TUI lifecycle", () => {
 		expect(typeof createCommand.render).toBe(expectedRenderType);
 		expect(typeof addCommand.render).toBe(expectedRenderType);
 		expect(typeof migrateCommand.render).toBe(expectedRenderType);
+	});
+
+	test("interactive add core-variation preserves alias block flags", () => {
+		const initialValues = renderAddCommandInitialValues({
+			flags: { block: "core/paragraph" },
+			positional: ["core-variation", "editorial-paragraph"],
+		});
+		if (!initialValues) {
+			return;
+		}
+
+		expect(initialValues.kind).toBe("core-variation");
+		expect(initialValues.name).toBe("editorial-paragraph");
+		expect(initialValues.block).toBe("core/paragraph");
+	});
+
+	test("interactive add core-variation derives block from positional target form", () => {
+		const initialValues = renderAddCommandInitialValues({
+			flags: {},
+			positional: ["core-variation", "core/group", "section-hero"],
+		});
+		if (!initialValues) {
+			return;
+		}
+
+		expect(initialValues.kind).toBe("core-variation");
+		expect(initialValues.name).toBe("section-hero");
+		expect(initialValues.block).toBe("core/group");
 	});
 
 	test("shared first-party submit surface replaces stale create fields while submitting", () => {

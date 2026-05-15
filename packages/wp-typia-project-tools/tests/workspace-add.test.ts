@@ -2,7 +2,7 @@ import { afterAll, describe, expect, test } from "bun:test";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { cleanupScaffoldTempRoot, createScaffoldTempRoot, entryPath, getCommandErrorMessage, linkWorkspaceNodeModules, parseJsonObjectFromOutput, runCapturedCli, runCli, runGeneratedScript, scaffoldOfficialWorkspace, templateLayerFixturePath, templateLayerWorkspaceAmbiguousFixturePath, templateLayerWorkspaceFixturePath, typecheckGeneratedProject, workspaceTemplatePackageManifest } from "./helpers/scaffold-test-harness.js";
-import { runAddBlockCommand, runAddPatternCommand } from "../src/runtime/cli-core.js";
+import { runAddBlockCommand, runAddCoreVariationCommand, runAddPatternCommand } from "../src/runtime/cli-core.js";
 import { scaffoldProject } from "../src/runtime/index.js";
 
 const legacyValidatorToolkitSource = [
@@ -768,6 +768,13 @@ test("canonical CLI can add core block variations without generating block manif
       cwd: targetDir,
     }
   );
+  await expect(
+    runAddCoreVariationCommand({
+      cwd: targetDir,
+      targetBlockName: "core/group",
+      variationName: "index",
+    })
+  ).rejects.toThrow("Core variation name must not normalize to `index`.");
 
   const editorPluginIndexSource = fs.readFileSync(
     path.join(targetDir, "src", "editor-plugins", "index.ts"),
@@ -851,6 +858,19 @@ test("canonical CLI can add core block variations without generating block manif
   ).toBe(false);
   expect(
     fs.existsSync(path.join(targetDir, "src", "blocks", "core-paragraph"))
+  ).toBe(false);
+  expect(
+    fs.existsSync(
+      path.join(
+        targetDir,
+        "src",
+        "editor-plugins",
+        "core-variations",
+        "core",
+        "group",
+        "index.ts"
+      )
+    )
   ).toBe(false);
 
   runCli("npm", ["run", "build"], { cwd: targetDir });

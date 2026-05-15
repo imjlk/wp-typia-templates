@@ -132,6 +132,14 @@ function assertCoreVariationDoesNotExist(
 	}
 }
 
+function assertCoreVariationSlugIsNotRegistryIndex(variationSlug: string): void {
+	if (variationSlug === "index") {
+		throw new Error(
+			"Core variation name must not normalize to `index`. Choose a different name so the variation module can be registered.",
+		);
+	}
+}
+
 function buildCoreVariationInnerBlocksSource(options: {
 	constName: string;
 	targetBlockName: string;
@@ -415,6 +423,7 @@ export async function runAddCoreVariationCommand({
 		normalizeBlockSlug(variationName),
 		CORE_VARIATION_USAGE,
 	);
+	assertCoreVariationSlugIsNotRegistryIndex(variationSlug);
 
 	assertCoreVariationDoesNotExist(
 		workspace.projectDir,
