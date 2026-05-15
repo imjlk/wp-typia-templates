@@ -13,6 +13,16 @@ import {
 } from '../../runtime-bridge-output';
 import type { NodeFallbackDispatchContext } from '../types';
 
+function resolveNodeFallbackAddName(
+  positionals: readonly string[],
+): string | undefined {
+  if (positionals[1] === 'core-variation' && positionals[3]) {
+    return positionals[3];
+  }
+
+  return positionals[2];
+}
+
 export async function dispatchNodeFallbackAdd({
   cwd,
   mergedFlags,
@@ -35,6 +45,10 @@ export async function dispatchNodeFallbackAdd({
 
   // Add-specific normalization stays here: map positionals to kind/name and
   // switch JSON mode to structured completion output.
+  const kind = positionals[1];
+  const name = resolveNodeFallbackAddName(positionals);
+  const positionalArgs = positionals.slice(1);
+
   if (mergedFlags.format === 'json') {
     let completion;
     try {
@@ -43,8 +57,9 @@ export async function dispatchNodeFallbackAdd({
         emitOutput: false,
         flags: mergedFlags,
         interactive: false,
-        kind: positionals[1],
-        name: positionals[2],
+        kind,
+        name,
+        positionalArgs,
         printLine,
         warnLine,
       });
@@ -58,8 +73,8 @@ export async function dispatchNodeFallbackAdd({
       JSON.stringify(
         buildStructuredCompletionSuccessPayload('add', completion, {
           dryRun: Boolean(mergedFlags['dry-run']),
-          kind: positionals[1],
-          name: positionals[2],
+          kind,
+          name,
           projectDir: extractCompletionProjectDir(completion) ?? cwd,
         }),
         null,
@@ -73,8 +88,9 @@ export async function dispatchNodeFallbackAdd({
     cwd,
     flags: mergedFlags,
     interactive: undefined,
-    kind: positionals[1],
-    name: positionals[2],
+    kind,
+    name,
+    positionalArgs,
     printLine,
     warnLine,
   });

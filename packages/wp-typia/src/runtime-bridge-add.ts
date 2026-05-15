@@ -38,6 +38,7 @@ export type AddExecutionInput = {
   interactive?: boolean;
   kind?: string;
   name?: string;
+  positionalArgs?: readonly string[];
   printLine?: PrintLine;
   prompt?: ReadlinePrompt;
   warnLine?: PrintLine;
@@ -141,6 +142,7 @@ export async function executeAddCommand({
   interactive,
   kind,
   name,
+  positionalArgs,
   printLine = console.log as PrintLine,
   prompt,
   warnLine = console.warn as PrintLine,
@@ -189,6 +191,7 @@ export async function executeAddCommand({
       },
       isInteractiveSession,
       name,
+      positionalArgs,
       warnLine,
     };
     return await executePlannedAddKind(kind, executionContext, {

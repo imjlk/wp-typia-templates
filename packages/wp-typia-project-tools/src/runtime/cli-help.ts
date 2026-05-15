@@ -23,6 +23,8 @@ export function formatHelpText(): string {
   wp-typia add admin-view <name> [--source <rest-resource:slug|core-data:kind/name>]
   wp-typia add block <name> [--template <basic|interactivity|persistence|compound>] [--external-layer-source <./path|github:owner/repo/path[#ref]|npm-package>] [--external-layer-id <layer-id>] [--inner-blocks-preset <freeform|ordered|horizontal|locked-structure>] [--alternate-render-targets <email,mjml,plain-text>] [--data-storage <post-meta|custom-table>] [--persistence-policy <authenticated|public>]
   wp-typia add integration-env <name> [--wp-env] [--release-zip] [--service <none|docker-compose>]
+  wp-typia add core-variation <block-name> <name>
+  wp-typia add core-variation <name> --block <namespace/block>
   wp-typia add variation <name> --block <block-slug>
   wp-typia add style <name> --block <block-slug>
   wp-typia add transform <name> --from <namespace/block> --to <block-slug|namespace/block-slug>

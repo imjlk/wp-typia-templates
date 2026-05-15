@@ -75,6 +75,7 @@ export {
 	runAddBlockStyleCommand,
 	runAddBlockTransformCommand,
 	runAddContractCommand,
+	runAddCoreVariationCommand,
 	runAddEditorPluginCommand,
 	runAddHookedBlockCommand,
 	runAddPatternCommand,

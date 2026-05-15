@@ -25,7 +25,7 @@ export const ADD_OPTION_METADATA = {
   },
   block: {
     description:
-      'Target block slug for variation, style, and end-to-end binding-source workflows.',
+      'Target block slug/name for variation, core-variation, style, and end-to-end binding-source workflows.',
     type: 'string',
   },
   'controller-class': {

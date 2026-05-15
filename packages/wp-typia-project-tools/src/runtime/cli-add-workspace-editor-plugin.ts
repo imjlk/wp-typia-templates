@@ -248,7 +248,13 @@ function buildEditorPluginRegistrySource(editorPluginSlugs: string[]): string {
 	return `${importLines}${importLines ? "\n\n" : ""}// wp-typia add editor-plugin entries\n`;
 }
 
-async function ensureEditorPluginBootstrapAnchors(
+/**
+ * Ensures the workspace bootstrap enqueues the shared editor plugin bundle.
+ *
+ * @param workspace Official workspace metadata used to locate and patch the bootstrap file.
+ * @returns A promise that resolves after the bootstrap anchors are present.
+ */
+export async function ensureEditorPluginBootstrapAnchors(
 	workspace: WorkspaceProject,
 ): Promise<void> {
 	const bootstrapPath = getWorkspaceBootstrapPath(workspace);
@@ -337,7 +343,13 @@ function ${enqueueFunctionName}() {
 	});
 }
 
-async function ensureEditorPluginBuildScriptAnchors(
+/**
+ * Ensures the workspace build script includes the shared editor plugin entry.
+ *
+ * @param workspace Official workspace metadata used to locate the build script.
+ * @returns A promise that resolves after the build script anchors are present.
+ */
+export async function ensureEditorPluginBuildScriptAnchors(
 	workspace: WorkspaceProject,
 ): Promise<void> {
 	const buildScriptPath = path.join(workspace.projectDir, "scripts", "build-workspace.mjs");
@@ -369,7 +381,13 @@ async function ensureEditorPluginBuildScriptAnchors(
 	});
 }
 
-async function ensureEditorPluginWebpackAnchors(
+/**
+ * Ensures the workspace webpack config builds the shared editor plugin entry.
+ *
+ * @param workspace Official workspace metadata used to locate the webpack config.
+ * @returns A promise that resolves after the webpack anchors are present.
+ */
+export async function ensureEditorPluginWebpackAnchors(
 	workspace: WorkspaceProject,
 ): Promise<void> {
 	const webpackConfigPath = path.join(workspace.projectDir, "webpack.config.js");
@@ -418,7 +436,13 @@ async function ensureEditorPluginWebpackAnchors(
 	});
 }
 
-async function resolveEditorPluginRegistryPath(projectDir: string): Promise<string> {
+/**
+ * Resolves the editor plugin registry path, preferring existing TypeScript or JavaScript registries.
+ *
+ * @param projectDir Workspace root directory to inspect.
+ * @returns A promise for the registry path to read or write.
+ */
+export async function resolveEditorPluginRegistryPath(projectDir: string): Promise<string> {
 	const editorPluginsDir = path.join(projectDir, "src", "editor-plugins");
 	for (const candidatePath of [
 		path.join(editorPluginsDir, "index.ts"),
@@ -446,7 +470,14 @@ async function readEditorPluginRegistrySlugs(
 	).map((match) => match[1]);
 }
 
-async function writeEditorPluginRegistry(
+/**
+ * Rewrites the shared editor plugin registry with the requested plugin slug included.
+ *
+ * @param projectDir Workspace root directory that owns `src/editor-plugins`.
+ * @param editorPluginSlug Editor plugin slug that must be imported by the registry.
+ * @returns A promise that resolves after the registry has been written.
+ */
+export async function writeEditorPluginRegistry(
 	projectDir: string,
 	editorPluginSlug: string,
 ): Promise<void> {

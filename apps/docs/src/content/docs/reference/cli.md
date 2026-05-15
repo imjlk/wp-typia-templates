@@ -213,6 +213,8 @@ wp-typia add block <name> --template basic
 wp-typia add admin-view <name>
 wp-typia add admin-view <name> --source rest-resource:products
 wp-typia add admin-view <name> --source core-data:postType/post
+wp-typia add core-variation core/group section-hero
+wp-typia add core-variation editorial-paragraph --block core/paragraph
 wp-typia add variation <name> --block <block-slug>
 wp-typia add style <name> --block <block-slug>
 wp-typia add transform <name> --from <namespace/block> --to <block-slug|namespace/block-slug>
@@ -240,7 +242,7 @@ Common flags:
 | ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `--template <basic \| interactivity \| persistence \| compound>` | Built-in block family for `add block`.                                                                                                                                                                                                                              |
 | `--dry-run`                                                      | Preview workspace file updates and completion guidance.                                                                                                                                                                                                             |
-| `--block <block-slug>`                                           | Target block for variation, style, and end-to-end binding-source workflows.                                                                                                                                                                                         |
+| `--block <block-slug \| namespace/block-slug>`                   | Target block for variation, core-variation alias, style, and end-to-end binding-source workflows.                                                                                                                                                                   |
 | `--attribute <attribute>`                                        | Target block attribute for end-to-end binding-source workflows.                                                                                                                                                                                                     |
 | `--from <namespace/block>`                                       | Source block name for transform workflows.                                                                                                                                                                                                                          |
 | `--to <block-slug \| namespace/block-slug>`                      | Target workspace block for transform workflows.                                                                                                                                                                                                                     |
@@ -273,18 +275,26 @@ Common flags:
 | `--data-storage <post-meta \| custom-table>`                     | Select persistence storage.                                                                                                                                                                                                                                         |
 | `--persistence-policy <authenticated \| public>`                 | Select persistence write policy.                                                                                                                                                                                                                                    |
 
-Use variations when you want alternate inserter presets for the same block,
-Block Styles when you want a named visual class for an existing block, transforms
-when users should convert content from another block type into your block, and
-patterns when you need a reusable PHP-registered content layout. Pattern
-catalog entries support typed `scope`, `sectionRole`, `tags`, `thumbnailUrl`,
-and `contentFile` metadata, and `wp-typia sync --check` validates duplicate
-slugs, missing content files, and invalid catalog metadata before checking block
-markup. Section-scoped catalog entries are expected to include a matching
-serialized section marker; the default convention accepts `core/group` wrappers
-with `section section--{role}` classes or `metadata.sectionRole` attributes, and
-programmatic callers can pass a custom `sectionRoleConvention` to
-`validatePatternCatalog()`.
+Use `core-variation` when you want an opinionated preset for an existing
+`namespace/block`, such as `core/group`, `core/paragraph`, or a third-party
+block, without creating a new custom block contract. It writes editor-side
+registration files under `src/editor-plugins/core-variations/`, supports starter
+attributes, `innerBlocks`, `isActive`, category, icon, keywords, description,
+and scope metadata, and intentionally does not generate `block.json` or Typia
+manifests. Use workspace block `variation` when the variation belongs to a
+generated block already listed in `scripts/block-config.ts`.
+
+Use Block Styles when you want a named visual class for an existing block,
+transforms when users should convert content from another block type into your
+block, and patterns when you need a reusable PHP-registered content layout.
+Pattern catalog entries support typed `scope`, `sectionRole`, `tags`,
+`thumbnailUrl`, and `contentFile` metadata, and `wp-typia sync --check`
+validates duplicate slugs, missing content files, and invalid catalog metadata
+before checking block markup. Section-scoped catalog entries are expected to
+include a matching serialized section marker; the default convention accepts
+`core/group` wrappers with `section section--{role}` classes or
+`metadata.sectionRole` attributes, and programmatic callers can pass a custom
+`sectionRoleConvention` to `validatePatternCatalog()`.
 
 Editor plugin scaffolds are slot-aware. The default `sidebar` slot generates a
 `PluginSidebar` shell with a matching more-menu entry, while

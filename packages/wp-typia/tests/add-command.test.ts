@@ -737,6 +737,7 @@ describe('wp-typia add command bridge', () => {
       'admin-view',
       'block',
       'integration-env',
+      'core-variation',
       'variation',
       'style',
       'transform',

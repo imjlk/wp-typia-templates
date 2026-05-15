@@ -791,6 +791,8 @@ chains for richer document-style layouts.
 Official workspaces also support first-class variation, Block Styles, block transforms, pattern, binding-source, AI-feature, and hooked-block expansion:
 
 ```bash
+wp-typia add core-variation core/group section-hero
+wp-typia add core-variation editorial-paragraph --block core/paragraph
 wp-typia add variation hero-card --block counter-card
 wp-typia add style callout-emphasis --block counter-card
 wp-typia add transform quote-to-counter --from core/quote --to counter-card
@@ -803,17 +805,23 @@ wp-typia add ai-feature brief-suggestions --namespace my-plugin/v1
 wp-typia add hooked-block counter-card --anchor core/post-content --position after
 ```
 
-Variations are generated under `src/blocks/<block>/variations/*.ts`, styles
-under `src/blocks/<block>/styles/*.ts`, and transforms under
-`src/blocks/<block>/transforms/*.ts`; each flow is wired through the target
+Core variations are generated under
+`src/editor-plugins/core-variations/<namespace>/<block>/*.ts` and wired through
+the shared editor plugin bundle. Choose them when the source of truth is an
+existing core or third-party block and you only need editor-side variation
+metadata, attributes, `innerBlocks`, and `isActive` registration, not a new
+custom `block.json` or Typia manifest. Workspace block variations are generated
+under `src/blocks/<block>/variations/*.ts`, styles under
+`src/blocks/<block>/styles/*.ts`, and transforms under
+`src/blocks/<block>/transforms/*.ts`; those flows are wired through the target
 block entrypoint and recorded in `scripts/block-config.ts`. Patterns are
 generated as namespaced PHP shells under `src/patterns/full/*.php` or
 `src/patterns/sections/*.php`, recorded in the typed `PATTERNS` catalog with
 `scope`, optional `sectionRole`, `tags`, `thumbnailUrl`, and `contentFile`
 metadata, and loaded by the workspace bootstrap.
-Choose variations for alternate inserter presets, Block Styles for named visual
-class options on the same block, transforms for converting from another source
-block into the generated block, and patterns for reusable multi-block layouts.
+Choose Block Styles for named visual class options on the same block,
+transforms for converting from another source block into the generated block,
+and patterns for reusable multi-block layouts.
 Binding sources are generated under `src/bindings/*/{server.php,editor.ts}` and
 wired through the shared workspace bootstrap plus editor bundle. The generated
 starter contract keeps one field-keyed data map in each file, so the common

@@ -152,6 +152,19 @@ export interface RunAddVariationCommandOptions {
 }
 
 /**
+ * Options for `wp-typia add core-variation`.
+ *
+ * @property cwd Working directory used to resolve the nearest official workspace.
+ * @property targetBlockName Full `namespace/block` name that receives the variation.
+ * @property variationName Human-entered variation name normalized into a slug.
+ */
+export interface RunAddCoreVariationCommandOptions {
+	cwd?: string;
+	targetBlockName: string;
+	variationName: string;
+}
+
+/**
  * Options for `wp-typia add style`.
  *
  * @property blockName Existing workspace block slug that owns the style.

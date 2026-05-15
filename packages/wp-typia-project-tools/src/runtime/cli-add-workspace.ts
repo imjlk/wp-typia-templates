@@ -47,6 +47,11 @@ export {
  */
 export { runAddContractCommand } from "./cli-add-workspace-contract.js";
 /**
+ * Re-export the generic core/external block variation scaffold workflow from
+ * the focused core-variation runtime helper module.
+ */
+export { runAddCoreVariationCommand } from "./cli-add-workspace-core-variation.js";
+/**
  * Re-export the hooked-block scaffold workflow from the focused hooked-block
  * runtime helper module.
  */

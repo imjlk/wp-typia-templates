@@ -2,7 +2,7 @@ import { afterAll, describe, expect, test } from "bun:test";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { cleanupScaffoldTempRoot, createScaffoldTempRoot, entryPath, getCommandErrorMessage, linkWorkspaceNodeModules, parseJsonObjectFromOutput, runCapturedCli, runCli, runGeneratedScript, scaffoldOfficialWorkspace, templateLayerFixturePath, templateLayerWorkspaceAmbiguousFixturePath, templateLayerWorkspaceFixturePath, typecheckGeneratedProject, workspaceTemplatePackageManifest } from "./helpers/scaffold-test-harness.js";
-import { runAddBlockCommand, runAddPatternCommand } from "../src/runtime/cli-core.js";
+import { runAddBlockCommand, runAddCoreVariationCommand, runAddPatternCommand } from "../src/runtime/cli-core.js";
 import { scaffoldProject } from "../src/runtime/index.js";
 
 const legacyValidatorToolkitSource = [
@@ -388,7 +388,6 @@ test("canonical CLI can add a basic block with an external layer package", async
       cwd: targetDir,
     }
   );
-
   expect(
     fs.existsSync(
       path.join(targetDir, "src", "blocks", "counter-card", "block-telemetry.ts")
@@ -717,6 +716,163 @@ test("canonical CLI can add a variation to an official workspace template", asyn
   ).toBe("pass");
 
   linkWorkspaceNodeModules(targetDir);
+  runCli("npm", ["run", "build"], { cwd: targetDir });
+}, 60_000);
+
+test("canonical CLI can add core block variations without generating block manifests", async () => {
+  const targetDir = path.join(tempRoot, "demo-workspace-add-core-variation");
+
+  await scaffoldOfficialWorkspace(targetDir);
+
+  linkWorkspaceNodeModules(targetDir);
+
+  runCli(
+    "node",
+    [entryPath, "add", "core-variation", "core/group", "section-hero"],
+    {
+      cwd: targetDir,
+    }
+  );
+  runCli(
+    "node",
+    [
+      entryPath,
+      "add",
+      "core-variation",
+      "editorial-paragraph",
+      "--block",
+      "core/paragraph",
+    ],
+    {
+      cwd: targetDir,
+    }
+  );
+  runCli(
+    "node",
+    [entryPath, "add", "core-variation", "core/columns", "columns-layout"],
+    {
+      cwd: targetDir,
+    }
+  );
+  runCli(
+    "node",
+    [entryPath, "add", "core-variation", "foo/bar-baz", "shared-slug"],
+    {
+      cwd: targetDir,
+    }
+  );
+  runCli(
+    "node",
+    [entryPath, "add", "core-variation", "foo-bar/baz", "shared-slug"],
+    {
+      cwd: targetDir,
+    }
+  );
+  await expect(
+    runAddCoreVariationCommand({
+      cwd: targetDir,
+      targetBlockName: "core/group",
+      variationName: "index",
+    })
+  ).rejects.toThrow("Core variation name must not normalize to `index`.");
+
+  const editorPluginIndexSource = fs.readFileSync(
+    path.join(targetDir, "src", "editor-plugins", "index.ts"),
+    "utf8"
+  );
+  const coreVariationsIndexSource = fs.readFileSync(
+    path.join(targetDir, "src", "editor-plugins", "core-variations", "index.ts"),
+    "utf8"
+  );
+  const groupVariationSource = fs.readFileSync(
+    path.join(
+      targetDir,
+      "src",
+      "editor-plugins",
+      "core-variations",
+      "core",
+      "group",
+      "section-hero.ts"
+    ),
+    "utf8"
+  );
+  const paragraphVariationSource = fs.readFileSync(
+    path.join(
+      targetDir,
+      "src",
+      "editor-plugins",
+      "core-variations",
+      "core",
+      "paragraph",
+      "editorial-paragraph.ts"
+    ),
+    "utf8"
+  );
+  const columnsVariationSource = fs.readFileSync(
+    path.join(
+      targetDir,
+      "src",
+      "editor-plugins",
+      "core-variations",
+      "core",
+      "columns",
+      "columns-layout.ts"
+    ),
+    "utf8"
+  );
+
+  expect(editorPluginIndexSource).toContain("import './core-variations';");
+  expect(coreVariationsIndexSource).toContain("registerBlockVariation");
+  expect(coreVariationsIndexSource).toContain("core/group");
+  expect(coreVariationsIndexSource).toContain("core/paragraph");
+  expect(coreVariationsIndexSource).toContain(
+    "coreVariation_core_group_section_hero"
+  );
+  expect(groupVariationSource).toContain("BlockVariation");
+  expect(groupVariationSource).toContain("BlockTemplate");
+  expect(groupVariationSource).toContain("category: 'design'");
+  expect(groupVariationSource).toContain("icon: 'layout'");
+  expect(groupVariationSource).toContain("keywords:");
+  expect(groupVariationSource).toContain("innerBlocks:");
+  expect(groupVariationSource).toContain("isActive: ['className']");
+  expect(groupVariationSource).toContain(
+    "scope: ['block', 'inserter', 'transform']"
+  );
+  expect(groupVariationSource).toContain("'core/heading'");
+  expect(groupVariationSource).toContain("'core/paragraph'");
+  expect(paragraphVariationSource).toContain(
+    'export const CORE_PARAGRAPH_EDITORIAL_PARAGRAPH_BLOCK_NAME = "core/paragraph"'
+  );
+  expect(paragraphVariationSource).toContain("[] satisfies BlockTemplate");
+  expect(columnsVariationSource).toContain("'core/column'");
+  expect(coreVariationsIndexSource).toContain("CORE_VARIATION_BLOCK_");
+  expect(coreVariationsIndexSource).toContain("coreVariationEntry");
+  expect(
+    fs.existsSync(path.join(targetDir, "src", "blocks", "core", "group"))
+  ).toBe(false);
+  expect(
+    fs.existsSync(path.join(targetDir, "src", "blocks", "core-group"))
+  ).toBe(false);
+  expect(
+    fs.existsSync(path.join(targetDir, "src", "blocks", "core", "paragraph"))
+  ).toBe(false);
+  expect(
+    fs.existsSync(path.join(targetDir, "src", "blocks", "core-paragraph"))
+  ).toBe(false);
+  expect(
+    fs.existsSync(
+      path.join(
+        targetDir,
+        "src",
+        "editor-plugins",
+        "core-variations",
+        "core",
+        "group",
+        "index.ts"
+      )
+    )
+  ).toBe(false);
+
   runCli("npm", ["run", "build"], { cwd: targetDir });
 }, 60_000);
 
