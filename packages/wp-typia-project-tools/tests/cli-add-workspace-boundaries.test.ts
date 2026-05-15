@@ -37,6 +37,14 @@ test('cli-add-workspace delegates workspace add workflows to focused helpers', (
     path.join(runtimeRoot, 'cli-add-workspace-editor-plugin.ts'),
     'utf8',
   );
+  const editorPluginAnchorsSource = fs.readFileSync(
+    path.join(runtimeRoot, 'cli-add-workspace-editor-plugin-anchors.ts'),
+    'utf8',
+  );
+  const editorPluginEmittersSource = fs.readFileSync(
+    path.join(runtimeRoot, 'cli-add-workspace-editor-plugin-source-emitters.ts'),
+    'utf8',
+  );
 	const restSource = fs.readFileSync(
 		path.join(runtimeRoot, 'cli-add-workspace-rest.ts'),
 		'utf8',
@@ -357,12 +365,62 @@ test('cli-add-workspace delegates workspace add workflows to focused helpers', (
   expect(bindingSourceTypesSource).toContain('export type BindingPostMetaSource');
   expect(bindingSource).not.toContain('function buildPatternSource(');
   expect(bindingSource).not.toContain('function buildEditorPluginEntrySource(');
-  expect(editorPluginSource).toContain('function buildEditorPluginEntrySource(');
   expect(editorPluginSource).toContain(
-    'async function ensureEditorPluginBootstrapAnchors(',
+    'from "./cli-add-workspace-editor-plugin-anchors.js"',
   );
   expect(editorPluginSource).toContain(
+    'from "./cli-add-workspace-editor-plugin-source-emitters.js"',
+  );
+  expect(editorPluginSource).toContain('await ensureEditorPluginBootstrapAnchors(');
+  expect(editorPluginSource).toContain('await ensureEditorPluginBuildScriptAnchors(');
+  expect(editorPluginSource).toContain('await ensureEditorPluginWebpackAnchors(');
+  expect(editorPluginSource).toContain('await resolveEditorPluginRegistryPath(');
+  expect(editorPluginSource).toContain('await writeEditorPluginRegistry(');
+  expect(editorPluginSource).toContain(
     'export async function runAddEditorPluginCommand(',
+  );
+  expect(editorPluginSource).not.toContain('function buildEditorPluginEntrySource(');
+  expect(editorPluginSource).not.toContain(
+    'async function ensureEditorPluginBootstrapAnchors(',
+  );
+  expect(editorPluginSource).not.toContain(
+    'async function ensureEditorPluginBuildScriptAnchors(',
+  );
+  expect(editorPluginSource).not.toContain(
+    'async function ensureEditorPluginWebpackAnchors(',
+  );
+  expect(editorPluginSource).toContain(
+    'export {',
+  );
+  expect(editorPluginEmittersSource).toContain(
+    'export function buildEditorPluginEntrySource(',
+  );
+  expect(editorPluginEmittersSource).toContain(
+    'export function buildEditorPluginSurfaceSource(',
+  );
+  expect(editorPluginEmittersSource).toContain(
+    'export function buildEditorPluginConfigEntry(',
+  );
+  expect(editorPluginEmittersSource).not.toContain(
+    'async function ensureEditorPluginBootstrapAnchors(',
+  );
+  expect(editorPluginAnchorsSource).toContain(
+    'export async function ensureEditorPluginBootstrapAnchors(',
+  );
+  expect(editorPluginAnchorsSource).toContain(
+    'export async function ensureEditorPluginBuildScriptAnchors(',
+  );
+  expect(editorPluginAnchorsSource).toContain(
+    'export async function ensureEditorPluginWebpackAnchors(',
+  );
+  expect(editorPluginAnchorsSource).toContain(
+    'export async function resolveEditorPluginRegistryPath(',
+  );
+  expect(editorPluginAnchorsSource).toContain(
+    'export async function writeEditorPluginRegistry(',
+  );
+  expect(editorPluginAnchorsSource).not.toContain(
+    'function buildEditorPluginEntrySource(',
   );
   expect(editorPluginSource).not.toContain('function buildPatternSource(');
   expect(editorPluginSource).not.toContain(
@@ -580,14 +638,14 @@ test('cli-add-workspace delegates workspace add workflows to focused helpers', (
   }
   expect(mutationSource).toContain('insertPhpSnippetBeforeWorkspaceAnchors');
   expect(mutationSource).toContain('appendPhpSnippetBeforeClosingTag');
-  for (const bootstrapAnchorSource of [
-    aiAnchorsSource,
-    bindingSourceAnchorsSource,
-    editorPluginSource,
-    patternSource,
-    postMetaAnchorsSource,
-    restAnchorsSource,
-  ]) {
+	for (const bootstrapAnchorSource of [
+		aiAnchorsSource,
+		bindingSourceAnchorsSource,
+		editorPluginAnchorsSource,
+		patternSource,
+		postMetaAnchorsSource,
+		restAnchorsSource,
+	]) {
     expect(bootstrapAnchorSource).toContain(
       'insertPhpSnippetBeforeWorkspaceAnchors',
     );
