@@ -19,6 +19,7 @@ export function formatAddHelpText(): string {
   wp-typia add block <name> [--template <${ADD_BLOCK_TEMPLATE_IDS.join("|")}>] [--external-layer-source <./path|github:owner/repo/path[#ref]|npm-package>] [--external-layer-id <layer-id>] [--inner-blocks-preset <freeform|ordered|horizontal|locked-structure>] [--alternate-render-targets <email,mjml,plain-text>] [--data-storage <post-meta|custom-table>] [--persistence-policy <authenticated|public>] [--dry-run]
   wp-typia add integration-env <name> [--wp-env] [--release-zip] [--service <none|docker-compose>] [--dry-run]
   wp-typia add core-variation <block-name> <name> [--dry-run]
+  wp-typia add core-variation <name> --block <namespace/block> [--dry-run]
 	wp-typia add variation <name> --block <block-slug> [--dry-run]
 	wp-typia add style <name> --block <block-slug> [--dry-run]
 	wp-typia add transform <name> --from <namespace/block> --to <block-slug|namespace/block-slug> [--dry-run]

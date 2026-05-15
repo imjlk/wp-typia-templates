@@ -13,10 +13,10 @@ import {
 } from '../add-kind-registry-shared';
 
 const CORE_VARIATION_MISSING_NAME_MESSAGE =
-  '`wp-typia add core-variation` requires <name>. Usage: wp-typia add core-variation <block-name> <name> or wp-typia add core-variation <name> --block <namespace/block-slug>.';
+  '`wp-typia add core-variation` requires <name>. Usage: wp-typia add core-variation <block-name> <name> or wp-typia add core-variation <name> --block <namespace/block>.';
 
 const CORE_VARIATION_MISSING_BLOCK_MESSAGE =
-  '`wp-typia add core-variation` requires <block-name>. Usage: wp-typia add core-variation <block-name> <name> or wp-typia add core-variation <name> --block <namespace/block-slug>.';
+  '`wp-typia add core-variation` requires <block-name>. Usage: wp-typia add core-variation <block-name> <name> or wp-typia add core-variation <name> --block <namespace/block>.';
 
 function resolveCoreVariationInputs(context: AddKindExecutionContext): {
   targetBlockName: string;
@@ -26,8 +26,15 @@ function resolveCoreVariationInputs(context: AddKindExecutionContext): {
   const positionalVariationName = context.positionalArgs?.[2];
 
   if (positionalVariationName) {
+    if (!positionalTargetBlockName) {
+      throw createCliDiagnosticCodeError(
+        CLI_DIAGNOSTIC_CODES.MISSING_ARGUMENT,
+        CORE_VARIATION_MISSING_BLOCK_MESSAGE,
+      );
+    }
+
     return {
-      targetBlockName: positionalTargetBlockName ?? '',
+      targetBlockName: positionalTargetBlockName,
       variationName: positionalVariationName,
     };
   }
@@ -100,6 +107,6 @@ export const coreVariationAddKindEntry =
     sortOrder: 25,
     supportsDryRun: true,
     usage:
-      'wp-typia add core-variation <block-name> <name> [--dry-run]\nAlias: wp-typia add core-variation <name> --block <namespace/block-slug> [--dry-run]',
+      'wp-typia add core-variation <block-name> <name> [--dry-run]\nAlias: wp-typia add core-variation <name> --block <namespace/block> [--dry-run]',
     visibleFieldNames: () => NAME_BLOCK_VISIBLE_FIELDS,
   });

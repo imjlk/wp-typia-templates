@@ -24,9 +24,8 @@ import { resolveWorkspaceProject } from "./workspace-project.js";
 
 const CORE_VARIATIONS_EDITOR_PLUGIN_SLUG = "core-variations";
 const CORE_VARIATION_USAGE =
-	"wp-typia add core-variation <block-name> <name>";
-const CORE_VARIATION_CONTAINER_BLOCKS = new Set([
-	"core/columns",
+	"wp-typia add core-variation <block-name> <name> or wp-typia add core-variation <name> --block <namespace/block>";
+const CORE_VARIATION_SIMPLE_CONTAINER_BLOCKS = new Set([
 	"core/column",
 	"core/cover",
 	"core/group",
@@ -138,7 +137,31 @@ function buildCoreVariationInnerBlocksSource(options: {
 	targetBlockName: string;
 	textDomain: string;
 }): string {
-	if (CORE_VARIATION_CONTAINER_BLOCKS.has(options.targetBlockName)) {
+	if (options.targetBlockName === "core/columns") {
+		return `export const ${options.constName} = [
+\t[
+\t\t'core/column',
+\t\t{},
+\t\t[
+\t\t\t[
+\t\t\t\t'core/heading',
+\t\t\t\t{
+\t\t\t\t\tlevel: 2,
+\t\t\t\t\tplaceholder: __( ${quoteTsString("Add a section heading")}, ${quoteTsString(options.textDomain)} ),
+\t\t\t\t},
+\t\t\t],
+\t\t\t[
+\t\t\t\t'core/paragraph',
+\t\t\t\t{
+\t\t\t\t\tplaceholder: __( ${quoteTsString("Add supporting copy")}, ${quoteTsString(options.textDomain)} ),
+\t\t\t\t},
+\t\t\t],
+\t\t],
+\t],
+] satisfies BlockTemplate;`;
+	}
+
+	if (CORE_VARIATION_SIMPLE_CONTAINER_BLOCKS.has(options.targetBlockName)) {
 		return `export const ${options.constName} = [
 \t[
 \t\t'core/heading',
@@ -294,7 +317,7 @@ async function readCoreVariationModuleRefs(
 
 function buildCoreVariationIndexSource(refs: readonly CoreVariationModuleRef[]): string {
 	const importLines = refs
-		.map((ref) => {
+		.map((ref, index) => {
 			const blockConstName = buildCoreVariationBlockConstName(
 				ref.targetBlockName,
 				ref.variationSlug,
@@ -303,20 +326,12 @@ function buildCoreVariationIndexSource(refs: readonly CoreVariationModuleRef[]):
 				ref.targetBlockName,
 				ref.variationSlug,
 			);
-			return `import { ${blockConstName}, ${variationConstName} } from '${buildCoreVariationImportPath(ref)}';`;
+			return `import { ${blockConstName} as CORE_VARIATION_BLOCK_${index}, ${variationConstName} as coreVariationEntry${index} } from '${buildCoreVariationImportPath(ref)}';`;
 		})
 		.join("\n");
 	const entryLines = refs
-		.map((ref) => {
-			const blockConstName = buildCoreVariationBlockConstName(
-				ref.targetBlockName,
-				ref.variationSlug,
-			);
-			const variationConstName = buildCoreVariationConstName(
-				ref.targetBlockName,
-				ref.variationSlug,
-			);
-			return `\t{ blockName: ${blockConstName}, variation: ${variationConstName} },`;
+		.map((_, index) => {
+			return `\t{ blockName: CORE_VARIATION_BLOCK_${index}, variation: coreVariationEntry${index} },`;
 		})
 		.join("\n");
 

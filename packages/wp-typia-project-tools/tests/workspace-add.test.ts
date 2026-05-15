@@ -388,7 +388,6 @@ test("canonical CLI can add a basic block with an external layer package", async
       cwd: targetDir,
     }
   );
-
   expect(
     fs.existsSync(
       path.join(targetDir, "src", "blocks", "counter-card", "block-telemetry.ts")
@@ -748,6 +747,27 @@ test("canonical CLI can add core block variations without generating block manif
       cwd: targetDir,
     }
   );
+  runCli(
+    "node",
+    [entryPath, "add", "core-variation", "core/columns", "columns-layout"],
+    {
+      cwd: targetDir,
+    }
+  );
+  runCli(
+    "node",
+    [entryPath, "add", "core-variation", "foo/bar-baz", "shared-slug"],
+    {
+      cwd: targetDir,
+    }
+  );
+  runCli(
+    "node",
+    [entryPath, "add", "core-variation", "foo-bar/baz", "shared-slug"],
+    {
+      cwd: targetDir,
+    }
+  );
 
   const editorPluginIndexSource = fs.readFileSync(
     path.join(targetDir, "src", "editor-plugins", "index.ts"),
@@ -781,6 +801,18 @@ test("canonical CLI can add core block variations without generating block manif
     ),
     "utf8"
   );
+  const columnsVariationSource = fs.readFileSync(
+    path.join(
+      targetDir,
+      "src",
+      "editor-plugins",
+      "core-variations",
+      "core",
+      "columns",
+      "columns-layout.ts"
+    ),
+    "utf8"
+  );
 
   expect(editorPluginIndexSource).toContain("import './core-variations';");
   expect(coreVariationsIndexSource).toContain("registerBlockVariation");
@@ -805,11 +837,20 @@ test("canonical CLI can add core block variations without generating block manif
     'export const CORE_PARAGRAPH_EDITORIAL_PARAGRAPH_BLOCK_NAME = "core/paragraph"'
   );
   expect(paragraphVariationSource).toContain("[] satisfies BlockTemplate");
+  expect(columnsVariationSource).toContain("'core/column'");
+  expect(coreVariationsIndexSource).toContain("CORE_VARIATION_BLOCK_");
+  expect(coreVariationsIndexSource).toContain("coreVariationEntry");
   expect(
     fs.existsSync(path.join(targetDir, "src", "blocks", "core", "group"))
   ).toBe(false);
   expect(
     fs.existsSync(path.join(targetDir, "src", "blocks", "core-group"))
+  ).toBe(false);
+  expect(
+    fs.existsSync(path.join(targetDir, "src", "blocks", "core", "paragraph"))
+  ).toBe(false);
+  expect(
+    fs.existsSync(path.join(targetDir, "src", "blocks", "core-paragraph"))
   ).toBe(false);
 
   runCli("npm", ["run", "build"], { cwd: targetDir });
