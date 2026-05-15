@@ -25,8 +25,16 @@ test("built-in non-ts artifacts delegate family emitters and render helpers to f
 		path.join(runtimeRoot, "built-in-block-non-ts-persistence-artifacts.ts"),
 		"utf8",
 	);
+	const persistenceTemplatesSource = fs.readFileSync(
+		path.join(runtimeRoot, "built-in-block-non-ts-persistence-templates.ts"),
+		"utf8",
+	);
 	const compoundSource = fs.readFileSync(
 		path.join(runtimeRoot, "built-in-block-non-ts-compound-artifacts.ts"),
+		"utf8",
+	);
+	const compoundTemplatesSource = fs.readFileSync(
+		path.join(runtimeRoot, "built-in-block-non-ts-compound-templates.ts"),
 		"utf8",
 	);
 	const renderUtilsSource = fs.readFileSync(
@@ -62,17 +70,45 @@ test("built-in non-ts artifacts delegate family emitters and render helpers to f
 		"export function buildInteractivityArtifacts(",
 	);
 	expect(persistenceSource).toContain(
-		"const PERSISTENCE_RENDER_TARGETS_TEMPLATE =",
+		'from "./built-in-block-non-ts-persistence-templates.js"',
 	);
 	expect(persistenceSource).toContain(
 		"export function buildPersistenceArtifacts(",
 	);
+	expect(persistenceSource).not.toContain(
+		"const PERSISTENCE_RENDER_TARGETS_TEMPLATE =",
+	);
+	expect(persistenceSource).not.toContain("const PERSISTENCE_RENDER_TEMPLATE =");
+	expect(persistenceTemplatesSource).toContain(
+		"export const PERSISTENCE_RENDER_TARGETS_TEMPLATE =",
+	);
+	expect(persistenceTemplatesSource).toContain(
+		"export const PERSISTENCE_RENDER_TEMPLATE =",
+	);
+	expect(persistenceTemplatesSource).toContain(
+		"export const PERSISTENCE_STYLE_TEMPLATE =",
+	);
 	expect(compoundSource).toContain(
-		"const COMPOUND_PERSISTENCE_RENDER_TARGETS_TEMPLATE =",
+		'from "./built-in-block-non-ts-compound-templates.js"',
 	);
 	expect(compoundSource).toContain("export function buildCompoundArtifacts(");
 	expect(compoundSource).toContain(
 		'from "./built-in-block-non-ts-render-utils.js"',
+	);
+	expect(compoundSource).not.toContain(
+		"const COMPOUND_PERSISTENCE_RENDER_TARGETS_TEMPLATE =",
+	);
+	expect(compoundSource).not.toContain(
+		"const COMPOUND_PERSISTENCE_RENDER_TEMPLATE =",
+	);
+	expect(compoundTemplatesSource).toContain(
+		"export const COMPOUND_PERSISTENCE_RENDER_TARGETS_TEMPLATE =",
+	);
+	expect(compoundTemplatesSource).toContain(
+		"export const COMPOUND_PERSISTENCE_RENDER_TEMPLATE =",
+	);
+	expect(compoundTemplatesSource).toContain(
+		"export const COMPOUND_STYLE_TEMPLATE =",
 	);
 	expect(renderUtilsSource).toContain("export function renderArtifact(");
 	expect(renderUtilsSource).toContain(
