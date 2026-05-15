@@ -81,6 +81,24 @@ test('cli-add-workspace delegates workspace add workflows to focused helpers', (
 		path.join(runtimeRoot, 'cli-add-workspace-rest-source-emitters.ts'),
 		'utf8',
 	);
+	const restGeneratedSourceEmittersSource = fs.readFileSync(
+		path.join(
+			runtimeRoot,
+			'cli-add-workspace-rest-generated-source-emitters.ts',
+		),
+		'utf8',
+	);
+	const restManualSourceEmittersSource = fs.readFileSync(
+		path.join(
+			runtimeRoot,
+			'cli-add-workspace-rest-manual-source-emitters.ts',
+		),
+		'utf8',
+	);
+	const restSourceUtilsSource = fs.readFileSync(
+		path.join(runtimeRoot, 'cli-add-workspace-rest-source-utils.ts'),
+		'utf8',
+	);
 	const restTypesSource = fs.readFileSync(
 		path.join(runtimeRoot, 'cli-add-workspace-rest-types.ts'),
 		'utf8',
@@ -524,9 +542,15 @@ test('cli-add-workspace delegates workspace add workflows to focused helpers', (
 	expect(restGeneratedSource).toContain(
 		'from "./cli-add-workspace-rest-php-templates.js"',
 	);
+	expect(restGeneratedSource).toContain(
+		'from "./cli-add-workspace-rest-generated-source-emitters.js"',
+	);
 	expect(restGeneratedSource).toContain('syncRestResourceArtifacts');
 	expect(restManualSource).toContain(
 		'export async function scaffoldManualRestContract(',
+	);
+	expect(restManualSource).toContain(
+		'from "./cli-add-workspace-rest-manual-source-emitters.js"',
 	);
 	expect(restManualSource).toContain('syncManualRestContractArtifacts');
 	expect(restPhpTemplatesSource).toContain(
@@ -536,14 +560,43 @@ test('cli-add-workspace delegates workspace add workflows to focused helpers', (
 		'export interface RunAddRestResourceCommandResult',
 	);
 	expect(restSourceEmittersSource).toContain(
+		'from "./cli-add-workspace-rest-generated-source-emitters.js"',
+	);
+	expect(restSourceEmittersSource).toContain(
+		'from "./cli-add-workspace-rest-manual-source-emitters.js"',
+	);
+	expect(restSourceEmittersSource).not.toContain(
 		'function buildRestResourceTypesSource(',
 	);
-  expect(restSourceEmittersSource).toContain(
-    'function buildRestResourceApiSource(',
-  );
-  expect(restSourceEmittersSource).toContain(
-    'function buildRestResourceDataSource(',
-  );
+	expect(restSourceEmittersSource).not.toContain(
+		'function buildManualRestContractTypesSource(',
+	);
+	expect(restGeneratedSourceEmittersSource).toContain(
+		'export function buildRestResourceTypesSource(',
+	);
+	expect(restGeneratedSourceEmittersSource).toContain(
+		'export function buildRestResourceApiSource(',
+	);
+	expect(restGeneratedSourceEmittersSource).toContain(
+		'export function buildRestResourceDataSource(',
+	);
+	expect(restGeneratedSourceEmittersSource).not.toContain(
+		'buildManualRestContract',
+	);
+	expect(restManualSourceEmittersSource).toContain(
+		'export function buildManualRestContractApiSource(',
+	);
+	expect(restManualSourceEmittersSource).toContain(
+		'export function buildManualRestContractTypesSource(',
+	);
+	expect(restManualSourceEmittersSource).not.toContain(
+		'buildRestResourceTypesSource',
+	);
+	expect(restSourceUtilsSource).toContain(
+		'export function formatResolveRestNonceSource(',
+	);
+	expect(restSourceUtilsSource).not.toContain('buildRestResource');
+	expect(restSourceUtilsSource).not.toContain('buildManualRestContract');
   expect(restAnchorsSource).toContain(
     'async function ensureRestResourceBootstrapAnchors(',
   );

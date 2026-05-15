@@ -35,7 +35,7 @@ import {
   type AdminViewRestResource,
   type AdminViewSource,
 } from './cli-add-workspace-admin-view-types.js';
-import { buildManualRestContractApiSource } from './cli-add-workspace-rest-source-emitters.js';
+import { buildManualRestContractApiSource } from './cli-add-workspace-rest-manual-source-emitters.js';
 import {
   getWorkspaceBootstrapPath,
   patchFile,

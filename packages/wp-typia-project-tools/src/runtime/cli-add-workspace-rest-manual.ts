@@ -20,7 +20,7 @@ import {
 	buildManualRestContractConfigEntry,
 	buildManualRestContractTypesSource,
 	buildManualRestContractValidatorsSource,
-} from "./cli-add-workspace-rest-source-emitters.js";
+} from "./cli-add-workspace-rest-manual-source-emitters.js";
 import {
 	type ManualRestContractScaffoldOptions,
 	type RunAddRestResourceCommandResult,
