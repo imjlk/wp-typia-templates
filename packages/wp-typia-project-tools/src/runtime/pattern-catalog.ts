@@ -1,6 +1,11 @@
 import fs from "node:fs";
 import path from "node:path";
 
+import {
+	type ParsedBlockPatternBlock,
+	validateBlockPatternContentNesting,
+} from "@wp-typia/block-runtime/metadata-core";
+
 export const PATTERN_CATALOG_SCOPE_IDS = ["full", "section"] as const;
 
 export type PatternCatalogScope = (typeof PATTERN_CATALOG_SCOPE_IDS)[number];
@@ -23,11 +28,16 @@ export type PatternCatalogDiagnosticCode =
 	| "invalid-pattern-content-file"
 	| "invalid-pattern-scope"
 	| "invalid-pattern-section-role"
+	| "invalid-pattern-section-role-marker"
 	| "invalid-pattern-slug"
 	| "invalid-pattern-tag"
 	| "invalid-pattern-thumbnail-url"
+	| "mismatched-pattern-section-role"
 	| "missing-pattern-content-file"
-	| "missing-pattern-section-role";
+	| "missing-pattern-section-role"
+	| "missing-pattern-section-role-marker"
+	| "duplicate-pattern-section-role-marker"
+	| "unknown-pattern-section-role-marker";
 
 export type PatternCatalogDiagnostic = {
 	code: PatternCatalogDiagnosticCode;
@@ -36,8 +46,39 @@ export type PatternCatalogDiagnostic = {
 	severity: PatternCatalogDiagnosticSeverity;
 };
 
+export type PatternCatalogSectionRoleConvention = {
+	/**
+	 * Serialized block name used as the section wrapper, for example `core/group`.
+	 */
+	wrapperBlockName?: string;
+	/**
+	 * Optional class that marks a wrapper block as section-like even when the
+	 * role marker is missing.
+	 */
+	baseClassName?: string;
+	/**
+	 * Class token pattern where `{role}` is replaced by the section role slug.
+	 */
+	roleClassNamePattern?: string;
+	/**
+	 * Dot-separated block attribute paths that can carry role slugs.
+	 */
+	roleAttributePaths?: readonly string[];
+	/**
+	 * Warn when a full pattern repeats the same section role marker.
+	 */
+	requireUniqueFullPatternRoles?: boolean;
+};
+
+export type PatternCatalogSectionRoleMatch = {
+	blockName: string;
+	blockPath: string;
+	roles: readonly string[];
+};
+
 export type PatternCatalogValidationOptions = {
 	projectDir?: string;
+	sectionRoleConvention?: PatternCatalogSectionRoleConvention | false;
 };
 
 export type PatternCatalogValidationResult = {
@@ -50,6 +91,20 @@ const PATTERN_SLUG_PATTERN = /^[a-z][a-z0-9-]*$/u;
 const PATTERN_SECTION_ROLE_PATTERN = PATTERN_SLUG_PATTERN;
 const PATTERN_TAG_PATTERN = /^[a-z0-9][a-z0-9-]*$/u;
 const PATTERN_CONTENT_FILE_ROOT = "src/patterns/";
+const DEFAULT_SECTION_ROLE_CONVENTION = {
+	baseClassName: "section",
+	requireUniqueFullPatternRoles: false,
+	roleAttributePaths: ["metadata.sectionRole"],
+	roleClassNamePattern: "section--{role}",
+	wrapperBlockName: "core/group",
+} satisfies Required<PatternCatalogSectionRoleConvention>;
+
+type NormalizedPatternCatalogSectionRoleConvention = Required<PatternCatalogSectionRoleConvention>;
+
+type LocatedPatternSectionRole = {
+	blockPath: string;
+	role: string;
+};
 
 function createPatternCatalogDiagnostic(
 	diagnostic: PatternCatalogDiagnostic,
@@ -88,6 +143,200 @@ function isPatternContentFilePath(value: string): boolean {
 	);
 }
 
+function normalizeSectionRoleConvention(
+	convention: PatternCatalogSectionRoleConvention = {},
+): NormalizedPatternCatalogSectionRoleConvention {
+	return {
+		baseClassName:
+			convention.baseClassName ??
+			DEFAULT_SECTION_ROLE_CONVENTION.baseClassName,
+		requireUniqueFullPatternRoles:
+			convention.requireUniqueFullPatternRoles ??
+			DEFAULT_SECTION_ROLE_CONVENTION.requireUniqueFullPatternRoles,
+		roleAttributePaths:
+			convention.roleAttributePaths ??
+			DEFAULT_SECTION_ROLE_CONVENTION.roleAttributePaths,
+		roleClassNamePattern:
+			convention.roleClassNamePattern ??
+			DEFAULT_SECTION_ROLE_CONVENTION.roleClassNamePattern,
+		wrapperBlockName:
+			convention.wrapperBlockName ??
+			DEFAULT_SECTION_ROLE_CONVENTION.wrapperBlockName,
+	};
+}
+
+function escapeRegExp(value: string): string {
+	return value.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&");
+}
+
+function createRoleClassNamePattern(pattern: string): RegExp {
+	const parts = pattern.split("{role}");
+	if (parts.length !== 2) {
+		throw new Error(
+			`roleClassNamePattern must contain exactly one "{role}" placeholder.`,
+		);
+	}
+
+	return new RegExp(
+		`^${escapeRegExp(parts[0] ?? "")}(?<role>\\S*)${escapeRegExp(parts[1] ?? "")}$`,
+		"u",
+	);
+}
+
+function getClassNameTokens(attributes: Record<string, unknown>): string[] {
+	const className = attributes.className;
+	if (typeof className !== "string") {
+		return [];
+	}
+
+	return className.split(/\s+/u).filter((token) => token.length > 0);
+}
+
+function getAttributePathValue(
+	attributes: Record<string, unknown>,
+	pathName: string,
+): unknown {
+	return pathName.split(".").reduce<unknown>((current, segment) => {
+		if (
+			current !== null &&
+			typeof current === "object" &&
+			!Array.isArray(current) &&
+			Object.prototype.hasOwnProperty.call(current, segment)
+		) {
+			return (current as Record<string, unknown>)[segment];
+		}
+
+		return undefined;
+	}, attributes);
+}
+
+function collectStringValues(value: unknown): string[] {
+	if (typeof value === "string") {
+		return [value];
+	}
+	if (Array.isArray(value)) {
+		return value.filter((item): item is string => typeof item === "string");
+	}
+
+	return [];
+}
+
+function uniqueValues(values: readonly string[]): string[] {
+	return [...new Set(values)];
+}
+
+function formatRoleList(roles: readonly string[]): string {
+	if (roles.length === 0) {
+		return "none";
+	}
+
+	return roles.map((role) => `"${role}"`).join(", ");
+}
+
+function formatBlockPaths(paths: readonly string[]): string {
+	return paths.map((blockPath) => `at ${blockPath}`).join(", ");
+}
+
+function describeRoleMarkerConvention(
+	convention: NormalizedPatternCatalogSectionRoleConvention,
+): string {
+	return `${convention.wrapperBlockName} wrappers with class "${convention.roleClassNamePattern}" or attributes ${convention.roleAttributePaths.join(", ")}`;
+}
+
+function isSectionWrapperCandidate(
+	block: ParsedBlockPatternBlock,
+	roles: readonly string[],
+	convention: NormalizedPatternCatalogSectionRoleConvention,
+): boolean {
+	if (block.blockName !== convention.wrapperBlockName) {
+		return false;
+	}
+	if (roles.length > 0) {
+		return true;
+	}
+
+	return getClassNameTokens(block.attributes).includes(convention.baseClassName);
+}
+
+function collectSectionRoleMatches(
+	blocks: readonly ParsedBlockPatternBlock[],
+	convention: NormalizedPatternCatalogSectionRoleConvention,
+	pathSegments: readonly string[] = [],
+): PatternCatalogSectionRoleMatch[] {
+	return blocks.flatMap((block, index) => {
+		const blockPathSegments = [
+			...pathSegments,
+			`${block.blockName}[${index}]`,
+		];
+		const blockPath = blockPathSegments.join(" > ");
+		const roles = extractPatternSectionRolesFromAttributes(
+			block.attributes,
+			convention,
+		);
+		const matches = isSectionWrapperCandidate(block, roles, convention)
+			? [
+					{
+						blockName: block.blockName,
+						blockPath,
+						roles,
+					},
+				]
+			: [];
+
+		return [
+			...matches,
+			...collectSectionRoleMatches(
+				block.innerBlocks,
+				convention,
+				blockPathSegments,
+			),
+		];
+	});
+}
+
+/**
+ * Extract section role slugs from serialized block attributes using the
+ * configured class and metadata marker convention.
+ *
+ * @param attributes Parsed block attributes from serialized pattern content.
+ * @param convention Optional marker convention override.
+ * @returns Unique role marker values in discovery order.
+ */
+export function extractPatternSectionRolesFromAttributes(
+	attributes: Record<string, unknown>,
+	convention: PatternCatalogSectionRoleConvention = {},
+): string[] {
+	const normalized = normalizeSectionRoleConvention(convention);
+	const roleClassNamePattern = createRoleClassNamePattern(
+		normalized.roleClassNamePattern,
+	);
+	const classRoles = getClassNameTokens(attributes)
+		.map((token) => roleClassNamePattern.exec(token)?.groups?.role)
+		.filter((role): role is string => typeof role === "string");
+	const attributeRoles = normalized.roleAttributePaths.flatMap((pathName) =>
+		collectStringValues(getAttributePathValue(attributes, pathName)),
+	);
+
+	return uniqueValues([...classRoles, ...attributeRoles]);
+}
+
+/**
+ * Find section wrapper blocks and their role markers in parsed pattern content.
+ *
+ * @param blocks Parsed block tree returned by `validateBlockPatternContentNesting`.
+ * @param convention Optional marker convention override.
+ * @returns Section wrapper matches with serialized block paths.
+ */
+export function extractPatternSectionRoleMatches(
+	blocks: readonly ParsedBlockPatternBlock[],
+	convention: PatternCatalogSectionRoleConvention = {},
+): PatternCatalogSectionRoleMatch[] {
+	return collectSectionRoleMatches(
+		blocks,
+		normalizeSectionRoleConvention(convention),
+	);
+}
+
 /**
  * Validate pattern thumbnail references with the same URL/path rules used by
  * catalog diagnostics and `wp-typia add pattern`.
@@ -113,16 +362,147 @@ export function resolvePatternCatalogContentFile(
 	return pattern.contentFile ?? pattern.file;
 }
 
+function createKnownSectionRoleSet(
+	patterns: readonly PatternCatalogEntry[],
+): ReadonlySet<string> {
+	return new Set(
+		patterns
+			.map((pattern) => pattern.sectionRole)
+			.filter(
+				(sectionRole): sectionRole is string =>
+					typeof sectionRole === "string" &&
+					PATTERN_SECTION_ROLE_PATTERN.test(sectionRole),
+			),
+	);
+}
+
+function validatePatternContentSectionRoles({
+	content,
+	contentFile,
+	convention,
+	knownSectionRoles,
+	label,
+	pattern,
+}: {
+	content: string;
+	contentFile: string;
+	convention: NormalizedPatternCatalogSectionRoleConvention;
+	knownSectionRoles: ReadonlySet<string>;
+	label: string;
+	pattern: PatternCatalogEntry;
+}): PatternCatalogDiagnostic[] {
+	const diagnostics: PatternCatalogDiagnostic[] = [];
+	const parsed = validateBlockPatternContentNesting(content, {
+		allowExternalBlockNames: true,
+		nesting: {},
+		patternFile: contentFile,
+	});
+	const matches = collectSectionRoleMatches(parsed.blocks, convention);
+	const locatedRoles = matches.flatMap<LocatedPatternSectionRole>((match) =>
+		match.roles.map((role) => ({
+			blockPath: match.blockPath,
+			role,
+		})),
+	);
+	const invalidRoles = locatedRoles.filter(
+		({ role }) => !PATTERN_SECTION_ROLE_PATTERN.test(role),
+	);
+	for (const invalidRole of uniqueValues(invalidRoles.map(({ role }) => role))) {
+		const paths = invalidRoles
+			.filter(({ role }) => role === invalidRole)
+			.map(({ blockPath }) => blockPath);
+		diagnostics.push(
+			createPatternCatalogDiagnostic({
+				code: "invalid-pattern-section-role-marker",
+				message: `${label}: section role marker "${invalidRole}" in ${contentFile} must start with a lowercase letter and contain only lowercase letters, numbers, and hyphens (${formatBlockPaths(paths)}).`,
+				patternSlug: pattern.slug,
+				severity: "error",
+			}),
+		);
+	}
+
+	const validLocatedRoles = locatedRoles.filter(({ role }) =>
+		PATTERN_SECTION_ROLE_PATTERN.test(role),
+	);
+	const validRoles = validLocatedRoles.map(({ role }) => role);
+	const uniqueValidRoles = uniqueValues(validRoles);
+	const unknownRoles = uniqueValidRoles.filter(
+		(role) => !knownSectionRoles.has(role),
+	);
+	for (const unknownRole of unknownRoles) {
+		const paths = validLocatedRoles
+			.filter(({ role }) => role === unknownRole)
+			.map(({ blockPath }) => blockPath);
+		diagnostics.push(
+			createPatternCatalogDiagnostic({
+				code: "unknown-pattern-section-role-marker",
+				message: `${label}: section role marker "${unknownRole}" in ${contentFile} is not declared by any PATTERNS sectionRole (${formatBlockPaths(paths)}).`,
+				patternSlug: pattern.slug,
+				severity: "warning",
+			}),
+		);
+	}
+
+	const scope = pattern.scope ?? "full";
+	const expectedSectionRole =
+		typeof pattern.sectionRole === "string" &&
+		PATTERN_SECTION_ROLE_PATTERN.test(pattern.sectionRole)
+			? pattern.sectionRole
+			: undefined;
+	if (scope === "section" && expectedSectionRole) {
+		if (validRoles.length === 0) {
+			diagnostics.push(
+				createPatternCatalogDiagnostic({
+					code: "missing-pattern-section-role-marker",
+					message: `${label}: section-scoped pattern content in ${contentFile} must include section role marker "${expectedSectionRole}" using ${describeRoleMarkerConvention(convention)}.`,
+					patternSlug: pattern.slug,
+					severity: "error",
+				}),
+			);
+		} else if (!validRoles.includes(expectedSectionRole)) {
+			diagnostics.push(
+				createPatternCatalogDiagnostic({
+					code: "mismatched-pattern-section-role",
+					message: `${label}: manifest sectionRole "${expectedSectionRole}" was not found in ${contentFile}; found ${formatRoleList(uniqueValidRoles)}.`,
+					patternSlug: pattern.slug,
+					severity: "error",
+				}),
+			);
+		}
+	}
+
+	if (scope === "full" && convention.requireUniqueFullPatternRoles) {
+		for (const role of uniqueValidRoles) {
+			const paths = validLocatedRoles
+				.filter((locatedRole) => locatedRole.role === role)
+				.map(({ blockPath }) => blockPath);
+			if (paths.length <= 1) {
+				continue;
+			}
+			diagnostics.push(
+				createPatternCatalogDiagnostic({
+					code: "duplicate-pattern-section-role-marker",
+					message: `${label}: full pattern content in ${contentFile} repeats section role marker "${role}" (${formatBlockPaths(paths)}).`,
+					patternSlug: pattern.slug,
+					severity: "warning",
+				}),
+			);
+		}
+	}
+
+	return diagnostics;
+}
+
 /**
  * Validate typed pattern catalog metadata declared in `scripts/block-config.ts`.
  *
- * The validator is intentionally metadata-only: it checks catalog shape,
- * duplicate slugs, optional section-role rules, safe content file paths, and
- * missing files when a workspace root is provided. Block markup validation runs
- * separately through the nesting validator.
+ * The validator checks catalog shape, duplicate slugs, optional section-role
+ * rules, safe content file paths, and missing files when a workspace root is
+ * provided. With a workspace root, it also parses serialized block markup and
+ * compares section role markers against the catalog manifest.
  *
  * @param patterns Pattern catalog entries to validate.
- * @param options Optional project root for content-file existence checks.
+ * @param options Optional project root and section role marker convention.
  * @returns Structured diagnostics split into errors and warnings.
  */
 export function validatePatternCatalog(
@@ -131,6 +511,11 @@ export function validatePatternCatalog(
 ): PatternCatalogValidationResult {
 	const diagnostics: PatternCatalogDiagnostic[] = [];
 	const seenSlugs = new Map<string, number>();
+	const sectionRoleConvention =
+		options.sectionRoleConvention === false
+			? null
+			: normalizeSectionRoleConvention(options.sectionRoleConvention);
+	const knownSectionRoles = createKnownSectionRoleSet(patterns);
 
 	for (const [index, pattern] of patterns.entries()) {
 		const label = pattern.slug || `PATTERNS[${index}]`;
@@ -245,13 +630,32 @@ export function validatePatternCatalog(
 			);
 			continue;
 		}
-		if (options.projectDir && !fs.existsSync(path.join(options.projectDir, contentFile))) {
+		if (!options.projectDir) {
+			continue;
+		}
+
+		const absoluteContentFile = path.join(options.projectDir, contentFile);
+		if (!fs.existsSync(absoluteContentFile)) {
 			diagnostics.push(
 				createPatternCatalogDiagnostic({
 					code: "missing-pattern-content-file",
 					message: `${label}: missing pattern content file ${contentFile}.`,
 					patternSlug: pattern.slug,
 					severity: "error",
+				}),
+			);
+			continue;
+		}
+
+		if (sectionRoleConvention) {
+			diagnostics.push(
+				...validatePatternContentSectionRoles({
+					content: fs.readFileSync(absoluteContentFile, "utf8"),
+					contentFile,
+					convention: sectionRoleConvention,
+					knownSectionRoles,
+					label,
+					pattern,
 				}),
 			);
 		}

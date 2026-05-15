@@ -130,9 +130,14 @@ function buildPatternConfigEntry(
 function buildPatternSource(
 	patternSlug: string,
 	namespace: string,
+	sectionRole: string | undefined,
 	textDomain: string,
 	title: string,
 ): string {
+	const content = sectionRole
+		? `'<!-- wp:group {"className":"section section--${sectionRole}"} --><div class="wp-block-group section section--${sectionRole}"><!-- wp:paragraph --><p>' . esc_html__( 'Describe this section pattern here.', '${textDomain}' ) . '</p><!-- /wp:paragraph --></div><!-- /wp:group -->'`
+		: `'<!-- wp:paragraph --><p>' . esc_html__( 'Describe this pattern here.', '${textDomain}' ) . '</p><!-- /wp:paragraph -->'`;
+
 	return `<?php
 if ( ! defined( 'ABSPATH' ) ) {
 \treturn;
@@ -144,7 +149,7 @@ register_block_pattern(
 \t\t'title'       => __( ${JSON.stringify(title)}, '${textDomain}' ),
 \t\t'description' => __( ${JSON.stringify(`A starter pattern for ${title}.`)}, '${textDomain}' ),
 \t\t'categories'  => array( '${namespace}' ),
-\t\t'content'     => '<!-- wp:paragraph --><p>' . esc_html__( 'Describe this pattern here.', '${textDomain}' ) . '</p><!-- /wp:paragraph -->',
+\t\t'content'     => ${content},
 \t)
 );
 `;
@@ -487,6 +492,7 @@ export async function runAddPatternCommand({
 			buildPatternSource(
 				patternSlug,
 				workspace.workspace.namespace,
+				patternCatalogOptions.sectionRole,
 				workspace.workspace.textDomain,
 				patternCatalogOptions.title,
 			),

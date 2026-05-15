@@ -4,6 +4,8 @@ import os from "node:os";
 import path from "node:path";
 
 import {
+	extractPatternSectionRoleMatches,
+	extractPatternSectionRolesFromAttributes,
 	formatPatternCatalogDiagnostics,
 	resolvePatternCatalogContentFile,
 	validatePatternCatalog,
@@ -23,12 +25,12 @@ describe("pattern catalog validation", () => {
 			});
 			fs.writeFileSync(
 				path.join(projectDir, "src", "patterns", "full", "landing.php"),
-				"<?php\n",
+				'<?php\n<!-- wp:group {"className":"section section--hero"} --><!-- /wp:group -->\n',
 				"utf8",
 			);
 			fs.writeFileSync(
 				path.join(projectDir, "src", "patterns", "sections", "hero.php"),
-				"<?php\n",
+				'<?php\n<!-- wp:group {"className":"section section--hero"} --><!-- /wp:group -->\n',
 				"utf8",
 			);
 
@@ -56,6 +58,170 @@ describe("pattern catalog validation", () => {
 			);
 
 			expect(result.diagnostics).toEqual([]);
+		} finally {
+			fs.rmSync(projectDir, { force: true, recursive: true });
+		}
+	});
+
+	test("extracts section role markers from class names and metadata", () => {
+		expect(
+			extractPatternSectionRolesFromAttributes({
+				className: "section section--hero",
+				metadata: {
+					sectionRole: "feature",
+				},
+			}),
+		).toEqual(["hero", "feature"]);
+
+		expect(
+			extractPatternSectionRoleMatches([
+				{
+					attributes: {
+						className: "section section--hero",
+					},
+					blockName: "core/group",
+					innerBlocks: [
+						{
+							attributes: {
+								className: "section section--feature",
+							},
+							blockName: "core/group",
+							innerBlocks: [],
+						},
+					],
+				},
+			]).map((match) => ({
+				blockPath: match.blockPath,
+				roles: match.roles,
+			})),
+		).toEqual([
+			{
+				blockPath: "core/group[0]",
+				roles: ["hero"],
+			},
+			{
+				blockPath: "core/group[0] > core/group[0]",
+				roles: ["feature"],
+			},
+		]);
+	});
+
+	test("reports invalid, missing, mismatched, and unknown section role markers", () => {
+		const projectDir = fs.mkdtempSync(
+			path.join(os.tmpdir(), "wp-typia-pattern-catalog-roles-"),
+		);
+		try {
+			fs.mkdirSync(path.join(projectDir, "src", "patterns", "sections"), {
+				recursive: true,
+			});
+			fs.writeFileSync(
+				path.join(projectDir, "src", "patterns", "sections", "missing.php"),
+				'<?php\n<!-- wp:group {"className":"section"} --><!-- /wp:group -->\n',
+				"utf8",
+			);
+			fs.writeFileSync(
+				path.join(projectDir, "src", "patterns", "sections", "invalid.php"),
+				'<?php\n<!-- wp:group {"className":"section section--1hero"} --><!-- /wp:group -->\n',
+				"utf8",
+			);
+			fs.writeFileSync(
+				path.join(projectDir, "src", "patterns", "sections", "mismatch.php"),
+				'<?php\n<!-- wp:group {"className":"section section--unknown"} --><!-- /wp:group -->\n',
+				"utf8",
+			);
+
+			const result = validatePatternCatalog(
+				[
+					{
+						contentFile: "src/patterns/sections/missing.php",
+						scope: "section",
+						sectionRole: "hero",
+						slug: "missing",
+					},
+					{
+						contentFile: "src/patterns/sections/invalid.php",
+						scope: "section",
+						sectionRole: "feature",
+						slug: "invalid",
+					},
+					{
+						contentFile: "src/patterns/sections/mismatch.php",
+						scope: "section",
+						sectionRole: "cta",
+						slug: "mismatch",
+					},
+				],
+				{ projectDir },
+			);
+
+			expect(result.diagnostics.map((diagnostic) => diagnostic.code)).toEqual(
+				expect.arrayContaining([
+					"missing-pattern-section-role-marker",
+					"invalid-pattern-section-role-marker",
+					"unknown-pattern-section-role-marker",
+					"mismatched-pattern-section-role",
+				]),
+			);
+			expect(formatPatternCatalogDiagnostics(result.diagnostics)).toContain(
+				"section--{role}",
+			);
+		} finally {
+			fs.rmSync(projectDir, { force: true, recursive: true });
+		}
+	});
+
+	test("warns for duplicate section role markers in full patterns when uniqueness is expected", () => {
+		const projectDir = fs.mkdtempSync(
+			path.join(os.tmpdir(), "wp-typia-pattern-catalog-full-roles-"),
+		);
+		try {
+			fs.mkdirSync(path.join(projectDir, "src", "patterns", "full"), {
+				recursive: true,
+			});
+			fs.mkdirSync(path.join(projectDir, "src", "patterns", "sections"), {
+				recursive: true,
+			});
+			fs.writeFileSync(
+				path.join(projectDir, "src", "patterns", "full", "landing.php"),
+				[
+					"<?php",
+					'<!-- wp:group {"className":"section section--hero"} --><!-- /wp:group -->',
+					'<!-- wp:group {"metadata":{"sectionRole":"hero"}} --><!-- /wp:group -->',
+				].join("\n"),
+				"utf8",
+			);
+			fs.writeFileSync(
+				path.join(projectDir, "src", "patterns", "sections", "hero.php"),
+				'<?php\n<!-- wp:group {"metadata":{"sectionRole":"hero"}} --><!-- /wp:group -->\n',
+				"utf8",
+			);
+
+			const result = validatePatternCatalog(
+				[
+					{
+						contentFile: "src/patterns/full/landing.php",
+						scope: "full",
+						slug: "landing",
+					},
+					{
+						contentFile: "src/patterns/sections/hero.php",
+						scope: "section",
+						sectionRole: "hero",
+						slug: "hero",
+					},
+				],
+				{
+					projectDir,
+					sectionRoleConvention: {
+						requireUniqueFullPatternRoles: true,
+					},
+				},
+			);
+
+			expect(result.errors).toEqual([]);
+			expect(result.warnings.map((diagnostic) => diagnostic.code)).toEqual([
+				"duplicate-pattern-section-role-marker",
+			]);
 		} finally {
 			fs.rmSync(projectDir, { force: true, recursive: true });
 		}

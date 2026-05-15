@@ -280,7 +280,11 @@ patterns when you need a reusable PHP-registered content layout. Pattern
 catalog entries support typed `scope`, `sectionRole`, `tags`, `thumbnailUrl`,
 and `contentFile` metadata, and `wp-typia sync --check` validates duplicate
 slugs, missing content files, and invalid catalog metadata before checking block
-markup.
+markup. Section-scoped catalog entries are expected to include a matching
+serialized section marker; the default convention accepts `core/group` wrappers
+with `section section--{role}` classes or `metadata.sectionRole` attributes, and
+programmatic callers can pass a custom `sectionRoleConvention` to
+`validatePatternCatalog()`.
 
 Editor plugin scaffolds are slot-aware. The default `sidebar` slot generates a
 `PluginSidebar` shell with a matching more-menu entry, while

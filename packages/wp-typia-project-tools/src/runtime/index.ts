@@ -215,6 +215,8 @@ export {
 	runScaffoldFlow,
 } from "./cli-core.js";
 export {
+	extractPatternSectionRoleMatches,
+	extractPatternSectionRolesFromAttributes,
 	formatPatternCatalogDiagnostics,
 	PATTERN_CATALOG_SCOPE_IDS,
 	resolvePatternCatalogContentFile,
@@ -240,6 +242,8 @@ export type {
 	PatternCatalogDiagnosticSeverity,
 	PatternCatalogEntry,
 	PatternCatalogScope,
+	PatternCatalogSectionRoleConvention,
+	PatternCatalogSectionRoleMatch,
 	PatternCatalogValidationOptions,
 	PatternCatalogValidationResult,
 } from "./pattern-catalog.js";
