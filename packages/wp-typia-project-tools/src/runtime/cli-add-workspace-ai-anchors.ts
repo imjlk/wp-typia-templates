@@ -136,7 +136,7 @@ export async function ensureAiFeatureSyncProjectAnchors(
 		const syncRestConst = "const syncRestScriptPath = path.join( 'scripts', 'sync-rest-contracts.ts' );";
 		const syncAiConst = "const syncAiScriptPath = path.join( 'scripts', 'sync-ai-features.ts' );";
 		const syncRestBlockPattern =
-			/if \( fs\.existsSync\( path\.resolve\( process\.cwd\(\), syncRestScriptPath \) \) \{\n\s*runSyncScript\( syncRestScriptPath, options \);\n\s*\}/u;
+			/if \( fs\.existsSync\( path\.resolve\( process\.cwd\(\), syncRestScriptPath \) \) \) \{\n\s*runSyncScript\( syncRestScriptPath, options \);\n\s*\}/u;
 		const syncAiBlock = [
 			"if ( fs.existsSync( path.resolve( process.cwd(), syncAiScriptPath ) ) ) {",
 			"\trunSyncScript( syncAiScriptPath, options );",
