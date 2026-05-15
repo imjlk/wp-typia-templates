@@ -1,3 +1,10 @@
+/**
+ * PHP helper template for compound parent alternate render targets.
+ *
+ * @remarks Consumed by `buildCompoundArtifacts()` for email, MJML,
+ * plain-text, and web render entries with block identity, namespace, text
+ * domain, storage, policy, CSS class, and title placeholders.
+ */
 export const COMPOUND_PERSISTENCE_RENDER_TARGETS_TEMPLATE = `<?php
 /**
  * Alternate render target helpers for the {{title}} compound parent block.
@@ -247,6 +254,12 @@ if ( ! function_exists( '{{phpPrefix}}_{{slugSnakeCase}}_render_target' ) ) {
 }
 `;
 
+/**
+ * SCSS template for compound parent block styles.
+ *
+ * @remarks Consumed by `buildCompoundArtifacts()` with `{{cssClassName}}`
+ * and `{{compoundChildCssClassName}}` scaffold placeholders.
+ */
 export const COMPOUND_STYLE_TEMPLATE = `.{{cssClassName}} {
 	border: 1px solid #dcdcde;
 	border-radius: 12px;
@@ -280,6 +293,13 @@ export const COMPOUND_STYLE_TEMPLATE = `.{{cssClassName}} {
 }
 `;
 
+/**
+ * Main PHP `render.php` template for the compound parent block.
+ *
+ * @remarks Consumed by `buildCompoundArtifacts()` with scaffold placeholders
+ * for block identity, namespace, text domain, storage mode, persistence policy,
+ * CSS class names, and PHP-safe title output.
+ */
 export const COMPOUND_PERSISTENCE_RENDER_TEMPLATE = `<?php
 /**
  * Dynamic render entry for the {{title}} compound parent block.

@@ -85,6 +85,9 @@ test("built-in non-ts artifacts delegate family emitters and render helpers to f
 	expect(persistenceTemplatesSource).toContain(
 		"export const PERSISTENCE_RENDER_TEMPLATE =",
 	);
+	expect(persistenceTemplatesSource).toContain(
+		"export const PERSISTENCE_STYLE_TEMPLATE =",
+	);
 	expect(compoundSource).toContain(
 		'from "./built-in-block-non-ts-compound-templates.js"',
 	);
@@ -103,6 +106,9 @@ test("built-in non-ts artifacts delegate family emitters and render helpers to f
 	);
 	expect(compoundTemplatesSource).toContain(
 		"export const COMPOUND_PERSISTENCE_RENDER_TEMPLATE =",
+	);
+	expect(compoundTemplatesSource).toContain(
+		"export const COMPOUND_STYLE_TEMPLATE =",
 	);
 	expect(renderUtilsSource).toContain("export function renderArtifact(");
 	expect(renderUtilsSource).toContain(

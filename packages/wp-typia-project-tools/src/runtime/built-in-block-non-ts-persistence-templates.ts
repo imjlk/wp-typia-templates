@@ -1,3 +1,9 @@
+/**
+ * SCSS template for persistence block editor and frontend styles.
+ *
+ * @remarks Consumed by `buildPersistenceArtifacts()` with
+ * `{{cssClassName}}` and `{{frontendCssClassName}}` scaffold placeholders.
+ */
 export const PERSISTENCE_STYLE_TEMPLATE = `.{{cssClassName}} {
 	border: 1px solid #dcdcde;
 	border-radius: 12px;
@@ -46,6 +52,13 @@ export const PERSISTENCE_STYLE_TEMPLATE = `.{{cssClassName}} {
 }
 `;
 
+/**
+ * Main PHP `render.php` template for the persistence block.
+ *
+ * @remarks Consumed by `buildPersistenceArtifacts()` with scaffold
+ * placeholders for block identity, namespace, text domain, storage mode,
+ * persistence policy, and frontend CSS class names.
+ */
 export const PERSISTENCE_RENDER_TEMPLATE = `<?php
 /**
  * Dynamic render entry for the {{title}} block.
@@ -168,6 +181,13 @@ $wrapper_attributes = get_block_wrapper_attributes(
 </div>
 `;
 
+/**
+ * PHP helper template for persistence alternate render targets.
+ *
+ * @remarks Consumed by `buildPersistenceArtifacts()` for email, MJML,
+ * plain-text, and web render entries with block identity, namespace, text
+ * domain, storage, policy, frontend class, and title placeholders.
+ */
 export const PERSISTENCE_RENDER_TARGETS_TEMPLATE = `<?php
 /**
  * Alternate render target helpers for the {{title}} block.
