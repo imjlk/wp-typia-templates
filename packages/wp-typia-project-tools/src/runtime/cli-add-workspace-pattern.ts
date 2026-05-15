@@ -48,6 +48,8 @@ const NESTED_PATTERN_GLOB =
 	"glob( __DIR__ . '/src/patterns/*/*.php' ) ?: array()";
 const LEGACY_FLAT_PATTERN_MODULES_ASSIGNMENT_PATTERN =
 	/^[ \t]*\$pattern_modules\s*=\s*glob\( __DIR__ \. '\/src\/patterns\/\*\.php' \) \?: array\(\);\s*$/mu;
+const LEGACY_FLAT_PATTERN_FOREACH_PATTERN =
+	/^[ \t]*foreach\s*\(\s*glob\( __DIR__ \. '\/src\/patterns\/\*\.php' \) \?: array\(\)\s+as\s+\$pattern_module\s*\)\s*\{\r?\n[ \t]*require\s+\$pattern_module;\r?\n[ \t]*\}/mu;
 
 function assertValidPatternRelativePath(
 	label: string,
@@ -75,16 +77,29 @@ function assertValidPatternContentFile(value: string, usage: string): string {
 		value,
 		usage,
 	);
-	if (
-		!normalizedPath.startsWith(PATTERN_CONTENT_FILE_ROOT) ||
-		!normalizedPath.endsWith(".php")
-	) {
+	if (!isLoadablePatternContentFilePath(normalizedPath)) {
 		throw new Error(
-			"Pattern content file must live under `src/patterns/` and end in `.php` so the generated PHP loader can require it.",
+			"Pattern content file must live directly under `src/patterns/` or one nested directory under `src/patterns/` and end in `.php` so the generated PHP loader can require it.",
 		);
 	}
 
 	return normalizedPath;
+}
+
+function isLoadablePatternContentFilePath(normalizedPath: string): boolean {
+	if (
+		!normalizedPath.startsWith(PATTERN_CONTENT_FILE_ROOT) ||
+		!normalizedPath.endsWith(".php")
+	) {
+		return false;
+	}
+
+	const patternRelativePath = normalizedPath.slice(PATTERN_CONTENT_FILE_ROOT.length);
+	const segments = patternRelativePath.split("/");
+	return (
+		(segments.length === 1 || segments.length === 2) &&
+		segments.every((segment) => segment.length > 0)
+	);
 }
 
 function buildPatternConfigEntry(
@@ -254,6 +269,17 @@ function ensureNestedPatternLoaderSource(
 	if (source.includes(NESTED_PATTERN_GLOB)) {
 		return source;
 	}
+	if (LEGACY_FLAT_PATTERN_FOREACH_PATTERN.test(source)) {
+		return source.replace(
+			LEGACY_FLAT_PATTERN_FOREACH_PATTERN,
+			[
+				buildNestedPatternModulesAssignment(),
+				"\tforeach ( $pattern_modules as $pattern_module ) {",
+				"\t\trequire $pattern_module;",
+				"\t}",
+			].join("\n"),
+		);
+	}
 	if (LEGACY_FLAT_PATTERN_MODULES_ASSIGNMENT_PATTERN.test(source)) {
 		return source.replace(
 			LEGACY_FLAT_PATTERN_MODULES_ASSIGNMENT_PATTERN,
@@ -350,9 +376,10 @@ function ${patternRegistrationFunctionName}() {
  * @param options Command options for the pattern scaffold workflow.
  * @param options.catalogTitle Optional human-readable title. Defaults to the
  * title-cased form of the normalized pattern slug.
- * @param options.contentFile Optional safe relative project path under
- * `src/patterns/` for the generated PHP file. Defaults to
- * `src/patterns/full/<slug>.php` or `src/patterns/sections/<slug>.php`.
+ * @param options.contentFile Optional safe relative project path directly
+ * under `src/patterns/` or one nested directory under `src/patterns/` for the
+ * generated PHP file. Defaults to `src/patterns/full/<slug>.php` or
+ * `src/patterns/sections/<slug>.php`.
  * @param options.cwd Working directory used to resolve the nearest official workspace.
  * Defaults to `process.cwd()`.
  * @param options.patternName Human-entered pattern name that will be normalized

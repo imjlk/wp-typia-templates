@@ -49,6 +49,7 @@ export type PatternCatalogValidationResult = {
 const PATTERN_SLUG_PATTERN = /^[a-z][a-z0-9-]*$/u;
 const PATTERN_SECTION_ROLE_PATTERN = PATTERN_SLUG_PATTERN;
 const PATTERN_TAG_PATTERN = /^[a-z0-9][a-z0-9-]*$/u;
+const PATTERN_CONTENT_FILE_ROOT = "src/patterns/";
 
 function createPatternCatalogDiagnostic(
 	diagnostic: PatternCatalogDiagnostic,
@@ -71,10 +72,19 @@ function isSafeRelativePath(value: string): boolean {
 }
 
 function isPatternContentFilePath(value: string): boolean {
+	if (
+		!isSafeRelativePath(value) ||
+		!value.startsWith(PATTERN_CONTENT_FILE_ROOT) ||
+		!value.endsWith(".php")
+	) {
+		return false;
+	}
+
+	const patternRelativePath = value.slice(PATTERN_CONTENT_FILE_ROOT.length);
+	const segments = patternRelativePath.split("/");
 	return (
-		isSafeRelativePath(value) &&
-		value.startsWith("src/patterns/") &&
-		value.endsWith(".php")
+		(segments.length === 1 || segments.length === 2) &&
+		segments.every((segment) => segment.length > 0)
 	);
 }
 
@@ -221,7 +231,7 @@ export function validatePatternCatalog(
 			diagnostics.push(
 				createPatternCatalogDiagnostic({
 					code: "invalid-pattern-content-file",
-					message: `${label}: contentFile must be a safe relative project path under src/patterns/ and end in .php.`,
+					message: `${label}: contentFile must be a safe relative project path directly under src/patterns/ or one nested directory under src/patterns/ and end in .php.`,
 					patternSlug: pattern.slug,
 					severity: "error",
 				}),

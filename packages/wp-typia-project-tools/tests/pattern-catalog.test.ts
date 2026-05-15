@@ -78,6 +78,10 @@ describe("pattern catalog validation", () => {
 					thumbnailUrl: "ftp://example.com/hero.png",
 				},
 				{
+					contentFile: "src/patterns/sections/hero/primary.php",
+					slug: "deep-hero",
+				},
+				{
 					scope: "detail",
 					sectionRole: "1detail",
 					slug: "bad_scope",
@@ -92,6 +96,7 @@ describe("pattern catalog validation", () => {
 			"missing-pattern-section-role",
 			"invalid-pattern-tag",
 			"invalid-pattern-thumbnail-url",
+			"invalid-pattern-content-file",
 			"invalid-pattern-content-file",
 			"invalid-pattern-slug",
 			"invalid-pattern-scope",

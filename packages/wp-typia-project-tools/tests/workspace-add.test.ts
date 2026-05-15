@@ -2966,8 +2966,11 @@ test("canonical CLI can add a pattern to an official workspace template", async 
     "\t\tglob( __DIR__ . '/src/patterns/*/*.php' ) ?: array()",
     "\t);",
   ].join("\n");
-  const flatPatternLoader =
-    "\t$pattern_modules = glob( __DIR__ . '/src/patterns/*.php' ) ?: array();";
+  const flatPatternLoader = [
+    "\tforeach ( glob( __DIR__ . '/src/patterns/*.php' ) ?: array() as $pattern_module ) {",
+    "\t\trequire $pattern_module;",
+    "\t}",
+  ].join("\n");
   fs.writeFileSync(
     bootstrapPath,
     fs.readFileSync(bootstrapPath, "utf8").replace(
@@ -2991,7 +2994,16 @@ test("canonical CLI can add a pattern to an official workspace template", async 
       patternName: "hero-layout",
     })
   ).rejects.toThrow(
-    "Pattern content file must live under `src/patterns/` and end in `.php`"
+    "Pattern content file must live directly under `src/patterns/` or one nested directory under `src/patterns/` and end in `.php`"
+  );
+  await expect(
+    runAddPatternCommand({
+      contentFile: "src/patterns/sections/hero/primary.php",
+      cwd: targetDir,
+      patternName: "deep-hero-layout",
+    })
+  ).rejects.toThrow(
+    "Pattern content file must live directly under `src/patterns/` or one nested directory under `src/patterns/` and end in `.php`"
   );
 
   runCli(
