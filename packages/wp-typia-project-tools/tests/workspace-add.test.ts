@@ -1590,6 +1590,7 @@ test("canonical CLI can add an integration environment starter to an official wo
   expect(smokeScriptSource).toContain("generated REST clients or schema");
   expect(smokeScriptSource).toContain("local-smoke");
   expect(smokeScriptSource).toContain("function resolveEndpointUrl");
+  expect(smokeScriptSource).toContain("AbortSignal.timeout");
   expect(smokeScriptSource).toContain(
     'resolveEndpointUrl(baseUrl, "wp-json/")'
   );

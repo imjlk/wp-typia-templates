@@ -128,10 +128,12 @@ function resolveEndpointUrl(baseUrl, endpointPath) {
 }
 
 async function assertJsonEndpoint(label, url) {
+	const REQUEST_TIMEOUT_MS = 15_000;
 	const response = await fetch(url, {
 		headers: {
 			accept: "application/json",
 		},
+		signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
 	});
 
 	if (!response.ok) {

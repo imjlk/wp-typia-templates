@@ -1,7 +1,7 @@
 import { promises as fsp } from "node:fs";
 import path from "node:path";
 
-import { pathExists, readOptionalUtf8File } from "./fs-async.js";
+import { readOptionalUtf8File } from "./fs-async.js";
 
 /**
  * Append only missing lines to an existing text file, preserving any existing
@@ -16,9 +16,8 @@ export async function appendMissingLines(
 	lines: readonly string[],
 ): Promise<void> {
 	const current = (await readOptionalUtf8File(filePath)) ?? "";
-	const missingLines = lines.filter(
-		(line) => !current.includes(`${line}\n`) && !current.endsWith(line),
-	);
+	const existingLines = new Set(current.split(/\r?\n/u));
+	const missingLines = lines.filter((line) => !existingLines.has(line));
 	if (missingLines.length === 0) {
 		return;
 	}
@@ -51,15 +50,18 @@ export async function writeFileIfAbsent({
 	source: string;
 	warnings: string[];
 }): Promise<void> {
-	if (await pathExists(filePath)) {
-		warnings.push(
-			`Preserved existing ${path.basename(filePath)}; review it manually if you need different local integration settings.`,
-		);
-		return;
-	}
-
 	await fsp.mkdir(path.dirname(filePath), { recursive: true });
-	await fsp.writeFile(filePath, source, "utf8");
+	try {
+		await fsp.writeFile(filePath, source, { encoding: "utf8", flag: "wx" });
+	} catch (error) {
+		if ((error as { code?: string }).code === "EEXIST") {
+			warnings.push(
+				`Preserved existing ${path.basename(filePath)}; review it manually if you need different local integration settings.`,
+			);
+			return;
+		}
+		throw error;
+	}
 }
 
 /**
@@ -74,12 +76,15 @@ export async function writeNewScaffoldFile(
 	filePath: string,
 	source: string,
 ): Promise<void> {
-	if (await pathExists(filePath)) {
-		throw new Error(
-			`An integration environment scaffold already exists at ${filePath}. Choose a different name.`,
-		);
-	}
-
 	await fsp.mkdir(path.dirname(filePath), { recursive: true });
-	await fsp.writeFile(filePath, source, "utf8");
+	try {
+		await fsp.writeFile(filePath, source, { encoding: "utf8", flag: "wx" });
+	} catch (error) {
+		if ((error as { code?: string }).code === "EEXIST") {
+			throw new Error(
+				`An integration environment scaffold already exists at ${filePath}. Choose a different name.`,
+			);
+		}
+		throw error;
+	}
 }
