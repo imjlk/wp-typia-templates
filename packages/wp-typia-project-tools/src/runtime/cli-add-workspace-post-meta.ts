@@ -12,7 +12,9 @@ import {
 	resolvePostMetaKey,
 	type RunAddPostMetaCommandOptions,
 } from "./cli-add-shared.js";
-import { ensureContractSyncScriptAnchors } from "./cli-add-workspace-rest-anchors.js";
+import {
+	ensureContractSyncScriptAnchors,
+} from "./cli-add-workspace-rest-contract-sync-anchors.js";
 import {
 	ensurePostMetaBootstrapAnchors,
 	ensurePostMetaSyncScriptAnchors,

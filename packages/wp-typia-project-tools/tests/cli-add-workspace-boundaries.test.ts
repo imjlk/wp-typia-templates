@@ -13,6 +13,10 @@ test('cli-add-workspace delegates workspace add workflows to focused helpers', (
     path.join(runtimeRoot, 'cli-add-workspace-assets.ts'),
     'utf8',
   );
+  const contractSource = fs.readFileSync(
+    path.join(runtimeRoot, 'cli-add-workspace-contract.ts'),
+    'utf8',
+  );
   const patternSource = fs.readFileSync(
     path.join(runtimeRoot, 'cli-add-workspace-pattern.ts'),
     'utf8',
@@ -79,6 +83,18 @@ test('cli-add-workspace delegates workspace add workflows to focused helpers', (
 	);
 	const restBootstrapAnchorsSource = fs.readFileSync(
 		path.join(runtimeRoot, 'cli-add-workspace-rest-bootstrap-anchors.ts'),
+		'utf8',
+	);
+	const restContractSyncAnchorsSource = fs.readFileSync(
+		path.join(runtimeRoot, 'cli-add-workspace-rest-contract-sync-anchors.ts'),
+		'utf8',
+	);
+	const restResourceSyncAnchorsSource = fs.readFileSync(
+		path.join(runtimeRoot, 'cli-add-workspace-rest-resource-sync-anchors.ts'),
+		'utf8',
+	);
+	const restSyncScriptSharedSource = fs.readFileSync(
+		path.join(runtimeRoot, 'cli-add-workspace-rest-sync-script-shared.ts'),
 		'utf8',
 	);
 	const restSourceEmittersSource = fs.readFileSync(
@@ -552,12 +568,18 @@ test('cli-add-workspace delegates workspace add workflows to focused helpers', (
 	expect(restGeneratedSource).toContain(
 		'from "./cli-add-workspace-rest-bootstrap-anchors.js"',
 	);
+	expect(restGeneratedSource).toContain(
+		'from "./cli-add-workspace-rest-resource-sync-anchors.js"',
+	);
 	expect(restGeneratedSource).toContain('syncRestResourceArtifacts');
 	expect(restManualSource).toContain(
 		'export async function scaffoldManualRestContract(',
 	);
 	expect(restManualSource).toContain(
 		'from "./cli-add-workspace-rest-manual-source-emitters.js"',
+	);
+	expect(restManualSource).toContain(
+		'from "./cli-add-workspace-rest-resource-sync-anchors.js"',
 	);
 	expect(restManualSource).toContain('syncManualRestContractArtifacts');
 	expect(restPhpTemplatesSource).toContain(
@@ -607,13 +629,22 @@ test('cli-add-workspace delegates workspace add workflows to focused helpers', (
 	expect(restAnchorsSource).toContain(
 		'from "./cli-add-workspace-rest-bootstrap-anchors.js"',
 	);
+	expect(restAnchorsSource).toContain(
+		'from "./cli-add-workspace-rest-contract-sync-anchors.js"',
+	);
+	expect(restAnchorsSource).toContain(
+		'from "./cli-add-workspace-rest-resource-sync-anchors.js"',
+	);
 	expect(restAnchorsSource).not.toContain(
 		'async function ensureRestResourceBootstrapAnchors(',
 	);
 	expect(restAnchorsSource).not.toContain(
 		'async function ensureRestSchemaHelperBootstrapAnchors(',
 	);
-	expect(restAnchorsSource).toContain(
+	expect(restAnchorsSource).not.toContain(
+		'async function ensureContractSyncScriptAnchors(',
+	);
+	expect(restAnchorsSource).not.toContain(
 		'async function ensureRestResourceSyncScriptAnchors(',
 	);
 	expect(restBootstrapAnchorsSource).toContain(
@@ -625,8 +656,44 @@ test('cli-add-workspace delegates workspace add workflows to focused helpers', (
 	expect(restBootstrapAnchorsSource).not.toContain(
 		'async function ensureRestResourceSyncScriptAnchors(',
 	);
+	expect(restContractSyncAnchorsSource).toContain(
+		'async function ensureContractSyncScriptAnchors(',
+	);
+	expect(restContractSyncAnchorsSource).toContain(
+		'from "./cli-add-workspace-rest-sync-script-shared.js"',
+	);
+	expect(restContractSyncAnchorsSource).not.toContain(
+		'async function ensureRestResourceSyncScriptAnchors(',
+	);
+	expect(restResourceSyncAnchorsSource).toContain(
+		'async function ensureRestResourceSyncScriptAnchors(',
+	);
+	expect(restResourceSyncAnchorsSource).toContain(
+		'from "./cli-add-workspace-rest-sync-script-shared.js"',
+	);
+	expect(restResourceSyncAnchorsSource).not.toContain(
+		'async function ensureContractSyncScriptAnchors(',
+	);
+	expect(restSyncScriptSharedSource).toContain(
+		'export function replaceBlockConfigImport(',
+	);
+	expect(restSyncScriptSharedSource).toContain(
+		'export function buildNoResourcesGuard(',
+	);
+	expect(restSyncScriptSharedSource).not.toContain(
+		'async function ensureContractSyncScriptAnchors(',
+	);
+	expect(restSyncScriptSharedSource).not.toContain(
+		'async function ensureRestResourceSyncScriptAnchors(',
+	);
+  expect(contractSource).toContain(
+    'from "./cli-add-workspace-rest-contract-sync-anchors.js"',
+  );
   expect(postMetaSource).toContain(
     'from "./cli-add-workspace-post-meta-anchors.js"',
+  );
+  expect(postMetaSource).toContain(
+    'from "./cli-add-workspace-rest-contract-sync-anchors.js"',
   );
   expect(postMetaSource).toContain(
     'from "./cli-add-workspace-post-meta-source-emitters.js"',

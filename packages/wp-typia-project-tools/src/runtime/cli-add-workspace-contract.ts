@@ -10,7 +10,9 @@ import {
 	type RunAddContractCommandOptions,
 } from "./cli-add-shared.js";
 import { executeWorkspaceMutationPlan } from "./cli-add-workspace-mutation.js";
-import { ensureContractSyncScriptAnchors } from "./cli-add-workspace-rest-anchors.js";
+import {
+	ensureContractSyncScriptAnchors,
+} from "./cli-add-workspace-rest-contract-sync-anchors.js";
 import {
 	buildContractConfigEntry,
 	buildContractTypesSource,
