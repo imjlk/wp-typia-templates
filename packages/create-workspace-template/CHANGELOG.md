@@ -1,5 +1,21 @@
 # @wp-typia/create-workspace-template
 
+## 0.18.0 — 2026-05-15
+
+### Minor changes
+
+- [f585cbf4](https://github.com/imjlk/wp-typia/commit/f585cbf471450210faa420ccba5656bbbf6363d6) Add typed block nesting contracts that drive `block.json` `parent`, `ancestor`, and `allowedBlocks` metadata during sync, including unknown-reference diagnostics for generated workspaces. — Thanks @imjlk!
+- [43b47672](https://github.com/imjlk/wp-typia/commit/43b476720172b572a36f4b15611ad9d57f260a18) Validate configured pattern files against typed block nesting contracts during
+  sync, reporting relationship violations with pattern file and block path
+  diagnostics while keeping unknown or unparseable pattern content as warnings. — Thanks @imjlk!
+- [c0a34be4](https://github.com/imjlk/wp-typia/commit/c0a34be4ed0418dedd5c0e3302bc4989c9c31e3a) Add typed pattern catalog metadata for workspace pattern scaffolds, including
+  section-scoped pattern entries, catalog validation for duplicate slugs and
+  missing content files, and CLI flags for scope, section role, tags, and
+  thumbnail metadata. — Thanks @imjlk!
+- [948c750d](https://github.com/imjlk/wp-typia/commit/948c750de7e298be94e29cd1eca5390623235e98) Generate typed `InnerBlocks` template constants from block nesting contracts and
+  validate template tuples against declared `allowedBlocks`, `parent`, and
+  `ancestor` relationships during sync. — Thanks @imjlk!
+
 ## 0.17.1 — 2026-05-13
 
 ### Patch changes

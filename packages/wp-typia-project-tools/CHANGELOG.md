@@ -1,5 +1,60 @@
 # @wp-typia/project-tools
 
+## 0.24.0 — 2026-05-15
+
+### Minor changes
+
+- [beff17c5](https://github.com/imjlk/wp-typia/commit/beff17c5276280958daad45133a5e8e4b4057c8c) Validate pattern catalog section role markers against serialized pattern
+  content, including configurable wrapper conventions, missing or mismatched
+  section-scoped markers, unknown roles, and optional duplicate-role warnings for
+  full patterns. — Thanks @imjlk!
+- [f2c7b166](https://github.com/imjlk/wp-typia/commit/f2c7b1661d0ef4a8ce63641e194e95dfe319e077) Add `wp-typia add core-variation` for editor-side variation scaffolds targeting
+  existing core or third-party blocks without generating custom block manifests or
+  Typia artifacts. — Thanks @imjlk!
+- [f585cbf4](https://github.com/imjlk/wp-typia/commit/f585cbf471450210faa420ccba5656bbbf6363d6) Add typed block nesting contracts that drive `block.json` `parent`, `ancestor`, and `allowedBlocks` metadata during sync, including unknown-reference diagnostics for generated workspaces. — Thanks @imjlk!
+- [4567d5ba](https://github.com/imjlk/wp-typia/commit/4567d5ba68b27433d7792311ccb6dfa7cb657633) Add post-meta-backed binding-source scaffolds that read typed post-meta schemas, emit PHP/editor preview resolvers, validate top-level meta paths, and expose the new `--from-post-meta`/`--post-meta` CLI options. — Thanks @imjlk!
+- [43b47672](https://github.com/imjlk/wp-typia/commit/43b476720172b572a36f4b15611ad9d57f260a18) Validate configured pattern files against typed block nesting contracts during
+  sync, reporting relationship violations with pattern file and block path
+  diagnostics while keeping unknown or unparseable pattern content as warnings. — Thanks @imjlk!
+- [c0a34be4](https://github.com/imjlk/wp-typia/commit/c0a34be4ed0418dedd5c0e3302bc4989c9c31e3a) Add typed pattern catalog metadata for workspace pattern scaffolds, including
+  section-scoped pattern entries, catalog validation for duplicate slugs and
+  missing content files, and CLI flags for scope, section role, tags, and
+  thumbnail metadata. — Thanks @imjlk!
+- [948c750d](https://github.com/imjlk/wp-typia/commit/948c750de7e298be94e29cd1eca5390623235e98) Generate typed `InnerBlocks` template constants from block nesting contracts and
+  validate template tuples against declared `allowedBlocks`, `parent`, and
+  `ancestor` relationships during sync. — Thanks @imjlk!
+
+### Patch changes
+
+- [5767c20a](https://github.com/imjlk/wp-typia/commit/5767c20a975c5953a0d6458efb8d0e823010aa97) Split AI feature sync-rest anchor patching into a focused runtime module while
+  preserving compatibility exports and generated workspace patch behavior. — Thanks @imjlk!
+- [c7888135](https://github.com/imjlk/wp-typia/commit/c7888135d6fe949037acf44067e9e0a33a70b37a) Split the generated AI feature sync script source emitter into a focused runtime
+  module while preserving compatibility exports and generated output. — Thanks @imjlk!
+- [7186dc89](https://github.com/imjlk/wp-typia/commit/7186dc89fa4b0eed155817def3f8b81a3f3df921) Split Typia LLM runtime rendering, sync, projection, and OpenAPI constraint helpers into focused modules. — Thanks @imjlk!
+- [7e47b274](https://github.com/imjlk/wp-typia/commit/7e47b2744776ed8d93cddf4f57cde9d2ebfce64c) Split compound and persistence non-TypeScript scaffold templates into focused runtime modules without changing generated output. — Thanks @imjlk!
+- [5b967cd6](https://github.com/imjlk/wp-typia/commit/5b967cd6c575a98b1ca95ebd704f027cc579e1ff) Split REST sync-rest anchor patching into contract, resource, and shared helper modules while preserving compatibility exports. — Thanks @imjlk!
+- [d2833763](https://github.com/imjlk/wp-typia/commit/d283376311817b55d150568e5be84f6b729167f9) Split binding-source workspace runtime source emitters and bootstrap/registry anchors into focused helper modules. — Thanks @imjlk!
+- [7aa67d66](https://github.com/imjlk/wp-typia/commit/7aa67d66f85d76cb55c192ccf14abc954cbe4532) Split remaining workspace add variation, style, transform, and hooked-block scaffold flows into focused modules. — Thanks @imjlk!
+- [4f5c83c7](https://github.com/imjlk/wp-typia/commit/4f5c83c7d985c1b260820d1e9895f9db5bbb8d35) Deduplicate REST sync anchor import replacement and no-resource guard builders while preserving contract and REST resource scaffold behavior. — Thanks @imjlk!
+- [fe793744](https://github.com/imjlk/wp-typia/commit/fe793744e01c4251b229ba19dd24662cb8317b3d) Add a shared WordPress block API compatibility matrix for Supports, Variations, and Bindings, plus project config fields for minimum WordPress version and strict compatibility diagnostics. — Thanks @imjlk!
+- [76557c0f](https://github.com/imjlk/wp-typia/commit/76557c0fcb99626b3fb581321126ba85e7886735) Split the generated REST schema helper PHP template emitter from REST resource PHP template generation while preserving compatibility exports. — Thanks @imjlk!
+- [56d1eae0](https://github.com/imjlk/wp-typia/commit/56d1eae07d0edc5f187e600ab0d6298500552478) Split workspace asset add workflows into focused pattern, binding-source, and editor-plugin runtime modules. — Thanks @imjlk!
+- [d443fffd](https://github.com/imjlk/wp-typia/commit/d443fffda3ffac3bf1b77c121928d9c2dab08edf) Split pattern workspace add helpers into focused runtime modules without changing generated output. — Thanks @imjlk!
+- [afe3e49a](https://github.com/imjlk/wp-typia/commit/afe3e49ae7f2581fbc94263eec52232a959e31b4) Split integration environment workspace add helpers into focused runtime modules without changing generated output. — Thanks @imjlk!
+- [40aa1ec4](https://github.com/imjlk/wp-typia/commit/40aa1ec457af1f3c68eece155472259d37e36675) Split REST workspace bootstrap anchor patching from sync-rest script patching while preserving compatibility exports. — Thanks @imjlk!
+- [fa79c9d4](https://github.com/imjlk/wp-typia/commit/fa79c9d40e41c86d381facecac20b1cf973900c5) Split ability workspace scaffold anchor and registry helpers into focused runtime modules without changing generated output. — Thanks @imjlk!
+- [b9b3faae](https://github.com/imjlk/wp-typia/commit/b9b3faae19ba329a79cf613e7650512d1f14838d) Split editor-plugin workspace runtime source emitters and bootstrap/registry anchors into focused helper modules. — Thanks @imjlk!
+- [a057cd7c](https://github.com/imjlk/wp-typia/commit/a057cd7c5a5018a44ac4414d3ee2aad36830a039) Split generated REST resource PHP routing and controller template helpers from
+  the main REST resource PHP template entrypoint while preserving generated
+  output compatibility. — Thanks @imjlk!
+- [5363a883](https://github.com/imjlk/wp-typia/commit/5363a8836ee5fab78475af208104b31450a827ae) Share the generated REST nonce helper source across manual contract and REST resource emitters while preserving scaffolded API output. — Thanks Junglei Kim!
+- [eb2c073f](https://github.com/imjlk/wp-typia/commit/eb2c073fe1a4b6032e54b458409db85efebc18d6) Split REST workspace source emitters into generated-resource and manual-contract modules while keeping the compatibility facade stable. — Thanks Junglei Kim!
+- [64367bb9](https://github.com/imjlk/wp-typia/commit/64367bb9d2f4bfd40ae79eae3311337c8b8f28b3) Align default doctor output rendering with the shared line-printer convention. — Thanks Junglei Kim!
+- [adaefd50](https://github.com/imjlk/wp-typia/commit/adaefd50a29c8f6786a9750a76ad416585030eda) Split built-in block non-TypeScript artifact templates into focused family modules. — Thanks Junglei Kim!
+- [a4e61656](https://github.com/imjlk/wp-typia/commit/a4e61656d39974aec1c7305ee2eae2d1c4c479ce) Centralize the generated `@wordpress/env` dependency fallback range through the shared package version module. — Thanks Junglei Kim!
+- [9f8f6c9c](https://github.com/imjlk/wp-typia/commit/9f8f6c9c094a8882aa1d63dcd763117a061d6019) Normalize manual REST `secretPreserveOnEmpty` CLI values before invoking project-tools runtime APIs. — Thanks Junglei Kim!
+- Updated dependencies: block-runtime (npm)@0.7.0, block-types (npm)@0.3.0
+
 ## 0.23.1 — 2026-05-13
 
 ### Patch changes
