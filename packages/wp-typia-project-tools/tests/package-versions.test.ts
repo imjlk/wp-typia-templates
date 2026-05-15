@@ -181,6 +181,16 @@ describe('package version cache invalidation', () => {
       ),
       'utf8',
     );
+    const abilityAnchorsSource = fs.readFileSync(
+      path.join(
+        import.meta.dir,
+        '..',
+        'src',
+        'runtime',
+        'cli-add-workspace-ability-anchors.ts',
+      ),
+      'utf8',
+    );
     const adminViewRuntimeSource = fs.readFileSync(
       path.join(
         import.meta.dir,
@@ -291,7 +301,8 @@ describe('package version cache invalidation', () => {
       '["@wordpress/env"] = "^11.2.0"',
     );
     expect(abilityRuntimeSource).not.toContain('from "./package-versions.js"');
-    expect(abilityScaffoldSource).toContain('from "./package-versions.js"');
+    expect(abilityScaffoldSource).not.toContain('from "./package-versions.js"');
+    expect(abilityAnchorsSource).toContain('from "./package-versions.js"');
     expect(adminViewScaffoldSource).toContain("from './package-versions.js'");
     expect(adminViewScaffoldSource).toContain(
       'resolveManagedPackageVersionRange',
