@@ -157,6 +157,10 @@ test('cli-add-workspace delegates workspace add workflows to focused helpers', (
     path.join(runtimeRoot, 'cli-add-workspace-ai-anchors.ts'),
     'utf8',
   );
+  const aiSyncRestAnchorsSource = fs.readFileSync(
+    path.join(runtimeRoot, 'cli-add-workspace-ai-sync-rest-anchors.ts'),
+    'utf8',
+  );
   const aiSourceEmittersSource = fs.readFileSync(
     path.join(runtimeRoot, 'cli-add-workspace-ai-source-emitters.ts'),
     'utf8',
@@ -778,6 +782,9 @@ test('cli-add-workspace delegates workspace add workflows to focused helpers', (
   expect(aiScaffoldSource).toContain(
     'from "./cli-add-workspace-ai-sync-script-source.js"',
   );
+  expect(aiScaffoldSource).toContain(
+    'from "./cli-add-workspace-ai-sync-rest-anchors.js"',
+  );
   expect(aiScaffoldSource).not.toContain('function buildAiFeatureTypesSource(');
   expect(aiScaffoldSource).not.toContain(
     'async function ensureAiFeatureBootstrapAnchors(',
@@ -806,12 +813,28 @@ test('cli-add-workspace delegates workspace add workflows to focused helpers', (
     "projectWordPressAiSchema",
   );
   expect(aiSyncScriptSource).not.toContain('function buildAiFeatureApiSource(');
-  expect(aiAnchorsSource).toContain(
-    'async function ensureAiFeatureBootstrapAnchors(',
+	expect(aiAnchorsSource).toContain(
+		'async function ensureAiFeatureBootstrapAnchors(',
+	);
+	expect(aiAnchorsSource).toMatch(
+		/export\s*\{[^}]*ensureAiFeatureSyncRestAnchors[^}]*\}\s*from\s+["']\.\/cli-add-workspace-ai-sync-rest-anchors\.js["']/u,
+	);
+	expect(aiAnchorsSource).not.toContain(
+		'async function ensureAiFeatureSyncRestAnchors(',
+	);
+  expect(aiAnchorsSource).not.toContain('function buildAiFeatureNoResourcesGuard(');
+  expect(aiSyncRestAnchorsSource).toContain(
+    'export async function ensureAiFeatureSyncRestAnchors(',
   );
-  expect(aiAnchorsSource).toContain(
-    'async function ensureAiFeatureSyncRestAnchors(',
-  );
+	expect(aiSyncRestAnchorsSource).toContain(
+		'function buildAiFeatureNoResourcesGuard(',
+	);
+	expect(aiSyncRestAnchorsSource).toContain(
+		"feature.restManifest.contracts !== null",
+	);
+	expect(aiSyncRestAnchorsSource).not.toContain(
+		'async function ensureAiFeatureBootstrapAnchors(',
+	);
   expect(integrationEnvSource).toContain(
     'from "./cli-add-workspace-integration-env-files.js"',
   );
