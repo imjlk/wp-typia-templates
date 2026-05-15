@@ -1566,6 +1566,7 @@ test("canonical CLI can add an integration environment starter to an official wo
   expect(envExampleSource).toContain(
     "WP_TYPIA_SERVICE_URL=http://localhost:3000"
   );
+  expect(envExampleSource).toContain("WP_TYPIA_SMOKE_TIMEOUT_MS=30000");
   expect(
     fs.readFileSync(path.join(targetDir, ".gitignore"), "utf8")
   ).toContain(".env");
@@ -1590,6 +1591,9 @@ test("canonical CLI can add an integration environment starter to an official wo
   expect(smokeScriptSource).toContain("generated REST clients or schema");
   expect(smokeScriptSource).toContain("local-smoke");
   expect(smokeScriptSource).toContain("function resolveEndpointUrl");
+  expect(smokeScriptSource).toContain("function getPositiveIntegerEnv");
+  expect(smokeScriptSource).toContain("AbortSignal.timeout");
+  expect(smokeScriptSource).toContain("WP_TYPIA_SMOKE_TIMEOUT_MS");
   expect(smokeScriptSource).toContain(
     'resolveEndpointUrl(baseUrl, "wp-json/")'
   );

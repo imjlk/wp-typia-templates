@@ -211,6 +211,16 @@ describe('package version cache invalidation', () => {
       ),
       'utf8',
     );
+    const integrationEnvPackageJsonSource = fs.readFileSync(
+      path.join(
+        import.meta.dir,
+        '..',
+        'src',
+        'runtime',
+        'cli-add-workspace-integration-env-package-json.ts',
+      ),
+      'utf8',
+    );
     const localDevPresetsSource = fs.readFileSync(
       path.join(
         import.meta.dir,
@@ -270,7 +280,10 @@ describe('package version cache invalidation', () => {
     expect(integrationEnvRuntimeSource).not.toContain(
       'const WP_ENV_PACKAGE_VERSION',
     );
-    expect(integrationEnvRuntimeSource).toContain(
+    expect(integrationEnvRuntimeSource).not.toContain(
+      'DEFAULT_WORDPRESS_ENV_VERSION',
+    );
+    expect(integrationEnvPackageJsonSource).toContain(
       'DEFAULT_WORDPRESS_ENV_VERSION',
     );
     expect(localDevPresetsSource).toContain('DEFAULT_WORDPRESS_ENV_VERSION');
