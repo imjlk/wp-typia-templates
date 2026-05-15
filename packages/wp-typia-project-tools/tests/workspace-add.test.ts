@@ -3061,6 +3061,8 @@ test("canonical CLI can add a pattern to an official workspace template", async 
   expect(bootstrapSource).toContain("/src/patterns/*/*.php");
   expect(patternSource).toContain("demo-space/hero-layout");
   expect(patternSource).toContain("section section--hero");
+  expect(patternSource).toContain("<!-- wp:group");
+  expect(patternSource).toContain('"className":"section section--hero"');
 
   const doctorOutput = runCli("node", [entryPath, "doctor", "--format", "json"], {
     cwd: targetDir,

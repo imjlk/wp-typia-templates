@@ -227,6 +227,80 @@ describe("pattern catalog validation", () => {
 		}
 	});
 
+	test("reports invalid section role conventions without throwing", () => {
+		const projectDir = fs.mkdtempSync(
+			path.join(os.tmpdir(), "wp-typia-pattern-catalog-convention-"),
+		);
+		try {
+			fs.mkdirSync(path.join(projectDir, "src", "patterns", "sections"), {
+				recursive: true,
+			});
+			fs.writeFileSync(
+				path.join(projectDir, "src", "patterns", "sections", "hero.php"),
+				'<?php\n<!-- wp:group {"className":"section section--hero"} --><!-- /wp:group -->\n',
+				"utf8",
+			);
+
+			const result = validatePatternCatalog(
+				[
+					{
+						contentFile: "src/patterns/sections/hero.php",
+						scope: "section",
+						sectionRole: "hero",
+						slug: "hero",
+					},
+				],
+				{
+					projectDir,
+					sectionRoleConvention: {
+						roleClassNamePattern: "section-role",
+					},
+				},
+			);
+
+			expect(result.errors.map((diagnostic) => diagnostic.code)).toEqual([
+				"invalid-pattern-section-role-convention",
+			]);
+		} finally {
+			fs.rmSync(projectDir, { force: true, recursive: true });
+		}
+	});
+
+	test("reports unreadable pattern content files as diagnostics", () => {
+		const projectDir = fs.mkdtempSync(
+			path.join(os.tmpdir(), "wp-typia-pattern-catalog-unreadable-"),
+		);
+		try {
+			fs.mkdirSync(path.join(projectDir, "src", "patterns", "sections"), {
+				recursive: true,
+			});
+			fs.mkdirSync(
+				path.join(projectDir, "src", "patterns", "sections", "hero.php"),
+			);
+
+			const result = validatePatternCatalog(
+				[
+					{
+						contentFile: "src/patterns/sections/hero.php",
+						scope: "section",
+						sectionRole: "hero",
+						slug: "hero",
+					},
+				],
+				{ projectDir },
+			);
+
+			expect(result.errors.map((diagnostic) => diagnostic.code)).toEqual([
+				"invalid-pattern-content-file",
+			]);
+			expect(result.errors[0]?.message).toContain(
+				"failed to read pattern content file",
+			);
+		} finally {
+			fs.rmSync(projectDir, { force: true, recursive: true });
+		}
+	});
+
 	test("reports duplicate slugs, missing files, and invalid metadata", () => {
 		const result = validatePatternCatalog(
 			[

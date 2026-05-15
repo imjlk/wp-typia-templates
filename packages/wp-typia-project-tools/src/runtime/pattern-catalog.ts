@@ -28,6 +28,7 @@ export type PatternCatalogDiagnosticCode =
 	| "invalid-pattern-content-file"
 	| "invalid-pattern-scope"
 	| "invalid-pattern-section-role"
+	| "invalid-pattern-section-role-convention"
 	| "invalid-pattern-section-role-marker"
 	| "invalid-pattern-slug"
 	| "invalid-pattern-tag"
@@ -46,36 +47,54 @@ export type PatternCatalogDiagnostic = {
 	severity: PatternCatalogDiagnosticSeverity;
 };
 
+/**
+ * Convention used to discover section role markers in serialized pattern
+ * content. Defaults target `core/group` wrappers with a `section` base class,
+ * `section--{role}` role class tokens, and `metadata.sectionRole` attributes.
+ */
 export type PatternCatalogSectionRoleConvention = {
 	/**
-	 * Serialized block name used as the section wrapper, for example `core/group`.
+	 * Serialized block name used as the section wrapper. Defaults to
+	 * `core/group`.
 	 */
 	wrapperBlockName?: string;
 	/**
 	 * Optional class that marks a wrapper block as section-like even when the
-	 * role marker is missing.
+	 * role marker is missing. Defaults to `section`.
 	 */
 	baseClassName?: string;
 	/**
-	 * Class token pattern where `{role}` is replaced by the section role slug.
+	 * Class token pattern where exactly one `{role}` placeholder is replaced by
+	 * the section role slug. Defaults to `section--{role}`.
 	 */
 	roleClassNamePattern?: string;
 	/**
-	 * Dot-separated block attribute paths that can carry role slugs.
+	 * Dot-separated block attribute paths that can carry role slugs. Defaults to
+	 * `metadata.sectionRole`.
 	 */
 	roleAttributePaths?: readonly string[];
 	/**
-	 * Warn when a full pattern repeats the same section role marker.
+	 * Warn when a full pattern repeats the same section role marker. Defaults to
+	 * `false`.
 	 */
 	requireUniqueFullPatternRoles?: boolean;
 };
 
+/**
+ * Section wrapper match extracted from a parsed WordPress block tree.
+ */
 export type PatternCatalogSectionRoleMatch = {
 	blockName: string;
 	blockPath: string;
 	roles: readonly string[];
 };
 
+/**
+ * Options for validating typed pattern catalog entries and, when `projectDir`
+ * is provided, their serialized pattern content. Set `sectionRoleConvention` to
+ * `false` to keep file existence checks but opt out of section-role marker
+ * validation.
+ */
 export type PatternCatalogValidationOptions = {
 	projectDir?: string;
 	sectionRoleConvention?: PatternCatalogSectionRoleConvention | false;
@@ -99,7 +118,9 @@ const DEFAULT_SECTION_ROLE_CONVENTION = {
 	wrapperBlockName: "core/group",
 } satisfies Required<PatternCatalogSectionRoleConvention>;
 
-type NormalizedPatternCatalogSectionRoleConvention = Required<PatternCatalogSectionRoleConvention>;
+type NormalizedPatternCatalogSectionRoleConvention = Required<PatternCatalogSectionRoleConvention> & {
+	roleClassNamePatternRegExp: RegExp;
+};
 
 type LocatedPatternSectionRole = {
 	blockPath: string;
@@ -143,9 +164,9 @@ function isPatternContentFilePath(value: string): boolean {
 	);
 }
 
-function normalizeSectionRoleConvention(
+function normalizeSectionRoleConventionInput(
 	convention: PatternCatalogSectionRoleConvention = {},
-): NormalizedPatternCatalogSectionRoleConvention {
+): Required<PatternCatalogSectionRoleConvention> {
 	return {
 		baseClassName:
 			convention.baseClassName ??
@@ -181,6 +202,18 @@ function createRoleClassNamePattern(pattern: string): RegExp {
 		`^${escapeRegExp(parts[0] ?? "")}(?<role>\\S*)${escapeRegExp(parts[1] ?? "")}$`,
 		"u",
 	);
+}
+
+function normalizeSectionRoleConvention(
+	convention: PatternCatalogSectionRoleConvention = {},
+): NormalizedPatternCatalogSectionRoleConvention {
+	const normalized = normalizeSectionRoleConventionInput(convention);
+	return {
+		...normalized,
+		roleClassNamePatternRegExp: createRoleClassNamePattern(
+			normalized.roleClassNamePattern,
+		),
+	};
 }
 
 function getClassNameTokens(attributes: Record<string, unknown>): string[] {
@@ -307,11 +340,8 @@ export function extractPatternSectionRolesFromAttributes(
 	convention: PatternCatalogSectionRoleConvention = {},
 ): string[] {
 	const normalized = normalizeSectionRoleConvention(convention);
-	const roleClassNamePattern = createRoleClassNamePattern(
-		normalized.roleClassNamePattern,
-	);
 	const classRoles = getClassNameTokens(attributes)
-		.map((token) => roleClassNamePattern.exec(token)?.groups?.role)
+		.map((token) => normalized.roleClassNamePatternRegExp.exec(token)?.groups?.role)
 		.filter((role): role is string => typeof role === "string");
 	const attributeRoles = normalized.roleAttributePaths.flatMap((pathName) =>
 		collectStringValues(getAttributePathValue(attributes, pathName)),
@@ -511,10 +541,25 @@ export function validatePatternCatalog(
 ): PatternCatalogValidationResult {
 	const diagnostics: PatternCatalogDiagnostic[] = [];
 	const seenSlugs = new Map<string, number>();
-	const sectionRoleConvention =
-		options.sectionRoleConvention === false
-			? null
-			: normalizeSectionRoleConvention(options.sectionRoleConvention);
+	let sectionRoleConvention: NormalizedPatternCatalogSectionRoleConvention | null =
+		null;
+	if (options.sectionRoleConvention !== false) {
+		try {
+			sectionRoleConvention = normalizeSectionRoleConvention(
+				options.sectionRoleConvention,
+			);
+		} catch (error) {
+			diagnostics.push(
+				createPatternCatalogDiagnostic({
+					code: "invalid-pattern-section-role-convention",
+					message: `sectionRoleConvention.roleClassNamePattern is invalid: ${
+						error instanceof Error ? error.message : String(error)
+					}`,
+					severity: "error",
+				}),
+			);
+		}
+	}
 	const knownSectionRoles = createKnownSectionRoleSet(patterns);
 
 	for (const [index, pattern] of patterns.entries()) {
@@ -648,9 +693,26 @@ export function validatePatternCatalog(
 		}
 
 		if (sectionRoleConvention) {
+			let content: string;
+			try {
+				content = fs.readFileSync(absoluteContentFile, "utf8");
+			} catch (error) {
+				diagnostics.push(
+					createPatternCatalogDiagnostic({
+						code: "invalid-pattern-content-file",
+						message: `${label}: failed to read pattern content file ${contentFile}: ${
+							error instanceof Error ? error.message : String(error)
+						}.`,
+						patternSlug: pattern.slug,
+						severity: "error",
+					}),
+				);
+				continue;
+			}
+
 			diagnostics.push(
 				...validatePatternContentSectionRoles({
-					content: fs.readFileSync(absoluteContentFile, "utf8"),
+					content,
 					contentFile,
 					convention: sectionRoleConvention,
 					knownSectionRoles,
