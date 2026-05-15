@@ -1,5 +1,14 @@
 # @wp-typia/block-types
 
+## 0.3.0 — 2026-05-15
+
+### Minor changes
+
+- [fe793744](https://github.com/imjlk/wp-typia/commit/fe793744e01c4251b229ba19dd24662cb8317b3d) Add a shared WordPress block API compatibility matrix for Supports, Variations, and Bindings, plus project config fields for minimum WordPress version and strict compatibility diagnostics. — Thanks @imjlk!
+- [256423d6](https://github.com/imjlk/wp-typia/commit/256423d665da8ab8ded84e22007e34f6bbf06997) Add typed defineVariation() and defineVariations() helpers with validation diagnostics and static JavaScript registration source generation. — Thanks @imjlk!
+- [8a47bfc5](https://github.com/imjlk/wp-typia/commit/8a47bfc5e95cf42a42e1fc5765061b6139b832d3) Add defineSupports() and SupportAttributes helpers for typed WordPress Block Supports authoring with version-aware compatibility diagnostics. — Thanks @imjlk!
+- [b8ed6ffd](https://github.com/imjlk/wp-typia/commit/b8ed6ffdc4ace09705d328897400eb513e629acb) Add typed defineBindingSource() helpers with Block Bindings metadata types, version-gated diagnostics, and PHP/editor registration source generation. — Thanks @imjlk!
+
 ## 0.2.4 — 2026-04-16
 
 ### Patch changes
