@@ -51,6 +51,23 @@ demo_space_load_rest_schema_helpers();
 	);
 });
 
+test("REST schema helper bootstrap validation accepts spaced PHP function declarations", async () => {
+	const workspace = createWorkspaceFixture(`<?php
+function demo_space_load_rest_schema_helpers () {
+\t$helper_path = __DIR__ . '/inc/rest-schema.php';
+\tif ( is_readable( $helper_path ) ) {
+\t\trequire_once $helper_path;
+\t}
+}
+
+demo_space_load_rest_schema_helpers();
+`);
+
+	await expect(ensureRestSchemaHelperBootstrapAnchors(workspace)).resolves.toBe(
+		undefined,
+	);
+});
+
 test("REST resource bootstrap validation inspects the existing loader body", async () => {
 	const workspace = createWorkspaceFixture(`<?php
 // The expected REST glob may appear elsewhere without making the loader valid.
@@ -65,5 +82,21 @@ add_action( 'init', 'demo_space_register_rest_resources', 20 );
 
 	await expect(ensureRestResourceBootstrapAnchors(workspace)).rejects.toThrow(
 		"does not include /inc/rest/*.php",
+	);
+});
+
+test("REST resource bootstrap validation accepts spaced PHP function declarations", async () => {
+	const workspace = createWorkspaceFixture(`<?php
+function demo_space_register_rest_resources () {
+\tforeach ( glob( __DIR__ . '/inc/rest/*.php' ) ?: array() as $rest_resource_module ) {
+\t\trequire_once $rest_resource_module;
+\t}
+}
+
+add_action( 'init', 'demo_space_register_rest_resources', 20 );
+`);
+
+	await expect(ensureRestResourceBootstrapAnchors(workspace)).resolves.toBe(
+		undefined,
 	);
 });

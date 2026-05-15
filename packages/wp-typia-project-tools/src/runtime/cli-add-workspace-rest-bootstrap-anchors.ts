@@ -14,6 +14,10 @@ import type { WorkspaceProject } from "./workspace-project.js";
 const REST_RESOURCE_SERVER_GLOB = "/inc/rest/*.php";
 const REST_SCHEMA_HELPER_PATH = "/inc/rest-schema.php";
 
+function escapeRegex(value: string): string {
+	return value.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&");
+}
+
 /**
  * Check that an expected generated path appears inside the named PHP function.
  *
@@ -27,12 +31,19 @@ function phpFunctionBlockIncludes(
 	functionName: string,
 	needle: string,
 ): boolean {
-	const start = source.indexOf(`function ${functionName}(`);
-	if (start === -1) {
+	const functionMatch = new RegExp(
+		`function\\s+${escapeRegex(functionName)}\\s*\\(`,
+		"u",
+	).exec(source);
+	if (functionMatch === null) {
 		return false;
 	}
 
-	const nextFunction = source.indexOf("\nfunction ", start + 1);
+	const start = functionMatch.index;
+	const remainder = source.slice(start + 1);
+	const nextFunctionMatch = /\nfunction\s+/u.exec(remainder);
+	const nextFunction =
+		nextFunctionMatch === null ? -1 : start + 1 + nextFunctionMatch.index;
 	const closingTag = source.indexOf("\n?>", start + 1);
 	const endCandidates = [nextFunction, closingTag].filter((index) => index !== -1);
 	const end = endCandidates.length > 0 ? Math.min(...endCandidates) : source.length;
