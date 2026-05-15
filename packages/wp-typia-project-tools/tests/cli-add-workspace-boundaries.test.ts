@@ -117,6 +117,14 @@ test('cli-add-workspace delegates workspace add workflows to focused helpers', (
     path.join(runtimeRoot, 'cli-add-workspace-ability-scaffold.ts'),
     'utf8',
   );
+  const abilityAnchorsSource = fs.readFileSync(
+    path.join(runtimeRoot, 'cli-add-workspace-ability-anchors.ts'),
+    'utf8',
+  );
+  const abilityRegistrySource = fs.readFileSync(
+    path.join(runtimeRoot, 'cli-add-workspace-ability-registry.ts'),
+    'utf8',
+  );
   const integrationEnvSource = fs.readFileSync(
     path.join(runtimeRoot, 'cli-add-workspace-integration-env.ts'),
     'utf8',
@@ -269,6 +277,9 @@ test('cli-add-workspace delegates workspace add workflows to focused helpers', (
   );
   expect(addWorkspaceSource).not.toContain(
     'async function ensureAdminViewBootstrapAnchors(',
+  );
+  expect(addWorkspaceSource).not.toContain(
+    'async function ensureAbilityBootstrapAnchors(',
   );
   expect(addWorkspaceSource).not.toContain('function buildVariationSource(');
   expect(addWorkspaceSource).not.toContain('function buildBlockStyleSource(');
@@ -751,6 +762,33 @@ test('cli-add-workspace delegates workspace add workflows to focused helpers', (
   expect(registrationHooksSource).toContain(
     'export async function ensureWorkspaceRegistrationSettingsCall(',
   );
+  expect(abilityScaffoldSource).toContain(
+    'from "./cli-add-workspace-ability-anchors.js"',
+  );
+  expect(abilityScaffoldSource).toContain(
+    'from "./cli-add-workspace-ability-registry.js"',
+  );
+  expect(abilityScaffoldSource).not.toContain(
+    'async function ensureAbilityBootstrapAnchors(',
+  );
+  expect(abilityScaffoldSource).not.toContain(
+    'function resolveManagedDependencyVersion(',
+  );
+  expect(abilityScaffoldSource).not.toContain(
+    'async function writeAbilityRegistry(',
+  );
+  expect(abilityAnchorsSource).toContain(
+    'export async function ensureAbilityBootstrapAnchors(',
+  );
+  expect(abilityAnchorsSource).toContain(
+    'export async function ensureAbilityWebpackAnchors(',
+  );
+  expect(abilityRegistrySource).toContain(
+    'export async function resolveAbilityRegistryPath(',
+  );
+  expect(abilityRegistrySource).toContain(
+    'export async function writeAbilityRegistry(',
+  );
   for (const scaffoldSource of [
     abilityScaffoldSource,
     adminViewScaffoldSource,
@@ -764,6 +802,7 @@ test('cli-add-workspace delegates workspace add workflows to focused helpers', (
   expect(mutationSource).toContain('insertPhpSnippetBeforeWorkspaceAnchors');
   expect(mutationSource).toContain('appendPhpSnippetBeforeClosingTag');
 	for (const bootstrapAnchorSource of [
+		abilityAnchorsSource,
 		aiAnchorsSource,
 		bindingSourceAnchorsSource,
 		editorPluginAnchorsSource,
