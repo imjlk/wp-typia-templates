@@ -5,11 +5,13 @@ import { ensureBlockConfigCanAddRestManifests } from "./cli-add-block-legacy-val
 import {
 	buildAiFeatureConfigEntry,
 	buildAiFeatureDataSource,
-	buildAiFeatureSyncScriptSource,
 	buildAiFeatureTypesSource,
 	buildAiFeatureValidatorsSource,
 	buildAiFeatureApiSource,
 } from "./cli-add-workspace-ai-source-emitters.js";
+import {
+	buildAiFeatureSyncScriptSource,
+} from "./cli-add-workspace-ai-sync-script-source.js";
 import {
 	ensureAiFeatureBootstrapAnchors,
 	ensureAiFeaturePackageScripts,
