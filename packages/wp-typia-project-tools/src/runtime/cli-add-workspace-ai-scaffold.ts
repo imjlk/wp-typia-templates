@@ -16,8 +16,10 @@ import {
 	ensureAiFeatureBootstrapAnchors,
 	ensureAiFeaturePackageScripts,
 	ensureAiFeatureSyncProjectAnchors,
-	ensureAiFeatureSyncRestAnchors,
 } from "./cli-add-workspace-ai-anchors.js";
+import {
+	ensureAiFeatureSyncRestAnchors,
+} from "./cli-add-workspace-ai-sync-rest-anchors.js";
 import { buildAiFeaturePhpSource } from "./cli-add-workspace-ai-templates.js";
 import { appendWorkspaceInventoryEntries } from "./workspace-inventory.js";
 import {
