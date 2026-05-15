@@ -101,9 +101,13 @@ if ( ! function_exists( '${fieldsFunctionName}' ) ) {
 }
 
 if ( ! function_exists( '${canReadFunctionName}' ) ) {
-\tfunction ${canReadFunctionName}( int $post_id, string $post_type ) : bool {
+\tfunction ${canReadFunctionName}( int $post_id ) : bool {
 \t\t$post = get_post( $post_id );
 \t\tif ( ! $post ) {
+\t\t\treturn false;
+\t\t}
+\t\t$post_type = is_string( $post->post_type ) ? $post->post_type : '';
+\t\tif ( '' === $post_type ) {
 \t\t\treturn false;
 \t\t}
 \t\tif ( ( ! is_post_publicly_viewable( $post ) && ! current_user_can( 'read_post', $post_id ) ) || post_password_required( $post ) ) {
@@ -129,7 +133,6 @@ if ( ! function_exists( '${resolveFunctionName}' ) ) {
 \t\t}
 
 \t\t$post_id = 0;
-\t\t$post_type = ${quotePhpString(options.postMeta.postType)};
 \t\tif (
 \t\t\tis_object( $block_instance ) &&
 \t\t\tproperty_exists( $block_instance, 'context' ) &&
@@ -138,16 +141,7 @@ if ( ! function_exists( '${resolveFunctionName}' ) ) {
 \t\t) {
 \t\t\t$post_id = absint( $block_instance->context['postId'] );
 \t\t}
-\t\tif (
-\t\t\tis_object( $block_instance ) &&
-\t\t\tproperty_exists( $block_instance, 'context' ) &&
-\t\t\tis_array( $block_instance->context ) &&
-\t\t\tisset( $block_instance->context['postType'] ) &&
-\t\t\tis_string( $block_instance->context['postType'] )
-\t\t) {
-\t\t\t$post_type = $block_instance->context['postType'];
-\t\t}
-\t\tif ( ! $post_id || ! ${canReadFunctionName}( $post_id, $post_type ) ) {
+\t\tif ( ! $post_id || ! ${canReadFunctionName}( $post_id ) ) {
 \t\t\treturn null;
 \t\t}
 
@@ -172,7 +166,7 @@ register_block_bindings_source(
 \tarray(
 \t\t'label' => __( ${quotePhpString(bindingSourceTitle)}, ${quotePhpString(options.textDomain)} ),
 \t\t'get_value_callback' => ${quotePhpString(resolveFunctionName)},
-\t\t'uses_context' => array( 'postId', 'postType' ),
+\t\t'uses_context' => array( 'postId' ),
 \t)
 );
 ${supportedAttributesHook}`;

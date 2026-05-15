@@ -315,11 +315,20 @@ test('cli-add-workspace delegates workspace add workflows to focused helpers', (
   expect(bindingSource).toContain(
     'export async function runAddBindingSourceCommand(',
   );
+  expect(bindingSource).toContain('await ensureBindingSourceBootstrapAnchors(');
+  expect(bindingSource).toContain('await resolveBindingSourceRegistryPath(');
+  expect(bindingSource).toContain('await writeBindingSourceRegistry(');
   expect(bindingSource).not.toContain('function buildBindingSourceServerSource(');
   expect(bindingSource).not.toContain(
     'async function ensureBindingSourceBootstrapAnchors(',
   );
   expect(bindingSource).not.toContain('function buildBindingSourceIndexSource(');
+  expect(bindingSource).not.toContain(
+    'async function resolveBindingSourceRegistryPath(',
+  );
+  expect(bindingSource).not.toContain(
+    'async function writeBindingSourceRegistry(',
+  );
   expect(bindingSourceEmittersSource).toContain(
     'export function buildBindingSourceServerSource(',
   );
@@ -334,6 +343,9 @@ test('cli-add-workspace delegates workspace add workflows to focused helpers', (
   );
   expect(bindingSourceAnchorsSource).toContain(
     'export async function ensureBindingSourceBootstrapAnchors(',
+  );
+  expect(bindingSourceAnchorsSource).toContain(
+    'export async function resolveBindingSourceRegistryPath(',
   );
   expect(bindingSourceAnchorsSource).toContain(
     'export async function writeBindingSourceRegistry(',
