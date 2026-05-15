@@ -77,6 +77,13 @@ test('cli-add-workspace delegates workspace add workflows to focused helpers', (
 		path.join(runtimeRoot, 'cli-add-workspace-rest-php-templates.ts'),
 		'utf8',
 	);
+	const restSchemaHelperPhpTemplateSource = fs.readFileSync(
+		path.join(
+			runtimeRoot,
+			'cli-add-workspace-rest-schema-helper-php-template.ts',
+		),
+		'utf8',
+	);
 	const restAnchorsSource = fs.readFileSync(
 		path.join(runtimeRoot, 'cli-add-workspace-rest-anchors.ts'),
 		'utf8',
@@ -563,6 +570,9 @@ test('cli-add-workspace delegates workspace add workflows to focused helpers', (
 		'from "./cli-add-workspace-rest-php-templates.js"',
 	);
 	expect(restGeneratedSource).toContain(
+		'from "./cli-add-workspace-rest-schema-helper-php-template.js"',
+	);
+	expect(restGeneratedSource).toContain(
 		'from "./cli-add-workspace-rest-generated-source-emitters.js"',
 	);
 	expect(restGeneratedSource).toContain(
@@ -584,6 +594,18 @@ test('cli-add-workspace delegates workspace add workflows to focused helpers', (
 	expect(restManualSource).toContain('syncManualRestContractArtifacts');
 	expect(restPhpTemplatesSource).toContain(
 		'export function buildRestResourcePhpSource(',
+	);
+	expect(restPhpTemplatesSource).toContain(
+		'from "./cli-add-workspace-rest-schema-helper-php-template.js"',
+	);
+	expect(restPhpTemplatesSource).not.toContain(
+		'function buildWorkspaceRestSchemaHelperPhpSource(',
+	);
+	expect(restSchemaHelperPhpTemplateSource).toContain(
+		'export function buildWorkspaceRestSchemaHelperPhpSource(',
+	);
+	expect(restSchemaHelperPhpTemplateSource).not.toContain(
+		'buildRestResourcePhpSource',
 	);
 	expect(restTypesSource).toContain(
 		'export interface RunAddRestResourceCommandResult',
