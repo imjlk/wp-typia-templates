@@ -6,18 +6,15 @@ import {
 	renderScaffoldCompatibilityConfig,
 	resolveScaffoldCompatibilityPolicy,
 } from "./scaffold-compatibility.js";
+import {
+	formatResolveRestNonceSource,
+	indentMultiline,
+} from "./cli-add-workspace-rest-source-utils.js";
 import { toPascalCase, toTitleCase } from "./string-case.js";
 
 export {
 	buildAiFeatureSyncScriptSource,
 } from "./cli-add-workspace-ai-sync-script-source.js";
-
-function indentMultiline(source: string, prefix: string): string {
-	return source
-		.split("\n")
-		.map((line) => `${prefix}${line}`)
-	.join("\n");
-}
 
 /**
  * Build the workspace inventory entry written into `scripts/block-config.ts` for one AI feature.
@@ -215,26 +212,7 @@ import {
 \trun${pascalCase}AiFeatureEndpoint,
 } from './api-client';
 
-function resolveRestNonce( fallback?: string ): string | undefined {
-\tif ( typeof fallback === 'string' && fallback.length > 0 ) {
-\t\treturn fallback;
-\t}
-
-\tif ( typeof window === 'undefined' ) {
-\t\treturn undefined;
-\t}
-
-\tconst wpApiSettings = (
-\t\twindow as typeof window & {
-\t\t\twpApiSettings?: { nonce?: string };
-\t\t}
-\t).wpApiSettings;
-
-\treturn typeof wpApiSettings?.nonce === 'string' &&
-\t\twpApiSettings.nonce.length > 0
-\t\t? wpApiSettings.nonce
-\t\t: undefined;
-}
+${formatResolveRestNonceSource("spaced")}
 
 function isPlainObject( value: unknown ): value is Record< string, unknown > {
 \treturn (
