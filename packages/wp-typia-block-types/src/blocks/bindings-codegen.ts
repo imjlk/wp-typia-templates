@@ -63,7 +63,13 @@ function phpStringArray(values: readonly string[]): string {
     : `array( ${values.map((value) => phpString(value)).join(", ")} )`;
 }
 
+const PHP_IDENTIFIER_PATTERN = /^[A-Za-z_][A-Za-z0-9_]*$/u;
+
 function sanitizePhpIdentifier(value: string): string {
+  if (PHP_IDENTIFIER_PATTERN.test(value)) {
+    return value;
+  }
+
   const sanitized = value.replace(/[^A-Za-z0-9_]/gu, "_").replace(/_+/gu, "_");
 
   return /^[A-Za-z_]/u.test(sanitized) ? sanitized : `wp_typia_${sanitized}`;

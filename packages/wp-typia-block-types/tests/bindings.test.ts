@@ -397,6 +397,24 @@ describe("binding source registration source generation", () => {
     );
   });
 
+  test("preserves valid custom PHP registration function names", () => {
+    const source = defineBindingSource({
+      getValueCallback: "example_get_profile_binding_value",
+      name: "example/profile-data",
+    });
+    const phpSource = createPhpBindingSourceRegistrationSource(source, {
+      functionName: "example__register_binding_sources",
+    });
+
+    expect(phpSource).toContain(
+      "function example__register_binding_sources()",
+    );
+    expect(phpSource).toContain(
+      "add_action( 'init', 'example__register_binding_sources' );",
+    );
+    expect(phpSource).not.toContain("example_register_binding_sources");
+  });
+
   test("exposes a direct compatibility manifest helper", () => {
     const manifest = createBindingSourceCompatibilityManifest({
       fieldsList: true,
