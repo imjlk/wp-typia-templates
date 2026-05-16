@@ -1,0 +1,100 @@
+import { describe, expect, test } from "bun:test";
+
+import {
+  getDiagnosticSeverity,
+  handleDiagnostics,
+} from "../src/blocks/shared/diagnostics";
+import { isObjectRecord } from "../src/blocks/shared/object-utils";
+import { normalizeStaticRegistrationValue } from "../src/blocks/shared/static-registration";
+
+describe("shared block API helper utilities", () => {
+  test("identifies object records without accepting arrays or null", () => {
+    expect(isObjectRecord({ enabled: true })).toBe(true);
+    expect(isObjectRecord([])).toBe(false);
+    expect(isObjectRecord(null)).toBe(false);
+  });
+
+  test("maps strict mode to authoring diagnostic severity", () => {
+    expect(getDiagnosticSeverity(true)).toBe("error");
+    expect(getDiagnosticSeverity(false)).toBe("warning");
+  });
+
+  test("normalizes nested static registration values and omits undefined fields", () => {
+    expect(
+      normalizeStaticRegistrationValue(
+        {
+          enabled: true,
+          nested: [
+            {
+              label: "Field",
+              omitted: undefined,
+            },
+          ],
+          omitted: undefined,
+        },
+        "entry",
+        { description: "test" },
+      ),
+    ).toEqual({
+      enabled: true,
+      nested: [
+        {
+          label: "Field",
+        },
+      ],
+    });
+  });
+
+  test("rejects unsupported static registration values with contextual paths", () => {
+    expect(() =>
+      normalizeStaticRegistrationValue(
+        {
+          nested: {
+            callback: () => undefined,
+          },
+        },
+        "entry",
+        { description: "test" },
+      ),
+    ).toThrow(
+      "Cannot generate static test registration code for function value at entry.nested.callback.",
+    );
+  });
+
+  test("emits warning diagnostics through callbacks and throws grouped errors", () => {
+    const warnings: Array<{ readonly message: string; readonly severity: "warning" }> =
+      [];
+
+    handleDiagnostics(
+      [
+        {
+          message: "Use a newer WordPress feature.",
+          severity: "warning",
+        },
+      ],
+      (diagnostic) => warnings.push(diagnostic),
+      { failureHeading: "Shared diagnostics failed:" },
+    );
+
+    expect(warnings).toEqual([
+      {
+        message: "Use a newer WordPress feature.",
+        severity: "warning",
+      },
+    ]);
+    expect(() =>
+      handleDiagnostics(
+        [
+          {
+            message: "Required support is unavailable.",
+            severity: "error",
+          },
+        ],
+        undefined,
+        { failureHeading: "Shared diagnostics failed:" },
+      ),
+    ).toThrow(
+      "Shared diagnostics failed:\n- Required support is unavailable.",
+    );
+  });
+});

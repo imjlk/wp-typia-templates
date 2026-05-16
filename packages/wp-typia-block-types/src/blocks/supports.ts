@@ -22,6 +22,8 @@ import {
   type WordPressCompatibilitySettings,
   type WordPressVersion,
 } from "./compatibility.js";
+import { handleDiagnostics } from "./shared/diagnostics.js";
+import { isObjectRecord } from "./shared/object-utils.js";
 
 /**
  * Derived from Gutenberg block support keys and commonly used block.json
@@ -484,16 +486,12 @@ const TOP_LEVEL_COMPATIBILITY_SUPPORT_KEYS = [
   "visibility",
 ] as const satisfies readonly BlockSupportFeature[];
 
-function isSupportObject(value: unknown): value is Readonly<Record<string, unknown>> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
-}
-
 function isEnabledSupportValue(value: unknown): boolean {
   return value !== false && value !== null && value !== undefined;
 }
 
 function isEnabledTopLevelSupportValue(value: unknown): boolean {
-  if (!isSupportObject(value)) {
+  if (!isObjectRecord(value)) {
     return isEnabledSupportValue(value);
   }
 
@@ -508,7 +506,7 @@ function hasEnabledNestedSupport(
   section: unknown,
   key: string,
 ): boolean {
-  return isSupportObject(section) && isEnabledSupportValue(section[key]);
+  return isObjectRecord(section) && isEnabledSupportValue(section[key]);
 }
 
 function addCompatibilityFeature(
@@ -556,7 +554,7 @@ export function collectBlockSupportsCompatibilityFeatures(
   }
 
   const color = supports.color;
-  if (isSupportObject(color)) {
+  if (isObjectRecord(color)) {
     for (const key of COLOR_COMPATIBILITY_SUPPORT_KEYS) {
       if (isEnabledSupportValue(color[key])) {
         addCompatibilityFeature(features, seen, `color.${key}`);
@@ -649,33 +647,15 @@ function handleDefineSupportsDiagnostics(
   diagnostics: readonly WordPressBlockApiCompatibilityDiagnostic[],
   onDiagnostic: DefineSupportsOptions["onDiagnostic"],
 ): void {
-  const errors = diagnostics.filter(
-    (diagnostic) => diagnostic.severity === "error",
-  );
-
-  if (errors.length > 0) {
-    throw new Error(
-      [
-        "WordPress block supports compatibility check failed:",
-        ...errors.map((diagnostic) => `- ${diagnostic.message}`),
-      ].join("\n"),
-    );
-  }
-
-  for (const diagnostic of diagnostics) {
-    if (onDiagnostic) {
-      onDiagnostic(diagnostic);
-      continue;
-    }
-
-    console.warn(`[wp-typia] ${diagnostic.message}`);
-  }
+  handleDiagnostics(diagnostics, onDiagnostic, {
+    failureHeading: "WordPress block supports compatibility check failed:",
+  });
 }
 
 export function getDefinedSupportsCompatibilityManifest(
   supports: unknown,
 ): WordPressBlockApiCompatibilityManifest | undefined {
-  return isSupportObject(supports)
+  return isObjectRecord(supports)
     ? (
         supports as {
           readonly [DEFINED_BLOCK_SUPPORTS_METADATA]?:
