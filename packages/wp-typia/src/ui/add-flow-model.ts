@@ -64,6 +64,7 @@ export const addFlowSchema = z.object({
   'secret-state-field': z.string().optional(),
   slot: z.string().optional(),
   source: z.string().optional(),
+  tag: z.string().optional(),
   tags: z.string().optional(),
   template: z.string().optional(),
   'thumbnail-url': z.string().optional(),
