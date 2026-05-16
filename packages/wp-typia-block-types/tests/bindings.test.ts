@@ -159,6 +159,43 @@ describe("defineBindingSource", () => {
     expect(editorSource).toContain("Skipped getFieldsList()");
   });
 
+  test("reports diagnostics through explicit loggers", () => {
+    const logs: Array<{
+      readonly diagnostic: BindingSourceDiagnostic;
+      readonly message: string;
+    }> = [];
+
+    defineBindingSource(
+      {
+        fields: [
+          {
+            label: "Title",
+            name: "title",
+          },
+        ],
+        getValueCallback: "example_get_post_binding_value",
+        minWordPress: "6.7",
+        name: "example/post-data",
+        strict: false,
+      },
+      {
+        logger: {
+          warn: (message, diagnostic) => {
+            logs.push({ diagnostic, message });
+          },
+        },
+      },
+    );
+
+    expect(logs).toHaveLength(1);
+    expect(logs[0]?.message).toContain("[wp-typia]");
+    expect(logs[0]?.diagnostic).toMatchObject({
+      code: "unsupported-wordpress-block-api-feature",
+      feature: "editorFieldsList",
+      severity: "warning",
+    });
+  });
+
   test("supports server-only sources without editor registration output", () => {
     const source = defineBindingSource({
       editor: false,

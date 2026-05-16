@@ -11,6 +11,7 @@ import {
 import {
   getDiagnosticSeverity,
   handleDiagnostics,
+  type DiagnosticLogger,
 } from "./shared/diagnostics.js";
 import { isObjectRecord } from "./shared/object-utils.js";
 
@@ -73,6 +74,7 @@ export interface DefineBindingSourceInlineOptions {
   readonly allowUnknownFutureKeys?: boolean;
   readonly editor?: boolean;
   readonly fieldsList?: boolean;
+  readonly logger?: DiagnosticLogger<BindingSourceDiagnostic>;
   readonly minVersion?: WordPressVersion;
   readonly minWordPress?: WordPressVersion | BindingSourceVersionGates;
   readonly minWordPressEditor?: WordPressVersion;
@@ -88,6 +90,7 @@ export interface DefineBindingSourceInlineOptions {
 export interface DefineBindingSourceOptions extends WordPressCompatibilitySettings {
   readonly editor?: boolean;
   readonly fieldsList?: boolean;
+  readonly logger?: DiagnosticLogger<BindingSourceDiagnostic>;
   readonly minWordPress?: WordPressVersion | BindingSourceVersionGates;
   readonly minWordPressEditor?: WordPressVersion;
   readonly minWordPressFieldsList?: WordPressVersion;
@@ -207,6 +210,7 @@ const DEFINE_BINDING_SOURCE_INLINE_OPTION_KEYS = new Set<string>([
   "allowUnknownFutureKeys",
   "editor",
   "fieldsList",
+  "logger",
   "minVersion",
   "minWordPress",
   "minWordPressEditor",
@@ -343,6 +347,7 @@ function resolveDefineBindingSourceSettings(
     supportedAttributesFilter: boolean;
   };
   gates: BindingSourceVersionGates;
+  logger: DefineBindingSourceOptions["logger"];
   onDiagnostic: DefineBindingSourceOptions["onDiagnostic"];
   strict: boolean;
 } {
@@ -364,6 +369,7 @@ function resolveDefineBindingSourceSettings(
         hasBindableAttributes,
     },
     gates,
+    logger: options.logger ?? inlineOptions.logger,
     onDiagnostic: options.onDiagnostic ?? inlineOptions.onDiagnostic,
     strict,
   };
@@ -594,9 +600,11 @@ function createBindingSourceDiagnostics(
 function handleBindingSourceDiagnostics(
   diagnostics: readonly BindingSourceDiagnostic[],
   onDiagnostic: DefineBindingSourceOptions["onDiagnostic"],
+  logger: DefineBindingSourceOptions["logger"],
 ): void {
   handleDiagnostics(diagnostics, onDiagnostic, {
     failureHeading: "WordPress block binding source check failed:",
+    logger,
   });
 }
 
@@ -659,7 +667,11 @@ export function defineBindingSource<
     }),
   ];
 
-  handleBindingSourceDiagnostics(diagnostics, resolved.onDiagnostic);
+  handleBindingSourceDiagnostics(
+    diagnostics,
+    resolved.onDiagnostic,
+    resolved.logger,
+  );
 
   Object.defineProperty(
     normalizedSource,

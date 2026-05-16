@@ -22,7 +22,10 @@ import {
   type WordPressCompatibilitySettings,
   type WordPressVersion,
 } from "./compatibility.js";
-import { handleDiagnostics } from "./shared/diagnostics.js";
+import {
+  handleDiagnostics,
+  type DiagnosticLogger,
+} from "./shared/diagnostics.js";
 import {
   isNonArrayObject,
   isObjectRecord,
@@ -376,6 +379,7 @@ type IfSupport<TCondition, TAttributes> = TCondition extends true
 
 export interface DefineSupportsInlineOptions {
   readonly allowUnknownFutureKeys?: boolean;
+  readonly logger?: DiagnosticLogger<WordPressBlockApiCompatibilityDiagnostic>;
   readonly minVersion?: WordPressVersion;
   readonly minWordPress?: WordPressVersion;
   readonly onDiagnostic?: (diagnostic: WordPressBlockApiCompatibilityDiagnostic) => void;
@@ -383,6 +387,7 @@ export interface DefineSupportsInlineOptions {
 }
 
 export interface DefineSupportsOptions extends WordPressCompatibilitySettings {
+  readonly logger?: DiagnosticLogger<WordPressBlockApiCompatibilityDiagnostic>;
   readonly minWordPress?: WordPressVersion;
   readonly onDiagnostic?: (diagnostic: WordPressBlockApiCompatibilityDiagnostic) => void;
 }
@@ -459,6 +464,7 @@ export type SupportAttributesFromBlockSupports<TSupports> =
 const KNOWN_BLOCK_SUPPORT_FEATURES = new Set<string>(BLOCK_SUPPORT_FEATURES);
 const DEFINE_SUPPORTS_INLINE_OPTION_KEYS = new Set<string>([
   "allowUnknownFutureKeys",
+  "logger",
   "minVersion",
   "minWordPress",
   "onDiagnostic",
@@ -649,9 +655,11 @@ export function createBlockSupportsCompatibilityManifest(
 function handleDefineSupportsDiagnostics(
   diagnostics: readonly WordPressBlockApiCompatibilityDiagnostic[],
   onDiagnostic: DefineSupportsOptions["onDiagnostic"],
+  logger: DefineSupportsOptions["logger"],
 ): void {
   handleDiagnostics(diagnostics, onDiagnostic, {
     failureHeading: "WordPress block supports compatibility check failed:",
+    logger,
   });
 }
 
@@ -686,6 +694,7 @@ export function defineSupports<
   handleDefineSupportsDiagnostics(
     manifest.diagnostics,
     options.onDiagnostic ?? inlineOptions.onDiagnostic,
+    options.logger ?? inlineOptions.logger,
   );
 
   Object.defineProperty(normalizedSupports, DEFINED_BLOCK_SUPPORTS_METADATA, {

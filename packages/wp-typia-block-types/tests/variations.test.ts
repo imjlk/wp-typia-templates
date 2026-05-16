@@ -120,6 +120,39 @@ describe("defineVariation", () => {
 		]);
 	});
 
+	test("reports authoring warnings through explicit loggers", () => {
+		const logs: Array<{
+			readonly diagnostic: BlockVariationDiagnostic;
+			readonly message: string;
+		}> = [];
+
+		defineVariation<ParagraphAttributes>(
+			"core/paragraph",
+			{
+				attributes: {
+					className: "is-style-editorial",
+				},
+				name: "example-editorial-paragraph",
+				title: "Editorial Paragraph",
+			},
+			{
+				logger: {
+					warn: (message, diagnostic) => {
+						logs.push({ diagnostic, message });
+					},
+				},
+			},
+		);
+
+		expect(logs).toHaveLength(1);
+		expect(logs[0]?.message).toContain("[wp-typia]");
+		expect(logs[0]?.diagnostic).toMatchObject({
+			code: "missing-is-active",
+			severity: "warning",
+			variationName: "example-editorial-paragraph",
+		});
+	});
+
 	test("throws in strict mode when editor registration is below the WordPress floor", () => {
 		expect(() =>
 			defineVariation<ParagraphAttributes>("core/paragraph", {
