@@ -3186,6 +3186,8 @@ test("canonical CLI can add a pattern to an official workspace template", async 
       "section",
       "--section-role",
       "hero",
+      "--catalog-title",
+      "Homepage Hero",
       "--tags",
       "landing,hero",
       "--thumbnail-url",
@@ -3213,6 +3215,7 @@ test("canonical CLI can add a pattern to an official workspace template", async 
   expect(blockConfigSource).toContain('scope: "section"');
   expect(blockConfigSource).toContain('sectionRole: "hero"');
   expect(blockConfigSource).toContain('tags: ["hero", "landing"]');
+  expect(blockConfigSource).toContain('title: "Homepage Hero"');
   expect(blockConfigSource).toContain(
     'thumbnailUrl: "./thumbnails/hero-layout.png"'
   );
@@ -3221,6 +3224,7 @@ test("canonical CLI can add a pattern to an official workspace template", async 
   expect(bootstrapSource).toContain("/src/patterns/*/*.php");
   expect(patternSource).toContain("demo-space/hero-layout");
   expect(patternSource).toContain("section section--hero");
+  expect(patternSource).toContain('"Homepage Hero"');
   expect(patternSource).toContain("<!-- wp:group");
   expect(patternSource).toContain('"className":"section section--hero"');
 

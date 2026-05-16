@@ -28,6 +28,7 @@ export const addFlowSchema = z.object({
   auth: z.string().optional(),
   block: z.string().optional(),
   'body-type': z.string().optional(),
+  'catalog-title': z.string().optional(),
   'controller-class': z.string().optional(),
   'controller-extends': z.string().optional(),
   'data-storage': z.string().optional(),

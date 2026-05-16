@@ -238,6 +238,7 @@ test('passes typed pattern catalog flags to the runtime', async () => {
     } as unknown as AddKindExecutionContext['addRuntime'],
     cwd: '/tmp/wp-typia-pattern-test',
     flags: {
+      'catalog-title': 'Homepage Hero',
       scope: 'section',
       'section-role': 'hero',
       tags: 'landing,hero',
@@ -255,6 +256,7 @@ test('passes typed pattern catalog flags to the runtime', async () => {
 
   expect(capturedOptions).toEqual([
     {
+      catalogTitle: 'Homepage Hero',
       cwd: '/tmp/wp-typia-pattern-test',
       patternName: 'hero-photo',
       patternScope: 'section',

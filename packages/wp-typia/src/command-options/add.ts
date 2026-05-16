@@ -28,6 +28,11 @@ export const ADD_OPTION_METADATA = {
       'Target block slug/name for variation, core-variation, style, and end-to-end binding-source workflows.',
     type: 'string',
   },
+  'catalog-title': {
+    description:
+      'Human-readable title for typed pattern catalog entries; defaults to the pattern slug title.',
+    type: 'string',
+  },
   'controller-class': {
     description:
       'REST resource controller class used for generated route callbacks or declared manual/provider route ownership.',

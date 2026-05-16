@@ -246,12 +246,14 @@ describe("first-party TUI interaction models", () => {
 
 		expect(
 			sanitizeAddSubmitValues({
+				"catalog-title": " Homepage Hero ",
 				kind: "pattern",
 				name: "hero-photo",
 				tag: " hero ",
 				tags: " landing,featured ",
 			}),
 		).toEqual({
+			"catalog-title": "Homepage Hero",
 			kind: "pattern",
 			name: "hero-photo",
 			tag: "hero",
