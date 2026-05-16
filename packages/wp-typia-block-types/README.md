@@ -119,6 +119,9 @@ Use `onDiagnostic` when callers need callback-driven diagnostics for tests,
 custom reporting, or UI integration:
 
 ```ts
+const diagnostics: Array<{ message: string; severity: 'warning' | 'error' }> =
+  [];
+
 defineSupports(
   {
     allowedBlocks: true,
