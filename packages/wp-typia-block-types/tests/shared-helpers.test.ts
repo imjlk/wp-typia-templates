@@ -4,11 +4,17 @@ import {
   getDiagnosticSeverity,
   handleDiagnostics,
 } from "../src/blocks/shared/diagnostics";
-import { isObjectRecord } from "../src/blocks/shared/object-utils";
+import {
+  isNonArrayObject,
+  isObjectRecord,
+} from "../src/blocks/shared/object-utils";
 import { normalizeStaticRegistrationValue } from "../src/blocks/shared/static-registration";
 
 describe("shared block API helper utilities", () => {
   test("identifies object records without accepting arrays or null", () => {
+    expect(isNonArrayObject({ enabled: true })).toBe(true);
+    expect(isNonArrayObject(new Date())).toBe(true);
+    expect(isNonArrayObject([])).toBe(false);
     expect(isObjectRecord({ enabled: true })).toBe(true);
     expect(isObjectRecord(Object.create(null))).toBe(true);
     expect(isObjectRecord([])).toBe(false);

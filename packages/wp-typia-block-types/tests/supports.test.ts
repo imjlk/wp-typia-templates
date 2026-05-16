@@ -157,6 +157,20 @@ describe("defineSupports", () => {
 		expect(enabledFeatures).toEqual(["background", "dimensions", "position"]);
 	});
 
+	test("does not treat non-plain object support values as enabled top-level features", () => {
+		class CustomSupportValue {
+			enabled = true;
+		}
+
+		const features = collectBlockSupportsCompatibilityFeatures({
+			background: new Date() as never,
+			contentRole: new CustomSupportValue() as never,
+			renaming: new Map([["enabled", true]]) as never,
+		}).map((feature) => feature.feature);
+
+		expect(features).toEqual([]);
+	});
+
 	test("throws in strict mode when supports require a newer WordPress floor", () => {
 		expect(() =>
 			defineSupports({

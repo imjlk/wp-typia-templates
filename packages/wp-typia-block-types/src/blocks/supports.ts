@@ -23,7 +23,10 @@ import {
   type WordPressVersion,
 } from "./compatibility.js";
 import { handleDiagnostics } from "./shared/diagnostics.js";
-import { isObjectRecord } from "./shared/object-utils.js";
+import {
+  isNonArrayObject,
+  isObjectRecord,
+} from "./shared/object-utils.js";
 
 /**
  * Derived from Gutenberg block support keys and commonly used block.json
@@ -492,7 +495,7 @@ function isEnabledSupportValue(value: unknown): boolean {
 
 function isEnabledTopLevelSupportValue(value: unknown): boolean {
   if (!isObjectRecord(value)) {
-    return isEnabledSupportValue(value);
+    return isNonArrayObject(value) ? false : isEnabledSupportValue(value);
   }
 
   return Object.entries(value).some(
