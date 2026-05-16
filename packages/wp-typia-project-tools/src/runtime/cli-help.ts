@@ -57,6 +57,7 @@ Notes:
   Use \`--template workspace\` as shorthand for \`@wp-typia/create-workspace-template\`, the official empty workspace scaffold behind \`wp-typia add ...\`.
   Use \`--profile plugin-qa\` with \`--template workspace\` when a plugin needs local wp-env smoke checks, \`.env.example\`, and release zip scripts from day one; omit it for the minimal workspace shell.
   Interactive add flows let you choose a template when \`--template\` is omitted; non-interactive runs default to \`basic\`.
+  Unknown \`core/*\` targets for \`add core-variation\` warn instead of failing so newer WordPress core blocks remain scaffoldable; third-party namespaces are allowed without local discovery.
   \`add admin-view\` scaffolds an opt-in DataViews-powered WordPress admin screen under \`src/admin-views/\`.
   Pass \`--source rest-resource:<slug>\` to reuse a list-capable REST resource.
   Pass \`--source core-data:postType/post\` or \`--source core-data:taxonomy/category\` to bind a WordPress-owned entity collection.

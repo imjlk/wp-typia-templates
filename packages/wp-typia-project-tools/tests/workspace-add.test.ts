@@ -775,6 +775,26 @@ test("canonical CLI can add core block variations without generating block manif
       variationName: "index",
     })
   ).rejects.toThrow("Core variation name must not normalize to `index`.");
+  const knownCoreResult = await runAddCoreVariationCommand({
+    cwd: targetDir,
+    targetBlockName: "core/heading",
+    variationName: "hero-heading",
+  });
+  expect(knownCoreResult.warnings).toBeUndefined();
+  const thirdPartyResult = await runAddCoreVariationCommand({
+    cwd: targetDir,
+    targetBlockName: "demo-space/feature-card",
+    variationName: "brand-feature",
+  });
+  expect(thirdPartyResult.warnings).toBeUndefined();
+  const unknownCoreResult = await runAddCoreVariationCommand({
+    cwd: targetDir,
+    targetBlockName: "core/groub",
+    variationName: "typo-target",
+  });
+  expect(unknownCoreResult.warnings).toEqual([
+    'Target block "core/groub" uses the WordPress core namespace but is not in wp-typia\'s known core block list. The variation was generated for forward compatibility; verify the block name or update wp-typia if this is a newer core block.',
+  ]);
 
   const editorPluginIndexSource = fs.readFileSync(
     path.join(targetDir, "src", "editor-plugins", "index.ts"),
