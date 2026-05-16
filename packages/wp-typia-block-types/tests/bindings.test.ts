@@ -2,6 +2,10 @@ import { describe, expect, test } from "bun:test";
 
 import type { BindingSourceDiagnostic } from "../src/blocks/bindings";
 import {
+  createEditorBindingSourceRegistrationSource as createEditorBindingSourceRegistrationSourceFromCodegen,
+  createPhpBindingSourceRegistrationSource as createPhpBindingSourceRegistrationSourceFromCodegen,
+} from "../src/blocks/bindings-codegen";
+import {
   createBindingSourceCompatibilityManifest,
   createEditorBindingSourceRegistrationSource,
   createPhpBindingSourceRegistrationSource,
@@ -307,6 +311,12 @@ describe("binding source registration source generation", () => {
     expect(editorSource).toContain('"name": "example/profile-data"');
     expect(editorSource).toContain('"name": "image_url"');
     expect(editorSource).toContain("getFieldsList: () => fields");
+    expect(createPhpBindingSourceRegistrationSourceFromCodegen(source, {
+      textDomain: "example",
+    })).toBe(phpSource);
+    expect(createEditorBindingSourceRegistrationSourceFromCodegen(source)).toBe(
+      editorSource,
+    );
   });
 
   test("rejects dynamic field args when generating static editor registration", () => {
