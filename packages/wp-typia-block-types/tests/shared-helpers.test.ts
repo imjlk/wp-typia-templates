@@ -10,8 +10,12 @@ import { normalizeStaticRegistrationValue } from "../src/blocks/shared/static-re
 describe("shared block API helper utilities", () => {
   test("identifies object records without accepting arrays or null", () => {
     expect(isObjectRecord({ enabled: true })).toBe(true);
+    expect(isObjectRecord(Object.create(null))).toBe(true);
     expect(isObjectRecord([])).toBe(false);
     expect(isObjectRecord(null)).toBe(false);
+    expect(isObjectRecord(new Date())).toBe(false);
+    expect(isObjectRecord(new Map())).toBe(false);
+    expect(isObjectRecord(new (class TestObject {})())).toBe(false);
   });
 
   test("maps strict mode to authoring diagnostic severity", () => {
@@ -58,6 +62,17 @@ describe("shared block API helper utilities", () => {
       ),
     ).toThrow(
       "Cannot generate static test registration code for function value at entry.nested.callback.",
+    );
+    expect(() =>
+      normalizeStaticRegistrationValue(
+        {
+          createdAt: new Date("2026-05-16T00:00:00.000Z"),
+        },
+        "entry",
+        { description: "test" },
+      ),
+    ).toThrow(
+      "Cannot generate static test registration code for unsupported value at entry.createdAt.",
     );
   });
 
