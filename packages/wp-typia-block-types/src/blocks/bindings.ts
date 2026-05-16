@@ -9,6 +9,12 @@ import {
   type WordPressCompatibilitySettings,
   type WordPressVersion,
 } from "./compatibility.js";
+import {
+  getDiagnosticSeverity,
+  handleDiagnostics,
+} from "./shared/diagnostics.js";
+import { isObjectRecord } from "./shared/object-utils.js";
+import { normalizeStaticRegistrationValue } from "./shared/static-registration.js";
 
 export type BindingSourceName = `${string}/${string}`;
 
@@ -231,12 +237,6 @@ const SOURCE_NAME_PATTERN =
   /^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\/[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/u;
 const FIELD_NAME_PATTERN = /^[A-Za-z_][A-Za-z0-9_-]*$/u;
 
-function isObjectRecord(
-  value: unknown,
-): value is Readonly<Record<string, unknown>> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
-}
-
 function isBindingSourceVersionGates(
   value: WordPressVersion | BindingSourceVersionGates | undefined,
 ): value is BindingSourceVersionGates {
@@ -381,10 +381,6 @@ function resolveDefineBindingSourceSettings(
     onDiagnostic: options.onDiagnostic ?? inlineOptions.onDiagnostic,
     strict,
   };
-}
-
-function getDiagnosticSeverity(strict: boolean): "error" | "warning" {
-  return strict ? "error" : "warning";
 }
 
 function getFeatureMinVersion(
@@ -613,27 +609,9 @@ function handleBindingSourceDiagnostics(
   diagnostics: readonly BindingSourceDiagnostic[],
   onDiagnostic: DefineBindingSourceOptions["onDiagnostic"],
 ): void {
-  const errors = diagnostics.filter(
-    (diagnostic) => diagnostic.severity === "error",
-  );
-
-  if (errors.length > 0) {
-    throw new Error(
-      [
-        "WordPress block binding source check failed:",
-        ...errors.map((diagnostic) => `- ${diagnostic.message}`),
-      ].join("\n"),
-    );
-  }
-
-  for (const diagnostic of diagnostics) {
-    if (onDiagnostic) {
-      onDiagnostic(diagnostic);
-      continue;
-    }
-
-    console.warn(`[wp-typia] ${diagnostic.message}`);
-  }
+  handleDiagnostics(diagnostics, onDiagnostic, {
+    failureHeading: "WordPress block binding source check failed:",
+  });
 }
 
 export function getDefinedBindingSourceMetadata(
@@ -768,55 +746,6 @@ export function createBindingSourceRegistrationPlan(
       source,
     };
   });
-}
-
-function normalizeStaticRegistrationValue(value: unknown, path: string): unknown {
-  if (value === undefined) {
-    return undefined;
-  }
-  if (
-    value === null ||
-    typeof value === "boolean" ||
-    typeof value === "number" ||
-    typeof value === "string"
-  ) {
-    return value;
-  }
-  if (typeof value === "function") {
-    throw new Error(
-      `Cannot generate static binding source registration code for function value at ${path}.`,
-    );
-  }
-  if (typeof value === "bigint" || typeof value === "symbol") {
-    throw new Error(
-      `Cannot generate static binding source registration code for ${typeof value} value at ${path}.`,
-    );
-  }
-  if (Array.isArray(value)) {
-    return value.map((entry, index) =>
-      normalizeStaticRegistrationValue(entry, `${path}[${index}]`),
-    );
-  }
-  if (isObjectRecord(value)) {
-    const normalized: Record<string, unknown> = {};
-
-    for (const [key, nestedValue] of Object.entries(value)) {
-      const nextValue = normalizeStaticRegistrationValue(
-        nestedValue,
-        `${path}.${key}`,
-      );
-
-      if (nextValue !== undefined) {
-        normalized[key] = nextValue;
-      }
-    }
-
-    return normalized;
-  }
-
-  throw new Error(
-    `Cannot generate static binding source registration code for unsupported value at ${path}.`,
-  );
 }
 
 function getBindingEvaluation(
@@ -1043,6 +972,7 @@ function createEditorRegistrationEntries(
           usesContext: entry.source.usesContext,
         },
         `sources.${entry.source.name}`,
+        { description: "binding source" },
       ),
     );
 
@@ -1057,6 +987,7 @@ function createEditorRegistrationEntries(
     fields[entry.source.name] = normalizeStaticRegistrationValue(
       entry.source.fields,
       `fields.${entry.source.name}`,
+      { description: "binding source" },
     ) as readonly BindingSourceField[];
   }
 

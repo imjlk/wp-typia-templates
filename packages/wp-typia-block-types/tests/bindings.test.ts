@@ -309,6 +309,31 @@ describe("binding source registration source generation", () => {
     expect(editorSource).toContain("getFieldsList: () => fields");
   });
 
+  test("rejects dynamic field args when generating static editor registration", () => {
+    const source = defineBindingSource({
+      fields: [
+        {
+          args: {
+            formatter: () => "dynamic",
+          },
+          label: "Dynamic",
+          name: "dynamic",
+        },
+      ],
+      getValueCallback: "example_get_dynamic_binding_value",
+      minWordPress: {
+        editor: "6.7",
+        fieldsList: "6.9",
+        server: "6.5",
+      },
+      name: "example/dynamic",
+    });
+
+    expect(() => createEditorBindingSourceRegistrationSource(source)).toThrow(
+      "Cannot generate static binding source registration code for function value at fields.example/dynamic[0].args.formatter.",
+    );
+  });
+
   test("keeps generated PHP filter callbacks unique after sanitization", () => {
     const first = defineBindingSource({
       bindableAttributes: [
