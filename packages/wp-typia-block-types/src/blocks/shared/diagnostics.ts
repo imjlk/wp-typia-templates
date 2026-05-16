@@ -5,6 +5,12 @@ export interface DiagnosticWithMessage {
   readonly severity: DiagnosticSeverity;
 }
 
+export interface DiagnosticLogger<
+  TDiagnostic extends DiagnosticWithMessage = DiagnosticWithMessage,
+> {
+  readonly warn: (message: string, diagnostic: TDiagnostic) => void;
+}
+
 export function getDiagnosticSeverity(strict: boolean): DiagnosticSeverity {
   return strict ? "error" : "warning";
 }
@@ -14,6 +20,7 @@ export function handleDiagnostics<TDiagnostic extends DiagnosticWithMessage>(
   onDiagnostic: ((diagnostic: TDiagnostic) => void) | undefined,
   options: {
     readonly failureHeading: string;
+    readonly logger?: DiagnosticLogger<TDiagnostic> | undefined;
   },
 ): void {
   const errors = diagnostics.filter(
@@ -35,6 +42,6 @@ export function handleDiagnostics<TDiagnostic extends DiagnosticWithMessage>(
       continue;
     }
 
-    console.warn(`[wp-typia] ${diagnostic.message}`);
+    options.logger?.warn(`[wp-typia] ${diagnostic.message}`, diagnostic);
   }
 }

@@ -14,6 +14,7 @@ import {
 import {
   getDiagnosticSeverity,
   handleDiagnostics,
+  type DiagnosticLogger,
 } from "./shared/diagnostics.js";
 import { isObjectRecord } from "./shared/object-utils.js";
 import { normalizeStaticRegistrationValue } from "./shared/static-registration.js";
@@ -60,6 +61,7 @@ export interface BlockVariationDefinition<
 
 export interface DefineVariationInlineOptions {
   readonly allowMissingIsActive?: boolean;
+  readonly logger?: DiagnosticLogger<BlockVariationDiagnostic>;
   readonly minVersion?: WordPressVersion;
   readonly minWordPress?: WordPressVersion;
   readonly onDiagnostic?: (diagnostic: BlockVariationDiagnostic) => void;
@@ -69,6 +71,7 @@ export interface DefineVariationInlineOptions {
 
 export interface DefineVariationOptions extends WordPressCompatibilitySettings {
   readonly allowMissingIsActive?: boolean;
+  readonly logger?: DiagnosticLogger<BlockVariationDiagnostic>;
   readonly minWordPress?: WordPressVersion;
   readonly onDiagnostic?: (diagnostic: BlockVariationDiagnostic) => void;
   readonly requireIsActive?: boolean;
@@ -152,6 +155,7 @@ export interface CreateBlockVariationRegistrationSourceOptions {
 
 const DEFINE_VARIATION_INLINE_OPTION_KEYS = new Set<string>([
   "allowMissingIsActive",
+  "logger",
   "minVersion",
   "minWordPress",
   "onDiagnostic",
@@ -203,6 +207,7 @@ function resolveDefineVariationSettings(
     requireIsActive: boolean;
     strict: boolean;
   };
+  logger: DefineVariationOptions["logger"];
   onDiagnostic: DefineVariationOptions["onDiagnostic"];
 } {
   const compatibility: WordPressCompatibilitySettings = {};
@@ -231,6 +236,7 @@ function resolveDefineVariationSettings(
         options.requireIsActive ?? inlineOptions.requireIsActive ?? true,
       strict,
     },
+    logger: options.logger ?? inlineOptions.logger,
     onDiagnostic: options.onDiagnostic ?? inlineOptions.onDiagnostic,
   };
 }
@@ -327,9 +333,11 @@ function createVariationDiagnostics<TAttributes extends BlockAttributes>(
 function handleVariationDiagnostics(
   diagnostics: readonly BlockVariationDiagnostic[],
   onDiagnostic: DefineVariationOptions["onDiagnostic"],
+  logger: DefineVariationOptions["logger"],
 ): void {
   handleDiagnostics(diagnostics, onDiagnostic, {
     failureHeading: "WordPress block variation check failed:",
+    logger,
   });
 }
 
@@ -400,7 +408,7 @@ export function defineVariation<
     ),
   ];
 
-  handleVariationDiagnostics(diagnostics, resolved.onDiagnostic);
+  handleVariationDiagnostics(diagnostics, resolved.onDiagnostic, resolved.logger);
 
   Object.defineProperty(normalizedVariation, DEFINED_BLOCK_VARIATION_METADATA, {
     configurable: false,
@@ -501,7 +509,11 @@ export function defineVariations<
     ...collectionDiagnostics,
   ];
 
-  handleVariationDiagnostics(collectionDiagnostics, options.onDiagnostic);
+  handleVariationDiagnostics(
+    collectionDiagnostics,
+    options.onDiagnostic,
+    options.logger,
+  );
 
   const normalizedVariations = [...variations] as unknown as DefinedBlockVariations<
     TVariations

@@ -108,6 +108,52 @@ generation. Non-strict mode downgrades them to warnings and recommends guarded
 generation. Unknown future keys are guarded by default, or passed through only
 when `allowUnknownFutureKeys` is enabled.
 
+## Diagnostic output policy
+
+Supports, Variations, and Bindings helpers keep diagnostics structured and
+silent by default. Strict diagnostics still throw grouped errors, but non-strict
+warnings do not write to `console.warn` unless a consumer opts into visible
+output.
+
+Use `onDiagnostic` when callers need callback-driven diagnostics for tests,
+custom reporting, or UI integration:
+
+```ts
+const diagnostics: Array<{ message: string; severity: 'warning' | 'error' }> =
+  [];
+
+defineSupports(
+  {
+    allowedBlocks: true,
+    minWordPress: '6.8',
+    strict: false,
+  },
+  {
+    onDiagnostic: (diagnostic) => {
+      diagnostics.push(diagnostic);
+    },
+  },
+);
+```
+
+Use `logger` when callers want formatted warning messages without taking over
+the structured callback path. Passing `console` restores console warning output.
+If both `onDiagnostic` and `logger` are provided, `onDiagnostic` handles the
+diagnostic and the logger is not called.
+
+```ts
+defineSupports(
+  {
+    allowedBlocks: true,
+    minWordPress: '6.8',
+    strict: false,
+  },
+  {
+    logger: console,
+  },
+);
+```
+
 ## Validation coverage
 
 `@wp-typia/block-types` now validates itself with a mixed strategy that matches

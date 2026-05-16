@@ -222,6 +222,36 @@ describe("defineSupports", () => {
 		});
 	});
 
+	test("reports non-strict compatibility warnings through explicit loggers", () => {
+		const logs: Array<{
+			readonly diagnostic: WordPressBlockApiCompatibilityDiagnostic;
+			readonly message: string;
+		}> = [];
+
+		defineSupports(
+			{
+				allowedBlocks: true,
+				minWordPress: "6.8",
+				strict: false,
+			},
+			{
+				logger: {
+					warn: (message, diagnostic) => {
+						logs.push({ diagnostic, message });
+					},
+				},
+			},
+		);
+
+		expect(logs).toHaveLength(1);
+		expect(logs[0]?.message).toContain("[wp-typia]");
+		expect(logs[0]?.diagnostic).toMatchObject({
+			code: "unsupported-wordpress-block-api-feature",
+			feature: "allowedBlocks",
+			severity: "warning",
+		});
+	});
+
 	test("passes through unknown future keys only when explicitly allowed", () => {
 		const supports = defineSupports({
 			minWordPress: "6.9",

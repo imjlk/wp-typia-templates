@@ -118,4 +118,65 @@ describe("shared block API helper utilities", () => {
       "Shared diagnostics failed:\n- Required support is unavailable.",
     );
   });
+
+  test("keeps warning diagnostics silent by default", () => {
+    const originalWarn = console.warn;
+    const consoleWarnings: unknown[][] = [];
+
+    console.warn = (...args: unknown[]) => {
+      consoleWarnings.push(args);
+    };
+
+    try {
+      handleDiagnostics(
+        [
+          {
+            message: "Use a newer WordPress feature.",
+            severity: "warning",
+          },
+        ],
+        undefined,
+        { failureHeading: "Shared diagnostics failed:" },
+      );
+    } finally {
+      console.warn = originalWarn;
+    }
+
+    expect(consoleWarnings).toEqual([]);
+  });
+
+  test("emits warning diagnostics through explicit loggers", () => {
+    const warnings: Array<{
+      readonly diagnostic: { readonly message: string; readonly severity: "warning" };
+      readonly message: string;
+    }> = [];
+
+    handleDiagnostics(
+      [
+        {
+          message: "Use a newer WordPress feature.",
+          severity: "warning",
+        },
+      ],
+      undefined,
+      {
+        failureHeading: "Shared diagnostics failed:",
+        logger: {
+          warn: (message, diagnostic) => {
+            warnings.push({ diagnostic, message });
+          },
+        },
+      },
+    );
+
+    expect(warnings).toEqual([
+      {
+        diagnostic: {
+          message: "Use a newer WordPress feature.",
+          severity: "warning",
+        },
+        message: "[wp-typia] Use a newer WordPress feature.",
+      },
+    ]);
+  });
 });
