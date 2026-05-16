@@ -234,6 +234,35 @@ describe('command option metadata helpers', () => {
     expect(parsed.positionals).toEqual(['transform', 'quote-to-counter']);
   });
 
+  test('accumulates repeatable pattern tag flags from shared add metadata', () => {
+    const parsed = parseCommandArgvWithMetadata(
+      [
+        'pattern',
+        'hero-photo',
+        '--tags',
+        'hero,landing',
+        '--tag',
+        'featured',
+        '--tag=hero',
+        '--tags',
+        'gallery',
+      ],
+      {
+        extraBooleanOptionNames: ['help', 'version'],
+        parser: buildCommandOptionParser(
+          GLOBAL_OPTION_METADATA,
+          ADD_OPTION_METADATA,
+        ),
+      },
+    );
+
+    expect(parsed.flags).toEqual({
+      tag: ['featured', 'hero'],
+      tags: ['hero,landing', 'gallery'],
+    });
+    expect(parsed.positionals).toEqual(['pattern', 'hero-photo']);
+  });
+
   test('parses manual REST secret flags from shared add metadata', () => {
     const parsed = parseCommandArgvWithMetadata(
       [

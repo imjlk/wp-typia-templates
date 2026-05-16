@@ -270,6 +270,52 @@ test('passes typed pattern catalog flags to the runtime', async () => {
   });
 });
 
+test('passes repeatable pattern tag flags to the runtime', async () => {
+  const capturedOptions: Record<string, unknown>[] = [];
+  const plan = await ADD_KIND_REGISTRY.pattern.prepareExecution({
+    addRuntime: {
+      runAddPatternCommand: async (options: Record<string, unknown>) => {
+        capturedOptions.push(options);
+
+        return {
+          contentFile: 'src/patterns/full/hero-photo.php',
+          patternScope: 'full',
+          patternSlug: String(options.patternName),
+          projectDir: String(options.cwd),
+          tags: Array.isArray(options.tags)
+            ? options.tags.map(String)
+            : String(options.tags).split(','),
+          title: 'Hero Photo',
+        };
+      },
+    } as unknown as AddKindExecutionContext['addRuntime'],
+    cwd: '/tmp/wp-typia-pattern-repeatable-test',
+    flags: {
+      tag: ['featured', 'landing'],
+      tags: ['hero,landing', 'gallery'],
+    },
+    getOrCreatePrompt: async () => {
+      throw new Error('pattern add-kind should not prompt in this test');
+    },
+    isInteractiveSession: false,
+    name: 'hero-photo',
+    warnLine: () => {},
+  });
+
+  await plan.execute('/tmp/wp-typia-pattern-repeatable-test');
+
+  expect(capturedOptions).toEqual([
+    {
+      cwd: '/tmp/wp-typia-pattern-repeatable-test',
+      patternName: 'hero-photo',
+      patternScope: undefined,
+      sectionRole: undefined,
+      tags: ['hero,landing', 'gallery', 'featured', 'landing'],
+      thumbnailUrl: undefined,
+    },
+  ]);
+});
+
 async function captureRestResourceRuntimeOptions(
   flags: Record<string, unknown>,
 ): Promise<Record<string, unknown>> {

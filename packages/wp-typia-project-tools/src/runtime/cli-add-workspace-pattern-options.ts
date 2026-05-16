@@ -106,7 +106,7 @@ function normalizePatternTags(tags: readonly string[] | string | undefined): str
 		typeof tags === "string"
 			? tags.split(",")
 			: Array.isArray(tags)
-				? [...tags]
+				? tags.flatMap((tag) => tag.split(","))
 				: [];
 	const normalizedTags = rawTags
 		.map((tag) => normalizeBlockSlug(tag))

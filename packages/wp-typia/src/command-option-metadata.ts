@@ -89,7 +89,8 @@ export function buildCommandOptions<TOptions extends CommandOptionMetadataMap>(
   {
     argumentKind?: 'flag';
     description: string;
-    schema: z.ZodDefault<z.ZodBoolean> | z.ZodOptional<z.ZodString>;
+    repeatable?: boolean;
+    schema: z.ZodTypeAny;
     short?: string;
   }
 > {
@@ -99,10 +100,13 @@ export function buildCommandOptions<TOptions extends CommandOptionMetadataMap>(
       {
         ...(option.argumentKind ? { argumentKind: option.argumentKind } : {}),
         description: option.description,
+        ...(option.repeatable ? { repeatable: true } : {}),
         schema:
           option.type === 'boolean'
             ? z.boolean().default(false)
-            : z.string().optional(),
+            : option.repeatable
+              ? z.union([z.string(), z.array(z.string())]).optional()
+              : z.string().optional(),
         ...(option.short ? { short: option.short } : {}),
       },
     ]),
@@ -143,6 +147,11 @@ export function buildCommandOptionParser(
 
   return {
     booleanOptionNames: new Set(collectOptionNamesByType(metadata, 'boolean')),
+    repeatableOptionNames: new Set(
+      Object.entries(metadata)
+        .filter(([, option]) => option.repeatable)
+        .map(([name]) => name),
+    ),
     shortFlagMap: new Map<string, ShortOptionDescriptor>(
       Object.entries(metadata).flatMap(([name, option]) =>
         option.short
@@ -152,6 +161,27 @@ export function buildCommandOptionParser(
     ),
     stringOptionNames: new Set(collectOptionNamesByType(metadata, 'string')),
   };
+}
+
+function assignParsedOptionValue(
+  flags: Record<string, unknown>,
+  options: {
+    name: string;
+    parser: CommandOptionParser;
+    value: string | boolean;
+  },
+): void {
+  if (!options.parser.repeatableOptionNames.has(options.name)) {
+    flags[options.name] = options.value;
+    return;
+  }
+
+  const current = flags[options.name];
+  flags[options.name] = Array.isArray(current)
+    ? [...current, options.value]
+    : current === undefined
+      ? [options.value]
+      : [current, options.value];
 }
 
 export function buildArgvWalkerRoutingMetadata(
@@ -234,7 +264,11 @@ export function extractKnownOptionValuesFromArgv(
       if (!next || next.startsWith('-')) {
         throw createMissingOptionValueError(arg);
       }
-      flags[shortFlag.name] = next;
+      assignParsedOptionValue(flags, {
+        name: shortFlag.name,
+        parser: options.parser,
+        value: next,
+      });
       index += 1;
       continue;
     }
@@ -262,14 +296,22 @@ export function extractKnownOptionValuesFromArgv(
         if (!inlineValue) {
           throw createMissingOptionValueError(`--${rawName}`);
         }
-        flags[rawName] = inlineValue;
+        assignParsedOptionValue(flags, {
+          name: rawName,
+          parser: options.parser,
+          value: inlineValue,
+        });
         continue;
       }
       const next = argv[index + 1];
       if (!next || next.startsWith('-')) {
         throw createMissingOptionValueError(`--${rawName}`);
       }
-      flags[rawName] = next;
+      assignParsedOptionValue(flags, {
+        name: rawName,
+        parser: options.parser,
+        value: next,
+      });
       index += 1;
       continue;
     }
@@ -322,7 +364,11 @@ export function parseCommandArgvWithMetadata(
       if (!next || next.startsWith('-')) {
         throw createMissingOptionValueError(arg);
       }
-      flags[shortFlag.name] = next;
+      assignParsedOptionValue(flags, {
+        name: shortFlag.name,
+        parser: options.parser,
+        value: next,
+      });
       index += 1;
       continue;
     }
@@ -345,14 +391,22 @@ export function parseCommandArgvWithMetadata(
         if (!inlineValue) {
           throw createMissingOptionValueError(`--${rawName}`);
         }
-        flags[rawName] = inlineValue;
+        assignParsedOptionValue(flags, {
+          name: rawName,
+          parser: options.parser,
+          value: inlineValue,
+        });
         continue;
       }
       const next = argv[index + 1];
       if (!next || next.startsWith('-')) {
         throw createMissingOptionValueError(`--${rawName}`);
       }
-      flags[rawName] = next;
+      assignParsedOptionValue(flags, {
+        name: rawName,
+        parser: options.parser,
+        value: next,
+      });
       index += 1;
       continue;
     }
@@ -394,6 +448,14 @@ export function resolveCommandOptionValues<
     const value = options.flags?.[name] ?? options.defaults?.[name];
     if (descriptor.type === 'boolean') {
       resolved[name] = Boolean(value ?? false);
+      continue;
+    }
+
+    if (descriptor.repeatable && Array.isArray(value)) {
+      resolved[name] =
+        value.every((item): item is string => typeof item === 'string')
+          ? value.join(',')
+          : undefined;
       continue;
     }
 

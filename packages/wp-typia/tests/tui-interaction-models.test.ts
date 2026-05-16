@@ -246,6 +246,20 @@ describe("first-party TUI interaction models", () => {
 
 		expect(
 			sanitizeAddSubmitValues({
+				kind: "pattern",
+				name: "hero-photo",
+				tag: " hero ",
+				tags: " landing,featured ",
+			}),
+		).toEqual({
+			kind: "pattern",
+			name: "hero-photo",
+			tag: "hero",
+			tags: "landing,featured",
+		});
+
+		expect(
+			sanitizeAddSubmitValues({
 				anchor: "",
 				block: "",
 				kind: "admin-view",
