@@ -7,11 +7,8 @@ import { promises as fsp } from "node:fs";
  * File-backed runtime JSON readers should use `safeJsonParse`,
  * `readJsonFileSync`, or `readJsonFile` so malformed JSON reports the file path
  * and operation context. Raw `JSON.parse` remains intentional for trusted
- * in-memory clones, subprocess output, test fixtures, generated workspace
- * script templates that embed their own path-aware parse handling,
- * package-version manifest cache probes with colocated path-aware wrappers,
- * and cache/discovery probes that immediately catch malformed documents to
- * continue with fallback behavior.
+ * in-memory clones, subprocess output, test fixtures, and generated workspace
+ * script templates that embed their own path-aware parse handling.
  *
  * This module keeps `cloneJsonValue` local instead of re-exporting the
  * block-runtime helper so Bunli CLI bundles that only need project-tools JSON

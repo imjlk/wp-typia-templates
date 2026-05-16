@@ -147,6 +147,62 @@ describe('package version cache invalidation', () => {
     );
   });
 
+  test('reports malformed package manifests with path-aware context', () => {
+    const linkedProjectToolsRoot = fs.mkdtempSync(
+      path.join(tempRoot, 'malformed-project-tools-'),
+    );
+    const packageJsonPath = path.join(linkedProjectToolsRoot, 'package.json');
+    writeProjectToolsManifest(linkedProjectToolsRoot, {
+      apiClientVersion: '^0.4.0',
+      projectToolsVersion: '1.2.3',
+    });
+
+    const packageVersionsModuleUrl = pathToFileURL(
+      path.join(import.meta.dir, '..', 'src', 'runtime', 'package-versions.ts'),
+    ).href;
+    const script = `
+			import assert from "node:assert/strict";
+			import fs from "node:fs";
+			import { getPackageVersions } from ${JSON.stringify(packageVersionsModuleUrl)};
+
+			const packageJsonPath = ${JSON.stringify(packageJsonPath)};
+			fs.writeFileSync(packageJsonPath, "{", "utf8");
+
+			assert.throws(
+				() => getPackageVersions(),
+				(error) => {
+					assert(error instanceof Error);
+					assert.match(error.message, /Failed to parse package version manifest at /);
+					assert.ok(error.message.includes(packageJsonPath));
+					return true;
+				}
+			);
+		`;
+
+    const bunBinary =
+      process.env.BUN_BINARY ??
+      ('Bun' in globalThis ? process.execPath : 'bun');
+    const result = spawnSync(bunBinary, ['--eval', script], {
+      cwd: linkedProjectToolsRoot,
+      encoding: 'utf8',
+      env: {
+        ...process.env,
+        WP_TYPIA_PROJECT_TOOLS_PACKAGE_ROOT: linkedProjectToolsRoot,
+      },
+    });
+
+    if (result.status !== 0) {
+      throw new Error(
+        `malformed package-versions script failed (status=${
+          result.status
+        }, error=${result.error?.message ?? 'none'}):\n${result.stderr}`,
+      );
+    }
+    expect(result.status).toBe(0);
+    expect(result.stdout).toBe('');
+    expect(result.stderr).toBe('');
+  });
+
   test('centralizes managed workspace dependency fallback ranges', async () => {
     const packageVersionsModuleUrl = pathToFileURL(
       path.join(import.meta.dir, '..', 'src', 'runtime', 'package-versions.ts'),

@@ -103,6 +103,7 @@ test('template source cache marker helpers sanitize metadata and parse TTL marke
       }),
     ),
   ).toBeNull()
+  expect(parseExternalTemplateCacheEntryMarker('{')).toBeNull()
 
   const pruneMarker = parseExternalTemplateCachePruneMarker(
     formatExternalTemplateCachePruneMarker({
@@ -118,4 +119,5 @@ test('template source cache marker helpers sanitize metadata and parse TTL marke
     ttlMs: 86_400_000,
   })
   expect(parseExternalTemplateCachePruneMarker('{}')).toBeNull()
+  expect(parseExternalTemplateCachePruneMarker('{')).toBeNull()
 })

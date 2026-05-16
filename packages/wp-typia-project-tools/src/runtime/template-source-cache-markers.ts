@@ -1,3 +1,5 @@
+import { safeJsonParse } from './json-utils.js'
+
 /**
  * Marker file written after a cache entry is fully populated.
  */
@@ -73,7 +75,9 @@ export function parseExternalTemplateCacheEntryMarker(
 ): ExternalTemplateCacheEntryMarker | null {
   let marker: unknown
   try {
-    marker = JSON.parse(markerText)
+    marker = safeJsonParse(markerText, {
+      context: 'external template cache entry marker',
+    })
   } catch {
     return null
   }
@@ -128,7 +132,9 @@ export function parseExternalTemplateCachePruneMarker(
 ): ExternalTemplateCachePruneMarker | null {
   let marker: unknown
   try {
-    marker = JSON.parse(markerText)
+    marker = safeJsonParse(markerText, {
+      context: 'external template cache prune marker',
+    })
   } catch {
     return null
   }
