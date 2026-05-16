@@ -166,8 +166,9 @@ export function createPhpBindingSourceRegistrationSource(
   sources: DefinedBindingSource | readonly DefinedBindingSource[],
   options: CreatePhpBindingSourceRegistrationSourceOptions = {},
 ): string {
-  const functionName =
-    options.functionName ?? "wp_typia_register_block_binding_sources";
+  const functionName = sanitizePhpIdentifier(
+    options.functionName ?? "wp_typia_register_block_binding_sources",
+  );
   const hook = options.hook ?? "init";
   const entries = createBindingSourceRegistrationPlan(asSourceList(sources));
   const lines: string[] = [];
