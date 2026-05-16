@@ -25,6 +25,101 @@ import { resolveWorkspaceProject } from "./workspace-project.js";
 const CORE_VARIATIONS_EDITOR_PLUGIN_SLUG = "core-variations";
 const CORE_VARIATION_USAGE =
 	"wp-typia add core-variation <block-name> <name> or wp-typia add core-variation <name> --block <namespace/block>";
+const KNOWN_CORE_VARIATION_TARGETS = new Set([
+	"core/archives",
+	"core/audio",
+	"core/avatar",
+	"core/block",
+	"core/button",
+	"core/buttons",
+	"core/calendar",
+	"core/categories",
+	"core/code",
+	"core/column",
+	"core/columns",
+	"core/comment-author-name",
+	"core/comment-content",
+	"core/comment-date",
+	"core/comment-edit-link",
+	"core/comment-reply-link",
+	"core/comment-template",
+	"core/comments",
+	"core/comments-pagination",
+	"core/comments-pagination-next",
+	"core/comments-pagination-numbers",
+	"core/comments-pagination-previous",
+	"core/comments-title",
+	"core/cover",
+	"core/details",
+	"core/embed",
+	"core/file",
+	"core/footnotes",
+	"core/freeform",
+	"core/gallery",
+	"core/group",
+	"core/heading",
+	"core/home-link",
+	"core/html",
+	"core/image",
+	"core/latest-comments",
+	"core/latest-posts",
+	"core/legacy-widget",
+	"core/list",
+	"core/list-item",
+	"core/loginout",
+	"core/media-text",
+	"core/missing",
+	"core/more",
+	"core/navigation",
+	"core/navigation-link",
+	"core/navigation-submenu",
+	"core/nextpage",
+	"core/page-list",
+	"core/paragraph",
+	"core/pattern",
+	"core/post-author",
+	"core/post-author-biography",
+	"core/post-author-name",
+	"core/post-comments",
+	"core/post-comments-form",
+	"core/post-content",
+	"core/post-date",
+	"core/post-excerpt",
+	"core/post-featured-image",
+	"core/post-navigation-link",
+	"core/post-terms",
+	"core/post-template",
+	"core/post-title",
+	"core/preformatted",
+	"core/pullquote",
+	"core/query",
+	"core/query-no-results",
+	"core/query-pagination",
+	"core/query-pagination-next",
+	"core/query-pagination-numbers",
+	"core/query-pagination-previous",
+	"core/query-title",
+	"core/quote",
+	"core/read-more",
+	"core/rss",
+	"core/search",
+	"core/separator",
+	"core/shortcode",
+	"core/site-logo",
+	"core/site-tagline",
+	"core/site-title",
+	"core/social-link",
+	"core/social-links",
+	"core/spacer",
+	"core/table",
+	"core/table-of-contents",
+	"core/tag-cloud",
+	"core/template-part",
+	"core/term-description",
+	"core/text-columns",
+	"core/verse",
+	"core/video",
+]);
 const CORE_VARIATION_SIMPLE_CONTAINER_BLOCKS = new Set([
 	"core/column",
 	"core/cover",
@@ -113,6 +208,19 @@ function buildCoreVariationImportPath(ref: CoreVariationModuleRef): string {
 
 function formatCoreVariationTitle(variationSlug: string): string {
 	return toTitleCase(variationSlug);
+}
+
+function getUnknownCoreVariationTargetWarning(
+	targetBlockName: string,
+): string | undefined {
+	if (
+		!targetBlockName.startsWith("core/") ||
+		KNOWN_CORE_VARIATION_TARGETS.has(targetBlockName)
+	) {
+		return undefined;
+	}
+
+	return `Target block "${targetBlockName}" uses the WordPress core namespace but is not in wp-typia's known core block list. The variation was generated for forward compatibility; verify the block name or update wp-typia if this is a newer core block.`;
 }
 
 function assertCoreVariationDoesNotExist(
@@ -398,7 +506,8 @@ async function writeCoreVariationRegistry(
  * Defaults to `process.cwd()`.
  * @param options.targetBlockName Full `namespace/block` name that receives the variation.
  * @param options.variationName Human-entered variation name normalized into the generated slug.
- * @returns The normalized variation metadata and owning workspace directory.
+ * @returns The normalized variation metadata, owning workspace directory, and
+ * optional warnings for suspicious but forward-compatible targets.
  * @throws {Error} When the command is run outside an official workspace, the
  * target block name is not full `namespace/block` form, or the generated file
  * already exists.
@@ -412,6 +521,7 @@ export async function runAddCoreVariationCommand({
 	targetBlockName: string;
 	variationFile: string;
 	variationSlug: string;
+	warnings?: string[];
 }> {
 	const workspace = resolveWorkspaceProject(cwd);
 	const resolvedTargetBlockName = assertFullBlockName(
@@ -423,6 +533,8 @@ export async function runAddCoreVariationCommand({
 		normalizeBlockSlug(variationName),
 		CORE_VARIATION_USAGE,
 	);
+	const unknownCoreTargetWarning =
+		getUnknownCoreVariationTargetWarning(resolvedTargetBlockName);
 	assertCoreVariationSlugIsNotRegistryIndex(variationSlug);
 
 	assertCoreVariationDoesNotExist(
@@ -499,6 +611,9 @@ export async function runAddCoreVariationCommand({
 			targetBlockName: resolvedTargetBlockName,
 			variationFile: path.relative(workspace.projectDir, variationFilePath),
 			variationSlug,
+			...(unknownCoreTargetWarning
+				? { warnings: [unknownCoreTargetWarning] }
+				: {}),
 		};
 	} catch (error) {
 		await rollbackWorkspaceMutation(mutationSnapshot);

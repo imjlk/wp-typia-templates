@@ -99,6 +99,7 @@ export const coreVariationAddKindEntry =
           variationFile: result.variationFile,
           variationSlug: result.variationSlug,
         }),
+        getWarnings: (result) => result.warnings,
         missingNameMessage: CORE_VARIATION_MISSING_NAME_MESSAGE,
         name: variationName,
         warnLine: context.warnLine,

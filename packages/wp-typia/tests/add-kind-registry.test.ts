@@ -318,6 +318,37 @@ test('passes repeatable pattern tag flags to the runtime', async () => {
   ]);
 });
 
+test('surfaces core-variation runtime warnings through the add plan', async () => {
+  const plan = await ADD_KIND_REGISTRY['core-variation'].prepareExecution({
+    addRuntime: {
+      runAddCoreVariationCommand: async () => ({
+        projectDir: '/tmp/wp-typia-core-variation-warning-test',
+        targetBlockName: 'core/groub',
+        variationFile:
+          'src/editor-plugins/core-variations/core/groub/typo-target.ts',
+        variationSlug: 'typo-target',
+        warnings: ['Unknown core variation target'],
+      }),
+    } as unknown as AddKindExecutionContext['addRuntime'],
+    cwd: '/tmp/wp-typia-core-variation-warning-test',
+    flags: {
+      block: 'core/groub',
+    },
+    getOrCreatePrompt: async () => {
+      throw new Error('core-variation add-kind should not prompt in this test');
+    },
+    isInteractiveSession: false,
+    name: 'typo-target',
+    warnLine: () => {},
+  });
+
+  const result = await plan.execute('/tmp/wp-typia-core-variation-warning-test');
+
+  expect(plan.getWarnings?.(result)).toEqual([
+    'Unknown core variation target',
+  ]);
+});
+
 async function captureRestResourceRuntimeOptions(
   flags: Record<string, unknown>,
 ): Promise<Record<string, unknown>> {

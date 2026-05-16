@@ -39,6 +39,7 @@ Notes:
   Pass \`--dry-run\` to preview the workspace files that would change without writing them.
   Interactive add flows let you choose a template when \`--template\` is omitted; non-interactive runs default to \`basic\`.
   \`add core-variation\` registers editor-side variations for existing core or external blocks without generating block.json or Typia manifests.
+  Unknown \`core/*\` core-variation targets warn instead of failing so newer WordPress core blocks remain scaffoldable; third-party namespaces are allowed without local discovery.
   \`add admin-view\` scaffolds an opt-in DataViews-powered WordPress admin screen under \`src/admin-views/\`.
   Pass \`--source rest-resource:<slug>\` to reuse a list-capable REST resource.
   Pass \`--source core-data:postType/post\` or \`--source core-data:taxonomy/category\` to bind a WordPress-owned entity collection.
