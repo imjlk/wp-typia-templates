@@ -3224,6 +3224,34 @@ test("canonical CLI can add a pattern to an official workspace template", async 
   expect(patternSource).toContain("<!-- wp:group");
   expect(patternSource).toContain('"className":"section section--hero"');
 
+  runCli(
+    "node",
+    [
+      entryPath,
+      "add",
+      "pattern",
+      "gallery-grid",
+      "--tags",
+      "gallery,landing",
+      "--tag",
+      "hero",
+      "--tag",
+      "gallery",
+    ],
+    {
+      cwd: targetDir,
+    }
+  );
+
+  const updatedBlockConfigSource = fs.readFileSync(
+    path.join(targetDir, "scripts", "block-config.ts"),
+    "utf8"
+  );
+  expect(updatedBlockConfigSource).toContain('slug: "gallery-grid"');
+  expect(updatedBlockConfigSource).toContain(
+    'tags: ["gallery", "hero", "landing"]'
+  );
+
   const doctorOutput = runCli("node", [entryPath, "doctor", "--format", "json"], {
     cwd: targetDir,
   });

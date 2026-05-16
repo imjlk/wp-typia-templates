@@ -64,6 +64,7 @@ export const longValueOptions = Object.freeze([
   '--service',
   '--slot',
   '--source',
+  '--tag',
   '--tags',
   '--template',
   '--text-domain',

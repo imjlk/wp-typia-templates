@@ -1,6 +1,7 @@
 export type CommandOptionMetadata = {
   argumentKind?: 'flag';
   description: string;
+  repeatable?: boolean;
   short?: string;
   type: 'boolean' | 'string';
 };
@@ -19,6 +20,7 @@ export type ShortOptionDescriptor = {
 
 export type CommandOptionParser = {
   booleanOptionNames: Set<string>;
+  repeatableOptionNames: Set<string>;
   shortFlagMap: Map<string, ShortOptionDescriptor>;
   stringOptionNames: Set<string>;
 };

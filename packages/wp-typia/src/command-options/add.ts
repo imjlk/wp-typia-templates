@@ -219,7 +219,14 @@ export const ADD_OPTION_METADATA = {
   },
   tags: {
     description:
-      'Comma-separated tags for typed pattern catalog entries.',
+      'Comma-separated tags for typed pattern catalog entries; may be repeated.',
+    repeatable: true,
+    type: 'string',
+  },
+  tag: {
+    description:
+      'Repeatable singular tag for typed pattern catalog entries.',
+    repeatable: true,
     type: 'string',
   },
   type: {

@@ -26,6 +26,7 @@ export const patternAddKindEntry =
     hiddenStringSubmitFields: [
       'scope',
       'section-role',
+      'tag',
       'tags',
       'thumbnail-url',
     ],
@@ -41,7 +42,7 @@ export const patternAddKindEntry =
           ? context.flags['section-role']
           : undefined;
       const tags =
-        typeof context.flags.tags === 'string' ? context.flags.tags : undefined;
+        normalizePatternTagFlags(context.flags.tags, context.flags.tag);
       const thumbnailUrl =
         typeof context.flags['thumbnail-url'] === 'string'
           ? context.flags['thumbnail-url']
@@ -69,6 +70,33 @@ export const patternAddKindEntry =
     sortOrder: 60,
     supportsDryRun: true,
     usage:
-      'wp-typia add pattern <name> [--scope <full|section>] [--section-role <role>] [--tags <tag,...>] [--thumbnail-url <url>] [--dry-run]',
+      'wp-typia add pattern <name> [--scope <full|section>] [--section-role <role>] [--tags <tag,...>|--tag <tag>...] [--thumbnail-url <url>] [--dry-run]',
     visibleFieldNames: () => NAME_ONLY_VISIBLE_FIELDS,
   });
+
+function collectStringFlagValues(value: unknown): string[] {
+  if (typeof value === 'string') {
+    return [value];
+  }
+  if (Array.isArray(value)) {
+    return value.filter((item): item is string => typeof item === 'string');
+  }
+  return [];
+}
+
+function normalizePatternTagFlags(
+  tagsFlag: unknown,
+  tagFlag: unknown,
+): string[] | string | undefined {
+  const tags = [
+    ...collectStringFlagValues(tagsFlag),
+    ...collectStringFlagValues(tagFlag),
+  ];
+  if (tags.length === 0) {
+    return undefined;
+  }
+  if (tags.length === 1) {
+    return tags[0];
+  }
+  return tags;
+}
