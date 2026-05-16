@@ -8,6 +8,9 @@ import type {
 	PatternCatalogEntry,
 } from "./pattern-catalog.js";
 
+/**
+ * Validates section role slugs used by pattern manifests and content markers.
+ */
 export const PATTERN_SECTION_ROLE_PATTERN = /^[a-z][a-z0-9-]*$/u;
 
 /**
@@ -52,8 +55,14 @@ export type PatternCatalogSectionRoleMatch = {
 	roles: readonly string[];
 };
 
+/**
+ * Fully resolved section-role marker convention with its compiled class matcher.
+ */
 export type NormalizedPatternCatalogSectionRoleConvention =
 	Required<PatternCatalogSectionRoleConvention> & {
+		/**
+		 * Compiled matcher for role class tokens produced from `roleClassNamePattern`.
+		 */
 		roleClassNamePatternRegExp: RegExp;
 	};
 
@@ -116,6 +125,13 @@ function createRoleClassNamePattern(pattern: string): RegExp {
 	);
 }
 
+/**
+ * Resolve a section-role convention and compile its class-token matcher.
+ *
+ * @param convention Optional marker convention override.
+ * @returns A fully populated convention ready for repeated block traversal.
+ * @throws When `roleClassNamePattern` does not contain exactly one `{role}` placeholder.
+ */
 export function normalizePatternCatalogSectionRoleConvention(
 	convention: PatternCatalogSectionRoleConvention = {},
 ): NormalizedPatternCatalogSectionRoleConvention {
@@ -214,7 +230,7 @@ function collectSectionRoleMatches(
 			`${block.blockName}[${index}]`,
 		];
 		const blockPath = blockPathSegments.join(" > ");
-		const roles = extractPatternSectionRolesFromAttributes(
+		const roles = extractPatternSectionRolesFromNormalizedAttributes(
 			block.attributes,
 			convention,
 		);
@@ -263,6 +279,13 @@ export function extractPatternSectionRolesFromAttributes(
 	convention: PatternCatalogSectionRoleConvention = {},
 ): string[] {
 	const normalized = normalizePatternCatalogSectionRoleConvention(convention);
+	return extractPatternSectionRolesFromNormalizedAttributes(attributes, normalized);
+}
+
+function extractPatternSectionRolesFromNormalizedAttributes(
+	attributes: Record<string, unknown>,
+	normalized: NormalizedPatternCatalogSectionRoleConvention,
+): string[] {
 	const classRoles = getClassNameTokens(attributes)
 		.map((token) => normalized.roleClassNamePatternRegExp.exec(token)?.groups?.role)
 		.filter((role): role is string => typeof role === "string");
@@ -290,6 +313,12 @@ export function extractPatternSectionRoleMatches(
 	);
 }
 
+/**
+ * Build the known valid section-role set from pattern catalog entries.
+ *
+ * @param patterns Catalog entries that may declare a `sectionRole`.
+ * @returns Valid section role slugs declared by the catalog.
+ */
 export function collectKnownPatternSectionRoles(
 	patterns: readonly Pick<PatternCatalogEntry, "sectionRole">[],
 ): ReadonlySet<string> {
@@ -304,6 +333,12 @@ export function collectKnownPatternSectionRoles(
 	);
 }
 
+/**
+ * Validate serialized pattern content against the catalog section-role rules.
+ *
+ * @param options Pattern content, marker convention, known roles, and diagnostic context.
+ * @returns Diagnostics for invalid, missing, mismatched, unknown, or duplicate section-role markers.
+ */
 export function validatePatternContentSectionRoles({
 	content,
 	contentFile,
