@@ -12,6 +12,27 @@ import {
 } from "../src/runtime/pattern-catalog.js";
 
 describe("pattern catalog validation", () => {
+	test("keeps section role content validation in a focused runtime module", () => {
+		const runtimeRoot = path.join(import.meta.dir, "..", "src", "runtime");
+		const catalogSource = fs.readFileSync(
+			path.join(runtimeRoot, "pattern-catalog.ts"),
+			"utf8",
+		);
+		const sectionRolesSource = fs.readFileSync(
+			path.join(runtimeRoot, "pattern-catalog-section-roles.ts"),
+			"utf8",
+		);
+
+		expect(catalogSource).toContain(
+			'from "./pattern-catalog-section-roles.js"',
+		);
+		expect(catalogSource).not.toContain("validateBlockPatternContentNesting");
+		expect(sectionRolesSource).toContain("validateBlockPatternContentNesting");
+		expect(sectionRolesSource).toContain(
+			"export function validatePatternContentSectionRoles",
+		);
+	});
+
 	test("accepts a typed full and section pattern catalog", () => {
 		const projectDir = fs.mkdtempSync(
 			path.join(os.tmpdir(), "wp-typia-pattern-catalog-"),
