@@ -239,6 +239,8 @@ describe('command option metadata helpers', () => {
       [
         'pattern',
         'hero-photo',
+        '--catalog-title',
+        'Hero Photo',
         '--tags',
         'hero,landing',
         '--tag',
@@ -257,6 +259,7 @@ describe('command option metadata helpers', () => {
     );
 
     expect(parsed.flags).toEqual({
+      'catalog-title': 'Hero Photo',
       tag: ['featured', 'hero'],
       tags: ['hero,landing', 'gallery'],
     });

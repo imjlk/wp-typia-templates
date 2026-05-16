@@ -24,6 +24,7 @@ export const patternAddKindEntry =
     },
     description: 'Add a PHP block pattern shell',
     hiddenStringSubmitFields: [
+      'catalog-title',
       'scope',
       'section-role',
       'tag',
@@ -41,6 +42,10 @@ export const patternAddKindEntry =
         typeof context.flags['section-role'] === 'string'
           ? context.flags['section-role']
           : undefined;
+      const catalogTitle =
+        typeof context.flags['catalog-title'] === 'string'
+          ? context.flags['catalog-title']
+          : undefined;
       const tags =
         normalizePatternTagFlags(context.flags.tags, context.flags.tag);
       const thumbnailUrl =
@@ -51,6 +56,7 @@ export const patternAddKindEntry =
       return {
         execute: (cwd) =>
           context.addRuntime.runAddPatternCommand({
+            catalogTitle,
             cwd,
             patternScope: scope,
             patternName: name,
@@ -70,7 +76,7 @@ export const patternAddKindEntry =
     sortOrder: 60,
     supportsDryRun: true,
     usage:
-      'wp-typia add pattern <name> [--scope <full|section>] [--section-role <role>] [--tags <tag,...>|--tag <tag>...] [--thumbnail-url <url>] [--dry-run]',
+      'wp-typia add pattern <name> [--scope <full|section>] [--section-role <role>] [--catalog-title <title>] [--tags <tag,...>|--tag <tag>...] [--thumbnail-url <url>] [--dry-run]',
     visibleFieldNames: () => NAME_ONLY_VISIBLE_FIELDS,
   });
 

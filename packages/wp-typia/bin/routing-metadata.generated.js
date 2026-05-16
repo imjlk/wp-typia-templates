@@ -19,6 +19,7 @@ export const longValueOptions = Object.freeze([
   '--auth',
   '--block',
   '--body-type',
+  '--catalog-title',
   '--config',
   '--controller-class',
   '--controller-extends',
