@@ -1,5 +1,19 @@
 # wp-typia
 
+## 0.24.1 — 2026-05-16
+
+### Patch changes
+
+- [679f2dfe](https://github.com/imjlk/wp-typia/commit/679f2dfeda4f2dec0199a46e7bc288f430d58c7b) Keep the CLI release lane aligned with the planned `@wp-typia/project-tools`
+  patch for the shared AI REST nonce source emitter. — Thanks @imjlk!
+- [b9e4cc55](https://github.com/imjlk/wp-typia/commit/b9e4cc5568286b52095c832cd891db592b14feea) Expose `--catalog-title` for pattern scaffolds so CLI-created catalog entries
+  can set the same human-readable title metadata already supported by the runtime. — Thanks @imjlk!
+- [b325c227](https://github.com/imjlk/wp-typia/commit/b325c2271feccce57f61051542318aaaafff264a) Support repeatable `--tag` and `--tags` flags for pattern scaffolds while
+  preserving existing comma-separated tag input and normalized manifest output. — Thanks @imjlk!
+- [4c4fa603](https://github.com/imjlk/wp-typia/commit/4c4fa60326ad8f128b6e52e028e60aff22af592c) Warn when `wp-typia add core-variation` targets an unknown `core/*` block while
+  preserving third-party namespaces and future core-block compatibility. — Thanks @imjlk!
+- Updated dependencies: project-tools (npm)@0.24.1
+
 ## 0.24.0 — 2026-05-15
 
 ### Minor changes
