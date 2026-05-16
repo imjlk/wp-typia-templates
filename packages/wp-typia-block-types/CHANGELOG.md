@@ -1,5 +1,18 @@
 # @wp-typia/block-types
 
+## 0.3.1 — 2026-05-16
+
+### Patch changes
+
+- [0eeb3580](https://github.com/imjlk/wp-typia/commit/0eeb3580f67c30e76fab321c2fd868dcb980ed6f) Split block binding source PHP and editor registration source generation into a
+  focused internal codegen module while preserving the existing bindings facade. — Thanks @imjlk!
+- [514b35d1](https://github.com/imjlk/wp-typia/commit/514b35d144aa2f9d5d465a3b8afee83540b97f4d) Make block-types diagnostic output explicit and silent by default. Non-strict
+  warnings from Supports, Variations, and Bindings no longer fall back to
+  `console.warn`; pass `onDiagnostic` for structured callbacks or `logger:
+  console`/a custom logger for visible warning output. — Thanks @imjlk!
+- [7378df6b](https://github.com/imjlk/wp-typia/commit/7378df6b11661385a3c2e3afd734db8fb185378b) Share static registration normalization, object-record checks, and diagnostic
+  fallback helpers across block bindings, variations, and supports internals. — Thanks @imjlk!
+
 ## 0.3.0 — 2026-05-15
 
 ### Minor changes
