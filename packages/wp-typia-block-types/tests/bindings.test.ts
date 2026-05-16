@@ -2,6 +2,10 @@ import { describe, expect, test } from "bun:test";
 
 import type { BindingSourceDiagnostic } from "../src/blocks/bindings";
 import {
+  createEditorBindingSourceRegistrationSource as createEditorBindingSourceRegistrationSourceFromCodegen,
+  createPhpBindingSourceRegistrationSource as createPhpBindingSourceRegistrationSourceFromCodegen,
+} from "../src/blocks/bindings-codegen";
+import {
   createBindingSourceCompatibilityManifest,
   createEditorBindingSourceRegistrationSource,
   createPhpBindingSourceRegistrationSource,
@@ -307,6 +311,12 @@ describe("binding source registration source generation", () => {
     expect(editorSource).toContain('"name": "example/profile-data"');
     expect(editorSource).toContain('"name": "image_url"');
     expect(editorSource).toContain("getFieldsList: () => fields");
+    expect(createPhpBindingSourceRegistrationSourceFromCodegen(source, {
+      textDomain: "example",
+    })).toBe(phpSource);
+    expect(createEditorBindingSourceRegistrationSourceFromCodegen(source)).toBe(
+      editorSource,
+    );
   });
 
   test("rejects dynamic field args when generating static editor registration", () => {
@@ -368,6 +378,41 @@ describe("binding source registration source generation", () => {
 
     expect(callbackNames).toHaveLength(2);
     expect(new Set(callbackNames).size).toBe(2);
+  });
+
+  test("sanitizes custom PHP registration function names", () => {
+    const source = defineBindingSource({
+      getValueCallback: "example_get_profile_binding_value",
+      name: "example/profile-data",
+    });
+    const phpSource = createPhpBindingSourceRegistrationSource(source, {
+      functionName: "example-plugin/register binding sources",
+    });
+
+    expect(phpSource).toContain(
+      "function example_plugin_register_binding_sources()",
+    );
+    expect(phpSource).toContain(
+      "add_action( 'init', 'example_plugin_register_binding_sources' );",
+    );
+  });
+
+  test("preserves valid custom PHP registration function names", () => {
+    const source = defineBindingSource({
+      getValueCallback: "example_get_profile_binding_value",
+      name: "example/profile-data",
+    });
+    const phpSource = createPhpBindingSourceRegistrationSource(source, {
+      functionName: "example__register_binding_sources",
+    });
+
+    expect(phpSource).toContain(
+      "function example__register_binding_sources()",
+    );
+    expect(phpSource).toContain(
+      "add_action( 'init', 'example__register_binding_sources' );",
+    );
+    expect(phpSource).not.toContain("example_register_binding_sources");
   });
 
   test("exposes a direct compatibility manifest helper", () => {

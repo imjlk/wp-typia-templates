@@ -74,6 +74,8 @@ import {
 	type BindingSourceField,
 	type BindingSourceRegistrationEntry,
 	type BlockMetadataBindings,
+	type CreateEditorBindingSourceRegistrationSourceOptions,
+	type CreatePhpBindingSourceRegistrationSourceOptions,
 	type TypedBlockMetadataBindings,
 } from "@wp-typia/block-types/blocks/bindings";
 import {
@@ -281,10 +283,22 @@ const profileMetadataContract: TypedBlockMetadataBindings<
 		imageUrl: Binding<typeof profileDataSource, { field: "image_url" }>;
 	}
 > = profileMetadata;
+const profilePhpRegistrationOptions = {
+	textDomain: "example",
+} satisfies CreatePhpBindingSourceRegistrationSourceOptions;
+const profileEditorRegistrationOptions = {
+	importSource: "@wordpress/blocks",
+} satisfies CreateEditorBindingSourceRegistrationSourceOptions;
 const profilePhpRegistrationSource =
-	createPhpBindingSourceRegistrationSource(profileDataSource);
+	createPhpBindingSourceRegistrationSource(
+		profileDataSource,
+		profilePhpRegistrationOptions,
+	);
 const profileEditorRegistrationSource =
-	createEditorBindingSourceRegistrationSource(profileDataSource);
+	createEditorBindingSourceRegistrationSource(
+		profileDataSource,
+		profileEditorRegistrationOptions,
+	);
 const profileRegistrationEntry: BindingSourceRegistrationEntry = {
 	metadata: profileSourceMetadata!,
 	source: profileDataSource,
