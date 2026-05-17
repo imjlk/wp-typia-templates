@@ -63,6 +63,7 @@ export const addFlowSchema = z.object({
   'secret-masked-response-field': z.string().optional(),
   'secret-preserve-on-empty': z.string().optional(),
   'secret-state-field': z.string().optional(),
+  service: z.string().optional(),
   slot: z.string().optional(),
   source: z.string().optional(),
   tag: z.string().optional(),
@@ -99,6 +100,10 @@ const ADD_FIELD_HEIGHTS: Record<AddFieldName, number> = {
   type: FIRST_PARTY_TEXT_FIELD_BODY_HEIGHT,
   to: FIRST_PARTY_TEXT_FIELD_BODY_HEIGHT,
 };
+
+export function getAddFieldLayoutNames(): AddFieldName[] {
+  return Object.keys(ADD_FIELD_HEIGHTS) as AddFieldName[];
+}
 
 export function isAddPersistenceTemplate(template?: string): boolean {
   return isRegisteredAddPersistenceTemplate(template);

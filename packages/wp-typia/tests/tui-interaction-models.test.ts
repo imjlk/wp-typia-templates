@@ -158,12 +158,14 @@ describe("first-party TUI interaction models", () => {
 				kind: "integration-env",
 				name: "local-smoke",
 				"release-zip": true,
+				service: " docker-compose ",
 				"wp-env": true,
 			}),
 		).toEqual({
 			kind: "integration-env",
 			name: "local-smoke",
 			"release-zip": true,
+			service: "docker-compose",
 			"wp-env": true,
 		});
 

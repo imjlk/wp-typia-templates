@@ -225,11 +225,13 @@ function createUnknownOptionError(
   );
 }
 
-export function extractKnownOptionValuesFromArgv(
+function walkArgvOptions(
   argv: string[],
   options: {
-    optionNames: Iterable<string>;
+    extraBooleanOptionNames?: Iterable<string>;
+    optionNames?: Iterable<string>;
     parser: CommandOptionParser;
+    strict: boolean;
   },
 ): {
   argv: string[];
@@ -237,104 +239,8 @@ export function extractKnownOptionValuesFromArgv(
 } {
   const flags: Record<string, unknown> = {};
   const nextArgv: string[] = [];
-  const optionNames = new Set(options.optionNames);
-
-  for (let index = 0; index < argv.length; index += 1) {
-    const arg = argv[index];
-    if (!arg) {
-      continue;
-    }
-
-    if (arg === '--') {
-      nextArgv.push(...argv.slice(index));
-      break;
-    }
-
-    if (arg.length === 2 && arg.startsWith('-')) {
-      const shortFlag = options.parser.shortFlagMap.get(arg.slice(1));
-      if (!shortFlag || !optionNames.has(shortFlag.name)) {
-        nextArgv.push(arg);
-        continue;
-      }
-      if (shortFlag.type === 'boolean') {
-        flags[shortFlag.name] = true;
-        continue;
-      }
-      const next = argv[index + 1];
-      if (!next || next.startsWith('-')) {
-        throw createMissingOptionValueError(arg);
-      }
-      assignParsedOptionValue(flags, {
-        name: shortFlag.name,
-        parser: options.parser,
-        value: next,
-      });
-      index += 1;
-      continue;
-    }
-
-    if (arg.startsWith('--')) {
-      const option = arg.slice(2);
-      const separatorIndex = option.indexOf('=');
-      const rawName =
-        separatorIndex === -1 ? option : option.slice(0, separatorIndex);
-      const inlineValue =
-        separatorIndex === -1 ? undefined : option.slice(separatorIndex + 1);
-      if (!optionNames.has(rawName)) {
-        nextArgv.push(arg);
-        continue;
-      }
-      if (options.parser.booleanOptionNames.has(rawName)) {
-        flags[rawName] = true;
-        continue;
-      }
-      if (!options.parser.stringOptionNames.has(rawName)) {
-        nextArgv.push(arg);
-        continue;
-      }
-      if (inlineValue !== undefined) {
-        if (!inlineValue) {
-          throw createMissingOptionValueError(`--${rawName}`);
-        }
-        assignParsedOptionValue(flags, {
-          name: rawName,
-          parser: options.parser,
-          value: inlineValue,
-        });
-        continue;
-      }
-      const next = argv[index + 1];
-      if (!next || next.startsWith('-')) {
-        throw createMissingOptionValueError(`--${rawName}`);
-      }
-      assignParsedOptionValue(flags, {
-        name: rawName,
-        parser: options.parser,
-        value: next,
-      });
-      index += 1;
-      continue;
-    }
-
-    nextArgv.push(arg);
-  }
-
-  return {
-    argv: nextArgv,
-    flags,
-  };
-}
-
-export function parseCommandArgvWithMetadata(
-  argv: string[],
-  options: {
-    extraBooleanOptionNames?: Iterable<string>;
-    parser: CommandOptionParser;
-  },
-): ParsedCommandArgv {
-  const flags: Record<string, unknown> = {};
-  const positionals: string[] = [];
   const booleanOptionNames = new Set(options.parser.booleanOptionNames);
+  const optionNames = new Set(options.optionNames ?? []);
 
   for (const optionName of options.extraBooleanOptionNames ?? []) {
     booleanOptionNames.add(optionName);
@@ -347,14 +253,21 @@ export function parseCommandArgvWithMetadata(
     }
 
     if (arg === '--') {
-      positionals.push(...argv.slice(index + 1));
+      nextArgv.push(...argv.slice(index + (options.strict ? 1 : 0)));
       break;
     }
 
     if (arg.length === 2 && arg.startsWith('-')) {
       const shortFlag = options.parser.shortFlagMap.get(arg.slice(1));
-      if (!shortFlag) {
-        throw createUnknownOptionError(arg);
+      if (
+        !shortFlag ||
+        (!options.strict && !optionNames.has(shortFlag.name))
+      ) {
+        if (options.strict) {
+          throw createUnknownOptionError(arg);
+        }
+        nextArgv.push(arg);
+        continue;
       }
       if (shortFlag.type === 'boolean') {
         flags[shortFlag.name] = true;
@@ -380,12 +293,20 @@ export function parseCommandArgvWithMetadata(
         separatorIndex === -1 ? option : option.slice(0, separatorIndex);
       const inlineValue =
         separatorIndex === -1 ? undefined : option.slice(separatorIndex + 1);
+      if (!options.strict && !optionNames.has(rawName)) {
+        nextArgv.push(arg);
+        continue;
+      }
       if (booleanOptionNames.has(rawName)) {
         flags[rawName] = true;
         continue;
       }
       if (!options.parser.stringOptionNames.has(rawName)) {
-        throw createUnknownOptionError(`--${rawName}`);
+        if (options.strict) {
+          throw createUnknownOptionError(`--${rawName}`);
+        }
+        nextArgv.push(arg);
+        continue;
       }
       if (inlineValue !== undefined) {
         if (!inlineValue) {
@@ -411,12 +332,48 @@ export function parseCommandArgvWithMetadata(
       continue;
     }
 
-    if (arg.startsWith('-')) {
+    if (arg.startsWith('-') && options.strict) {
       throw createUnknownOptionError(arg);
     }
 
-    positionals.push(arg);
+    nextArgv.push(arg);
   }
+
+  return {
+    argv: nextArgv,
+    flags,
+  };
+}
+
+export function extractKnownOptionValuesFromArgv(
+  argv: string[],
+  options: {
+    optionNames: Iterable<string>;
+    parser: CommandOptionParser;
+  },
+): {
+  argv: string[];
+  flags: Record<string, unknown>;
+} {
+  return walkArgvOptions(argv, {
+    optionNames: options.optionNames,
+    parser: options.parser,
+    strict: false,
+  });
+}
+
+export function parseCommandArgvWithMetadata(
+  argv: string[],
+  options: {
+    extraBooleanOptionNames?: Iterable<string>;
+    parser: CommandOptionParser;
+  },
+): ParsedCommandArgv {
+  const { argv: positionals, flags } = walkArgvOptions(argv, {
+    extraBooleanOptionNames: options.extraBooleanOptionNames,
+    parser: options.parser,
+    strict: true,
+  });
 
   return {
     flags,

@@ -21,6 +21,7 @@ import {
   SYNC_OPTION_METADATA,
   TEMPLATES_OPTION_METADATA,
 } from '../src/command-option-metadata';
+import { ADD_KIND_IDS } from '../src/add-kind-registry';
 import { ADD_OPTION_METADATA as FOCUSED_ADD_OPTION_METADATA } from '../src/command-options/add';
 import { CREATE_OPTION_METADATA as FOCUSED_CREATE_OPTION_METADATA } from '../src/command-options/create';
 import { DOCTOR_OPTION_METADATA as FOCUSED_DOCTOR_OPTION_METADATA } from '../src/command-options/doctor';
@@ -30,6 +31,11 @@ import { MCP_OPTION_METADATA as FOCUSED_MCP_OPTION_METADATA } from '../src/comma
 import { MIGRATE_OPTION_METADATA as FOCUSED_MIGRATE_OPTION_METADATA } from '../src/command-options/migrate';
 import { SYNC_OPTION_METADATA as FOCUSED_SYNC_OPTION_METADATA } from '../src/command-options/sync';
 import { TEMPLATES_OPTION_METADATA as FOCUSED_TEMPLATES_OPTION_METADATA } from '../src/command-options/templates';
+import {
+  addFlowSchema,
+  getAddFieldLayoutNames,
+  getVisibleAddFieldNames,
+} from '../src/ui/add-flow-model';
 
 describe('command option metadata helpers', () => {
   function expectDiagnosticCode(
@@ -438,6 +444,122 @@ describe('command option metadata helpers', () => {
       id: 'basic',
     });
     expect(extracted.argv).toEqual(['templates', 'inspect', '--', '--format']);
+  });
+
+  test('keeps loose extraction permissive for unknown options', () => {
+    const parser = buildCommandOptionParser(ALL_COMMAND_OPTION_METADATA);
+    const extracted = extractKnownOptionValuesFromArgv(
+      [
+        '--unknown',
+        'value',
+        '--format=json',
+        '-c',
+        'wp-typia.config.ts',
+        '-z',
+        '--',
+        '--id',
+        'literal',
+      ],
+      {
+        optionNames: ['config', 'format', 'id'],
+        parser,
+      },
+    );
+
+    expect(extracted.flags).toEqual({
+      config: 'wp-typia.config.ts',
+      format: 'json',
+    });
+    expect(extracted.argv).toEqual([
+      '--unknown',
+      'value',
+      '-z',
+      '--',
+      '--id',
+      'literal',
+    ]);
+  });
+
+  test('keeps strict parsing terminator and repeatable option behavior stable', () => {
+    const parsed = parseCommandArgvWithMetadata(
+      [
+        'pattern',
+        'hero-photo',
+        '--tag',
+        'featured',
+        '--tag=landing',
+        '--',
+        '--tag',
+        'literal',
+      ],
+      {
+        parser: buildCommandOptionParser(
+          GLOBAL_OPTION_METADATA,
+          ADD_OPTION_METADATA,
+        ),
+      },
+    );
+
+    expect(parsed.flags).toEqual({
+      tag: ['featured', 'landing'],
+    });
+    expect(parsed.positionals).toEqual([
+      'pattern',
+      'hero-photo',
+      '--tag',
+      'literal',
+    ]);
+  });
+
+  test('keeps add option metadata aligned with interactive schema fields', () => {
+    const metadataOptionNames = Object.keys(ADD_OPTION_METADATA).filter(
+      (optionName) => optionName !== 'dry-run',
+    );
+    const schemaOptionNames = Object.keys(addFlowSchema.shape).filter(
+      (fieldName) => fieldName !== 'kind' && fieldName !== 'name',
+    );
+
+    expect(schemaOptionNames.sort()).toEqual(metadataOptionNames.sort());
+  });
+
+  test('keeps visible add fields covered by metadata, schema, and layout', () => {
+    const metadataOptionNames = new Set(Object.keys(ADD_OPTION_METADATA));
+    const schemaFieldNames = new Set(Object.keys(addFlowSchema.shape));
+    const layoutFieldNames = new Set<string>(getAddFieldLayoutNames());
+    const visibleFieldNames = new Set<string>();
+    const nonOptionFieldNames = new Set(['kind', 'name']);
+
+    for (const kind of ADD_KIND_IDS) {
+      for (const template of [
+        undefined,
+        'basic',
+        'interactivity',
+        'persistence',
+        'compound',
+      ]) {
+        for (const fieldName of getVisibleAddFieldNames({ kind, template })) {
+          visibleFieldNames.add(fieldName);
+        }
+      }
+    }
+
+    const missingMetadata = [...visibleFieldNames]
+      .filter(
+        (fieldName) =>
+          !nonOptionFieldNames.has(fieldName) &&
+          !metadataOptionNames.has(fieldName),
+      )
+      .sort();
+    const missingSchema = [...visibleFieldNames]
+      .filter((fieldName) => !schemaFieldNames.has(fieldName))
+      .sort();
+    const missingLayout = [...visibleFieldNames]
+      .filter((fieldName) => !layoutFieldNames.has(fieldName))
+      .sort();
+
+    expect(missingMetadata).toEqual([]);
+    expect(missingSchema).toEqual([]);
+    expect(missingLayout).toEqual([]);
   });
 
   test('throws diagnostic-coded errors for parser option failures', () => {

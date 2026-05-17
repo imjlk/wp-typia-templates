@@ -65,4 +65,5 @@ export const integrationEnvAddKindEntry =
       'wp-typia add integration-env <name> [--wp-env] [--release-zip] [--service <none|docker-compose>] [--dry-run]',
     visibleFieldNames: () => NAME_ONLY_VISIBLE_FIELDS,
     hiddenBooleanSubmitFields: ['wp-env', 'release-zip'],
+    hiddenStringSubmitFields: ['service'],
   });
