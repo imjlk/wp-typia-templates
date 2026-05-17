@@ -1,5 +1,11 @@
 # wp-typia
 
+## 0.24.2 — 2026-05-17
+
+### Patch changes
+
+- [da0d3a08](https://github.com/imjlk/wp-typia/commit/da0d3a0860ebf05e6c2822db3b1c843073dfbb5e) Share CLI option argv walking and guard add option schema drift. — Thanks @imjlk!
+
 ## 0.24.1 — 2026-05-16
 
 ### Patch changes
