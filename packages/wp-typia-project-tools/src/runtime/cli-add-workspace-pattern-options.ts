@@ -90,6 +90,15 @@ function resolvePatternScope(scope: string | undefined): PatternCatalogScope {
 	);
 }
 
+/**
+ * Normalize and validate a raw pattern section role before catalog generation.
+ * Non-empty values are normalized with normalizeBlockSlug; valid roles start
+ * with a lowercase letter and then use lowercase letters, numbers, or hyphens.
+ *
+ * @param value Raw section-role input from CLI or programmatic callers.
+ * @returns Normalized role slug, or undefined when the input is empty.
+ * @throws When the normalized role does not match the shared section-role pattern.
+ */
 function normalizePatternSectionRole(value: string | undefined): string | undefined {
 	if (value === undefined || value.trim() === "") {
 		return undefined;
